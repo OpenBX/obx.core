@@ -1,8 +1,12 @@
 <?php
-/*****************************************
- ** @vendor A68 Studio                  **
- ** @mailto info@a-68.ru                **
- ** @time 17:36                       **
- ** @user tashiro                       **
- *****************************************/
+/*************************************
+ ** @product OBX:Core Bitrix Module **
+ ** @authors                        **
+ **         Maksim S. Makarov       **
+ **         Morozov P. Artem        **
+ ** @License GPLv3                  **
+ ** @mailto rootfavell@gmail.com    **
+ ** @mailto tashiro@yandex.ru       **
+ *************************************/
+
 ?>
