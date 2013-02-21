@@ -373,7 +373,7 @@ class OBX_Tools
 		if( self::$_lessJSPath ) {
 			$returnString .= '<script type="text/javascript"> less = { env: \'development\' }; </script>'."\n";
 			$returnString .= '<script type="text/javascript" src="'.self::$_lessJSPath.'"></script>'."\n";
-			$returnString .= '<script type="text/javascript">less.watch();</script>'."\n";
+			//$returnString .= '<script type="text/javascript">less.watch();</script>'."\n";
 		}
 		return $returnString;
 	}
