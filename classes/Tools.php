@@ -346,6 +346,37 @@ class OBX_Tools
 		return include $templateFile;
 	}
 
+
+	static private $_bViewContentDispatcherActive = false;
+	static private $_arContentViewTargets = array();
+	static public function showViewContent($view) {
+		if(preg_match('~^[a-zA-Z\_\-]{1,30}$~', $view)) {
+			$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target.'.$view.'.php';
+			if( file_exists($contentFile) ) {
+				global $APPLICATION;
+				$APPLICATION->ShowViewContent($view);
+				self::$_arContentViewTargets[$view] = array(
+					'CONTENT_FILE' => $contentFile
+				);
+				if(!self::$_bViewContentDispatcherActive) {
+					AddEventHandler('main', 'OnEpilog', 'OBX_Tools::dispatchViewTargetContents');
+					self::$_bViewContentDispatcherActive = true;
+				}
+			}
+		}
+
+	}
+
+	static public function dispatchViewTargetContents() {
+		global $APPLICATION, $USER, $DB;
+		foreach(self::$_arContentViewTargets as $view => &$arViewTarget) {
+			ob_start();
+			include $arViewTarget['CONTENT_FILE'];
+			$content = ob_get_clean();
+			$APPLICATION->AddViewContent($view, $content);
+		}
+	}
+
 	/////////////////////////////
 	/// CONNECTING LESS FILES ///
 	static private $_arLessFiles = array();
