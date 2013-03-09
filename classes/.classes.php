@@ -22,4 +22,8 @@ $arModuleClasses = array(
 	,'OBX_DBSimpleStatic'				=> 'classes/DBSimple.php'
 );
 return $arModuleClasses;
+
+
+
+
 ?>
