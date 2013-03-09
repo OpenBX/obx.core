@@ -286,6 +286,7 @@ class OBX_Build {
 					,$this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName()
 					,true, true, FALSE, 'modules'
 				);
+				@unlink($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName().'/.git');
 			}
 		}
 		if( count($this->_arResources)>0 ) {
