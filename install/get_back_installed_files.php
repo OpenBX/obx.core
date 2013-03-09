@@ -29,10 +29,12 @@ DeleteDirFilesEx("/bitrix/modules/obx.core/install/php_interface/event.d");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/php_interface");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/js");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx");
+DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx");
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/event.d/obx.core.debug.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/event.d/obx.core.parse_ini_string.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/run_event.d.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/js/obx.core", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/js/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/layout", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/", true, true);
+OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/breadcrumb.get", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/", true, true);
 if($bConnectEpilog) require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
 ?>
