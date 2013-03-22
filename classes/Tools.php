@@ -612,13 +612,13 @@ class OBX_Tools
 	}
 	/**
 	 * @static
-	 * @param CBitrixComponent $component
+	 * @param CBitrixComponent|string $component
 	 * @param null $jsFilePath
+	 * @return bool
 	 */
 	static public function addComponentDeferredJS($component, $jsFilePath = null) {
 		/**
 		 * @var CMain $APPLICATION
-		 * @var CBitrixComponent $component
 		 */
 		$templateFolder = null;
 		if($component instanceof CBitrixComponent) {
