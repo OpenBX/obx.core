@@ -822,6 +822,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onStartAdd(&$arFields) { return true; }
 	protected function _onBeforeAdd(&$arFields, &$arCheckResult) { return true; }
 	protected function _onAfterAdd(&$arFields) { return true; }
+
+	/**
+	 * @param $arFields
+	 * @return int | bool
+	 */
 	public function add($arFields) {
 		global $DB;
 
@@ -867,7 +872,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		}
 		
 		// check for duplicate primary key (if primary key is not auto_increment field)
-		if($mainTablePrimaryKey != $mainTableAutoIncrement ) {
+		if( $mainTablePrimaryKey != null && $mainTablePrimaryKey != $mainTableAutoIncrement ) {
 			$arItemByPrimaryKey = $this->getByID($arFields[$mainTablePrimaryKey]);
 			if( count($arItemByPrimaryKey)>0 ) {
 				if(array_key_exists("DUP_PK", $arLangMessages) ) {
@@ -944,10 +949,13 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 		$bContinueAfterEvent = $this->_onAfterAdd($arFields); if(!$bContinueAfterEvent) return 0;
 
-		if($mainTablePrimaryKey == $mainTableAutoIncrement ) {
-			$arFields[$mainTablePrimaryKey] = $DB->LastID();
+		if($mainTablePrimaryKey !== null) {
+			if($mainTablePrimaryKey == $mainTableAutoIncrement ) {
+				$arFields[$mainTablePrimaryKey] = $DB->LastID();
+			}
+			return $arFields[$mainTablePrimaryKey];
 		}
-		return $arFields[$mainTablePrimaryKey];
+		return true;
 	}
 
 	protected function _onStartUpdate(&$arFields) { return true; }
