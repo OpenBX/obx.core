@@ -144,6 +144,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const ERR_DUP_UNIQUE = 4096;			// дублирование значения уникального индекса
 	const ERR_MISS_REQUIRED = 8192;			// Не заполнено обязательное поле
 	const ERR_NOTHING_TU_UPDATE = 16384;	// невозможно обновить. запись не найдена
+	const ERR_CANT_DEL_WITHOUT_PK = 32768;  // невозсожно использовать метод delete без использования PrimaryKey
 	//const WRN_
 	//const MSG_
 	
@@ -1114,19 +1115,25 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	public function delete($PRIMARY_KEY_VALUE) {
 		global $DB;
 
-		$bContinueAfterEvent = $this->_onStartDelete($PRIMARY_KEY_VALUE); if(!$bContinueAfterEvent) return false;
 		$arTableList = $this->_arTableList;
 		$arTableFields = $this->_arTableFields;
+		$mainTableAlias = $this->_mainTable;
 		$mainTableAutoIncrement = $this->_mainTableAutoIncrement;
 		$mainTablePrimaryKey = $this->_mainTablePrimaryKey;
+		$arLangMessages = $this->_arDBSimpleLangMessages;
+		if($mainTablePrimaryKey == null) {
+			$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_CANT_DEL_WITHOUT_PK', array(
+				"#TABLE#" => $arTableList[$mainTableAlias]
+			)), self::ERR_CANT_DEL_WITHOUT_PK);
+			return false;
+		}
+		$bContinueAfterEvent = $this->_onStartDelete($PRIMARY_KEY_VALUE); if(!$bContinueAfterEvent) return false;
 		if( $mainTableAutoIncrement == $mainTablePrimaryKey ) {
 			$PRIMARY_KEY_VALUE = intval($PRIMARY_KEY_VALUE);
 		}
-		$mainTablePrimaryKey = $this->_mainTablePrimaryKey;
 		$arIDField = $arTableFields[$mainTablePrimaryKey];
 		list($tableAS, $tblFieldName) = each($arIDField);
 		$tableName = $arTableList[$tableAS];
-		$arLangMessages = $this->_arDBSimpleLangMessages;
 
 		if(!$PRIMARY_KEY_VALUE) {
 			if( array_key_exists("NOTHING_TO_DELETE", $arLangMessages) ) {

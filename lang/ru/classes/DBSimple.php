@@ -15,4 +15,5 @@ $MESS["OBX_DB_SIMPLE_ERR_ADD_DUP_UNIQUE"] = "Ошибка создания. За
 $MESS["OBX_DB_SIMPLE_ERR_UPD_DUP_UNIQUE"] = "Ошибка обновления. Запись со значением уникального индекса (#FLD_LIST#) = (#FLD_VALUES#) уже существует";
 $MESS["OBX_DB_SIMPLE_ERR_ADD_MISS_FIELD"] = "Не заполено (или неверно) обязательное поле «#FIELD_NAME#» при создании записи";
 $MESS["OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE"] = "Ошибка обновления. Запись не найдена";
+$MESS["OBX_DB_SIMPLE_ERR_CANT_DEL_WITHOUT_PK"] = "Невозможно удалить запись из таблицы «#TABLE#» с использованием метода delete(). Для таблицы не предусмотрен первичный ключ.";
 ?>
