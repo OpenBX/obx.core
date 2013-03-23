@@ -49,6 +49,7 @@ abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_
 
 	/**
 	 * @return OBX_DBSimple
+	 * @throws Exception
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
@@ -203,7 +204,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		}
 
 		$arCheckResult = array(
-			"__BREAK" => false
+			'__BREAK' => false
 		);
 		foreach($arFields as $fieldName => &$fieldValue)
 		{
@@ -211,61 +212,61 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if( array_key_exists($fieldName, $arTableFieldsCheck) )
 			{
 				$arCheckResult[$fieldName] = array(
-					"RAW_VALUE" => $fieldValue,
-					"FIELD_TYPE" => null,
-					"FIELD_TYPE_MASK" => 0,
-					"FIELD_ATTR" => array(),
-					"IS_EMPTY" => false,
-					"IS_CORRECT" => false,
-					"FROM_DEFAULTS" => false,
-					"CHECK_DATA" => array()
+					'RAW_VALUE' => $fieldValue,
+					'FIELD_TYPE' => null,
+					'FIELD_TYPE_MASK' => 0,
+					'FIELD_ATTR' => array(),
+					'IS_EMPTY' => false,
+					'IS_CORRECT' => false,
+					'FROM_DEFAULTS' => false,
+					'CHECK_DATA' => array()
 				);
 				$fieldType = $arTableFieldsCheck[$fieldName];
 				$bValueIsCorrect = false;
 				$bNotNull = false;
 				$bDefaultIfNull = false;
 				if( $fieldType & self::FLD_NOT_NULL) {
-					$arCheckResult[$fieldName]["FIELD_ATTR"]["FLD_NOT_NULL"] = self::FLD_NOT_NULL;
+					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_NOT_NULL'] = self::FLD_NOT_NULL;
 					$bNotNull = true;
 				}
 				if( ($fieldType & self::FLD_DEFAULT) ) {
-					$arCheckResult[$fieldName]["FIELD_ATTR"]["FLD_DEFAULT"] = self::FLD_DEFAULT;
+					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_DEFAULT'] = self::FLD_DEFAULT;
 					if( $prepareType == self::PREPARE_ADD ) {
 						$bDefaultIfNull = true;
 					}
 				}
 				if( $fieldType & self::FLD_REQUIRED ) {
-					$arCheckResult[$fieldName]["FIELD_ATTR"]["FLD_REQUIRED"] = self::FLD_REQUIRED;
+					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_REQUIRED'] = self::FLD_REQUIRED;
 				}
 				$bEmpty = empty($fieldValue);
 				if($bEmpty) {
-					$arCheckResult[$fieldName]["IS_EMPTY"] = true;
+					$arCheckResult[$fieldName]['IS_EMPTY'] = true;
 				}
 				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {
 					case self::FLD_T_NO_CHECK:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_NO_CHECK";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_NO_CHECK;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_NO_CHECK';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_NO_CHECK;
 						$bValueIsCorrect = true;
 						break;
 					case self::FLD_T_CHAR:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_CHAR";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_CHAR;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CHAR';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CHAR;
 						if( (!$bNotNull && $bEmpty) || !$bEmpty ) {
 							$fieldValue = substr($fieldValue, 0 ,1);
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_INT:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_INT";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_INT;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_INT';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_INT;
 						$fieldValue = intval($fieldValue);
 						if( (!$bNotNull && $fieldValue==0) || $fieldValue>0 ) {
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_STRING:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_STRING";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_STRING;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_STRING';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_STRING;
 						$valStrLen = strlen($fieldValue);
 						if( (!$bNotNull && $valStrLen==0) || $valStrLen>0 ) {
 							$fieldValue = $DB->ForSql(htmlspecialcharsEx($fieldValue));
@@ -273,16 +274,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						}
 						break;
 					case self::FLD_T_CODE:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_CODE";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_CODE;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CODE';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CODE;
 						$fieldValue = trim($fieldValue);
 						if( (!$bNotNull && empty($fieldValue)) || preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~', $fieldValue) ) {
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_BCHAR:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_BCHAR";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_BCHAR;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BCHAR';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BCHAR;
 						if( !$bNotNull && empty($fieldValue) ) {
 							$bValueIsCorrect = true;
 						}
@@ -294,16 +295,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						}
 						break;
 					case self::FLD_T_FLOAT:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_FLOAT";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_FLOAT;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_FLOAT';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_FLOAT;
 						$fieldValue = floatval($fieldValue);
 						if( (!$bNotNull && $fieldValue==0) || $fieldValue>0 ) {
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_IDENT:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_IDENT";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_IDENT;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IDENT';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IDENT;
 						$fieldValue = trim($fieldValue);
 						if(
 								( !$bNotNull && empty($fieldValue) )
@@ -314,92 +315,92 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						}
 						break;
 					case self::FLD_T_BX_LANG_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_BX_LANG_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_BX_LANG_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BX_LANG_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BX_LANG_ID;
 						$fieldValue = trim($fieldValue);
 						if( strlen($fieldValue)>0 && preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]?$~', $fieldValue)) {
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_IBLOCK_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_IBLOCK_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_IBLOCK_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ID;
 						$fieldValue = intval($fieldValue);
 						$rs = CIBlock::GetByID($fieldValue);
 						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]["CHECK_DATA"] = $arData;
+							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_IBLOCK_PROP_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_IBLOCK_PROP_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_IBLOCK_PROP_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_PROP_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_PROP_ID;
 						$rs = CIBlockProperty::GetByID($fieldValue);
 						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]["CHECK_DATA"] = $arData;
+							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_IBLOCK_ELEMENT_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_IBLOCK_ELEMENT_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_IBLOCK_ELEMENT_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ELEMENT_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ELEMENT_ID;
 						$rs = CIBlockElement::GetByID($fieldValue);
 						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]["CHECK_DATA"] = $arData;
+							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_IBLOCK_SECTION_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_IBLOCK_SECTION_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_IBLOCK_SECTION_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_SECTION_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_SECTION_ID;
 						$rs = CIBlockSection::GetByID($fieldValue);
 						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]["CHECK_DATA"] = $arData;
+							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_USER_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_USER_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_USER_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_USER_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_USER_ID;
 						$rs = CUser::GetByID($fieldValue);
 						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]["CHECK_DATA"] = $arData;
+							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 							$bValueIsCorrect = true;
 						}
 						break;
 					case self::FLD_T_GROUP_ID:
-						$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_T_GROUP_ID";
-						$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_T_GROUP_ID;
+						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_GROUP_ID';
+						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_GROUP_ID;
 						$rs = CGroup::GetByID($fieldValue);
 						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]["CHECK_DATA"] = $arData;
+							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 							$bValueIsCorrect = true;
 						}
 						break;
 				}
 				if( $fieldType & self::FLD_CUSTOM_CK ) {
-					$arCheckResult[$fieldName]["FIELD_TYPE"] = "FLD_CUSTOM_CK";
-					$arCheckResult[$fieldName]["FIELD_TYPE_MASK"] = self::FLD_CUSTOM_CK;
+					$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_CUSTOM_CK';
+					$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_CUSTOM_CK;
 					if( $bValueIsCorrect ) {
 						$customCheckFunc = '__check_'.$fieldName;
 						if( is_callable(array($this, $customCheckFunc)) ) {
-							//$bValueIsCorrect = call_user_func($customCheckFunc, $fieldValue, $arCheckResult[$fieldName]["CHECK_DATA"]);
-							$bValueIsCorrect = $this->$customCheckFunc($fieldValue, $arCheckResult[$fieldName]["CHECK_DATA"]);
+							//$bValueIsCorrect = call_user_func($customCheckFunc, $fieldValue, $arCheckResult[$fieldName]['CHECK_DATA']);
+							$bValueIsCorrect = $this->$customCheckFunc($fieldValue, $arCheckResult[$fieldName]['CHECK_DATA']);
 						}
 					}
 				}
 				if( !$bValueIsCorrect && ($fieldType & self::FLD_BRK_INCORR) ) {
-					$arCheckResult["__BREAK"] = true;
+					$arCheckResult['__BREAK'] = true;
 				}
 
 				if($bEmpty && $bDefaultIfNull) {
 					if(array_key_exists($fieldName, $arTableFieldsDefault)) {
-						$arCheckResult[$fieldName]["FROM_DEFAULTS"] = true;
+						$arCheckResult[$fieldName]['FROM_DEFAULTS'] = true;
 						$arFieldsPrepared[$fieldName] = $arTableFieldsDefault[$fieldName];
 					}
 				}
 				elseif($bValueIsCorrect) {
-					$arCheckResult[$fieldName]["IS_CORRECT"] = true;
+					$arCheckResult[$fieldName]['IS_CORRECT'] = true;
 					$arFieldsPrepared[$fieldName] = $fieldValue;
 				}
 			}
@@ -439,7 +440,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			$bRequired = ($fieldAttr & self::FLD_REQUIRED)?true:false;
 			if( $bRequired && !array_key_exists($asFieldName, $arFields) ) {
 				if( ($fieldAttr & self::FLD_DEFAULT)
-					&& ( !isset($arFields[$asFieldName]) || $arCheckResult[$asFieldName]["IS_EMPTY"] )
+					&& ( !isset($arFields[$asFieldName]) || $arCheckResult[$asFieldName]['IS_EMPTY'] )
 					&& array_key_exists($asFieldName, $arTableFieldsDefault)
 				) {
 					$arFields[$asFieldName] = $arTableFieldsDefault[$asFieldName];
@@ -496,9 +497,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
-				$isSubQuery = ((strpos($tblFieldName,"(")===false)?false:true);
+				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
 				if(!$isSubQuery){
-					$sqlField = $asName.".".$tblFieldName;
+					$sqlField = $asName.'.'.$tblFieldName;
 				}
 				else{
 					$sqlField = $tblFieldName;
@@ -593,7 +594,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if($orAscDesc == 'ASC' || $orAscDesc == 'DESC') {
 					$arTblField = $arTableFields[$fieldCode];
 					list($asName, $tblFieldName) = each($arTblField);
-					$isSubQuery = ((strpos($tblFieldName,"(")===false)?false:true);
+					$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
 					if (!$isSubQuery){
 						$sqlField = $asName.'.'.$tblFieldName;
 					}else{
@@ -641,7 +642,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				continue;
 			}
 			if( $arSelectFromTables[$asLeftTblName] && $arSelectFromTables[$asRightTblName] ) {
-				$sWhereTblLink .= "\n\t AND ".$asLeftTblName.".".$leftFieldName." = ".$asRightTblName.".".$rightFieldName;
+				$sWhereTblLink .= "\n\t AND ".$asLeftTblName.'.'.$leftFieldName.' = '.$asRightTblName.'.'.$rightFieldName;
 			}
 			continue;
 		}
@@ -661,11 +662,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if($bSelectFromTable) {
 				if( $bShowNullFields && array_key_exists($asTblName, $arTableLeftJoinTables) ) {
 					$arTableLeftJoinTables[$asTblName] = true;
-					$sJoin .= "\nLEFT JOIN\n\t".$arTableList[$asTblName].' AS '.$asTblName.' ON ('.$arTableLeftJoin[$asTblName].")";
+					$sJoin .= "\nLEFT JOIN\n\t".$arTableList[$asTblName].' AS '.$asTblName.' ON ('.$arTableLeftJoin[$asTblName].')';
 				}
 				elseif( $bShowNullFields && array_key_exists($asTblName, $arTableRightJoin) ) {
 					$arTableRightJoin[$asTblName] = true;
-					$sJoin .= "\nRIGHT JOIN\n\t".$arTableList[$asTblName].' AS '.$asTblName.' ON ('.$arTableRightJoin[$asTblName].")";
+					$sJoin .= "\nRIGHT JOIN\n\t".$arTableList[$asTblName].' AS '.$asTblName.' ON ('.$arTableRightJoin[$asTblName].')';
 				}
 				else {
 					$sSelectFrom .= (($bFirstSelectFrom)?"\n\t":", \n\t").$arTableList[$asTblName].' AS '.$asTblName;
@@ -677,13 +678,13 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			list($firstTableAlias, $firstTableName) = each($arTableList);
 			$sSelectFrom .= "\n\t".$firstTableName.' AS '.$firstTableAlias;
 		}
-		$sWhere = "";
+		$sWhere = '';
 		if( !empty($sSelectFrom) || !empty($sSelectFrom) ) {
 			$sWhere = "\nWHERE (1=1)".$sWhereTblLink.$sWhereFilter;
 		}
 
 		$sqlList = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sJoin.$sWhere.$sGroupBy.$sSort;
-		$res = $DB->Query($sqlList, false, "File: ".__FILE__."<br />\nLine: ".__LINE__);
+		$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		return $res;
 	}
 
@@ -728,10 +729,10 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			list($leftTblAlias, $leftTblField) = each($arLeftField);
 			list($rightTblAlias, $rightTblField) = each($arRightField);
 			if($leftTblAlias == $mainTable) {
-				$arMainTableLinkStrings[$rightTblAlias.".".$rightTblField] = array($leftTblAlias, $leftTblField);
+				$arMainTableLinkStrings[$rightTblAlias.'.'.$rightTblField] = array($leftTblAlias, $leftTblField);
 			}
 			if($rightTblAlias == $mainTable) {
-				$arMainTableLinkStrings[$leftTblAlias.".".$leftTblField] = array($rightTblAlias, $rightTblField);
+				$arMainTableLinkStrings[$leftTblAlias.'.'.$leftTblField] = array($rightTblAlias, $rightTblField);
 			}
 		}
 
@@ -747,7 +748,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			$arSelect = array();
 			foreach ($arTableFields as $fieldCode => $arSqlField) {
 				list($tlbAlias, $tblFieldName) = each($arSqlField);
-				if($tlbAlias == $mainTable || array_key_exists($tlbAlias.".".$tblFieldName, $arMainTableLinkStrings)) {
+				if($tlbAlias == $mainTable || array_key_exists($tlbAlias.'.'.$tblFieldName, $arMainTableLinkStrings)) {
 					$arSelect[] = $fieldCode;
 				}
 			}
@@ -759,19 +760,19 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
 				// Очень спорный момент. Нужно аккуратно проектировать подзапросы
-//				$isSubQuery = ((strpos($tblFieldName,"(")===false)?false:true);
+//				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
 //				if($isSubQuery){
 //					continue;
 //				}
 				if($asName != $mainTable) {
-					if( !array_key_exists($asName.".".$tblFieldName, $arMainTableLinkStrings) ) {
+					if( !array_key_exists($asName.'.'.$tblFieldName, $arMainTableLinkStrings) ) {
 						continue;
 					}
-					$arrTmp = $arMainTableLinkStrings[$asName.".".$tblFieldName];
+					$arrTmp = $arMainTableLinkStrings[$asName.'.'.$tblFieldName];
 					$asName = $arrTmp[0];
 					$tblFieldName = $arrTmp[1];
 				}
-				$sqlField = $asName.".".$tblFieldName;
+				$sqlField = $asName.'.'.$tblFieldName;
 				if( array_key_exists($sqlField, $arAlreadySelected) ) continue;
 				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
 				$arAlreadySelected[$sqlField] = true;
@@ -786,7 +787,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			list($asLeftTblName, $leftFieldName) = each($arLeftField);
 			list($asRightTblName, $rightFieldName) = each($arRightField);
 			if( $arSelectFromTables[$asLeftTblName] && $arSelectFromTables[$asRightTblName] ) {
-				$sWhereTblLink .= "\n\t AND ".$asLeftTblName.".".$leftFieldName." = ".$asRightTblName.".".$rightFieldName;
+				$sWhereTblLink .= "\n\t AND ".$asLeftTblName.'.'.$leftFieldName.' = '.$asRightTblName.'.'.$rightFieldName;
 			}
 			continue;
 		}
@@ -807,10 +808,10 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			$this->prepareFieldsData(self::PREPARE_UPDATE, $arFilter = array($mainTablePrimaryKey => $PRIMARY_KEY_VALUE));
 			$PRIMARY_KEY_VALUE = $arFilter[$mainTablePrimaryKey];
 		}
-		$sWhere .= "\n\t".$mainTable.".".$mainTablePrimaryKey.' = \''.$PRIMARY_KEY_VALUE.'\'';
+		$sWhere .= "\n\t".$mainTable.'.'.$mainTablePrimaryKey.' = \''.$PRIMARY_KEY_VALUE.'\'';
 		$sWhere .= $sWhereTblLink;
 		$sqlByPrimaryKey = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sWhere;
-		$rsList = $DB->Query($sqlByPrimaryKey, false, "File: ".__FILE__."<br />\nLine: ".__LINE__);
+		$rsList = $DB->Query($sqlByPrimaryKey, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		if(!$bReturnCDBResult) {
 			if( ($arElement = $rsList->Fetch()) ) {
 				return $arElement;
@@ -823,6 +824,37 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onStartAdd(&$arFields) { return true; }
 	protected function _onBeforeAdd(&$arFields, &$arCheckResult) { return true; }
 	protected function _onAfterAdd(&$arFields) { return true; }
+
+	protected function _getLangMessageReplace($field) {
+		$arLangReplace = array(
+			'FIELD' => $field
+		);
+		$arFieldsDescription = $this->_arFieldsDescription;
+		if( !is_array($arFieldsDescription) && count($arFieldsDescription)>0 ) {
+			if( array_key_exists($field, $arFieldsDescription) ) {
+				if( array_key_exists('NAME', $arFieldsDescription[$field]) ) {
+					$arLangReplace['#'.$field.'_NAME#'] = $arFieldsDescription[$field]['NAME'];
+					$arLangReplace['#FIELD_NAME#'] = $arFieldsDescription[$field]['NAME'];
+				}
+				if( array_key_exists('DESC', $arFieldsDescription[$field]) ) {
+					$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESC'];
+					$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESC'];
+				}
+				if( array_key_exists('DESCR', $arFieldsDescription[$field]) ) {
+					$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCR'];
+					$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCR'];
+				}
+				if( array_key_exists('DESCRIPTION', $arFieldsDescription[$field]) ) {
+					$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCRIPTION'];
+					$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCRIPTION'];
+				}
+			}
+		}
+		return $arLangReplace;
+	}
+//	public function getLangMessage($field = 'ALL', $bReplaceMacroses = false) {
+//
+//	}
 
 	/**
 	 * @param $arFields
@@ -838,33 +870,40 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			unset($arFields[$mainTableAutoIncrement]);
 		}
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_ADD, $arFields);
-		if($arCheckResult["__BREAK"]) return 0;
+		if($arCheckResult['__BREAK']) return 0;
 
 		$bContinueAfterEvent = $this->_onBeforeAdd($arFields, $arCheckResult); if(!$bContinueAfterEvent) return 0;
 
-		$arLangMessages = $this->_arDBSimpleLangMessages; 
+		$arLangMessages = $this->_arDBSimpleLangMessages;
 		$arMissedFields = $this->checkRequiredFields($arFields, $arCheckResult);
 		if( count($arMissedFields)>0 ) {
 			$bBreakOnMissField = false;
 			foreach($arMissedFields as $fieldName) {
-				if(array_key_exists("REQ_FLD_".$fieldName, $arLangMessages) ) {
-					$arLangMessage = $arLangMessages["REQ_FLD_".$fieldName];
-					switch( $arLangMessage["TYPE"] ) {
-						case "E":
-							$this->addError($arLangMessage["TEXT"], $arLangMessage["CODE"]);
+				if(array_key_exists('REQ_FLD_'.$fieldName, $arLangMessages) ) {
+					$arLangMessage = $arLangMessages['REQ_FLD_'.$fieldName];
+					// Заменяем макросы имён полей в lang-сообщениях
+					$arLangReplace = $this->_getLangMessageReplace($fieldName);
+					if( count($arLangReplace)>0 ) {
+						foreach($arLangReplace as $placeHolder => &$phValue) {
+							$arLangMessages['TEXT'] = str_replace($placeHolder, $phValue, $arLangMessages['TEXT']);
+						}
+					}
+					switch( $arLangMessage['TYPE'] ) {
+						case 'E':
+							$this->addError($arLangMessage['TEXT'], $arLangMessage['CODE']);
 							$bBreakOnMissField = true;
 							break;
-						case "W":
-							$this->addWarning($arLangMessage["TEXT"], $arLangMessage["CODE"]);
+						case 'W':
+							$this->addWarning($arLangMessage['TEXT'], $arLangMessage['CODE']);
 							break;
-						case "M":
-							$this->addMessage($arLangMessage["TEXT"], $arLangMessage["CODE"]);
+						case 'M':
+							$this->addMessage($arLangMessage['TEXT'], $arLangMessage['CODE']);
 							break;
 					}
 				}
 				else {
-					$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_ADD_MISS_FIELD", array(
-						"#FIELD_NAME#" => $fieldName
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_ADD_MISS_FIELD', array(
+						'#FIELD#' => $fieldName
 					)), self::ERR_MISS_REQUIRED);
 					$bBreakOnMissField = true;
 				}
@@ -876,20 +915,19 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		if( $mainTablePrimaryKey != null && $mainTablePrimaryKey != $mainTableAutoIncrement ) {
 			$arItemByPrimaryKey = $this->getByID($arFields[$mainTablePrimaryKey]);
 			if( count($arItemByPrimaryKey)>0 ) {
-				if(array_key_exists("DUP_PK", $arLangMessages) ) {
-					$this->addError(
-						str_replace(
-							"#".$mainTablePrimaryKey."#",
-							$arFields[$mainTablePrimaryKey],
-							$arLangMessages["DUP_PK"]["TEXT"]
-						),
-						$arLangMessages["DUP_PK"]["CODE"]
-					);
+				if(array_key_exists('DUP_PK', $arLangMessages) ) {
+					$arLangReplace = $this->_getLangMessageReplace($mainTablePrimaryKey);
+					if( count($arLangReplace)>0 ) {
+						foreach($arLangReplace as $placeHolder => &$phValue) {
+							$arLangMessages['DUP_PK']['TEXT'] = str_replace($placeHolder, $phValue, $arLangMessages['DUP_PK']['TEXT']);
+						}
+					}
+					$this->addError($arLangMessages['DUP_PK']['TEXT'], $arLangMessages['DUP_PK']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_ADD_DUP_PK", array(
-						"#PK_NAME#" => $mainTablePrimaryKey,
-						"#PK_VALUE#" => $arFields[$mainTablePrimaryKey]
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_ADD_DUP_PK', array(
+						'#PK_NAME#' => $mainTablePrimaryKey,
+						'#PK_VALUE#' => $arFields[$mainTablePrimaryKey]
 					)), self::ERR_DUP_PK);
 				}
 				return 0;
@@ -903,12 +941,12 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$arUniqueFilter = array();
 				$arInUniqueMacrosNames = array();
 				$arInUniqueMacrosValues = array();
-				$strUniqueFieldsList = "";
-				$strUniqueFieldsValues = "";
+				$strUniqueFieldsList = '';
+				$strUniqueFieldsValues = '';
 				$bFirstUniqueField = true;
 				foreach($arUniqueFields as $inUniqueFieldName) {
 					$arUniqueFilter[$inUniqueFieldName] = $arFields[$inUniqueFieldName];
-					$arInUniqueMacrosNames[] = "#".$inUniqueFieldName."#";
+					$arInUniqueMacrosNames[] = '#'.$inUniqueFieldName.'#';
 					$arInUniqueMacrosValues[] = $arFields[$inUniqueFieldName];
 					$strUniqueFieldsList .= (($bFirstUniqueField)?"'":"', '").$inUniqueFieldName;
 					$strUniqueFieldsValues .= (($bFirstUniqueField)?"'":"', '").$arFields[$inUniqueFieldName];
@@ -921,20 +959,20 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if( count($arUniqueFilter)>0 ) {
 					$arExistsList = $this->getListArray(null, $arUniqueFilter, null, null, null, false);
 					if( count($arExistsList)>0 ) {
-						if(array_key_exists("DUP_ADD_".$udxName, $arLangMessages) ) {
+						if(array_key_exists('DUP_ADD_'.$udxName, $arLangMessages) ) {
 							$this->addError(
 								str_replace(
 									$arInUniqueMacrosNames,
 									$arInUniqueMacrosValues,
-									$arLangMessages["DUP_ADD_".$udxName]["TEXT"]
+									$arLangMessages['DUP_ADD_'.$udxName]['TEXT']
 								),
-								$arLangMessages["DUP_ADD_".$udxName]["CODE"]
+								$arLangMessages['DUP_ADD_'.$udxName]['CODE']
 							);
 						}
 						else {
-							$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_ADD_DUP_UNIQUE", array(
-								"#FLD_LIST#" => $strUniqueFieldsList,
-								"#FLD_VALUES#" => $strUniqueFieldsValues
+							$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_ADD_DUP_UNIQUE', array(
+								'#FLD_LIST#' => $strUniqueFieldsList,
+								'#FLD_VALUES#' => $strUniqueFieldsValues
 							)), self::ERR_DUP_UNIQUE);
 						}
 						return 0;
@@ -945,8 +983,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$arTableList = $this->_arTableList;
 		$mainEntityTableName  = $arTableList[$this->_mainTable];
 		$arInsert = $DB->PrepareInsert($mainEntityTableName, $arFields);
-		$sqlInsert = 'INSERT INTO '.$mainEntityTableName." (".$arInsert[0].") VALUES (".$arInsert[1].");";
-		$DB->Query($sqlInsert, false, "File: ".__FILE__."<br />\nLine: ".__LINE__);
+		$sqlInsert = 'INSERT INTO '.$mainEntityTableName.' ('.$arInsert[0].') VALUES ('.$arInsert[1].');';
+		$DB->Query($sqlInsert, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 
 		$bContinueAfterEvent = $this->_onAfterAdd($arFields); if(!$bContinueAfterEvent) return 0;
 
@@ -968,7 +1006,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 		$bContinueAfterEvent = $this->_onStartUpdate($arFields); if(!$bContinueAfterEvent) return false;
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_UPDATE, $arFields);
-		if($arCheckResult["__BREAK"]) return false;
+		if($arCheckResult['__BREAK']) return false;
 		$bContinueAfterEvent = $this->_onBeforeUpdate($arFields, $arCheckResult); if(!$bContinueAfterEvent) return false;
 
 		$mainTablePrimaryKey = $this->_mainTablePrimaryKey;
@@ -1015,11 +1053,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			}
 		}
 		if(!$ID) {
-			if( array_key_exists("NOTHING_TO_UPDATE", $arLangMessages) ) {
-				$this->addError($arLangMessages["NOTHING_TO_UPDATE"]["TEXT"], $arLangMessages["NOTHING_TO_UPDATE"]["CODE"]);
+			if( array_key_exists('NOTHING_TO_UPDATE', $arLangMessages) ) {
+				$this->addError($arLangMessages['NOTHING_TO_UPDATE']['TEXT'], $arLangMessages['NOTHING_TO_UPDATE']['CODE']);
 			}
 			else {
-				$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE"), self::ERR_NOTHING_TU_UPDATE);
+				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE'), self::ERR_NOTHING_TU_UPDATE);
 			}
 			return false;
 		}
@@ -1028,15 +1066,15 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$arThatElement = $this->getByID($ID);
 			//}
 			if( empty($arThatElement) ) {
-				if( array_key_exists("NOTHING_TO_UPDATE", $arLangMessages) ) {
-					$this->addError($arLangMessages["NOTHING_TO_UPDATE"]["TEXT"], $arLangMessages["NOTHING_TO_UPDATE"]["CODE"]);
+				if( array_key_exists('NOTHING_TO_UPDATE', $arLangMessages) ) {
+					$this->addError($arLangMessages['NOTHING_TO_UPDATE']['TEXT'], $arLangMessages['NOTHING_TO_UPDATE']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE"), self::ERR_NOTHING_TU_UPDATE);
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE'), self::ERR_NOTHING_TU_UPDATE);
 				}
 				return false;
 			}
-			$arCheckResult["__EXIST_ROW"] = $arThatElement;
+			$arCheckResult['__EXIST_ROW'] = $arThatElement;
 		}
 
 		$arElementInFuture = array_merge($arThatElement, $arFields);
@@ -1055,12 +1093,12 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					$arUniqueFilter = array();
 					$arInUniqueMacrosNames = array();
 					$arInUniqueMacrosValues = array();
-					$strUniqueFieldsList = "";
-					$strUniqueFieldsValues = "";
+					$strUniqueFieldsList = '';
+					$strUniqueFieldsValues = '';
 					$bFirstUniqueField = true;
 					foreach($arUniqueFields as $inUniqueFieldName) {
 						$arUniqueFilter[$inUniqueFieldName] = $arElementInFuture[$inUniqueFieldName];
-						$arInUniqueMacrosNames[] = "#".$inUniqueFieldName."#";
+						$arInUniqueMacrosNames[] = '#'.$inUniqueFieldName.'#';
 						$arInUniqueMacrosValues[] = $arElementInFuture[$inUniqueFieldName];
 						$strUniqueFieldsList .= (($bFirstUniqueField)?"'":"', '").$inUniqueFieldName;
 						$strUniqueFieldsValues .= (($bFirstUniqueField)?"'":"', '").$arElementInFuture[$inUniqueFieldName];
@@ -1071,24 +1109,24 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						$strUniqueFieldsValues .= "'";
 					}
 					if( count($arUniqueFilter)>0 ) {
-						$arUniqueFilter["!".$mainTablePrimaryKey] = $arThatElement[$mainTablePrimaryKey];
+						$arUniqueFilter['!'.$mainTablePrimaryKey] = $arThatElement[$mainTablePrimaryKey];
 						$arExistsList = $this->getListArray(null, $arUniqueFilter);
 						//$arExistsList = $this->getListArray(null, $arUniqueFilter, null, null, null, false);
 						if( count($arExistsList)>0 ) {
-							if(array_key_exists("DUP_UPD_".$udxName, $arLangMessages) ) {
+							if(array_key_exists('DUP_UPD_'.$udxName, $arLangMessages) ) {
 								$this->addError(
 									str_replace(
 										$arInUniqueMacrosNames,
 										$arInUniqueMacrosValues,
-										$arLangMessages["DUP_UPD_".$udxName]["TEXT"]
+										$arLangMessages['DUP_UPD_'.$udxName]['TEXT']
 									),
-									$arLangMessages["DUP_UPD_".$udxName]["CODE"]
+									$arLangMessages['DUP_UPD_'.$udxName]['CODE']
 								);
 							}
 							else {
-								$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_UPD_DUP_UNIQUE", array(
-									"#FLD_LIST#" => $strUniqueFieldsList,
-									"#FLD_VALUES#" => $strUniqueFieldsValues
+								$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_DUP_UNIQUE', array(
+									'#FLD_LIST#' => $strUniqueFieldsList,
+									'#FLD_VALUES#' => $strUniqueFieldsValues
 								)), self::ERR_DUP_UNIQUE);
 							}
 							return false;
@@ -1104,7 +1142,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						.'` SET '.$strUpdate
 						.' WHERE `'
 							.$mainTablePrimaryKey.'` = \''.$DB->ForSql($arThatElement[$mainTablePrimaryKey]).'\';';
-		$DB->Query($strUpdate, false, "File: ".__FILE__."<br />\nLine: ".__LINE__);
+		$DB->Query($strUpdate, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterUpdate($arFields); if(!$bContinueAfterEvent) return false;
 		return true;
 	}
@@ -1123,7 +1161,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$arLangMessages = $this->_arDBSimpleLangMessages;
 		if($mainTablePrimaryKey == null) {
 			$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_CANT_DEL_WITHOUT_PK', array(
-				"#TABLE#" => $arTableList[$mainTableAlias]
+				'#TABLE#' => $arTableList[$mainTableAlias]
 			)), self::ERR_CANT_DEL_WITHOUT_PK);
 			return false;
 		}
@@ -1136,29 +1174,29 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$tableName = $arTableList[$tableAS];
 
 		if(!$PRIMARY_KEY_VALUE) {
-			if( array_key_exists("NOTHING_TO_DELETE", $arLangMessages) ) {
-				$this->addError($arLangMessages["NOTHING_TO_DELETE"]["TEXT"], $arLangMessages["NOTHING_TO_DELETE"]["CODE"]);
+			if( array_key_exists('NOTHING_TO_DELETE', $arLangMessages) ) {
+				$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 			}
 			else {
-				$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE"), self::ERR_NOTHING_TO_DELETE);
+				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
 			}
 			return false;
 		}
 		else {
 			$arExists = $this->getByID($PRIMARY_KEY_VALUE);
 			if( empty($arExists) ) {
-				if( array_key_exists("NOTHING_TO_DELETE", $arLangMessages) ) {
-					$this->addError($arLangMessages["NOTHING_TO_DELETE"]["TEXT"], $arLangMessages["NOTHING_TO_DELETE"]["CODE"]);
+				if( array_key_exists('NOTHING_TO_DELETE', $arLangMessages) ) {
+					$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE"), self::ERR_NOTHING_TO_DELETE);
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
 				}
 				return false;
 			}
 		}
 		$bContinueAfterEvent = $this->_onBeforeDelete($arExists); if(!$bContinueAfterEvent) return false;
 		$sqlDelete = 'DELETE FROM '.$tableName.' WHERE '.$tblFieldName.' = \''.$PRIMARY_KEY_VALUE.'\';';
-		$DB->Query($sqlDelete, false, "File: ".__FILE__."<br />\nLine: ".__LINE__);
+		$DB->Query($sqlDelete, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterDelete($arExists); if(!$bContinueAfterEvent) return false;
 		return true;
 	}
@@ -1181,10 +1219,10 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			list($leftTblAlias, $leftTblField) = each($arLeftField);
 			list($rightTblAlias, $rightTblField) = each($arRightField);
 			if($leftTblAlias == $mainTableNameAlias) {
-				$arMainTableLinkStrings[$rightTblAlias.".".$rightTblField] = $leftTblField;
+				$arMainTableLinkStrings[$rightTblAlias.'.'.$rightTblField] = $leftTblField;
 			}
 			if($rightTblAlias == $mainTableNameAlias) {
-				$arMainTableLinkStrings[$leftTblAlias.".".$leftTblField] = $rightTblField;
+				$arMainTableLinkStrings[$leftTblAlias.'.'.$leftTblField] = $rightTblField;
 			}
 		}
 
@@ -1225,8 +1263,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					$arTblField = $arTableFields[$fieldCode];
 					list($asName, $tblFieldName) = each($arTblField);
 					if( $asName != $mainTableNameAlias ) {
-						if( array_key_exists($asName.".".$tblFieldName, $arMainTableLinkStrings) ) {
-							$tblFieldName = $arMainTableLinkStrings[$asName.".".$tblFieldName];
+						if( array_key_exists($asName.'.'.$tblFieldName, $arMainTableLinkStrings) ) {
+							$tblFieldName = $arMainTableLinkStrings[$asName.'.'.$tblFieldName];
 						}
 						else {
 							$tblFieldName = '';
@@ -1277,11 +1315,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$arDelete = $this->_deleteByFilterPrepare($arFilter);
 		$arLangMessages = $this->_arDBSimpleLangMessages;
 		if( empty($arDelete) || !is_array($arDelete) ) {
-			if( array_key_exists("NOTHING_TO_DELETE", $arLangMessages) ) {
-				$this->addError($arLangMessages["NOTHING_TO_DELETE"]["TEXT"], $arLangMessages["NOTHING_TO_DELETE"]["CODE"]);
+			if( array_key_exists('NOTHING_TO_DELETE', $arLangMessages) ) {
+				$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 			}
 			else {
-				$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE"), self::ERR_NOTHING_TO_DELETE);
+				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
 			}
 			return false;
 		}
@@ -1290,11 +1328,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			$sqlExistence = 'SELECT * FROM '.$arDelete['TABLE_NAME'].' WHERE'.$arDelete['WHERE_STRING'];
 			$rsExists = $DB->Query($sqlExistence);
 			if(!$rsExists->Fetch()) {
-				if( array_key_exists("NOTHING_TO_DELETE", $arLangMessages) ) {
-					$this->addError($arLangMessages["NOTHING_TO_DELETE"]["TEXT"], $arLangMessages["NOTHING_TO_DELETE"]["CODE"]);
+				if( array_key_exists('NOTHING_TO_DELETE', $arLangMessages) ) {
+					$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage("OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE"), self::ERR_NOTHING_TO_DELETE);
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
 				}
 				return false;
 			}
@@ -1302,7 +1340,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$bContinueAfterEvent = $this->_onBeforeDeleteByFilter($arFilter, $bCheckExistence, $arDelete);
 		if(!$bContinueAfterEvent) return false;
 		$sqlDelete = 'DELETE FROM '.$arDelete['TABLE_NAME'].' WHERE'.$arDelete['WHERE_STRING'];
-		$DB->Query($sqlDelete, false, "File: ".__FILE__."<br />\nLine: ".__LINE__);
+		$DB->Query($sqlDelete, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterDeleteByFilter($arFilter, $bCheckExistence);
 		if(!$bContinueAfterEvent) return false;
 		return true;
@@ -1322,7 +1360,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if (isset($arDefaults[$key]) && strlen($arDefaults[$key]) > 0) {
 				$resDefault = $arDefaults[$key];
 			} else {
-				$resDefault = "";
+				$resDefault = '';
 			}
 			$arResult[$key] = $resDefault;
 		}
@@ -1341,7 +1379,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		foreach($this->_arTableFields as $fieldCode => &$arTblFieldName) {
 			if(
 				isset($this->_arFieldsDescription[$fieldCode])
-				&& isset($this->_arFieldsDescription[$fieldCode]["NAME"])
+				&& isset($this->_arFieldsDescription[$fieldCode]['NAME'])
 			)
 			$arResult[$fieldCode] = $this->_arFieldsDescription[$fieldCode];
 		}
