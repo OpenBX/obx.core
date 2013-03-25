@@ -204,7 +204,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		}
 
 		$arCheckResult = array(
-			'__BREAK' => false
+			'__BREAK' => false,
 		);
 		foreach($arFields as $fieldName => &$fieldValue)
 		{
@@ -825,28 +825,65 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onBeforeAdd(&$arFields, &$arCheckResult) { return true; }
 	protected function _onAfterAdd(&$arFields) { return true; }
 
-	protected function _getLangMessageReplace($field) {
-		$arLangReplace = array(
-			'FIELD' => $field
-		);
+	protected function _getLangMessageReplace($field, $bReturn2Arrays4StrReplace = true) {
+		if( $bReturn2Arrays4StrReplace ) {
+			$arLangReplace = array(
+				'TARGET' => array('#FIELD#'),
+				'VALUE' => array($field)
+			);
+		}
+		else {
+			$arLangReplace = array(
+				'#FIELD#' => $field
+			);
+		}
+
 		$arFieldsDescription = $this->_arFieldsDescription;
-		if( !is_array($arFieldsDescription) && count($arFieldsDescription)>0 ) {
+		if( is_array($arFieldsDescription) && count($arFieldsDescription)>0 ) {
 			if( array_key_exists($field, $arFieldsDescription) ) {
-				if( array_key_exists('NAME', $arFieldsDescription[$field]) ) {
-					$arLangReplace['#'.$field.'_NAME#'] = $arFieldsDescription[$field]['NAME'];
-					$arLangReplace['#FIELD_NAME#'] = $arFieldsDescription[$field]['NAME'];
+				if($bReturn2Arrays4StrReplace) {
+					if( array_key_exists('NAME', $arFieldsDescription[$field]) ) {
+						$arLangReplace['TARGET'][] = '#'.$field.'_NAME#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['NAME'];
+						$arLangReplace['TARGET'][] = '#FIELD_NAME#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['NAME'];
+					}
+					if( array_key_exists('DESC', $arFieldsDescription[$field]) ) {
+						$arLangReplace['TARGET'][] = '#'.$field.'_DESCRIPTION#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['DESC'];
+						$arLangReplace['TARGET'][] = '#FIELD_DESCRIPTION#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['DESC'];
+					}
+					if( array_key_exists('DESCR', $arFieldsDescription[$field]) ) {
+						$arLangReplace['TARGET'][] = '#'.$field.'_DESCRIPTION#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['DESCR'];
+						$arLangReplace['TARGET'][] = '#FIELD_DESCRIPTION#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['DESCR'];
+					}
+					if( array_key_exists('DESCRIPTION', $arFieldsDescription[$field]) ) {
+						$arLangReplace['TARGET'][] = '#'.$field.'_DESCRIPTION#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['DESCRIPTION'];
+						$arLangReplace['TARGET'][] = '#FIELD_DESCRIPTION#';
+						$arLangReplace['VALUE'][] = $arFieldsDescription[$field]['DESCRIPTION'];
+					}
 				}
-				if( array_key_exists('DESC', $arFieldsDescription[$field]) ) {
-					$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESC'];
-					$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESC'];
-				}
-				if( array_key_exists('DESCR', $arFieldsDescription[$field]) ) {
-					$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCR'];
-					$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCR'];
-				}
-				if( array_key_exists('DESCRIPTION', $arFieldsDescription[$field]) ) {
-					$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCRIPTION'];
-					$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCRIPTION'];
+				else {
+					if( array_key_exists('NAME', $arFieldsDescription[$field]) ) {
+						$arLangReplace['#'.$field.'_NAME#'] = $arFieldsDescription[$field]['NAME'];
+						$arLangReplace['#FIELD_NAME#'] = $arFieldsDescription[$field]['NAME'];
+					}
+					if( array_key_exists('DESC', $arFieldsDescription[$field]) ) {
+						$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESC'];
+						$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESC'];
+					}
+					if( array_key_exists('DESCR', $arFieldsDescription[$field]) ) {
+						$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCR'];
+						$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCR'];
+					}
+					if( array_key_exists('DESCRIPTION', $arFieldsDescription[$field]) ) {
+						$arLangReplace['#'.$field.'_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCRIPTION'];
+						$arLangReplace['#FIELD_DESCRIPTION#'] = $arFieldsDescription[$field]['DESCRIPTION'];
+					}
 				}
 			}
 		}
@@ -884,9 +921,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					// Заменяем макросы имён полей в lang-сообщениях
 					$arLangReplace = $this->_getLangMessageReplace($fieldName);
 					if( count($arLangReplace)>0 ) {
-						foreach($arLangReplace as $placeHolder => &$phValue) {
-							$arLangMessages['TEXT'] = str_replace($placeHolder, $phValue, $arLangMessages['TEXT']);
-						}
+						$arLangMessage['TEXT'] = str_replace($arLangReplace['TARGET'], $arLangReplace['VALUE'], $arLangMessage['TEXT']);
 					}
 					switch( $arLangMessage['TYPE'] ) {
 						case 'E':
@@ -918,9 +953,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if(array_key_exists('DUP_PK', $arLangMessages) ) {
 					$arLangReplace = $this->_getLangMessageReplace($mainTablePrimaryKey);
 					if( count($arLangReplace)>0 ) {
-						foreach($arLangReplace as $placeHolder => &$phValue) {
-							$arLangMessages['DUP_PK']['TEXT'] = str_replace($placeHolder, $phValue, $arLangMessages['DUP_PK']['TEXT']);
-						}
+						$arLangMessages['DUP_PK']['TEXT'] = str_replace(
+							$arLangReplace['TARGET'],
+							$arLangReplace['VALUE'],
+							$arLangMessages['DUP_PK']['TEXT']
+						);
 					}
 					$this->addError($arLangMessages['DUP_PK']['TEXT'], $arLangMessages['DUP_PK']['CODE']);
 				}
