@@ -9,6 +9,9 @@
  ** @mailto tashiro@yandex.ru       **
  *************************************/
 
+define("OBX_MAGIC_WORD", "I_KNOW_WHAT_I_DO");
+define("I_KNOW_WHAT_I_DO", "I_KNOW_WHAT_I_DO");
+
 $arModuleClasses = array(
 	 'OBX_Tools'						=> 'classes/Tools.php'
 	,"OBX_IMessagePool"					=> "classes/MessagePool.php"
