@@ -146,7 +146,7 @@ class OBX_Tools
 	 * @param integer $quantity число
 	 * @param string $nominative именительный подеж ед. число
 	 * @param string $genetive родительный подеж ед. число
-	 * @param string $genplural родительный подеж ед. число
+	 * @param string $genplural родительный подеж множ. число
 	 * @return string
 	 */
 	static public function rusQuantity($quantity, $nominative, $genetive, $genplural){
