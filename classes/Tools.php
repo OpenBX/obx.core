@@ -142,6 +142,43 @@ class OBX_Tools
 		}
 	}
 
+	/**
+	 * Отдает наименование единицы в форме соотвествующей числу
+	 * @param integer $quantity число
+	 * @param string $nominative именительный подеж ед. число (час)
+	 * @param string $genetive родительный подеж ед. число  (часа)
+	 * @param string $genplural родительный подеж множ. число (часов)
+	 * @return string
+	 */
+	static public function rusQuantity($quantity, $nominative, $genetive = NULL, $genplural = NULL){
+		$oneState = false;
+		if($genetive == NULL || $genplural = NULL) {
+			$oneState = true;
+		}
+		$quantity = abs(intval($quantity));
+		switch($quantity%100) {
+			case 11:
+			case 12:
+			case 13:
+			case 14:
+				return ($oneState)?$nominative."ов":$genplural;
+				break;
+			default:
+				switch($quantity%10) {
+					case 1:
+						return $nominative;
+						break;
+					case 2:
+					case 3:
+					case 4:
+						return ($oneState)?$nominative."а":$genetive;
+						break;
+					default:
+						return ($oneState)?$nominative."ов":$genplural;
+				}
+		}
+	}
+
 	// get list converted to array indexed by ID
 	static function convListToIDIndex(&$arSectionList) {
 		$arSectionsIDIndexList = array();
