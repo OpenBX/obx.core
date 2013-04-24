@@ -217,7 +217,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected $_arTableFields = array();
 
 	/**
-	 * Зыкозависимое описание полей заданных в $this->_arTableFields
+	 * Языкозависимое описание полей заданных в $this->_arTableFields
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arFieldsDescription = array(
