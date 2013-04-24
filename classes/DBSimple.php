@@ -393,7 +393,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
 	 *
 	 * Каждое описание содержит следующие ключи
-	 * 		'TYPE' - модет принимать значения
+	 * 		'TYPE' - может принимать значения
 	 * 			Примечение: В зависимости от этого типа будет вызван соответствующий метод объекта CMessagePool
 	 * 			'E' - Error - ошибка - CMessagePool::addError()
 	 * 			'W' - Warning - предупреждение - CMessagePool::addError()
