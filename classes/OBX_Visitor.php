@@ -31,6 +31,8 @@ IncludeModuleLangFile(__FILE__);
 
 class OBX_Visitor extends OBX_DBSimple
 {
+    static protected $visitor_cookie_name = "VISITOR_COOKIE_ID";
+
     protected $_arTableList = array(
         'V' => 'obx_visitors'
     );
@@ -50,6 +52,7 @@ class OBX_Visitor extends OBX_DBSimple
         'USER_ID'
     );
     protected $_arSortDefault = array('USER_ID' => 'ASC');
+    protected $_arTableUnique = array("COOKIE_ID" => array("COOKIE_ID"));
 
     function __construct()
     {
@@ -67,25 +70,30 @@ class OBX_Visitor extends OBX_DBSimple
                 'TEXT' => GetMessage('OBX_VISITORS_ERROR_REQ_FLD_COOKIE_ID'),
                 'CODE' => 1
             ),
+            'DUP_UPD_COOKIE_ID' => array(
+                'TYPE' => 'E',
+                'TEXT' => GetMessage('OBX_VISITORS_ERROR_DUP_UPD_COOKIE_ID'),
+                'CODE' => 2
+            ),
             'DUP_ADD_ID' => array(
                 'TYPE' => 'E',
                 'TEXT' => GetMessage('OBX_VISITORS_ERROR_DUP_ADD_ID'),
-                'CODE' => 2
+                'CODE' => 3
             ),
             'DUP_ADD_COOKIE_ID' => array(
                 'TYPE' => 'E',
                 'TEXT' => GetMessage('OBX_VISITORS_ERROR_DUP_ADD_COOKIE_ID'),
-                'CODE' => 3
+                'CODE' => 4
             ),
             'NOTHING_TO_DELETE' => array(
                 'TYPE' => 'M',
                 'TEXT' => GetMessage('OBX_VISITORS_MESSAGE_NOTHING_TO_DELETE'),
-                'CODE' => 4
+                'CODE' => 5
             ),
             'NOTHING_TO_UPDATE' => array(
                 'TYPE' => 'E',
                 'TEXT' => GetMessage('OBX_VISITORS_ERROR_NOTHING_TO_UPDATE'),
-                'CODE' => 5
+                'CODE' => 6
             )
         );
         $this->_arFieldsDescription = array(
@@ -104,8 +112,42 @@ class OBX_Visitor extends OBX_DBSimple
         );
     }
 
-    static public function getCookieID () {
+    protected function getCookieID () {
         return $_SERVER["REMOTE_ADDR"]."_".md5($_SERVER["HTTP_USER_AGENT"].microtime().mt_rand());
+    }
+
+    /*
+     * Получаем идентификатор из куков. Если нет, создаем и записываем в куки.
+     * Затем этот инентификатор возвращается.
+     */
+    public function getCurrentUserCookieID () {
+        global $APPLICATION;
+        $c_value = $APPLICATION->get_cookie(self::$visitor_cookie_name);
+        if (strlen($c_value) == 0) {
+            $c_value = getCookieID();
+            $APPLICATION->set_cookie(self::$visitor_cookie_name, $c_value);
+        }
+        return $c_value;
+    }
+
+    /*
+     * Автоматизируем работу по добавлению. Но если нужно прописать другие параметры, это возможно.
+     * Достаточно добавить соответствующие элементы массива с любым значением.
+     */
+    protected function _onStartAdd(&$arFields) {
+        if (!array_key_exists("NOT_SET_COOKIE_ID", $arFields)) {
+            $arFields["USER_ID"] = getCurrentUserCookieID();
+        }
+        if (!array_key_exists("NOT_SET_USER_ID", $arFields)) {
+            global $USER;
+            $arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
+        }
+        return true;
+    }
+
+    // Оставим этот метод, что бы в методе parent::add вызвался метод OBX_Visitor::_onStartAdd а не метод класса OBX_DBSimple
+    public function add ($arFields = array()) {
+        return parent::add($arFields);
     }
 }
 

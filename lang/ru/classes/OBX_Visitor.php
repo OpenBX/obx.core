@@ -17,7 +17,8 @@ $MESS["OBX_VISITORS_USER_ID_NAME"] = "ID пользователя битрикс
 $MESS["OBX_VISITORS_USER_ID_DESCR"] = "Может быть 0, если посетитель не авторизован. Может повторяться для разных COOKIE_ID.";
 $MESS["OBX_VISITORS_ERROR_REQ_FLD_COOKIE_ID"] = "При добавлении посетителя в БД обязательно нужно указать COOKIE_ID.";
 $MESS["OBX_VISITORS_ERROR_DUP_ADD_ID"] = "Посетитель с таким ID уже существует в БД.";
-$MESS["OBX_VISITORS_ERROR_DUP_ADD_COOKIE_ID"] = "Посетитель с таким COOKIE_ID уже существует в БД.";
+$MESS["OBX_VISITORS_ERROR_DUP_ADD_COOKIE_ID"] = "Нельзя добавить, посетитель с таким COOKIE_ID уже существует в БД.";
+$MESS["OBX_VISITORS_ERROR_DUP_UPD_COOKIE_ID"] = "Нельзя обновить, посетитель с таким COOKIE_ID уже существует в БД.";
 $MESS["OBX_VISITORS_MESSAGE_NOTHING_TO_DELETE"] = "Нелья удалить посетителя - такого посетителя нет в БД.";
 $MESS["OBX_VISITORS_ERROR_NOTHING_TO_UPDATE"] = "Ошибка обновления - посетитель не найден в БД.";
 ?>
