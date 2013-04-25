@@ -1023,11 +1023,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
-				// Очень спорный момент. Нужно аккуратно проектировать подзапросы
-//				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
-//				if($isSubQuery){
-//					continue;
-//				}
+				// TODO: это может сломаться в любой момент. Разобраться Очень спорный момент. Нужно аккуратно проектировать подзапросы
+				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
+				if($isSubQuery){
+					continue;
+				}
 				if($asName != $mainTable) {
 					if( !array_key_exists($asName.'.'.$tblFieldName, $arMainTableLinkStrings) ) {
 						continue;
