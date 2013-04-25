@@ -261,10 +261,14 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	/**
 	 * Массив содержащий связи полей таблиц
 	 * Данные связи будут применяться для формирования условий в блоке WHERE.
-	 * 	А так же для корректного формирования запросов в случае использование в arSelect
-	 * 	полей, которые являюются связями... тут можно описать доп. логику проверки и почему важгл всегда заполнять этот массив
+	 * 	А так же в методе $this->getByID() возможна ситуация
+	 * 	когда в arSelect указано поле имеющееся в основной таблице сущности, но явно указывает на связнуб таблица.
+	 * 	В таких случаях метод $this->getByID() заглядывает в данный массив для того, что бы убедиться
+	 * 	в том, что ссылка на данной поле имеется и поле межно применять сделав выборку из основной таблицы сущности.
+	 * 	Примечание: Такое возникает когда применяются и JOIN-ы. В таких случаях надо заполнять
+	 * 	и $this->_arTableLeftJoin и $this->_arTableLinks
 	 *
-	 * Примечание: Даже если для реализации актуальны только JOIN, все равно зачастую важно звполнять массив связей
+	 * Даже если для реализации актуальны только JOIN, все равно зачастую важно звполнять массив связей
 	 * @var array
 	 * @access protected
 	 */
@@ -506,9 +510,18 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if($bEmpty) {
 					$arCheckResult[$fieldName]['IS_EMPTY'] = true;
 				}
-				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {   /* А что если программист задаст значение так,
-   что ($fieldType & ~self::FLD_ATTR_ALL) будет равно не какому то одному флагу, а их объединению, например FLD_T_CHAR | FLD_T_INT.
-   Тогда ни одна из ветвей case не выполнится. Может тут добавить ветвь default, в которой бросается исключение? */
+				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {
+					/* [lzv]
+					 * А что если программист задаст значение так,
+					 * что ($fieldType & ~self::FLD_ATTR_ALL) будет равно не какому то одному флагу, а их объединению, например FLD_T_CHAR | FLD_T_INT.
+					 * Тогда ни одна из ветвей case не выполнится. Может тут добавить ветвь default, в которой бросается исключение?
+					 *
+					 * [pr0n1x]
+					 * Как говориться "сам себе сзлобный буратино".
+					 * В идеале классы-сущности будут генерироваться, а код программиста будет вынесен в класс, который наследует сущность.
+					 * Формировать вручную эти декларации быстрее, чем писать сущность с нуля, однако тестирование требуется очень чательное.
+					 * Потому иделяльно будет вообще избавить программиста от написания этих сущностей
+					 */
 					case self::FLD_T_NO_CHECK:
 						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_NO_CHECK';
 						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_NO_CHECK;
@@ -683,8 +696,10 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 *		prepareFieldsData отсек обязательное поле CODE которое не прошло валидацию,
 	 * 		если для поля выставлен аттрибут обязательного наличия(self::FLD_REQUIRED), то данная ф-ия вернет
 	 * 		данное поле в результирующем массиве
-	 * @param $arFields ссылка - поля переданные в аргументе
-	 * @param null $arTableFieldsDefault - значения полей по умолчанию, если поле потеряно, но есть дефолтное значение, будет подставлено оно
+	 * @param array &$arFields ссылка - поля переданные в аргументе
+	 * @param array &$arCheckResult
+	 * @param array|null $arTableFieldsCheck
+	 * @param array|null $arTableFieldsDefault  - значения полей по умолчанию, если поле потеряно, но есть дефолтное значение, будет подставлено оно
 	 * @return array Массив пропущенных обязательных значений
 	 */
 	protected function checkRequiredFields(&$arFields, &$arCheckResult, $arTableFieldsCheck = null, $arTableFieldsDefault = null) {
@@ -723,6 +738,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 	}
 
+	/**
+	 * Возвращает список записей сущности
+	 * @param null | array $arSort - поля и порядок сортировки
+	 * @param null | array $arFilter - фильтр полей
+	 * @param null | array $arGroupBy - грпиировать по полям
+	 * @param null | array $arPagination - массив для формирования постраничной навигации
+	 * @param null | array $arSelect - выбираемые поля
+	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
+	 * @return bool | CDBResult
+	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		global $DB;
 
@@ -763,7 +788,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
-				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
+				$isSubQuery = (strpos($tblFieldName,'(')!==false);
 				if(!$isSubQuery){
 					$sqlField = $asName.'.'.$tblFieldName;
 				}
@@ -860,7 +885,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if($orAscDesc == 'ASC' || $orAscDesc == 'DESC') {
 					$arTblField = $arTableFields[$fieldCode];
 					list($asName, $tblFieldName) = each($arTblField);
-					$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
+					$isSubQuery = (strpos($tblFieldName,'(')!==false);
 					if (!$isSubQuery){
 						$sqlField = $asName.'.'.$tblFieldName;
 					}else{
@@ -954,6 +979,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $res;
 	}
 
+	/**
+	 * То же что и $this->getList() только возвращает не CDBResult, а array
+	 * @param null | array $arSort
+	 * @param null | array $arFilter
+	 * @param null | array $arGroupBy
+	 * @param null | array $arPagination
+	 * @param null | array  $arSelect
+	 * @param bool $bShowNullFields
+	 * @return array
+	 */
 	public function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 
 		$arTableJoinNullFieldDefaults = $this->_arTableJoinNullFieldDefaults;
@@ -972,6 +1007,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $arList;
 	}
 
+	/**
+	 * Метод позволяет получить только поля из основной таблицы сущности
+	 * или в крайнем случае поля из других таблиц,
+	 * но только в том случае если они прописаны в массиве $this->_arTableLinks
+	 * Поля-подзапросы в $arSelect так же будут проигнорированы
+	 * @param string |int | float $PRIMARY_KEY_VALUE
+	 * @param array | null $arSelect
+	 * @param bool $bReturnCDBResult
+	 * @return array | CDBResult
+	 */
 	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false) {
 		global $DB;
 
@@ -1160,7 +1205,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 //	}
 
 	/**
-	 * @param $arFields
+	 * @param array $arFields
 	 * @return int | bool
 	 */
 	public function add($arFields) {
@@ -1689,4 +1734,3 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $arResult[$fieldCode];
 	}
 }
-?>
