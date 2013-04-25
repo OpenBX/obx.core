@@ -506,7 +506,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if($bEmpty) {
 					$arCheckResult[$fieldName]['IS_EMPTY'] = true;
 				}
-				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {
+				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {   /* А что если программист задаст значение так,
+   что ($fieldType & ~self::FLD_ATTR_ALL) будет равно не какому то одному флагу, а их объединению, например FLD_T_CHAR | FLD_T_INT.
+   Тогда ни одна из ветвей case не выполнится. Может тут добавить ветвь default, в которой бросается исключение? */
 					case self::FLD_T_NO_CHECK:
 						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_NO_CHECK';
 						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_NO_CHECK;
