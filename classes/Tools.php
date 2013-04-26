@@ -715,6 +715,19 @@ class OBX_Tools
 					return true;
 				}
 			}
+		} else {
+			$jsFilePathFull = str_replace(
+				array('//', '///'), array('/', '/'),
+					$_SERVER["DOCUMENT_ROOT"].$jsFilePath
+			);
+			if ( is_file($jsFilePathFull)) {
+				if( substr($jsFilePath, -3) == ".js" ) {
+					if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
+						self::$_arDeferredJSFiles[] = $jsFilePath;
+						return true;
+					}
+				}
+			}
 		}
 		return false;
 	}
