@@ -15,16 +15,8 @@
  *  obx_visitors
  *      ID (int 18)
  *      COOKIE_ID (varchar 60) - {IP посетителя}_{md5 хеш от уникальных данных} - главный ключ. Он же и будет храниться в куках.
- *      USER_ID (int 18) - ID авторизованного пользователя битрикс, может быть 0 если не авторизован. Может повторяться для разных COOKIE_ID
- *
- * Посещения
- *  obx_visitors_hits
- *      ID (int 20)
- *      VISITOR_ID (int 18) - значение из поля ID таблицы obx_visitors
- *      DATE_HIT (datetime)
- *      SITE_ID (varchar 5)
- *      URL (text) - часть адреса после первого слеша /
- *
+ *      USER_ID (int 18) - ID авторизованного пользователя битрикс, может быть 0 если не авторизован. Может повторяться для разных COOKIE_ID,
+ *                          если пользователь несколько раз сбрасывал куки, затем заходил на сайт не авторизованным, затем авторизовывался.
  */
 
 IncludeModuleLangFile(__FILE__);
@@ -117,6 +109,32 @@ class OBX_Visitor extends OBX_DBSimple
     }
 
     /*
+     * Автоматизируем работу по добавлению. Но если нужно прописать другие параметры, это возможно.
+     * Достаточно добавить соответствующие элементы массива с любым значением.
+     */
+    protected function _onStartAdd(&$arFields) {
+        if (!array_key_exists("NOT_RESET_COOKIE_ID", $arFields)) {
+            $arFields["USER_ID"] = $this->getCurrentUserCookieID();
+        }
+        if (!array_key_exists("NOT_RESET_USER_ID", $arFields)) {
+            global $USER;
+            $arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
+        }
+        return true;
+    }
+
+    /*
+     * При обновлении можно оставить автоматическую подстановку USER_ID, либо указать его вручную.
+     */
+    protected function _onStartUpdate(&$arFields) {
+        if (!array_key_exists("NOT_RESET_USER_ID", $arFields)) {
+            global $USER;
+            $arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
+        }
+        return true;
+    }
+
+    /*
      * Получаем идентификатор из куков. Если нет, создаем и записываем в куки.
      * Затем этот инентификатор возвращается.
      */
@@ -124,33 +142,47 @@ class OBX_Visitor extends OBX_DBSimple
         global $APPLICATION;
         $c_value = $APPLICATION->get_cookie(self::$visitor_cookie_name);
         if (strlen($c_value) == 0) {
-            $c_value = getCookieID();
+            $c_value = $this->getCookieID();
             $APPLICATION->set_cookie(self::$visitor_cookie_name, $c_value);
         }
         return $c_value;
-    }
-
-    /*
-     * Автоматизируем работу по добавлению. Но если нужно прописать другие параметры, это возможно.
-     * Достаточно добавить соответствующие элементы массива с любым значением.
-     */
-    protected function _onStartAdd(&$arFields) {
-        if (!array_key_exists("NOT_SET_COOKIE_ID", $arFields)) {
-            $arFields["USER_ID"] = getCurrentUserCookieID();
-        }
-        if (!array_key_exists("NOT_SET_USER_ID", $arFields)) {
-            global $USER;
-            $arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
-        }
-        return true;
     }
 
     // Оставим этот метод, что бы в методе parent::add вызвался метод OBX_Visitor::_onStartAdd а не метод класса OBX_DBSimple
     public function add ($arFields = array()) {
         return parent::add($arFields);
     }
+
+    // Ограничим возможности обновления
+    public function update($arFields) {
+        return parent::update($arFields, true);
+    }
+
+    /*
+     * Этот метод просто делает все, что нужно. Возвращает COOKIE_ID.
+     */
+    public function check_add_and_update () {
+        $cID = $this->getCurrentUserCookieID();
+        $visitors = $this->getListArray(null, array("COOKIE_ID" => $cID));
+        if (count($visitors) == 0) {
+            $this->add(array());
+        } else {
+            global $USER;
+            if ($USER->IsAuthorized() and $visitors[0]["USER_ID"] != $USER->GetID()) $this->update(array("ID" => $visitors[0]["ID"]));
+        }
+        return $cID;
+    }
 }
 
+/*
+ * Посещения
+ *  obx_visitors_hits
+ *      ID (int 20)
+ *      VISITOR_ID (int 18) - значение из поля ID таблицы obx_visitors
+ *      DATE_HIT (datetime)
+ *      SITE_ID (varchar 5)
+ *      URL (text) - часть адреса после первого слеша /
+ */
 class OBX_VisitorHit extends OBX_DBSimple
 {
     protected $_arTableList = array(
