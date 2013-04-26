@@ -133,7 +133,6 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const FLD_T_IBLOCK_SECTION_ID = 4096;	// ID секции инфблока. Проверяет наличие
 	const FLD_T_USER_ID = 8192;				// ID пользвоателя битрикс
 	const FLD_T_GROUP_ID = 16384;			// ID группы пользователей битрикс
-	const FLD_T_CHECK_IN_DB = 32768;		// Проверять значение поля на наличие в БД
 
 	// FIELD ATTR
 	const FLD_NOT_NULL = 131072;		// не нуль
@@ -143,7 +142,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const FLD_UNSET = 2097152;			// выкинуть значение из arFields!
 	const FLD_BRK_INCORR = 4194304;		// прервать выполнение ф-ии, если значение неверно
 
-	const FLD_ATTR_ALL = 8257536;		// все вместе: FLD_NOT_NULL | FLD_DEF_NULL | FLD_REQUIRED | FLD_CUSTOM_CHECK
+	const FLD_ATTR_ALL = 8257536;		// все FIELD ATTRs вместе
 
 
 	const ERR_NOTHING_TO_DELETE = 1024;		// невозможно удалить. заись не найдена
@@ -1498,6 +1497,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onStartDelete(&$PRIMARY_KEY_VALUE) { return true; }
 	protected function _onBeforeDelete(&$arItem) { return true; }
 	protected function _onAfterDelete(&$arItem) { return true; }
+
+	/**
+	 * @param $PRIMARY_KEY_VALUE
+	 * @return bool
+	 */
 	public function delete($PRIMARY_KEY_VALUE) {
 		global $DB;
 

@@ -63,7 +63,7 @@ class obx_core extends CModule
 		$bSuccess = $this->UnInstallEvents() && $bSuccess;
 		//$bSuccess = $this->UnInstallDeps() && $bSuccess;
 		$bSuccess = $this->UnInstallFiles() && $bSuccess;
-		$bSuccess = $this->UnInstallDB() && $bSuccess;		
+		$bSuccess = $this->UnInstallDB() && $bSuccess;
 		if($bSuccess) {
 			if( IsModuleInstalled($this->MODULE_ID) ) {
 				UnRegisterModule($this->MODULE_ID);
@@ -181,6 +181,19 @@ class obx_core extends CModule
 		return $arDepsList;
 	}
 
+	protected function prepareDBConnection() {
+		global $APPLICATION, $DB, $DBType;
+		if (defined('MYSQL_TABLE_TYPE') && strlen(MYSQL_TABLE_TYPE) > 0) {
+			$DB->Query("SET table_type = '" . MYSQL_TABLE_TYPE . "'", true);
+		}
+		if (defined('BX_UTF') && BX_UTF === true) {
+			$DB->Query('SET NAMES "utf8"');
+			//$DB->Query('SET sql_mode=""');
+			$DB->Query('SET character_set_results=utf8');
+			$DB->Query('SET collation_connection = "utf8_unicode_ci"');
+		}
+	}
+
 	static public function getModuleCurDir() {
 		static $modCurDir = null;
 		if ($modCurDir === null) {
@@ -195,4 +208,3 @@ class obx_core extends CModule
 		@include(GetLangFileName(self::getModuleCurDir() . "/lang/", "/install/index.php"));
 	}
 }
-?>
