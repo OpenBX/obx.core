@@ -38,7 +38,7 @@ interface OBX_IDBSimpleStatic
 
 abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_IDBSimpleStatic {
 	static protected $_arDBSimple = array();
-	final static public function __initDBSimple($DBSimple) {
+	final static public function __initDBSimple(OBX_DBSimple $DBSimple) {
 		$className = get_called_class();
 		if( !isset(self::$_arDBSimple[$className]) ) {
 			if($DBSimple instanceof OBX_DBSimple) {
