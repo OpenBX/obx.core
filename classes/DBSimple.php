@@ -38,7 +38,7 @@ interface OBX_IDBSimpleStatic
 
 abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_IDBSimpleStatic {
 	static protected $_arDBSimple = array();
-	final static public function __initDBSimple($DBSimple) {
+	final static public function __initDBSimple(OBX_DBSimple $DBSimple) {
 		$className = get_called_class();
 		if( !isset(self::$_arDBSimple[$className]) ) {
 			if($DBSimple instanceof OBX_DBSimple) {
@@ -102,6 +102,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	static protected $_arDBSimple = array();
 
 	/**
+	 * @final
+	 * @static
 	 * @return OBX_DBSimple
 	 */
 	final static public function getInstance() {
@@ -113,6 +115,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	}
 
 
+	// Атрибуты полей для массива $_arTableFieldsCheck
 	// FIELD TYPES
 	const FLD_T_NO_CHECK = 1;				// без проверки - использовать с FLD_CUSTOM_CK
 	const FLD_T_INT = 2;					// целый
@@ -130,6 +133,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const FLD_T_IBLOCK_SECTION_ID = 4096;	// ID секции инфблока. Проверяет наличие
 	const FLD_T_USER_ID = 8192;				// ID пользвоателя битрикс
 	const FLD_T_GROUP_ID = 16384;			// ID группы пользователей битрикс
+	const FLD_T_CHECK_IN_DB = 32768;		// Проверять значение поля на наличие в БД
 
 	// FIELD ATTR
 	const FLD_NOT_NULL = 131072;		// не нуль
@@ -138,6 +142,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const FLD_CUSTOM_CK = 1048576;		// своя ф-ия проверки значения
 	const FLD_UNSET = 2097152;			// выкинуть значение из arFields!
 	const FLD_BRK_INCORR = 4194304;		// прервать выполнение ф-ии, если значение неверно
+
 	const FLD_ATTR_ALL = 8257536;		// все вместе: FLD_NOT_NULL | FLD_DEF_NULL | FLD_REQUIRED | FLD_CUSTOM_CHECK
 
 
@@ -163,30 +168,292 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * для метода $this->prepareFieldsData()
 	 */
 
+	/**
+	 * Массив с описанием таблиц сущности
+	 * В качестве ключа используется alias таблица (long_table_name as ARKEY)
+	 * <code>
+	 * 	<?php
+	 * 		$this->_arTableList = array(
+	 * 			'O' => 'obx_orders',
+	 * 			'S' => 'obx_order_status',
+	 * 			'I' => 'obx_basket_items',
+	 * 			'U' => 'b_user'
+	 * 		);
+	 * 	?>
+	 * </code>
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableList = array();
+
+	/**
+	 * Массив с описанием полей сущнсти
+	 * Данные поля будут использоваться а аргументе метода DBSimple::getList() в качестве $arSelect
+	 * Имена не обязательно совпадает с именами полей таблиц
+	 * Как видно из примера в каждм ключе содержится массив описывающий поле сущности
+	 * Массив поля сущности содержит вложенный массив ключем которого является ALIAS таблицы,
+	 * 	а значением - имя поля в соответствующей таблице.
+	 * 	Так же возможны подзапросы на примере поля USER_NAME,
+	 * 	Так же возможны сложные подзапросы. Пример можно посмотреть в модуле obx.market в классе OBX\OrdersList
+	 * <code>
+	 * 	<?php
+	 * 		$this->_arTableFields = array(
+	 * 			'ID' => array('O' => 'ID'),
+	 * 			'DATE_CREATED' => array('O' => 'DATE_CREATED'),
+	 * 			'TIMESTAMP_X' => array('O' => 'TIMESTAMP_X'),
+	 * 			'USER_ID' => array('O' => 'USER_ID'),
+	 * 			'USER_NAME' => array('U' => 'CONCAT(U.LAST_NAME," ",U.NAME)'),
+	 * 			'STATUS_ID' => array('O' => 'STATUS_ID'),
+	 * 			'STATUS_CODE' => array('S' => 'CODE'),
+	 * 			'STATUS_NAME' => array('S' => 'NAME'),
+	 * 		);
+	 * 	?>
+	 * </code>
+	 *
+	 * @var array
+	 * @access protected
+	 * @example bitrix/modules/obx.market/classes/OrdersList.php
+	 */
 	protected $_arTableFields = array();
+
+	/**
+	 * Языкозависимое описание полей заданных в $this->_arTableFields
+	 * <code>
+	 * 	<?php
+	 * 		$this->_arFieldsDescription = array(
+	 * 			'ID' => array(
+	 * 				"NAME" => GetMessage("OBX_ORDERLIST_ID_NAME"),
+	 * 				"DESCR" => GetMessage("OBX_ORDERLIST_ID_DESCR"),
+	 * 			),
+	 * 			//...
+	 * 		);
+	 * ?>
+	 * </code>
+	 * @var array
+	 * @access protected
+	 */
+	protected $_arFieldsDescription = array();
+
+	/**
+	 * Переменная содержит ALIAS основной таблицы сущности.
+	 * Основная таблица сущности будет использована в методах:
+	 * 	$this->add(), $this->update(), $this->delete()
+	 * @var string
+	 */
 	protected $_mainTable = '';
+
+	/**
+	 * Переменная содержит имя ПОЛЯ основной таблицы сущности,
+	 * которое является первичным ключом
+	 * @var string
+	 * @access protected
+	 */
 	protected $_mainTablePrimaryKey = 'ID';
+
+	/**
+	 * Переменная содержит имя ПОЛЯ основной таблицы сущности,
+	 * которое является автоинкрементным
+	 * @var string
+	 * @access protected
+	 */
 	protected $_mainTableAutoIncrement = 'ID';
+
+	/**
+	 * Массив содержащий связи полей таблиц
+	 * Данные связи будут применяться для формирования условий в блоке WHERE.
+	 * 	А так же в методе $this->getByID() возможна ситуация
+	 * 	когда в arSelect указано поле имеющееся в основной таблице сущности, но явно указывает на связнуб таблица.
+	 * 	В таких случаях метод $this->getByID() заглядывает в данный массив для того, что бы убедиться
+	 * 	в том, что ссылка на данной поле имеется и поле межно применять сделав выборку из основной таблицы сущности.
+	 * 	Примечание: Такое возникает когда применяются и JOIN-ы. В таких случаях надо заполнять
+	 * 	и $this->_arTableLeftJoin и $this->_arTableLinks
+	 *
+	 * Даже если для реализации актуальны только JOIN, все равно зачастую важно звполнять массив связей
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableLinks = array();
+
+	/**
+	 * Массив описывающий условия для LEFT JOIN
+	 * <code>
+	 * 	<?php
+	 * 		$this->_arTableLeftJoin = array(
+	 *
+	 * 		);
+	 * 	?>
+	 * </code>
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableLeftJoin = array();
+
+	/**
+	 *
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableRightJoin = array();
+
+	/**
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableJoinNullFieldDefaults = array();
+
+	/**
+	 * Массив с опсанием индексов
+	 * Пока не применяется
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableIndex = array();
+
+	/**
+	 * Массив с описанием unique-индексов
+	 * Заполнять обязательно.
+	 * Методы $this->add() и $this->update() проверяют этот массив для предотвращения вставки дублей
+	 * <code>
+	 * 	<?php
+	 * 		$_arTableUnique = array(
+	 * 			'имя_уникального_индекса' => array('поле1', 'поле2')
+	 * 		);
+	 * 	?>
+	 * </code>
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableUnique = array();
+
+	/**
+	 * Значение указанных полей данного массива будут автоматически вставлены в arFilter метода GetList,
+	 * если не будут указаны там явно.
+	 * Важно понимать, что _arFilterDefault как правило заполняется в контрукторе
+	 * и знаения этих будет актуальным в момент содания объекта DBSimple
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arFilterDefault = array();
+
+	/**
+	 * arSelect по умолчанию
+	 * Если в методе $this->getLis() не задан аргумент arSelect, то будет использован этот.
+	 * Если в классе сущности не задан и этот массив,
+	 * то в качестве arSelect будет принят полный список ключей массива $this->_arTableFields
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arSelectDefault = array();
+
+	/**
+	 * Сорттировка по умолчанию
+	 * Если в методе $this->getList() не указан аргумент arSort, то он будет наполнен из этого массива
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arSortDefault = array('ID' => 'ASC');
 
+	/**
+	 * Типы и атрибуты полей основной таблицы сущности
+	 * Используется для проверки входных данных в методах $this->add() и $this->update()
+	 * Выше все контстанты используемые в этом массиве документированы
+	 * Пример:
+	 * <code>
+	 * 	<?php
+	 * 		$this->_arTableFieldsCheck = array(
+	 * 			'ID' => self::FLD_T_INT | self::FLD_NOT_NULL,
+	 * 			'DATE_CREATED' => self::FLD_T_NO_CHECK,
+	 * 			'TIMESTAMP_X' => self::FLD_T_NO_CHECK,
+	 * 			'USER_ID' => self::FLD_T_USER_ID | self::FLD_NOT_NULL | self::FLD_DEFAULT | self::FLD_REQUIRED,
+	 * 			'STATUS_ID' => self::FLD_T_INT | self::FLD_NOT_NULL | self::FLD_DEFAULT | self::FLD_REQUIRED,
+	 * 			'CURRENCY' => self::FLD_T_CODE | self::FLD_NOT_NULL | self::FLD_DEFAULT | self::FLD_REQUIRED,
+	 * 			'DELIVERY_ID' => self::FLD_T_INT,
+	 * 			'DELIVERY_COST' => self::FLD_T_FLOAT,
+	 * 			'PAY_ID' => self::FLD_T_INT,
+	 * 			'PAY_TAX_VALUE' => self::FLD_T_FLOAT,
+	 * 			'DISCOUNT_ID' => self::FLD_T_INT,
+	 * 			'DISCOUNT_VALUE' => self::FLD_T_FLOAT
+	 * 		);
+	 * 	?>
+	 * </code>
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableFieldsCheck = array();
+
+	/**
+	 * Языковые сообщения при выводе ошибок
+	 * Из данного массива будут получены ошибки и предупреждения
+	 * Ключевые события стандартизировны и закреплены за префиксами ключей массива
+	 * REQ_FLD_ИМЯ_ПОЛЯ - описание события если в аргументе $arFields метода $this->add($arFields)
+	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
+	 * DUP_ADD_ИМЯ_UNIQUE_ИНДЕКСА - описание события если в аргументе $arFields метода $this->add($arFields)
+	 * 				заданы поля уникального индекса уже существующие для записи в таблице БД
+	 * DUP_UPD_ИМЯ_UNIQUE_ИНДЕКСА - описание события если в аргументе $arFields метода $this->update($arFields)
+	 * 				заданы поля уникального индекса уже существующие для записи в таблице БД
+	 * NOTHING_TO_DELETE - описание события если в метод $this->delete() на нашел запись для удаления
+	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
+	 * NOTHING_TO_UPDATE - описание события если в метод $this->update() на нашел запись для обновления
+	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
+	 *
+	 * Каждое описание содержит следующие ключи
+	 * 		'TYPE' - может принимать значения
+	 * 			Примечение: В зависимости от этого типа будет вызван соответствующий метод объекта CMessagePool
+	 * 			'E' - Error - ошибка - CMessagePool::addError()
+	 * 			'W' - Warning - предупреждение - CMessagePool::addError()
+	 * 			'M' - MessageСообщение - CMessagePool::addMessage()
+	 * 		'TEXT' - текст события
+	 * 		'CODE' - код события
+	 * 		Как правило применяется 'E'
+	 * Пример:
+	 * <code>
+	 * 	<?php
+	 * 		$this->_arDBSimpleLangMessages = array(
+	 *			'REQ_FLD_ИМЯ_ПОЛЯ' =>  array(
+	 * 				'TYPE' => 'E',
+	 * 				'TEXT' => GetMessage('OBX_ORDER_STATUS_ERROR_1'),
+	 * 				'CODE' => 1
+	 * 			),
+	 * 		);
+	 * ?>
+	 * </code>
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arDBSimpleLangMessages = array();
+
+	/**
+	 * Массив сожержит значения по умолчанию для полей аргумента arFields метода $this->add()
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arTableFieldsDefault = array();
 
+	/**
+	 * Группировка по умолчанию
+	 * Пока не используется
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arGroupByFields = array();
 
-	protected $_arFieldsDescription = array();
+	/**
+	 * Массив содержит имена полей таблицы сущности, которые доступны для редактрирования в административной панели
+	 * @var array
+	 * @access protected
+	 */
 	protected $_arFieldsEditInAdmin = array();
 
+	/**
+	 * Метод подготовки данных
+	 * Применяется в $this->add() и $this->update()
+	 * Использует атрибуты полей из массива $this->_arTableFieldsCheck для проверки входных параметров метода
+	 * @param int $prepareType - может принимать для зачения self::PREPARE_ADD или self::PREPARE_ADD
+	 * @param array $arFields - значения полей основной таблицы сущности
+	 * @param null|array $arTableFieldsCheck - если задан, то переопределяет штатный $this->_arTableFieldsCheck
+	 * @param null|array $arTableFieldsDefault - если задан, то переопределяет штатный $this->_arTableFieldsDefault
+	 * @return array
+	 */
 	protected function prepareFieldsData($prepareType, &$arFields, $arTableFieldsCheck = null, $arTableFieldsDefault = null) {
 
 		global $DB;
@@ -244,6 +511,17 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					$arCheckResult[$fieldName]['IS_EMPTY'] = true;
 				}
 				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {
+					/* [lzv]
+					 * А что если программист задаст значение так,
+					 * что ($fieldType & ~self::FLD_ATTR_ALL) будет равно не какому то одному флагу, а их объединению, например FLD_T_CHAR | FLD_T_INT.
+					 * Тогда ни одна из ветвей case не выполнится. Может тут добавить ветвь default, в которой бросается исключение?
+					 *
+					 * [pr0n1x]
+					 * Как говориться "сам себе сзлобный буратино".
+					 * В идеале классы-сущности будут генерироваться, а код программиста будет вынесен в класс, который наследует сущность.
+					 * Формировать вручную эти декларации быстрее, чем писать сущность с нуля, однако тестирование требуется очень чательное.
+					 * Потому иделяльно будет вообще избавить программиста от написания этих сущностей
+					 */
 					case self::FLD_T_NO_CHECK:
 						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_NO_CHECK';
 						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_NO_CHECK;
@@ -418,8 +696,10 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 *		prepareFieldsData отсек обязательное поле CODE которое не прошло валидацию,
 	 * 		если для поля выставлен аттрибут обязательного наличия(self::FLD_REQUIRED), то данная ф-ия вернет
 	 * 		данное поле в результирующем массиве
-	 * @param $arFields ссылка - поля переданные в аргументе
-	 * @param null $arTableFieldsDefault - значения полей по умолчанию, если поле потеряно, но есть дефолтное значение, будет подставлено оно
+	 * @param array &$arFields ссылка - поля переданные в аргументе
+	 * @param array &$arCheckResult
+	 * @param array|null $arTableFieldsCheck
+	 * @param array|null $arTableFieldsDefault  - значения полей по умолчанию, если поле потеряно, но есть дефолтное значение, будет подставлено оно
 	 * @return array Массив пропущенных обязательных значений
 	 */
 	protected function checkRequiredFields(&$arFields, &$arCheckResult, $arTableFieldsCheck = null, $arTableFieldsDefault = null) {
@@ -458,6 +738,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 	}
 
+	/**
+	 * Возвращает список записей сущности
+	 * @param null | array $arSort - поля и порядок сортировки
+	 * @param null | array $arFilter - фильтр полей
+	 * @param null | array $arGroupBy - грпиировать по полям
+	 * @param null | array $arPagination - массив для формирования постраничной навигации
+	 * @param null | array $arSelect - выбираемые поля
+	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
+	 * @return bool | CDBResult
+	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		global $DB;
 
@@ -498,7 +788,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
-				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
+				$isSubQuery = (strpos($tblFieldName,'(')!==false);
 				if(!$isSubQuery){
 					$sqlField = $asName.'.'.$tblFieldName;
 				}
@@ -595,7 +885,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if($orAscDesc == 'ASC' || $orAscDesc == 'DESC') {
 					$arTblField = $arTableFields[$fieldCode];
 					list($asName, $tblFieldName) = each($arTblField);
-					$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
+					$isSubQuery = (strpos($tblFieldName,'(')!==false);
 					if (!$isSubQuery){
 						$sqlField = $asName.'.'.$tblFieldName;
 					}else{
@@ -689,6 +979,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $res;
 	}
 
+	/**
+	 * То же что и $this->getList() только возвращает не CDBResult, а array
+	 * @param null | array $arSort
+	 * @param null | array $arFilter
+	 * @param null | array $arGroupBy
+	 * @param null | array $arPagination
+	 * @param null | array  $arSelect
+	 * @param bool $bShowNullFields
+	 * @return array
+	 */
 	public function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 
 		$arTableJoinNullFieldDefaults = $this->_arTableJoinNullFieldDefaults;
@@ -707,6 +1007,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $arList;
 	}
 
+	/**
+	 * Метод позволяет получить только поля из основной таблицы сущности
+	 * или в крайнем случае поля из других таблиц,
+	 * но только в том случае если они прописаны в массиве $this->_arTableLinks
+	 * Поля-подзапросы в $arSelect так же будут проигнорированы
+	 * @param string |int | float $PRIMARY_KEY_VALUE
+	 * @param array | null $arSelect
+	 * @param bool $bReturnCDBResult
+	 * @return array | CDBResult
+	 */
 	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false) {
 		global $DB;
 
@@ -760,11 +1070,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
-				// Очень спорный момент. Нужно аккуратно проектировать подзапросы
-//				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
-//				if($isSubQuery){
-//					continue;
-//				}
+				// TODO: это может сломаться в любой момент. Разобраться Очень спорный момент. Нужно аккуратно проектировать подзапросы
+				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
+				if($isSubQuery){
+					continue;
+				}
 				if($asName != $mainTable) {
 					if( !array_key_exists($asName.'.'.$tblFieldName, $arMainTableLinkStrings) ) {
 						continue;
@@ -895,7 +1205,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 //	}
 
 	/**
-	 * @param $arFields
+	 * @param array $arFields
 	 * @return int | bool
 	 */
 	public function add($arFields) {
@@ -1424,4 +1734,3 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $arResult[$fieldCode];
 	}
 }
-?>
