@@ -104,11 +104,6 @@ class OBX_VisitorDBS extends OBX_DBSimple
 		);
 	}
 
-	// Оставим этот метод, что бы в методе parent::add вызвался метод OBX_Visitor::_onStartAdd а не метод класса OBX_DBSimple
-	public function add($arFields = array()) {
-		return parent::add($arFields);
-	}
-
 	// Ограничим возможности обновления
 	public function update($arFields) {
 		return parent::update($arFields, true);
