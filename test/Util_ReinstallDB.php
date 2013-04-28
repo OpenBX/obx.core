@@ -8,7 +8,7 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-class OBX_Test_Util_Core_ReinstallDB extends OBX_Market_TestCase {
+class OBX_Test_Util_Core_ReinstallDB extends OBX_Core_TestCase /*OBX_Market_TestCase Ошибка? Почему то этот класс не находился */ {
 	public function testReinstallDB() {
 		require_once $_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/obx.core/install/index.php';
 		$module_obx_core = new obx_core;
