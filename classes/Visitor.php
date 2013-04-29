@@ -132,8 +132,84 @@ class OBX_VisitorHitDBS extends OBX_DBSimple
 		'SITE_ID'		    => array('H' => 'SITE_ID'),
 		'URL'			    => array('H' => 'URL'),
 	);
-	function __construct() {
 
+	protected $_mainTable = 'H';
+	protected $_mainTablePrimaryKey = 'ID';
+	protected $_mainTableAutoIncrement = 'ID';
+
+	protected $_arSelectDefault = array(
+		'ID',
+		'VISITOR_ID',
+		'DATE_HIT',
+		'SITE_ID',
+		'URL'
+	);
+	protected $_arSortDefault = array('ID' => 'ASC');
+	protected $_arTableUnique = array();
+
+	function __construct()
+	{
+		$this->_arTableFieldsDefault = array();
+		$this->_arTableFieldsCheck = array(
+			'ID' => self::FLD_T_INT | self::FLD_NOT_NULL,
+			'VISITOR_ID' => self::FLD_T_INT | self::FLD_NOT_NULL | self::FLD_REQUIRED,
+			'DATE_HIT' => self::FLD_T_STRING,
+			'SITE_ID' => self::FLD_T_STRING,
+			'URL' => self::FLD_T_STRING
+		);
+		$this->_arDBSimpleLangMessages = array(
+			'REQ_FLD_VISITOR_ID' => array(
+				'TYPE' => 'E',
+				'TEXT' => GetMessage('OBX_VISITORS_HITS_ERROR_REQ_FLD_VISITOR_ID'),
+				'CODE' => 1
+			),
+			'DUP_ADD_ID' => array(
+				'TYPE' => 'E',
+				'TEXT' => GetMessage('OBX_VISITORS_HITS_ERROR_DUP_ADD_ID'),
+				'CODE' => 2
+			),
+			'NOTHING_TO_DELETE' => array(
+				'TYPE' => 'M',
+				'TEXT' => GetMessage('OBX_VISITORS_HITS_MESSAGE_NOTHING_TO_DELETE'),
+				'CODE' => 3
+			),
+			'NOTHING_TO_UPDATE' => array(
+				'TYPE' => 'E',
+				'TEXT' => GetMessage('OBX_VISITORS_HITS_ERROR_NOTHING_TO_UPDATE'),
+				'CODE' => 4
+			)
+		);
+		$this->_arFieldsDescription = array(
+			'ID' => array(
+				"NAME" => GetMessage("OBX_VISITORS_HITS_ID_NAME"),
+				"DESCR" => GetMessage("OBX_VISITORS_HITS_ID_DESCR"),
+			),
+			'VISITOR_ID' => array(
+				"NAME" => GetMessage("OBX_VISITORS_HITS_VISITOR_ID_NAME"),
+				"DESCR" => GetMessage("OBX_VISITORS_HITS_VISITOR_ID_DESCR"),
+			),
+			'DATE_HIT' => array(
+				"NAME" => GetMessage("OBX_VISITORS_HITS_DATE_HIT_NAME"),
+				"DESCR" => GetMessage("OBX_VISITORS_HITS_DATE_HIT_DESCR"),
+			),
+			'SITE_ID' => array(
+				"NAME" => GetMessage("OBX_VISITORS_HITS_SITE_ID_NAME"),
+				"DESCR" => GetMessage("OBX_VISITORS_HITS_SITE_ID_DESCR"),
+			),
+			'URL' => array(
+				"NAME" => GetMessage("OBX_VISITORS_HITS_URL_NAME"),
+				"DESCR" => GetMessage("OBX_VISITORS_HITS_URL_DESCR"),
+			),
+		);
+	}
+
+	/**
+	 * Обновлять нельзя.
+	 * @param $arFields
+	 * @return bool
+	 */
+	public function update($arFields) {
+		return false;
 	}
 }
 
@@ -145,17 +221,17 @@ class OBX_Visitor
 {
 	static private $visitor_cookie_name = "VISITOR_COOKIE_ID";
 
-	private $object;
+	private $_VisitorDBS;
 
 	public function __construct() {
-		$this->object = OBX_VisitorDBS::getInstance();
+		$this->_VisitorDBS = OBX_VisitorDBS::getInstance();
 	}
 
 	/**
 	 * Создается строка CookieID из уникальных данных.
 	 * @return string
 	 */
-	private function getCookieID () {
+	static public function generationCookieID () {
 		return md5($_SERVER["REMOTE_ADDR"].$_SERVER["HTTP_USER_AGENT"].microtime().mt_rand());
 	}
 
@@ -168,7 +244,7 @@ class OBX_Visitor
 		global $APPLICATION;
 		$c_value = $APPLICATION->get_cookie(self::$visitor_cookie_name);
 		if (strlen($c_value) == 0) {
-			$c_value = $this->getCookieID();
+			$c_value = self::generationCookieID();
 			$APPLICATION->set_cookie(self::$visitor_cookie_name, $c_value);
 		}
 		return $c_value;
@@ -189,7 +265,7 @@ class OBX_Visitor
 			global $USER;
 			$arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
 		}
-		return $this->object->add($arFields);
+		return $this->_VisitorDBS->add($arFields);
 	}
 
 	/**
@@ -205,15 +281,16 @@ class OBX_Visitor
 			global $USER;
 			$arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
 		}
-		return $this->object->update($arFields);
+		return $this->_VisitorDBS->update($arFields);
 	}
 
 	/**
-	 * Удаление посетителя с указанным ID. Так же удаляются все его хиты.
+	 * Удаление посетителя с указанным ID. Так же удаляются все его хиты (когда они будут реализованы).
 	 * @param $ID
+	 * @return bool
 	 */
 	public function delete ($ID) {
-
+		return $this->_VisitorDBS->delete($ID);
 	}
 
 	/**
@@ -222,9 +299,9 @@ class OBX_Visitor
 	 * Возвращает COOKIE_ID.
 	 * @return string
 	 */
-	public function check_add_and_update () {
+	public function checkAddAndUpdate () {
 		$cID = $this->getCurrentUserCookieID();
-		$visitors = $this->object->getListArray(null, array("COOKIE_ID" => $cID));
+		$visitors = $this->_VisitorDBS->getListArray(null, array("COOKIE_ID" => $cID));
 		if (count($visitors) == 0) {
 			$this->add();
 		} else {
