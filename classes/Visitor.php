@@ -268,6 +268,18 @@ class OBX_Visitor
 		return $this->_VisitorDBS->add($arFields);
 	}
 
+	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
+		return $this->_VisitorDBS->getList($arSort, $arFilter, $arGroupBy, $arPagination, $arSelect, $bShowNullFields);
+	}
+
+	public function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
+		return $this->_VisitorDBS->getListArray($arSort, $arFilter, $arGroupBy, $arPagination, $arSelect, $bShowNullFields);
+	}
+
+	public function popLastError () {
+		return $this->_VisitorDBS->popLastError();
+	}
+
 	/**
 	 * Обновление посетителя.
 	 * @param $arFields
