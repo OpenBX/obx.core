@@ -23,8 +23,6 @@ IncludeModuleLangFile(__FILE__);
 
 class OBX_VisitorDBS extends OBX_DBSimple
 {
-	static protected $visitor_cookie_name = "VISITOR_COOKIE_ID";
-
 	protected $_arTableList = array(
 		'V' => 'obx_visitors'
 	);
@@ -139,17 +137,32 @@ class OBX_VisitorHitDBS extends OBX_DBSimple
 	}
 }
 
+/*
+ * Внимание! Необходимо учитывать, что у нескольких посетителей с разным COOKIE_ID может быть одинаковый USER_ID.
+ * Это возможно, если пользователь очищал куки и снова зашел на сайт, получив новый COOKIE_ID, а затем авторизовался.
+ */
 class OBX_Visitor
 {
+	static private $visitor_cookie_name = "VISITOR_COOKIE_ID";
+
 	private $object;
 
 	public function __construct() {
-		$object = OBX_VisitorDBS::getInstance();
+		$this->object = OBX_VisitorDBS::getInstance();
 	}
 
-	/*
+	/**
+	 * Создается строка CookieID из уникальных данных.
+	 * @return string
+	 */
+	private function getCookieID () {
+		return md5($_SERVER["REMOTE_ADDR"].$_SERVER["HTTP_USER_AGENT"].microtime().mt_rand());
+	}
+
+	/**
 	 * Получаем идентификатор из куков. Если нет, создаем и записываем в куки.
 	 * Затем этот инентификатор возвращается.
+	 * @return string
 	 */
 	public function getCurrentUserCookieID () {
 		global $APPLICATION;
@@ -161,11 +174,14 @@ class OBX_Visitor
 		return $c_value;
 	}
 
-	private function getCookieID () {
-		return md5($_SERVER["REMOTE_ADDR"].$_SERVER["HTTP_USER_AGENT"].microtime().mt_rand());
-	}
-
-	public function add ($arFields, $reset_COOKIE_ID = true, $reset_USER_ID = true) {
+	/**
+	 * Добавление посетителя, с возможностью автоматического заполнения полей.
+	 * @param array $arFields
+	 * @param bool $reset_COOKIE_ID Флаг автоматической установки COOKIE_ID
+	 * @param bool $reset_USER_ID Флаг автоматической установки USER_ID
+	 * @return mixed
+	 */
+	public function add ($arFields = array(), $reset_COOKIE_ID = true, $reset_USER_ID = true) {
 		if ($reset_COOKIE_ID) {
 			$arFields["COOKIE_ID"] = $this->getCurrentUserCookieID();
 		}
@@ -173,22 +189,48 @@ class OBX_Visitor
 			global $USER;
 			$arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
 		}
+		return $this->object->add($arFields);
+	}
 
+	/**
+	 * Обновление посетителя.
+	 * @param $arFields
+	 * @param bool $update_COOKIE_ID Если true, значение COOKIE_ID обновляется из $arFields, иначе остается прежним.
+	 * @param bool $reset_USER_ID Если true, USER_ID берется из текущего пользователя, иначе из $arFields.
+	 * @return mixed
+	 */
+	public function update ($arFields, $update_COOKIE_ID = false, $reset_USER_ID = true) {
+		if (!$update_COOKIE_ID) unset($arFields["COOKIE_ID"]);
+		if ($reset_USER_ID) {
+			global $USER;
+			$arFields["USER_ID"] = ($USER->IsAuthorized() ? $USER->GetID() : 0);
+		}
+		return $this->object->update($arFields);
+	}
 
+	/**
+	 * Удаление посетителя с указанным ID. Так же удаляются все его хиты.
+	 * @param $ID
+	 */
+	public function delete ($ID) {
 
 	}
 
-	/*
-	 * Этот метод просто делает все, что нужно. Возвращает COOKIE_ID.
+	/**
+	 * Если у посетителя нет COOKIE_ID, он устанавливается. Затем создается запись в БД, если такого посетителя еще нет.
+	 * Если посетитель есть, но у него другой USER_ID, он обновляется.
+	 * Возвращает COOKIE_ID.
+	 * @return string
 	 */
 	public function check_add_and_update () {
 		$cID = $this->getCurrentUserCookieID();
-		$visitors = $this->getListArray(null, array("COOKIE_ID" => $cID));
+		$visitors = $this->object->getListArray(null, array("COOKIE_ID" => $cID));
 		if (count($visitors) == 0) {
-			$this->add(array());
+			$this->add();
 		} else {
 			global $USER;
-			if ($USER->IsAuthorized() and $visitors[0]["USER_ID"] != $USER->GetID()) $this->update(array("ID" => $visitors[0]["ID"]));
+			if ($USER->IsAuthorized() and $visitors[0]["USER_ID"] != $USER->GetID())
+				$this->update(array("ID" => $visitors[0]["ID"]));
 		}
 		return $cID;
 	}
