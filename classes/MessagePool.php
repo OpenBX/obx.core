@@ -430,4 +430,3 @@ class OBX_CMessagePoolDecorator implements OBX_IMessagePool {
 		return $this->getMessagePool()->clearAll();
 	}
 }
-?>

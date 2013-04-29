@@ -1,11 +1,14 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: maximum
- * Date: 26.04.13
- * Time: 16:34
- * To change this template use File | Settings | File Templates.
- */
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ **         Artem P. Morozov  aka tashiro     **
+ ** @License GPLv3                            **
+ ** @mailto rootfavell@gmail.com              **
+ ** @mailto tashiro@yandex.ru                 **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
 final class OBX_Test_VisitorDBS extends OBX_Core_TestCase {
 
