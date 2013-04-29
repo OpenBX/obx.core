@@ -12,30 +12,51 @@
 
 final class OBX_Test_VisitorDBS extends OBX_Core_TestCase {
 
-	static private $_VisitrosDBS = null;
-	static private $_arVisitros = array();
+	static private $_VisitorsDBS = null;
+	static private $_arVisitorsData = array();
 
-	public function setUp() {
-		self::$_VisitrosDBS = OBX_VisitorDBS::getInstance();
+	public static function setUpBeforeClass() {
+		self::$_VisitorsDBS = OBX_VisitorDBS::getInstance();
+		self::$_arVisitorsData = array(
+			array(
+				"COOKIE_ID" => "e4c83f93cbd45cbb1e487d0cc9b928aa",
+				"USER_ID" => "",
+			),
+			array(
+				"COOKIE_ID" => "fe14bf2a370d5d5695dae3bbd8201df4",
+				"USER_ID" => "2",
+			),
+			array(
+				"COOKIE_ID" => "de07963ee1f08c199a952eb55f8549da",
+				"USER_ID" => "",
+			),
+			array(
+				"COOKIE_ID" => "a76cc2b4be2c4d7f6a3fe9b8fdb19ca4",
+				"USER_ID" => "1",
+			),
+		);
 	}
 
 	public function testAddVisitor() {
-		$_SERVER["REMOTE_ADDR"] = "127.0.0.1";
-		$_SERVER["HTTP_USER_AGENT"] = "phpunit cli version not like Gecko";
-		for($i = 0; $i < 4; $i++) {
-			$intNewVisitorID = self::$_VisitrosDBS->add();
+		foreach (self::$_arVisitorsData as $k => $arVisitor) {
+			$intNewVisitorID = self::$_VisitorsDBS->add($arVisitor);
 			if(!$intNewVisitorID) {
-				$arError = self::$_VisitrosDBS->popLastError();
-				$this->assertTrue(false, $intNewVisitorID, 'Error: '.$arError['TEXT']);
+				$arError = self::$_VisitorsDBS->popLastError();
+				$this->fail("ID: ".$intNewVisitorID."; Error: ".$arError['TEXT']);
 				continue;
 			}
-			self::$_arVisitros[] = $intNewVisitorID;
+			self::$_arVisitorsData[$k]["ID"] = $intNewVisitorID;
 		}
 	}
 
+	/**
+	 * @depends testAddVisitor
+	 */
 	public function testVisitorsGetList() {
-		$arVisitorsList = self::$_VisitrosDBS->getListArray(null, self::$_arVisitros);
-		$this->assertGreaterThan(0, $arVisitorsList, 'Error: empty visitros list');
+		$arKeys = array("ID" => array());
+		foreach (self::$_arVisitorsData as $arV) $arKeys["ID"][] = $arV["ID"];
+		$arVisitorsList = self::$_VisitorsDBS->getListArray(null, $arKeys);
+		$this->assertEquals(count($arKeys["ID"]), count($arVisitorsList), 'Error: not match count visitors list');
 		foreach($arVisitorsList as &$arVisitor) {
 			$this->assertArrayHasKey('ID', $arVisitor);
 			$this->assertArrayHasKey('COOKIE_ID', $arVisitor);
@@ -47,22 +68,25 @@ final class OBX_Test_VisitorDBS extends OBX_Core_TestCase {
 	 * @depends testAddVisitor
 	 */
 	public function testUpdateVisitor() {
-		$arVisitorsListBefore = self::$_VisitrosDBS->getListArray(null, self::$_arVisitros);
-		foreach($arVisitorsListBefore as &$arVisitor) {
-
-		}
+		self::$_arVisitorsData[0]["COOKIE_ID"] = "5ac83f93cb845cbb1e480d0cc9b92821";
+		self::$_arVisitorsData[0]["USER_ID"] = "3";
+		self::$_arVisitorsData[1]["COOKIE_ID"] = "9ac43f73cb359cbb1e196d0cc3b92827";
+		self::$_arVisitorsData[1]["USER_ID"] = "1";
+		for ($i = 0; $i < 2; $i++)
+			if (! self::$_VisitorsDBS->update(self::$_arVisitorsData[$i])) {
+				$arError = self::$_VisitorsDBS->popLastError();
+				$this->fail("ID: ".self::$_arVisitorsData[$i]["ID"]."; Error: ".$arError['TEXT']);
+			}
 	}
 
 	/**
 	 * @depends testUpdateVisitor
 	 */
 	public function testGetVisitorsList() {
-		foreach(self::$_arVisitros as $intVisitorID) {
-			$bSuccess = self::$_VisitrosDBS->delete($intVisitorID);
-			if(!$bSuccess) {
-				$arError = self::$_VisitrosDBS->popLastError();
-				$this->assertTrue($bSuccess, 'Error: '.$arError['TEXT'].'; code: '.$arError['CODE']);
+		foreach(self::$_arVisitorsData as $arV)
+			if(!self::$_VisitorsDBS->delete($arV["ID"])) {
+				$arError = self::$_VisitorsDBS->popLastError();
+				$this->fail('Error: '.$arError['TEXT'].'; code: '.$arError['CODE']);
 			}
-		}
 	}
 }
