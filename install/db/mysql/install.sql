@@ -1,21 +1,23 @@
 -- Посетители сайта
-CREATE TABLE IF NOT EXISTS obx_visitors (
-  ID int(18) NOT NULL AUTO_INCREMENT,
-  USER_ID int(18) DEFAULT NULL,
-  COOKIE_ID varchar(32) DEFAULT NULL,
-  PRIMARY KEY (ID),
-  UNIQUE KEY COOKIE_ID (COOKIE_ID)
-) DEFAULT CHARSET=utf8;
+create table if not exists obx_visitors (
+  ID int(18) not null auto_increment,
+  USER_ID int(18) default null,
+  COOKIE_ID varchar(32) default null,
+  primary key (ID),
+  unique obx_visitors_cookie(COOKIE_ID),
+  unique obx_visitors_user(USER_ID)
+);
 
 -- Хиты посетителей
-CREATE TABLE IF NOT EXISTS obx_visitors_hits (
-  ID int(20) NOT NULL AUTO_INCREMENT,
+-- эту сущность ещё надо продумать
+create table if not exists obx_visitors_hits (
+  ID int(18) not null auto_increment,
   VISITOR_ID int(18) NULL,
   DATE_HIT datetime NULL,
   SITE_ID varchar(5) NULL,
   URL text NULL,
-  PRIMARY KEY (ID)
-) DEFAULT CHARSET=utf8;
+  primary key (ID)
+);
 
 -- старое
 

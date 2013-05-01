@@ -24,7 +24,10 @@ $arModuleClasses = array(
 	,'OBX_IDBSimpleStatic'				=> 'classes/DBSimple.php'
 	,'OBX_DBSimple'						=> 'classes/DBSimple.php'
 	,'OBX_DBSimpleStatic'				=> 'classes/DBSimple.php'
-	,'OBX_VisitorDBS'					=> 'classes/Visitor.php'
-	,'OBX_Visitor'		        		=> 'classes/Visitor.php'
+	,'OBX_VisitorDBS'					=> 'classes/VisitorList.php'
+	,'OBX_VisitorList'					=> 'classes/VisitorList.php'
+	,'OBX_Visitor'						=> 'classes/Visitor.php'
+	,'OBX_VisitorHitDBS'				=> 'classes/VisitorHitList.php'
+	,'OBX_VisitorHitList'				=> 'classes/VisitorHitList.php'
 );
 return $arModuleClasses;

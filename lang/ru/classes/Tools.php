@@ -65,4 +65,3 @@ $MESS['SaturdayA'] = 'субботу';
 
 $MESS['Sunday'] = 'воскресенье';
 $MESS['SundayA'] = 'воскресенье';
-?>

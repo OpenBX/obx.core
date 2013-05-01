@@ -140,6 +140,14 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const FLD_REQUIRED = 524288;		// значение поля является обязательным при добавлении новой строки
 	const FLD_CUSTOM_CK = 1048576;		// своя ф-ия проверки значения
 	const FLD_UNSET = 2097152;			// выкинуть значение из arFields!
+
+	/**
+	 * Выполнение ф-ии self::add() / self::update() будет прервано
+	 * если значение не корретно без занесения кода и текста ошибки в пул ошибок
+	 * удобно применять в сочетании с self::FLD_CUSTOM_CK
+	 * при этом сообщение об ошибке должен добавить программист в методе __check_FIELD_NAME()
+	 * @const
+	 */
 	const FLD_BRK_INCORR = 4194304;		// прервать выполнение ф-ии, если значение неверно
 
 	const FLD_ATTR_ALL = 8257536;		// все FIELD ATTRs вместе
