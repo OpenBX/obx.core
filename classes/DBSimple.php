@@ -746,6 +746,113 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	}
 
 	/**
+	 * @param $arFilter
+	 * @param $arSelectFromTables
+	 * @param $bLogicOrSubfilter - фомирование строки фильтра для блока с логикой OR
+	 * @param string $aws - additional white space - дополнительный отступ
+	 * @return string
+	 */
+	private function _getWhereSQL(&$arFilter, &$arSelectFromTables, $bLogicOrSubfilter = false, $aws = '') {
+		global $DB;
+		$arTableFields = $this->_arTableFields;
+		$sWhereFilter = '';
+		foreach( $arFilter as $fieldCode => $filterFieldValue) {
+			if( $filterFieldValue == '__undefined__' || $filterFieldValue == '__skip__' ) {
+				continue;
+			}
+			if($fieldCode == 'OR' || substr($fieldCode, 0, 3) == 'OR_' ) {
+				if(!is_array($filterFieldValue)) {
+					continue;
+				}
+					foreach($filterFieldValue as &$arSubFilter) {
+						if( !is_array($arSubFilter) ) {
+							continue;
+						}
+						$sWhereFilter .= "\n\tAND ((1<>1)";
+						$sWhereFilter .= $this->_getWhereSQL($arSubFilter, $arSelectFromTables, true, $aws."\t");
+						$sWhereFilter .= "\n\t)";
+					}
+				$debug=1;
+			}
+			else {
+				$EQ = '=';
+				$arrayFieldValueCond = 'OR';
+				$fieldCodeCond1 = substr($fieldCode, 0, 1);
+				$fieldCodeCond2 = substr($fieldCode, 0, 2);
+				if( $fieldCodeCond1 == '!' ) {
+					$fieldCode = substr($fieldCode, 1);
+					$EQ = '<>';
+					$arrayFieldValueCond = 'AND';
+				}
+				elseif( $fieldCodeCond1 == '<') {
+					if($fieldCodeCond2 == '<=') {
+						$fieldCode = substr($fieldCode, 2);
+						$EQ = '<=';
+					}
+					else {
+						$fieldCode = substr($fieldCode, 1);
+						$EQ = '<';
+					}
+				}
+				elseif( $fieldCodeCond1 == '>') {
+					if($fieldCodeCond2 == '>=') {
+						$fieldCode = substr($fieldCode, 2);
+						$EQ = '>=';
+					}
+					else {
+						$fieldCode = substr($fieldCode, 1);
+						$EQ = '>';
+					}
+				}
+				if(array_key_exists($fieldCode, $arTableFields)) {
+					$arTblField = $arTableFields[$fieldCode];
+					list($asName, $tblFieldName) = each($arTblField);
+					$sqlField = $asName.'.'.$tblFieldName;
+					if( !is_array($filterFieldValue) ) {
+						$bFieldValueNullCheck = false;
+						if( $filterFieldValue === null || $filterFieldValue == '__null__' ) {
+							$bFieldValueNullCheck = true;
+							$strNot = ($EQ=='<>')?' NOT':'';
+						}
+						$filterFieldValue = $DB->ForSql($filterFieldValue);
+						$sWhereFilter .= "\n\t".$aws.($bLogicOrSubfilter?'OR':'AND').' ('
+							.(
+								($bFieldValueNullCheck)
+								?($sqlField.' IS'.$strNot.' NULL')
+								:($sqlField.' '.$EQ.' \''.$filterFieldValue.'\'')
+							)
+						.')';
+					}
+					elseif( count($filterFieldValue)>0 ) {
+						$sWhereFilter .= "\n\t".$aws.($bLogicOrSubfilter?'OR':'AND').' (';
+						$bFirstFilterFieldPart = true;
+						foreach($filterFieldValue as &$filterFieldValuePart) {
+							$bFieldValueNullCheck = false;
+							if( $filterFieldValuePart === null || $filterFieldValuePart == '__null__' ) {
+								$bFieldValueNullCheck = true;
+								$strNot = ($EQ=='<>')?' NOT':'';
+							}
+							$filterFieldValuePart = $DB->ForSql($filterFieldValuePart);
+							$sWhereFilter .= "\n\t".$aws;
+							$sWhereFilter .= ($bFirstFilterFieldPart?("\t\t".$aws):("\t".$aws.$arrayFieldValueCond.' '));
+							$sWhereFilter .=(
+								($bFieldValueNullCheck)
+								?($sqlField.' IS'.$strNot.' NULL')
+								:($sqlField.' '.$EQ.' \''.$filterFieldValuePart.'\'')
+							);
+							$bFirstFilterFieldPart = false;
+						}
+						$sWhereFilter .= "\n\t".$aws.')';
+					}
+					$arSelectFromTables[$asName] = true;
+				}
+			}
+
+		}
+		return $sWhereFilter;
+	}
+
+	/**
 	 * Возвращает список записей сущности
 	 * @param null | array $arSort - поля и порядок сортировки
 	 * @param null | array $arFilter - фильтр полей
@@ -819,63 +926,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if( !$bFilterIsDefault && count($arFilterDefault)>0 ) {
 				$arFilter = array_merge($arFilterDefault, $arFilter);
 			}
-			foreach( $arFilter as $fieldCode => $filterFieldValue) {
-				if( $filterFieldValue === null || $filterFieldValue == 'undefined' ) {
-					continue;
-				}
-				$EQ = '=';
-				$arrayFieldValueCond = 'OR';
-				$fieldCodeCond1 = substr($fieldCode, 0, 1);
-				$fieldCodeCond2 = substr($fieldCode, 0, 2);
-				if( $fieldCodeCond1 == '!' ) {
-					$fieldCode = substr($fieldCode, 1);
-					$EQ = '<>';
-					$arrayFieldValueCond = 'AND';
-				}
-				elseif( $fieldCodeCond1 == '<') {
-					if($fieldCodeCond2 == '<=') {
-						$fieldCode = substr($fieldCode, 2);
-						$EQ = '<=';
-					}
-					else {
-						$fieldCode = substr($fieldCode, 1);
-						$EQ = '<';
-					}
-				}
-				elseif( $fieldCodeCond1 == '>') {
-					if($fieldCodeCond2 == '>=') {
-						$fieldCode = substr($fieldCode, 2);
-						$EQ = '>=';
-					}
-					else {
-						$fieldCode = substr($fieldCode, 1);
-						$EQ = '>';
-					}
-				}
-				if(array_key_exists($fieldCode, $arTableFields)) {
-					$arTblField = $arTableFields[$fieldCode];
-					list($asName, $tblFieldName) = each($arTblField);
-					$sqlField = $asName.'.'.$tblFieldName;
-					if( !is_array($filterFieldValue) ) {
-						$filterFieldValue = $DB->ForSql($filterFieldValue);
-						$sWhereFilter .= "\n\tAND (".$sqlField.' '.$EQ.' \''.$filterFieldValue.'\')';
-					}
-					elseif( count($filterFieldValue)>0 ) {
-						$sWhereFilter .= "\n\tAND (";
-						$bFirstFilterFieldPart = true;
-						foreach($filterFieldValue as &$filterFieldValuePart) {
-							$filterFieldValuePart = $DB->ForSql($filterFieldValuePart);
-							$sWhereFilter .= "\n\t"
-								.($bFirstFilterFieldPart?"\t\t":"\t".$arrayFieldValueCond.' ')
-								.$sqlField.' '.$EQ.' \''.$filterFieldValuePart.'\''
-							;
-							$bFirstFilterFieldPart = false;
-						}
-						$sWhereFilter .= "\n\t)";
-					}
-					$arSelectFromTables[$asName] = true;
-				}
-			}
+			$sWhereFilter = $this->_getWhereSQL($arFilter, $arSelectFromTables);
 		}
 
 		if( empty($arSort) || !is_array($arSort) ) {
