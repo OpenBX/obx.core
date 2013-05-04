@@ -3,10 +3,8 @@
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
  **         Maksim S. Makarov aka pr0n1x      **
- **         Artem P. Morozov  aka tashiro     **
  ** @License GPLv3                            **
  ** @mailto rootfavell@gmail.com              **
- ** @mailto tashiro@yandex.ru                 **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
@@ -22,6 +20,7 @@ interface OBX_IDBSimple
 	function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
 	function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
 	function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false);
+	function getLastQueryString();
 }
 
 interface OBX_IDBSimpleStatic
@@ -34,6 +33,7 @@ interface OBX_IDBSimpleStatic
 	static function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
 	static function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
 	static function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false);
+	static function getLastQueryString();
 }
 
 abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_IDBSimpleStatic {
@@ -80,7 +80,9 @@ abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_
 	static function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		return self::getInstance()->getListArray($arSort, $arFilter, $arGroupBy, $arPagination, $arSelect, $bShowNullFields);
 	}
-
+	static function getLastQueryString() {
+		return self::getInstance()->getLastQueryString();
+	}
 	public static function getFieldNames($arSelect = null){
 		return self::getInstance()->getFieldNames($arSelect);
 	}
@@ -450,6 +452,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arFieldsEditInAdmin = array();
+
+	protected $_lastQueryString = '';
 
 	/**
 	 * Метод подготовки данных
@@ -1033,6 +1037,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		}
 
 		$sqlList = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sJoin.$sWhere.$sGroupBy.$sSort;
+		$this->_lastQueryString = $sqlList;
 		$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		return $res;
 	}
@@ -1180,6 +1185,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$sWhere .= "\n\t".$mainTable.'.'.$mainTablePrimaryKey.' = \''.$PRIMARY_KEY_VALUE.'\'';
 		$sWhere .= $sWhereTblLink;
 		$sqlByPrimaryKey = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sWhere;
+		$this->_lastQueryString = $sqlByPrimaryKey;
 		$rsList = $DB->Query($sqlByPrimaryKey, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		if(!$bReturnCDBResult) {
 			if( ($arElement = $rsList->Fetch()) ) {
@@ -1390,6 +1396,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$mainEntityTableName  = $arTableList[$this->_mainTable];
 		$arInsert = $DB->PrepareInsert($mainEntityTableName, $arFields);
 		$sqlInsert = 'INSERT INTO '.$mainEntityTableName.' ('.$arInsert[0].') VALUES ('.$arInsert[1].');';
+		$this->_lastQueryString = $sqlInsert;
 		$DB->Query($sqlInsert, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 
 		$bContinueAfterEvent = $this->_onAfterAdd($arFields); if(!$bContinueAfterEvent) return 0;
@@ -1548,6 +1555,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						.'` SET '.$strUpdate
 						.' WHERE `'
 							.$mainTablePrimaryKey.'` = \''.$DB->ForSql($arThatElement[$mainTablePrimaryKey]).'\';';
+		$this->_lastQueryString = $strUpdate;
 		$DB->Query($strUpdate, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterUpdate($arFields); if(!$bContinueAfterEvent) return false;
 		return true;
@@ -1607,6 +1615,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		}
 		$bContinueAfterEvent = $this->_onBeforeDelete($arExists); if(!$bContinueAfterEvent) return false;
 		$sqlDelete = 'DELETE FROM '.$tableName.' WHERE '.$tblFieldName.' = \''.$PRIMARY_KEY_VALUE.'\';';
+		$this->_lastQueryString = $sqlDelete;
 		$DB->Query($sqlDelete, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterDelete($arExists); if(!$bContinueAfterEvent) return false;
 		return true;
@@ -1751,6 +1760,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$bContinueAfterEvent = $this->_onBeforeDeleteByFilter($arFilter, $bCheckExistence, $arDelete);
 		if(!$bContinueAfterEvent) return false;
 		$sqlDelete = 'DELETE FROM '.$arDelete['TABLE_NAME'].' WHERE'.$arDelete['WHERE_STRING'];
+		$this->_lastQueryString = $sqlDelete;
 		$DB->Query($sqlDelete, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterDeleteByFilter($arFilter, $bCheckExistence);
 		if(!$bContinueAfterEvent) return false;
@@ -1795,5 +1805,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			$arResult[$fieldCode] = $this->_arFieldsDescription[$fieldCode];
 		}
 		return $arResult[$fieldCode];
+	}
+
+	public function getLastQueryString() {
+		return $this->_lastQueryString;
 	}
 }
