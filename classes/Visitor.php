@@ -31,6 +31,8 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 		$this->_resetFields();
 		$arVisitor = array();
 		$cookieID = null;
+		// [lzv] таким образом проверять условия - сложно для понимания. Код должен быть таким, что бы его было легко поддерживать.
+		// лучше сделать на обычных if else.
 		switch(true) {
 			case (!is_array($arFields)):
 				break;
@@ -146,8 +148,23 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 		return $c_value;
 	}
 
+	// [lzv] Если парметр null, метод ничего не возвращает! Нужно добавить return в нужных местах.
 	public function checkAuth($userID = null) {
 		global $USER;
+		// [lzv] мой вариант. Переменная $bFetchUser только запутывает.
+		if (($userID = intval($userID)) <= 0) {
+			$userID = $USER->GetID();
+		} else {
+			$rsUser = CUser::GetByID($userID);
+			if( !($arUser = $rsUser->GetNext()) ) {
+				// TODO: Добавить языковый вывод ошибки
+				$this->addWarning('Can\'t check user auth. User not found');
+				return false;
+			}
+		}
+		return $userID; /* [lzv] или тут просто return true? */
+
+/*
 		$bFetchUser = true;
 		if($userID == null) {
 			$userID = $USER->GetID();
@@ -160,7 +177,7 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 				$this->addWarning('Can\'t check user auth. User not found');
 				return false;
 			}
-		}
+		}//*/
 	}
 }
 
