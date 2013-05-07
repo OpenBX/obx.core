@@ -87,6 +87,12 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 				}
 			}
 			else {
+				/*
+				 * [lzv]
+				 * $cookieID будет не null, только если в параметрах к конструктору прибыл массив только с одним
+				 * элементом COOKIE_ID, и при этом по этому COOKIE_ID не было найдено записи.
+				 * В остальных случаях $cookieID будет равно null.
+				*/
 				if( $cookieID !== null && $this->_VisitorDBS->__check_COOKIE_ID($cookieID) ) {
 					$arVisitor['COOKIE_ID'] = $cookieID;
 				}
