@@ -21,7 +21,6 @@ class OBX_VisitorDBS extends OBX_DBSimple
 		'USER_ID'			=> array('V' => 'USER_ID'),
 //		[pr0n1x] избыточно, но может пригодится
 //		'SESSION_ID'		=> array('V' => 'SESSION_ID'),
-//		'COOKIE_ID'			=> array('V' => 'COOKIE_ID'),
 //		'LAST_VISIT'		=> array('V' => 'LAST_VISIT'),
 //		'USER_ID'			=> array('V' => 'USER_ID'), // если пользовтель уже зарегистрировался
 //		'NICKNAME'			=> array('V' => 'NICKNAME'),
@@ -40,7 +39,6 @@ class OBX_VisitorDBS extends OBX_DBSimple
 //		'JSON_USER_DATA'	=> array('V' => 'JSON_USER_DATA'),
 //		'JSON_CONTACT'		=> array('V' => 'JSON_CONTACT'),
 //		'JSON_SOCIAL'		=> array('V' => 'JSON_SOCIAL'),
-//		'USER_ID'			=> array('V' => 'USER_ID'),
 	);
 
 	protected $_mainTable = 'V';

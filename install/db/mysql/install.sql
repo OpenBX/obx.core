@@ -4,8 +4,7 @@ create table if not exists obx_visitors (
   USER_ID int(18) default null,
   COOKIE_ID varchar(32) default null,
   primary key (ID),
-  unique obx_visitors_cookie(COOKIE_ID),
-  unique obx_visitors_user(USER_ID)
+  unique obx_visitors_cookie(COOKIE_ID)
 );
 
 -- Хиты посетителей
