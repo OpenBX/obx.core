@@ -752,11 +752,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	/**
 	 * @param $arFilter
 	 * @param $arSelectFromTables
-	 * @param $bLogicOrSubfilter - фомирование строки фильтра для блока с логикой OR
-	 * @param string $aws - additional white space - дополнительный отступ
+	 * @param $bLogicOrInsideSubFilter - фомирование строки фильтра для блока с логикой OR
+	 * @param string $aws - additional white space - дополнительный отступ - для удобства отладки :)
 	 * @return string
 	 */
-	private function _getWhereSQL(&$arFilter, &$arSelectFromTables, $bLogicOrSubfilter = false, $aws = '') {
+	private function _getWhereSQL(&$arFilter, &$arSelectFromTables, $bLogicOrInsideSubFilter = false, $aws = '') {
 		global $DB;
 		$arTableFields = $this->_arTableFields;
 		$sWhereFilter = '';
@@ -764,19 +764,26 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			if( $filterFieldValue == '__undefined__' || $filterFieldValue == '__skip__' ) {
 				continue;
 			}
-			if($fieldCode == 'OR' || substr($fieldCode, 0, 3) == 'OR_' ) {
-				if(!is_array($filterFieldValue)) {
-					continue;
-				}
+			if(
+				$fieldCode == 'OR' || substr($fieldCode, 0, 3) == 'OR_'
+				|| $fieldCode == 'AND_OR' || substr($fieldCode, 0, 7) == 'AND_OR_'
+			) {
+				if(!is_array($filterFieldValue)) continue;
 					foreach($filterFieldValue as &$arSubFilter) {
-						if( !is_array($arSubFilter) ) {
-							continue;
-						}
+						if( !is_array($arSubFilter) ) continue;
 						$sWhereFilter .= "\n\tAND ((1<>1)";
 						$sWhereFilter .= $this->_getWhereSQL($arSubFilter, $arSelectFromTables, true, $aws."\t");
 						$sWhereFilter .= "\n\t)";
 					}
-				$debug=1;
+			}
+			if( $fieldCode == 'OR_AND' || substr($fieldCode, 0, 7) == 'OR_AND_' ) {
+				if(!is_array($filterFieldValue)) continue;
+				foreach($filterFieldValue as &$arSubFilter) {
+					if( !is_array($arSubFilter) ) continue;
+					$sWhereFilter .= "\n\tOR ((1==1)";
+					$sWhereFilter .= $this->_getWhereSQL($arSubFilter, $arSelectFromTables, false, $aws."\t");
+					$sWhereFilter .= "\n\t)";
+				}
 			}
 			else {
 				$EQ = '=';
@@ -819,7 +826,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 							$strNot = ($EQ=='<>')?' NOT':'';
 						}
 						$filterFieldValue = $DB->ForSql($filterFieldValue);
-						$sWhereFilter .= "\n\t".$aws.($bLogicOrSubfilter?'OR':'AND').' ('
+						$sWhereFilter .= "\n\t".$aws.($bLogicOrInsideSubFilter?'OR':'AND').' ('
 							.(
 								($bFieldValueNullCheck)
 								?($sqlField.' IS'.$strNot.' NULL')
@@ -828,7 +835,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						.')';
 					}
 					elseif( count($filterFieldValue)>0 ) {
-						$sWhereFilter .= "\n\t".$aws.($bLogicOrSubfilter?'OR':'AND').' (';
+						$sWhereFilter .= "\n\t".$aws.($bLogicOrInsideSubFilter?'OR':'AND').' (';
 						$bFirstFilterFieldPart = true;
 						foreach($filterFieldValue as &$filterFieldValuePart) {
 							$bFieldValueNullCheck = false;
