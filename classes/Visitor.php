@@ -33,7 +33,7 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 		$cookieID = null;
 		// [lzv] таким образом проверять условия - сложно для понимания. Код должен быть таким, что бы его было легко поддерживать.
 		// лучше сделать на обычных if else.
-		switch(true) {
+		/*switch(true) {
 			case (!is_array($arFields)):
 				break;
 			case array_key_exists('ID', $arFields):
@@ -52,7 +52,24 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 					$arVisitor = $arVisitorsList[0];
 					break;
 				}
+		}//*/
+
+		// [lzv] Если я правильно понял код выше, то в этом виде гораздо понятней. И строк меньше :)
+		if (is_array($arFields)) {
+			if (array_key_exists('ID', $arFields)) {
+				$arVisitor = $this->_VisitorDBS->getByID($arFields['ID']);
+			}
+			if (empty($arVisitor) and array_key_exists('USER_ID', $arFields)) {
+				$arVisitorsList = $this->_VisitorDBS->getListArray(null, array('USER_ID' => $arFields['USER_ID']));
+				if( !empty($arVisitorsList) ) $arVisitor = $arVisitorsList[0];
+			}
+			if (empty($arVisitor) and array_key_exists('COOKIE_ID', $arFields)) {
+				$arVisitorsList = $this->_VisitorDBS->getListArray(null, array('COOKIE_ID' => $arFields['COOKIE_ID']));
+				$cookieID = $arFields['COOKIE_ID'];
+				if( !empty($arVisitorsList) ) $arVisitor = $arVisitorsList[0];
+			}
 		}
+
 		if( !empty($arVisitor) ) {
 			$this->_arFields = $arVisitor;
 		}
@@ -70,6 +87,12 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 				}
 			}
 			else {
+				/*
+				 * [lzv]
+				 * $cookieID будет не null, только если в параметрах к конструктору прибыл массив только с одним
+				 * элементом COOKIE_ID, и при этом по этому COOKIE_ID не было найдено записи.
+				 * В остальных случаях $cookieID будет равно null.
+				*/
 				if( $cookieID !== null && $this->_VisitorDBS->__check_COOKIE_ID($cookieID) ) {
 					$arVisitor['COOKIE_ID'] = $cookieID;
 				}
