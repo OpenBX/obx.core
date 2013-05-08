@@ -912,10 +912,20 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		foreach($arSelect as $fieldCode) {
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
-				list($asName, $tblFieldName) = each($arTblField);
+				if( array_key_exists('REQUIRED_TABLES', $arTblField) ) {
+					if( is_array($arTblField['REQUIRED_TABLES']) ) {
+						foreach($arTblField['REQUIRED_TABLES'] as &$requiredTableAlias) {
+							$arSelectFromTables[$requiredTableAlias];
+						} unset($requiredTableAlias);
+					}
+					elseif( is_string($arTblField['REQUIRED_TABLES']) ) {
+						$arSelectFromTables[$arTblField['REQUIRED_TABLES']];
+					}
+				}
+				list($tblAlias, $tblFieldName) = each($arTblField);
 				$isSubQuery = (strpos($tblFieldName,'(')!==false);
 				if(!$isSubQuery){
-					$sqlField = $asName.'.'.$tblFieldName;
+					$sqlField = $tblAlias.'.'.$tblFieldName;
 				}
 				else{
 					$sqlField = $tblFieldName;
@@ -923,7 +933,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
 				$bFirst = false;
-				$arSelectFromTables[$asName] = true;
+				$arSelectFromTables[$tblAlias] = true;
 			}
 		}
 
@@ -953,16 +963,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$orAscDesc = strtoupper($orAscDesc);
 				if($orAscDesc == 'ASC' || $orAscDesc == 'DESC') {
 					$arTblField = $arTableFields[$fieldCode];
-					list($asName, $tblFieldName) = each($arTblField);
+					list($tblAlias, $tblFieldName) = each($arTblField);
 					$isSubQuery = (strpos($tblFieldName,'(')!==false);
 					if (!$isSubQuery){
-						$sqlField = $asName.'.'.$tblFieldName;
+						$sqlField = $tblAlias.'.'.$tblFieldName;
 					}else{
 						$sqlField = $fieldCode;
 					}
 					$sSort .= (($bFirst)?"\nORDER BY \n\t":", \n\t").$sqlField.' '.$orAscDesc;
 					$bFirst = false;
-					$arSelectFromTables[$asName] = true;
+					$arSelectFromTables[$tblAlias] = true;
 				}
 			}
 		}
@@ -973,8 +983,10 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			foreach ($arGroupBy as $fieldCode){
 				if( isset($arTableFields[$fieldCode]) ) {
 					$arTblField = $arTableFields[$fieldCode];
-					list($asName, $tblFieldName) = each($arTblField);
-					$arGroupByFields[$asName] = $tblFieldName;
+					list($tblAlias, $tblFieldName) = each($arTblField);
+					if( !array_key_exists($tblAlias, $arGroupByFields) ) {
+						$arGroupByFields[$tblAlias] = $tblFieldName;
+					}
 				}
 			}
 		}
@@ -1012,8 +1024,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		foreach($arTableLeftJoinTables as $sdTblName => &$bJoinThisTable) {
 			$bJoinThisTable = false;
 		}
-		$arTableRightJoin = $arTableRightJoin;
-		foreach($arTableRightJoin as $sdTblName => &$bJoinThisTable) {
+		$arTableRightJoinTables = $arTableRightJoin;
+		foreach($arTableRightJoinTables as $sdTblName => &$bJoinThisTable) {
 			$bJoinThisTable = false;
 		}
 		// Из каких таблиц выбираем | какие таблицы джойним
@@ -1024,7 +1036,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					$arTableLeftJoinTables[$asTblName] = true;
 					$sJoin .= "\nLEFT JOIN\n\t".$arTableList[$asTblName].' AS '.$asTblName.' ON ('.$arTableLeftJoin[$asTblName].')';
 				}
-				elseif( $bShowNullFields && array_key_exists($asTblName, $arTableRightJoin) ) {
+				elseif( $bShowNullFields && array_key_exists($asTblName, $arTableRightJoinTables) ) {
 					$arTableRightJoin[$asTblName] = true;
 					$sJoin .= "\nRIGHT JOIN\n\t".$arTableList[$asTblName].' AS '.$asTblName.' ON ('.$arTableRightJoin[$asTblName].')';
 				}
