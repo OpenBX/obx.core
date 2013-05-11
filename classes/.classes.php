@@ -20,6 +20,7 @@ $arModuleClasses = array(
 	,"OBX_CMessagePool"					=> "classes/MessagePool.php"
 	,"OBX_CMessagePoolStatic"			=> "classes/MessagePool.php"
 	,"OBX_CMessagePoolDecorator"		=> "classes/MessagePool.php"
+	,'OBX_DBSResult'					=> 'classes/DBSimple.php'
 	,'OBX_IDBSimple'					=> 'classes/DBSimple.php'
 	,'OBX_IDBSimpleStatic'				=> 'classes/DBSimple.php'
 	,'OBX_DBSimple'						=> 'classes/DBSimple.php'

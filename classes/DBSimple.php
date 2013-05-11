@@ -96,6 +96,21 @@ abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_
 	}
 }
 
+class OBX_DBSResult extends CDBResult {
+	protected $_obxAbstractionName = null;
+	function __construct($DBResult = null) {
+		parent::__construct($DBResult);
+	}
+	public function setAbstractionName($className) {
+		if( class_exists($className) ) {
+			$this->_obxAbstractionName = $className;
+		}
+	}
+	public function getAbstractionName() {
+		return $this->_obxAbstractionName;
+	}
+}
+
 abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 {
 	protected function __construct() {}
@@ -117,8 +132,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	}
 
 
-	// Атрибуты полей для массива $_arTableFieldsCheck
-	// FIELD TYPES
+	/*
+	 * FIELD TYPES Типы полей полей для массива $_arTableFieldsCheck
+	 */
 	const FLD_T_NO_CHECK = 1;				// без проверки - использовать с FLD_CUSTOM_CK
 	const FLD_T_INT = 2;					// целый
 	const FLD_T_CHAR = 4;					// один символ
@@ -133,11 +149,25 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	const FLD_T_IBLOCK_PROP_ID = 1024;		// ID свойства элемента ИБ. Проверяет наличие
 	const FLD_T_IBLOCK_ELEMENT_ID = 2048;	// ID элемента инфоблока. Проверяет наличие
 	const FLD_T_IBLOCK_SECTION_ID = 4096;	// ID секции инфблока. Проверяет наличие
-	const FLD_T_USER_ID = 8192;				// ID пользвоателя битрикс
+	const FLD_T_USER_ID = 8192;			// ID пользвоателя битрикс
 	const FLD_T_GROUP_ID = 16384;			// ID группы пользователей битрикс
 
-	// FIELD ATTR
-	const FLD_NOT_NULL = 131072;		// не нуль
+	/*
+	 * FIELD ATTR
+	 * Ниже идут контсантны-аттрибуты
+	 */
+
+	/**
+	 * Баззнаковое значение
+	 * Применяется в сочетании с FLD_T_INT / FLD_T_FLOAT / FLD_T_BCHAR
+	 * для FLD_T_INT FLD_T_FLOAT - просто проверка не наеотрицательность
+	 * FLD_T_BCHAR - в этом случае пройдет только 'Y' все что не равно 'Y' будет отброшено
+	 * @const
+	 */
+	const FLD_UNSIGNED = 32768;
+
+	const FLD_NOT_ZERO = 65536;			// Не нуль для int и float
+	const FLD_NOT_NULL = 131072;		// Не NULL - именно NULL как тип данных СУБД
 	const FLD_DEFAULT = 262144;			// задать значение по дефолту если нуль - зн-я по умолч. в массиве $this->_arTableFieldsDefault
 	const FLD_REQUIRED = 524288;		// значение поля является обязательным при добавлении новой строки
 	const FLD_CUSTOM_CK = 1048576;		// своя ф-ия проверки значения
@@ -152,7 +182,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 */
 	const FLD_BRK_INCORR = 4194304;		// прервать выполнение ф-ии, если значение неверно
 
-	const FLD_ATTR_ALL = 8257536;		// все FIELD ATTRs вместе
+	const FLD_ATTR_ALL = 8355840;		// все FIELD ATTRs вместе
 
 
 	const ERR_NOTHING_TO_DELETE = 1024;		// невозможно удалить. заись не найдена
@@ -455,6 +485,41 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 	protected $_lastQueryString = '';
 
+
+	protected function __checkNumericField($bFloat = false, &$fieldValue, &$bUnsignedType, &$bNotNull, &$bNotZero) {
+		$bValueIsCorrect = false;
+		$bPassNull = !$bNotNull;
+		//$bPassZero = !$bNotZero;
+		if( $bPassNull && ($fieldValue===null || !is_numeric($fieldValue)) ) {
+			$fieldValue = null;
+			$bValueIsCorrect = true;
+		}
+		else {
+			if($bFloat) {
+				$fieldValue = floatval($fieldValue);
+			}
+			else {
+				$fieldValue = intval($fieldValue);
+			}
+			if( $bUnsignedType ) {
+				if($bNotZero) {
+					if($fieldValue > 0) $bValueIsCorrect = true;
+				}
+				else {
+					if($fieldValue >= 0) $bValueIsCorrect = true;
+				}
+			}
+			else {
+				if($bNotZero) {
+					if($fieldValue != 0) $bValueIsCorrect = true;
+				}
+				else {
+					$bValueIsCorrect = true;
+				}
+			}
+		}
+		return $bValueIsCorrect;
+	}
 	/**
 	 * Метод подготовки данных
 	 * Применяется в $this->add() и $this->update()
@@ -496,6 +561,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					'FIELD_TYPE_MASK' => 0,
 					'FIELD_ATTR' => array(),
 					'IS_EMPTY' => false,
+					'IS_NULL' => false,
 					'IS_CORRECT' => false,
 					'FROM_DEFAULTS' => false,
 					'CHECK_DATA' => array()
@@ -503,11 +569,23 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$fieldType = $arTableFieldsCheck[$fieldName];
 				$bValueIsCorrect = false;
 				$bNotNull = false;
+				$bNotZero = false;
 				$bDefaultIfNull = false;
+				$bUnsignedType = false;
+				if( $fieldType & self::FLD_UNSIGNED ) {
+					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_UNSIGNED'] = self::FLD_UNSIGNED;
+					$bUnsignedType = true;
+				}
 				if( $fieldType & self::FLD_NOT_NULL) {
 					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_NOT_NULL'] = self::FLD_NOT_NULL;
 					$bNotNull = true;
 				}
+				$bPassNull = !$bNotNull;
+				if( $fieldType & self::FLD_NOT_ZERO ) {
+					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_NOT_ZERO'] = self::FLD_NOT_ZERO;
+					$bNotZero = true;
+				}
+				$bPassZero = !$bNotZero;
 				if( ($fieldType & self::FLD_DEFAULT) ) {
 					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_DEFAULT'] = self::FLD_DEFAULT;
 					if( $prepareType == self::PREPARE_ADD ) {
@@ -517,156 +595,160 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if( $fieldType & self::FLD_REQUIRED ) {
 					$arCheckResult[$fieldName]['FIELD_ATTR']['FLD_REQUIRED'] = self::FLD_REQUIRED;
 				}
-				$bEmpty = empty($fieldValue);
-				if($bEmpty) {
+				$bValueIsEmpty = empty($fieldValue);
+				if($bValueIsEmpty) {
 					$arCheckResult[$fieldName]['IS_EMPTY'] = true;
 				}
-				switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {
-					/* [lzv]
-					 * А что если программист задаст значение так,
-					 * что ($fieldType & ~self::FLD_ATTR_ALL) будет равно не какому то одному флагу, а их объединению, например FLD_T_CHAR | FLD_T_INT.
-					 * Тогда ни одна из ветвей case не выполнится. Может тут добавить ветвь default, в которой бросается исключение?
-					 *
-					 * [pr0n1x]
-					 * Как говориться "сам себе сзлобный буратино".
-					 * В идеале классы-сущности будут генерироваться, а код программиста будет вынесен в класс, который наследует сущность.
-					 * Формировать вручную эти декларации быстрее, чем писать сущность с нуля, однако тестирование требуется очень чательное.
-					 * Потому иделяльно будет вообще избавить программиста от написания этих сущностей
-					 */
-					case self::FLD_T_NO_CHECK:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_NO_CHECK';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_NO_CHECK;
-						$bValueIsCorrect = true;
-						break;
-					case self::FLD_T_CHAR:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CHAR';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CHAR;
-						if( (!$bNotNull && $bEmpty) || !$bEmpty ) {
-							$fieldValue = substr($fieldValue, 0 ,1);
+				if($fieldValue === null && $bPassNull) {
+					$bValueIsCorrect = true;
+					$bValueIsEmpty = true;
+					$arCheckResult[$fieldName]['IS_NULL'] = true;
+					$arCheckResult[$fieldName]['IS_EMPTY'] = true;
+					$arCheckResult[$fieldName]['IS_CORRECT'] = true;
+				}
+				else {
+					switch( ($fieldType & ~self::FLD_ATTR_ALL) ) {
+						case self::FLD_T_NO_CHECK:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_NO_CHECK';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_NO_CHECK;
 							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_INT:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_INT';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_INT;
-						$fieldValue = intval($fieldValue);
-						if( (!$bNotNull && $fieldValue==0) || $fieldValue>0 ) {
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_STRING:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_STRING';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_STRING;
-						$valStrLen = strlen($fieldValue);
-						if( (!$bNotNull && $valStrLen==0) || $valStrLen>0 ) {
-							$fieldValue = $DB->ForSql(htmlspecialcharsEx($fieldValue));
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_CODE:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CODE';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CODE;
-						$fieldValue = trim($fieldValue);
-						if( (!$bNotNull && empty($fieldValue)) || preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~', $fieldValue) ) {
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_BCHAR:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BCHAR';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BCHAR;
-						if( !$bNotNull && empty($fieldValue) ) {
-							$bValueIsCorrect = true;
-						}
-						else {
-							$fieldValue = strtoupper($fieldValue);
-							if( $fieldValue == 'Y' || $fieldValue == 'N' ) {
+							break;
+						case self::FLD_T_CHAR:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CHAR';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CHAR;
+							if( $bPassNull && $bValueIsEmpty ) {
+								$fieldValue = null;
+							}
+							elseif( !$bValueIsEmpty ) {
+								$fieldValue = substr($fieldValue, 0 ,1);
 								$bValueIsCorrect = true;
 							}
-						}
-						break;
-					case self::FLD_T_FLOAT:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_FLOAT';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_FLOAT;
-						$fieldValue = floatval($fieldValue);
-						if( (!$bNotNull && $fieldValue==0) || $fieldValue>0 ) {
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_IDENT:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IDENT';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IDENT;
-						$fieldValue = trim($fieldValue);
-						if(
+							break;
+						case self::FLD_T_INT:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_INT';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_INT;
+							$bValueIsCorrect = $this->__checkNumericField(false, $fieldValue, $bUnsignedType, $bNotNull, $bNotZero);
+							break;
+						case self::FLD_T_STRING:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_STRING';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_STRING;
+							$valStrLen = strlen($fieldValue);
+							if( $bPassNull && $valStrLen==0 ) {
+								$fieldValue = null;
+								$bValueIsCorrect = true;
+							}
+							elseif( $valStrLen>0 ) {
+								$fieldValue = $DB->ForSql(htmlspecialcharsEx($fieldValue));
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_CODE:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CODE';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CODE;
+							$fieldValue = trim($fieldValue);
+							if( $bPassNull && empty($fieldValue) ) {
+								$fieldValue = null;
+								$bValueIsCorrect = true;
+							}
+							elseif( preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~', $fieldValue) ) {
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_BCHAR:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BCHAR';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BCHAR;
+							if( $bPassNull && empty($fieldValue) ) {
+								$fieldValue = null;
+								$bValueIsCorrect = true;
+							}
+							else {
+								$fieldValue = strtoupper($fieldValue);
+								if( $fieldValue == 'Y' || ( !$bUnsignedType && $fieldValue == 'N') ) {
+									$bValueIsCorrect = true;
+								}
+							}
+							break;
+						case self::FLD_T_FLOAT:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_FLOAT';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_FLOAT;
+							$bValueIsCorrect = $this->__checkNumericField(true, $fieldValue, $bUnsignedType, $bNotNull, $bNotZero);
+							break;
+						case self::FLD_T_IDENT:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IDENT';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IDENT;
+							$fieldValue = trim($fieldValue);
+							if(
 								( !$bNotNull && empty($fieldValue) )
-							||	( is_numeric($fieldValue) && ($fieldValue = intval($fieldValue))>0 )
-							||	( preg_match('~^[a-z0-9A-Z\_]{1,255}$~', $fieldValue) )
-						) {
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_BX_LANG_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BX_LANG_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BX_LANG_ID;
-						$fieldValue = trim($fieldValue);
-						if( strlen($fieldValue)>0 && preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]?$~', $fieldValue)) {
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_IBLOCK_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ID;
-						$fieldValue = intval($fieldValue);
-						$rs = CIBlock::GetByID($fieldValue);
-						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_IBLOCK_PROP_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_PROP_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_PROP_ID;
-						$rs = CIBlockProperty::GetByID($fieldValue);
-						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_IBLOCK_ELEMENT_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ELEMENT_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ELEMENT_ID;
-						$rs = CIBlockElement::GetByID($fieldValue);
-						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_IBLOCK_SECTION_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_SECTION_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_SECTION_ID;
-						$rs = CIBlockSection::GetByID($fieldValue);
-						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_USER_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_USER_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_USER_ID;
-						$rs = CUser::GetByID($fieldValue);
-						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
-							$bValueIsCorrect = true;
-						}
-						break;
-					case self::FLD_T_GROUP_ID:
-						$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_GROUP_ID';
-						$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_GROUP_ID;
-						$rs = CGroup::GetByID($fieldValue);
-						if( ($arData = $rs->GetNext()) ) {
-							$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
-							$bValueIsCorrect = true;
-						}
-						break;
+								||	( is_numeric($fieldValue) && ($fieldValue = intval($fieldValue))>0 )
+								||	( preg_match('~^[a-z0-9A-Z\_]{1,255}$~', $fieldValue) )
+							) {
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_BX_LANG_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BX_LANG_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BX_LANG_ID;
+							$fieldValue = trim($fieldValue);
+							if( strlen($fieldValue)>0 && preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]?$~', $fieldValue)) {
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_IBLOCK_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ID;
+							$fieldValue = intval($fieldValue);
+							$rs = CIBlock::GetByID($fieldValue);
+							if( ($arData = $rs->GetNext()) ) {
+								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_IBLOCK_PROP_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_PROP_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_PROP_ID;
+							$rs = CIBlockProperty::GetByID($fieldValue);
+							if( ($arData = $rs->GetNext()) ) {
+								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_IBLOCK_ELEMENT_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ELEMENT_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ELEMENT_ID;
+							$rs = CIBlockElement::GetByID($fieldValue);
+							if( ($arData = $rs->GetNext()) ) {
+								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_IBLOCK_SECTION_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_SECTION_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_SECTION_ID;
+							$rs = CIBlockSection::GetByID($fieldValue);
+							if( ($arData = $rs->GetNext()) ) {
+								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_USER_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_USER_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_USER_ID;
+							$rs = CUser::GetByID($fieldValue);
+							if( ($arData = $rs->GetNext()) ) {
+								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
+								$bValueIsCorrect = true;
+							}
+							break;
+						case self::FLD_T_GROUP_ID:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_GROUP_ID';
+							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_GROUP_ID;
+							$rs = CGroup::GetByID($fieldValue);
+							if( ($arData = $rs->GetNext()) ) {
+								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
+								$bValueIsCorrect = true;
+							}
+							break;
+					}
 				}
 				if( $fieldType & self::FLD_CUSTOM_CK ) {
 					$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_CUSTOM_CK';
@@ -683,7 +765,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					$arCheckResult['__BREAK'] = true;
 				}
 
-				if($bEmpty && $bDefaultIfNull) {
+				if($bValueIsEmpty && $bDefaultIfNull) {
 					if(array_key_exists($fieldName, $arTableFieldsDefault)) {
 						$arCheckResult[$fieldName]['FROM_DEFAULTS'] = true;
 						$arFieldsPrepared[$fieldName] = $arTableFieldsDefault[$fieldName];
@@ -915,11 +997,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if( array_key_exists('REQUIRED_TABLES', $arTblField) ) {
 					if( is_array($arTblField['REQUIRED_TABLES']) ) {
 						foreach($arTblField['REQUIRED_TABLES'] as &$requiredTableAlias) {
-							$arSelectFromTables[$requiredTableAlias];
+							$arSelectFromTables[$requiredTableAlias] = true;
 						} unset($requiredTableAlias);
 					}
 					elseif( is_string($arTblField['REQUIRED_TABLES']) ) {
-						$arSelectFromTables[$arTblField['REQUIRED_TABLES']];
+						$arSelectFromTables[$arTblField['REQUIRED_TABLES']] = true;
 					}
 				}
 				list($tblAlias, $tblFieldName) = each($arTblField);
@@ -1058,6 +1140,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$sqlList = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sJoin.$sWhere.$sGroupBy.$sSort;
 		$this->_lastQueryString = $sqlList;
 		$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
+		$res = new OBX_DBSResult($res);
+		$res->setAbstractionName(get_called_class());
 		return $res;
 	}
 
@@ -1368,6 +1452,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$arTableUnique = $this->_arTableUnique;
 		// check for duplicate unique index
 		if( count($arTableUnique)>0 ) {
+			$arTableFieldsDefault = $this->_arTableFieldsDefault;
 			foreach( $arTableUnique as $udxName => $arUniqueFields ) {
 				$arUniqueFilter = array();
 				$arInUniqueMacrosNames = array();
@@ -1376,7 +1461,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$strUniqueFieldsValues = '';
 				$bFirstUniqueField = true;
 				foreach($arUniqueFields as $inUniqueFieldName) {
-					$arUniqueFilter[$inUniqueFieldName] = $arFields[$inUniqueFieldName];
+					if( array_key_exists($inUniqueFieldName, $arFields) ) {
+						$arUniqueFilter[$inUniqueFieldName] = $arFields[$inUniqueFieldName];
+					}
+					elseif(array_key_exists($inUniqueFieldName, $arTableFieldsDefault)) {
+						$arUniqueFilter[$inUniqueFieldName] = $arTableFieldsDefault[$inUniqueFieldName];
+					}
+					else {
+						$arUniqueFilter[$inUniqueFieldName] = null;
+					}
+
 					$arInUniqueMacrosNames[] = '#'.$inUniqueFieldName.'#';
 					$arInUniqueMacrosValues[] = $arFields[$inUniqueFieldName];
 					$strUniqueFieldsList .= (($bFirstUniqueField)?"'":"', '").$inUniqueFieldName;
@@ -1388,8 +1482,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 					$strUniqueFieldsValues .= "'";
 				}
 				if( count($arUniqueFilter)>0 ) {
-					$arExistsList = $this->getListArray(null, $arUniqueFilter, null, null, null, false);
-					if( count($arExistsList)>0 ) {
+					$rsExistsList = $this->getList(null, $arUniqueFilter, null, null, null, false);
+					if( $rsExistsList->Fetch() ) {
 						if(array_key_exists('DUP_ADD_'.$udxName, $arLangMessages) ) {
 							$this->addError(
 								str_replace(
@@ -1569,11 +1663,21 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		}
 		$bContinueAfterEvent = $this->_onBeforeExecUpdate($arFields, $arCheckResult); if(!$bContinueAfterEvent) return false;
 		$strUpdate = $DB->PrepareUpdate($mainEntityTableName, $arFields);
+		$strUpdateSetNullFields = '';
+		foreach($arFields as $fieldName => &$fieldValue) {
+			if($fieldValue === null) {
+				$strUpdateSetNullFields .= ', `'.$fieldName.'` = NULL';
+			}
+		}
 		$strUpdate = 'UPDATE `'
 						.$mainEntityTableName
 						.'` SET '.$strUpdate
+						.$strUpdateSetNullFields
 						.' WHERE `'
-							.$mainTablePrimaryKey.'` = \''.$DB->ForSql($arThatElement[$mainTablePrimaryKey]).'\';';
+							.$mainTablePrimaryKey
+							.'` = '
+							.('\''.$DB->ForSql($arThatElement[$mainTablePrimaryKey]).'\'')
+			.';';
 		$this->_lastQueryString = $strUpdate;
 		$DB->Query($strUpdate, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 		$bContinueAfterEvent = $this->_onAfterUpdate($arFields); if(!$bContinueAfterEvent) return false;
@@ -1784,6 +1888,50 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$bContinueAfterEvent = $this->_onAfterDeleteByFilter($arFilter, $bCheckExistence);
 		if(!$bContinueAfterEvent) return false;
 		return true;
+	}
+
+	/**
+	 * @param OBX_DBSResult $rs
+	 * @param array $arErrors
+	 * @return bool
+	 */
+	public function deleteByDBResult(OBX_DBSResult $rs, Array &$arErrors = null) {
+		$bResult = false;
+		$bSuccess = false;
+		$iCount = 0;
+		if( get_called_class() == $rs->getAbstractionName() ) {
+			if($this->_mainTablePrimaryKey !== null) {
+				while($arRow = $rs->Fetch()) {
+					$iCount++;
+					$bSuccess = false;
+					if( array_key_exists($this->_mainTablePrimaryKey, $arRow) ) {
+						$bSuccess = $this->delete($arRow[$this->_mainTablePrimaryKey]);
+						if(!$bSuccess && $arErrors !== null) {
+							$arErrors[] = $this->getLastError('ARRAY');
+						}
+					}
+					$bResult = $bResult && $bSuccess;
+				}
+			}
+			else {
+				// TODO: Тут получаем поля уникального индекса и по его полям вызываем deleteByFilter
+			}
+		}
+		else {
+			// TODO: Тут выкидываем ошибку. Потому что нельзя удалять записи сущности плученные с помощью класса другой сущности
+		}
+		return $bResult;
+	}
+
+	protected function _onStartUpdateByFilter() { return true; }
+	protected function _onBeforeUpdateByFilter() { return true; }
+	protected function _onAfterUpdateByFilter() { return true; }
+	protected function updateByFilterLowLevel($arFields, $arFilter) {
+		// TODO:этот метод делает тоже что и updateByFilter, но не проверяет на уникальные поля $arFields
+	}
+
+	public function updateByFilter($arFields, $arFilter) {
+		// TODO: В этои методе мы или ислючаем поля $arFields входящие в уникальные ключи
 	}
 
 	public function getFieldNames($arSelect = null) {
