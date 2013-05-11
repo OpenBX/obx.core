@@ -166,12 +166,25 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 */
 	const FLD_UNSIGNED = 32768;
 
-	const FLD_NOT_ZERO = 65536;			// Не нуль для int и float
+	const FLD_NOT_ZERO = 65536;			// Не нуль для int и float и не пустая длина для string
 	const FLD_NOT_NULL = 131072;		// Не NULL - именно NULL как тип данных СУБД
 	const FLD_DEFAULT = 262144;			// задать значение по дефолту если нуль - зн-я по умолч. в массиве $this->_arTableFieldsDefault
 	const FLD_REQUIRED = 524288;		// значение поля является обязательным при добавлении новой строки
 	const FLD_CUSTOM_CK = 1048576;		// своя ф-ия проверки значения
 	const FLD_UNSET = 2097152;			// выкинуть значение из arFields!
+
+	/**
+	 * Комплексный тип сочетающий тип int c аттрибутами типичнвми для первичного ключа ID
+	 * self::FLD_T_INT
+	 * | self::FLD_NOT_NULL
+	 * | self::FLD_NOT_ZERO
+	 * | self::FLD_UNSIGNED,
+	 *
+	 * 2 + 32768 + 65536 + 131072
+	 * @const
+	 */
+	const FLD_T_PK_ID = 229378;
+
 
 	/**
 	 * Выполнение ф-ии self::add() / self::update() будет прервано
@@ -633,12 +646,12 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_STRING';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_STRING;
 							$valStrLen = strlen($fieldValue);
-							if( $bPassNull && $valStrLen==0 ) {
-								$fieldValue = null;
+							if( $valStrLen>0 ) {
+								$fieldValue = $DB->ForSql(htmlspecialcharsEx($fieldValue));
 								$bValueIsCorrect = true;
 							}
-							elseif( $valStrLen>0 ) {
-								$fieldValue = $DB->ForSql(htmlspecialcharsEx($fieldValue));
+							elseif($bPassZero) {
+								$fieldValue = '';
 								$bValueIsCorrect = true;
 							}
 							break;
@@ -646,26 +659,16 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_CODE';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_CODE;
 							$fieldValue = trim($fieldValue);
-							if( $bPassNull && empty($fieldValue) ) {
-								$fieldValue = null;
-								$bValueIsCorrect = true;
-							}
-							elseif( preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~', $fieldValue) ) {
+							if( preg_match('~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~', $fieldValue) ) {
 								$bValueIsCorrect = true;
 							}
 							break;
 						case self::FLD_T_BCHAR:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BCHAR';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BCHAR;
-							if( $bPassNull && empty($fieldValue) ) {
-								$fieldValue = null;
+							$fieldValue = strtoupper(substr($fieldValue, 0, 1));
+							if( $fieldValue == 'Y' || ( !$bUnsignedType && $fieldValue == 'N') ) {
 								$bValueIsCorrect = true;
-							}
-							else {
-								$fieldValue = strtoupper($fieldValue);
-								if( $fieldValue == 'Y' || ( !$bUnsignedType && $fieldValue == 'N') ) {
-									$bValueIsCorrect = true;
-								}
 							}
 							break;
 						case self::FLD_T_FLOAT:
@@ -678,9 +681,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IDENT;
 							$fieldValue = trim($fieldValue);
 							if(
-								( !$bNotNull && empty($fieldValue) )
-								||	( is_numeric($fieldValue) && ($fieldValue = intval($fieldValue))>0 )
-								||	( preg_match('~^[a-z0-9A-Z\_]{1,255}$~', $fieldValue) )
+								( is_numeric($fieldValue) && ($fieldValue = intval($fieldValue))>0 )
+								||
+								( preg_match('~^[a-z0-9A-Z\_]{1,255}$~', $fieldValue) )
 							) {
 								$bValueIsCorrect = true;
 							}
@@ -900,6 +903,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				if(array_key_exists($fieldCode, $arTableFields)) {
 					$arTblField = $arTableFields[$fieldCode];
 					list($asName, $tblFieldName) = each($arTblField);
+					$isSubQuery = (strpos($tblFieldName,'(')!==false);
+					// Нельзя сделать фильтр по полю, которое является подзапросом
+					if($isSubQuery) {
+						continue;
+					}
 					$sqlField = $asName.'.'.$tblFieldName;
 					if( !is_array($filterFieldValue) ) {
 						$bFieldValueNullCheck = false;
