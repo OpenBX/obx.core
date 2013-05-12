@@ -10,8 +10,8 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-define("OBX_MAGIC_WORD", "I_KNOW_WHAT_I_DO");
-define("I_KNOW_WHAT_I_DO", "I_KNOW_WHAT_I_DO");
+define("OBX_MAGIC_WORD", "__I_KNOW_WHAT_I_DO__");
+define("I_KNOW_WHAT_I_DO", "__I_KNOW_WHAT_I_DO__");
 
 $arModuleClasses = array(
 	 'OBX_Tools'						=> 'classes/Tools.php'

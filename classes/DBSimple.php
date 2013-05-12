@@ -54,10 +54,14 @@ abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
-		if( !isset(self::$_arDBSimple[$className]) ) {
-			throw new Exception("Static Class $className not initialized. May be in static decorator class used non static method. See Call-Stack");
+		if( isset(self::$_arDBSimple[$className]) ) {
+			return self::$_arDBSimple[$className];
 		}
-		return self::$_arDBSimple[$className];
+		$className = str_replace('OBX_', 'OBX\\', $className);
+		if( isset(self::$_arDBSimple[$className]) ) {
+			return self::$_arDBSimple[$className];
+		}
+		throw new Exception("Static Class $className not initialized. May be in static decorator class used non static method. See Call-Stack");
 	}
 	static public function add($arFields) {
 		return self::getInstance()->add($arFields);
@@ -562,7 +566,12 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 
 		$arCheckResult = array(
 			'__BREAK' => false,
+			'__MAGIC_WORD' => false,
 		);
+		if( array_key_exists(OBX_MAGIC_WORD, $arFields) ) {
+			$arCheckResult['__MAGIC_WORD'] = true;
+			unset($arFields[OBX_MAGIC_WORD]);
+		}
 		foreach($arFields as $fieldName => &$fieldValue)
 		{
 			$arCheckResult[$fieldName] = null;
@@ -776,6 +785,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				}
 				elseif($bValueIsCorrect) {
 					$arCheckResult[$fieldName]['IS_CORRECT'] = true;
+					$arCheckResult[$fieldName]['VALUE'] = $fieldValue;
 					$arFieldsPrepared[$fieldName] = $fieldValue;
 				}
 			}
@@ -1537,7 +1547,6 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onAfterUpdate(&$arFields) { return true; }
 	public function update($arFields, $bNotUpdateUniqueFields = false) {
 		global $DB;
-
 		$bContinueAfterEvent = $this->_onStartUpdate($arFields); if(!$bContinueAfterEvent) return false;
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_UPDATE, $arFields);
 		if($arCheckResult['__BREAK']) return false;
