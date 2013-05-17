@@ -619,6 +619,11 @@ class OBX_Tools
 	///////////////////////////////////
 	/// CONNECTNG DEFERRED JS FILES ///
 	static private $_arDeferredJSFiles = array();
+
+	/**
+	 * @param string $jsFilePath
+	 * @return bool
+	 */
 	static public function addDeferredJS($jsFilePath) {
 		if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
 			if( substr($jsFilePath, -3) == ".js" ) {
