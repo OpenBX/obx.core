@@ -971,7 +971,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @param null | array $arPagination - массив для формирования постраничной навигации
 	 * @param null | array $arSelect - выбираемые поля
 	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
-	 * @return bool | CDBResult
+	 * @return bool | OBX_DBSResult
 	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		global $DB;
@@ -1199,7 +1199,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @param string |int | float $PRIMARY_KEY_VALUE
 	 * @param array | null $arSelect
 	 * @param bool $bReturnCDBResult
-	 * @return array | CDBResult
+	 * @return array | OBX_DBSResult
 	 */
 	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false) {
 		global $DB;
@@ -1314,6 +1314,8 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			}
 			return array();
 		}
+		$rsList = new OBX_DBSResult($rsList);
+		$rsList->setAbstractionName(get_called_class());
 		return $rsList;
 	}
 
