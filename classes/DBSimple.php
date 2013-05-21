@@ -912,6 +912,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				}
 				if(array_key_exists($fieldCode, $arTableFields)) {
 					$arTblField = $arTableFields[$fieldCode];
+					$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 					list($asName, $tblFieldName) = each($arTblField);
 					$isSubQuery = (strpos($tblFieldName,'(')!==false);
 					// Нельзя сделать фильтр по полю, которое является подзапросом
@@ -963,6 +964,20 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		return $sWhereFilter;
 	}
 
+	protected function _checkRequiredTablesByField(&$arSelectFromTables, &$arTableFields, &$fieldCode) {
+		$arTblField = $arTableFields[$fieldCode];
+		if( array_key_exists('REQUIRED_TABLES', $arTblField) ) {
+			if( is_array($arTblField['REQUIRED_TABLES']) ) {
+				foreach($arTblField['REQUIRED_TABLES'] as &$requiredTableAlias) {
+					$arSelectFromTables[$requiredTableAlias] = true;
+				} unset($requiredTableAlias);
+			}
+			elseif( is_string($arTblField['REQUIRED_TABLES']) ) {
+				$arSelectFromTables[$arTblField['REQUIRED_TABLES']] = true;
+			}
+		}
+	}
+
 	/**
 	 * Возвращает список записей сущности
 	 * @param null | array $arSort - поля и порядок сортировки
@@ -1012,16 +1027,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		foreach($arSelect as $fieldCode) {
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
-				if( array_key_exists('REQUIRED_TABLES', $arTblField) ) {
-					if( is_array($arTblField['REQUIRED_TABLES']) ) {
-						foreach($arTblField['REQUIRED_TABLES'] as &$requiredTableAlias) {
-							$arSelectFromTables[$requiredTableAlias] = true;
-						} unset($requiredTableAlias);
-					}
-					elseif( is_string($arTblField['REQUIRED_TABLES']) ) {
-						$arSelectFromTables[$arTblField['REQUIRED_TABLES']] = true;
-					}
-				}
+				$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 				list($tblAlias, $tblFieldName) = each($arTblField);
 				$isSubQuery = (strpos($tblFieldName,'(')!==false);
 				if(!$isSubQuery){
@@ -1063,6 +1069,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 				$orAscDesc = strtoupper($orAscDesc);
 				if($orAscDesc == 'ASC' || $orAscDesc == 'DESC') {
 					$arTblField = $arTableFields[$fieldCode];
+					$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 					list($tblAlias, $tblFieldName) = each($arTblField);
 					$isSubQuery = (strpos($tblFieldName,'(')!==false);
 					if (!$isSubQuery){
