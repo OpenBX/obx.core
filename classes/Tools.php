@@ -187,6 +187,7 @@ class OBX_Tools
 		}
 		return $arSectionsIDIndexList;
 	}
+
 	// making parent-child relation table
 	static function getRelationTableFromFlatTree(&$arFlatTree, $DEPTH_KEY = 'DEPTH_LEVEL', $CHILDS_KEY = 'CHILDS', $PARENT_KEY = 'PARENT', $bModifySrcArray = false) {
 		$iItems = 0;
@@ -246,33 +247,94 @@ class OBX_Tools
 		}
 		return false;
 	}
+
+	/**
+	 * Получить индекс массива
+	 * @param $arList
+	 * @param string | array $str_arKey - ключ по которому проиндексировать массив
+	 * @param bool $bUniqueKeys
+	 * @param bool $bSetReferences
+	 * @return array
+	 */
+	static function getListIndex(&$arList, $str_arKey, $bUniqueKeys = true, $bSetReferences = false ) {
+		$arListIndex = array();
+		$complexKey = null;
+		if( !is_array($str_arKey) ) {
+			$str_arKey = array($str_arKey);
+		}
+		foreach($arList as &$arItem) {
+			$bFirst = true;
+			$complexKey = '';
+			foreach($str_arKey as &$keyItem) {
+				$complexKey .= ($bFirst?'':'_');
+				$bFirst = false;
+				if( ! array_key_exists($keyItem, $arItem) || empty($arItem[$keyItem]) ) {
+					$complexKey .= 'NULL';
+				}
+				else {
+					$complexKey .= $arItem[$keyItem];
+				}
+			}
+
+			if( $bUniqueKeys || !array_key_exists($complexKey, $arListIndex) ) {
+				if($bSetReferences) {
+					$arListIndex[$complexKey] = &$arItem;
+				}
+				else {
+					$arListIndex[$complexKey] = $arItem;
+				}
+			}
+			else {
+				if( is_array($arListIndex[$complexKey]) ) {
+					if($bSetReferences) {
+						$arListIndex[$complexKey][] = &$arItem;
+					}
+					else {
+						$arListIndex[$complexKey][] = $arItem;
+					}
+				}
+				else {
+					if($bSetReferences) {
+						$elementBackup = &$arListIndex[$complexKey];
+						$arListIndex[$complexKey] = array(&$elementBackup);
+						unset($elementBackup);
+					}
+					else {
+						$arListIndex[$complexKey] = array($arListIndex[$complexKey]);
+					}
+				}
+			}
+		}
+		return $arListIndex;
+	}
 	
 
 	//////////// РАБОТА С ФАЙЛАМИ И ПАПКАМИ
 	/**
-	 * 
+	 *
 	 * Ф-ия работает опасно. Если указать не глубокий путь,
 	 * то можно потереть чужие файлы.
-	 * 
+	 *
 	 * Что бы этого изберажть, ниже ТУДУ.
-	 * 
+	 *
 	 * TODO: Написать небольшую рекурсию,
 	 * которая удаляя содержимое папки удаляла только те имена,
 	 * которые есть в $frDir. Т.е. вызывать не DeleteDirFilesEx а саму себя
 	 * и при выходе из рекурсии проверять не остлись ли файлы или папки.
-	 * Если остались, то не удаляем папку. 
-	 * @param String $frDir
-	 * @param String $toDir
-	 * @param String $arExept
+	 * Если остались, то не удаляем папку.
+	 * @param string $frDir
+	 * @param string $toDir
+	 * @param array $arExclude
+	 * @static
 	 */
-	static function deleteDirContents($frDir, $toDir, $arExept = array()) {
+	static function deleteDirContents($frDir, $toDir, $arExclude = array()) {
 		if( is_dir($frDir) ) {
 			$d = dir($frDir);
 			while( $entry = $d->read() ) {
 				if( $entry=="." || $entry==".." ) {
 					continue;
 				}
-				if( in_array($entry, $arExept) ) {
+				if( in_array($entry, $arExclude) ) {
 					continue;
 				}
 				if( is_dir($toDir."/".$entry) ) {

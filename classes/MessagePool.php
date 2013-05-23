@@ -27,17 +27,17 @@ interface OBX_IMessagePool
 	function getMessages();
 	function getWarnings();
 	function getErrors();
-	function getAll();
+	function getMessagePoolData();
 
 	function countMessages();
 	function countWarnings();
 	function countErrors();
-	function countAll();
+	function countMessagePoolData();
 
 	function clearMessages();
 	function clearWarnings();
 	function clearErrors();
-	function clearAll();
+	function clearMessagePool();
 }
 
 interface OBX_IMessagePoolStatic
@@ -57,17 +57,17 @@ interface OBX_IMessagePoolStatic
 	static function getMessages();
 	static function getWarnings();
 	static function getErrors();
-	static function getAll();
+	static function getMessagePoolData();
 
 	static function countMessages();
 	static function countWarnings();
 	static function countErrors();
-	static function countAll();
+	static function countMessagePoolData();
 
 	static function clearMessages();
 	static function clearWarnings();
 	static function clearErrors();
-	static function clearAll();
+	static function clearMessagePool();
 }
 
 class OBX_CMessagePool implements OBX_IMessagePool
@@ -204,7 +204,7 @@ class OBX_CMessagePool implements OBX_IMessagePool
 	public function getErrors() {
 		return $this->_arErrors;
 	}
-	public function getAll() {
+	public function getMessagePoolData() {
 		return $this->_arCommonMessagePool;
 	}
 
@@ -217,7 +217,7 @@ class OBX_CMessagePool implements OBX_IMessagePool
 	public function countErrors() {
 		return $this->_countErrors;
 	}
-	public function countAll() {
+	public function countMessagePoolData() {
 		return $this->_countCommonMessages;
 	}
 
@@ -251,7 +251,7 @@ class OBX_CMessagePool implements OBX_IMessagePool
 		// update keys
 		//$this->_arCommonMessagePool = array_values($this->_arCommonMessagePool);
 	}
-	public function clearAll() {
+	public function clearMessagePool() {
 		$this->_arMessages = array();
 		$this->_arErrors = array();
 		$this->_arWarnings = array();
@@ -319,8 +319,8 @@ class OBX_CMessagePoolStatic implements OBX_IMessagePoolStatic {
 	static public function getWarnings() {
 		return self::getMessagePool()->getWarnings();
 	}
-	static public function getAll() {
-		return self::getMessagePool()->getAll();
+	static public function getMessagePoolData() {
+		return self::getMessagePool()->getMessagePoolData();
 	}
 	static public function countMessages() {
 		return self::getMessagePool()->countMessages();
@@ -331,8 +331,8 @@ class OBX_CMessagePoolStatic implements OBX_IMessagePoolStatic {
 	static public function countErrors() {
 		return self::getMessagePool()->countErrors();
 	}
-	static public function countAll() {
-		return self::getMessagePool()->countAll();
+	static public function countMessagePoolData() {
+		return self::getMessagePool()->countMessagePoolData();
 	}
 	static public function clearMessages() {
 		return self::getMessagePool()->clearMessages();
@@ -343,8 +343,8 @@ class OBX_CMessagePoolStatic implements OBX_IMessagePoolStatic {
 	static public function clearWarnings() {
 		return self::getMessagePool()->clearWarnings();
 	}
-	static public function clearAll() {
-		return self::getMessagePool()->clearAll();
+	static public function clearMessagePool() {
+		return self::getMessagePool()->clearMessagePool();
 	}
 }
 
@@ -402,8 +402,8 @@ class OBX_CMessagePoolDecorator implements OBX_IMessagePool {
 	public function getWarnings() {
 		return $this->getMessagePool()->getWarnings();
 	}
-	public function getAll() {
-		return $this->getMessagePool()->getAll();
+	public function getMessagePoolData() {
+		return $this->getMessagePool()->getMessagePoolData();
 	}
 	public function countMessages() {
 		return $this->getMessagePool()->countMessages();
@@ -414,8 +414,8 @@ class OBX_CMessagePoolDecorator implements OBX_IMessagePool {
 	public function countErrors() {
 		return $this->getMessagePool()->countErrors();
 	}
-	public function countAll() {
-		return $this->getMessagePool()->countAll();
+	public function countMessagePoolData() {
+		return $this->getMessagePool()->countMessagePoolData();
 	}
 	public function clearMessages() {
 		return $this->getMessagePool()->clearMessages();
@@ -426,7 +426,7 @@ class OBX_CMessagePoolDecorator implements OBX_IMessagePool {
 	public function clearWarnings() {
 		return $this->getMessagePool()->clearWarnings();
 	}
-	public function clearAll() {
-		return $this->getMessagePool()->clearAll();
+	public function clearMessagePool() {
+		return $this->getMessagePool()->clearMessagePool();
 	}
 }
