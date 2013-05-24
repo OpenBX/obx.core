@@ -241,6 +241,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableList = array();
+	final public function getTableList() {
+		return $this->_arTableList;
+	}
 
 	/**
 	 * Массив с описанием полей сущнсти
@@ -271,6 +274,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @example bitrix/modules/obx.market/classes/OrdersList.php
 	 */
 	protected $_arTableFields = array();
+	final public function getTableFields() {
+		return $this->_arTableFields;
+	}
 
 	/**
 	 * Языкозависимое описание полей заданных в $this->_arTableFields
@@ -289,6 +295,17 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arFieldsDescription = array();
+	public function getFieldsDescription() {
+		$arResult = array();
+		foreach($this->_arTableFields as $fieldCode => &$arTblFieldName) {
+			if(
+				isset($this->_arFieldsDescription[$fieldCode])
+				&& isset($this->_arFieldsDescription[$fieldCode]['NAME'])
+			)
+				$arResult[$fieldCode] = $this->_arFieldsDescription[$fieldCode];
+		}
+		return $arResult[$fieldCode];
+	}
 
 	/**
 	 * Переменная содержит ALIAS основной таблицы сущности.
@@ -297,6 +314,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @var string
 	 */
 	protected $_mainTable = '';
+	final public function getMainTable() {
+		return $this->_mainTable;
+	}
 
 	/**
 	 * Переменная содержит имя ПОЛЯ основной таблицы сущности,
@@ -305,6 +325,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_mainTablePrimaryKey = 'ID';
+	final public function getMainTablePrimaryKey() {
+		return $this->_mainTablePrimaryKey;
+	}
 
 	/**
 	 * Переменная содержит имя ПОЛЯ основной таблицы сущности,
@@ -313,6 +336,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_mainTableAutoIncrement = 'ID';
+	final public function getMainTableAutoIncrement() {
+		return $this->_mainTableAutoIncrement;
+	}
 
 	/**
 	 * Массив содержащий связи полей таблиц
@@ -329,6 +355,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableLinks = array();
+	final public function getTableLinks() {
+		return $this->_arTableLinks;
+	}
 
 	/**
 	 * Массив описывающий условия для LEFT JOIN
@@ -343,6 +372,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableLeftJoin = array();
+	final public function getTableLeftJoin() {
+		return $this->_arTableLeftJoin;
+	}
 
 	/**
 	 *
@@ -350,12 +382,18 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableRightJoin = array();
+	final public function getTableRightJoin() {
+		return $this->_arTableRightJoin;
+	}
 
 	/**
 	 * @var array
 	 * @access protected
 	 */
 	protected $_arTableJoinNullFieldDefaults = array();
+	final public function getTableJoinNullFieldDefaults() {
+		return $this->_arTableJoinNullFieldDefaults;
+	}
 
 	/**
 	 * Массив с опсанием индексов
@@ -364,6 +402,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableIndex = array();
+	final public function getTableIndex() {
+		return $this->_arTableIndex;
+	}
 
 	/**
 	 * Массив с описанием unique-индексов
@@ -380,6 +421,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableUnique = array();
+	final public function getTableUnique(){
+		return $this->_arTableUnique;
+	}
 
 	/**
 	 * Значение указанных полей данного массива будут автоматически вставлены в arFilter метода GetList,
@@ -390,6 +434,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arFilterDefault = array();
+	final public function getFilterDefault() {
+		return $this->_arFilterDefault;
+	}
 
 	/**
 	 * arSelect по умолчанию
@@ -400,6 +447,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arSelectDefault = array();
+	final public function getSelectDefault() {
+		return $this->_arSelectDefault;
+	}
 
 	/**
 	 * Сорттировка по умолчанию
@@ -408,6 +458,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arSortDefault = array('ID' => 'ASC');
+	final public function getSortDefault() {
+		return $this->_arSortDefault;
+	}
 
 	/**
 	 * Типы и атрибуты полей основной таблицы сущности
@@ -436,6 +489,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableFieldsCheck = array();
+	final public function getTableFieldsCheck() {
+		return $this->_arTableFieldsCheck;
+	}
 
 	/**
 	 * Языковые сообщения при выводе ошибок
@@ -477,6 +533,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arDBSimpleLangMessages = array();
+	final public function getDBSimpleLangMessages(){
+		return $this->_arDBSimpleLangMessages;
+	}
 
 	/**
 	 * Массив сожержит значения по умолчанию для полей аргумента arFields метода $this->add()
@@ -484,6 +543,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arTableFieldsDefault = array();
+	final public function getTableFieldsDefault(){
+		return $this->_arTableFieldsDefault;
+	}
 
 	/**
 	 * Группировка по умолчанию
@@ -492,6 +554,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @access protected
 	 */
 	protected $_arGroupByFields = array();
+	final public function getGroupByFields() {
+		return $this->_arGroupByFields;
+	}
 
 	/**
 	 * Массив содержит имена полей таблицы сущности, которые доступны для редактрирования в административной панели
@@ -501,7 +566,9 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected $_arFieldsEditInAdmin = array();
 
 	protected $_lastQueryString = '';
-
+	final public function getLastQueryString() {
+		return $this->_lastQueryString;
+	}
 
 	protected function __checkNumericField($bFloat = false, &$fieldValue, &$bUnsignedType, &$bNotNull, &$bNotZero) {
 		$bValueIsCorrect = false;
@@ -1986,21 +2053,5 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		if (!is_array($arEditFields) || empty($arEditFields))
 			$arEditFields = array_keys($this->_arTableFields);
 		return $arEditFields;
-	}
-
-	public function getFieldsDescription() {
-		$arResult = array();
-		foreach($this->_arTableFields as $fieldCode => &$arTblFieldName) {
-			if(
-				isset($this->_arFieldsDescription[$fieldCode])
-				&& isset($this->_arFieldsDescription[$fieldCode]['NAME'])
-			)
-			$arResult[$fieldCode] = $this->_arFieldsDescription[$fieldCode];
-		}
-		return $arResult[$fieldCode];
-	}
-
-	public function getLastQueryString() {
-		return $this->_lastQueryString;
 	}
 }
