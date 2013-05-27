@@ -48,15 +48,14 @@ class JSLang
 		return $this->_arDomains;
 	}
 
-	protected function _getNode($domain, $langID = LANGUAGE_ID) {
+	protected function _getNode($domain, $langID = LANGUAGE_ID, $bCreateInitArray = false) {
 		$arDomain = explode('.', $domain);
 		$refNode = &$this->_arDomains;
 		$refPrevNode = null;
 		$lastNodeName = null;
-		$initDomainChain = null;
+		$domainChain = null;
 		foreach($arDomain as $nodeName) {
-			$initDomainChain .= ($initDomainChain===null)?$nodeName:'.'.$nodeName;
-			$this->_arJSInitializedNodes[$initDomainChain] = false;
+			$domainChain .= ($domainChain===null)?$nodeName:'.'.$nodeName;
 			if( !array_key_exists($nodeName, $refNode) ) {
 				$refNode[$nodeName] = array();
 				$refPrevNode = &$refNode;
@@ -71,10 +70,10 @@ class JSLang
 				}
 				elseif( is_string($refNode[$nodeName]) ) {
 					$refPrevNode = &$refNode;
-					$this->_arText[$initDomainChain.'.'.self::OVERRIDE_NODE_KEY] = $this->_arText[$initDomainChain];
-					unset($this->_arText[$initDomainChain]);
+					$this->_arText[$domainChain.'.'.self::OVERRIDE_NODE_KEY] = $this->_arText[$domainChain];
+					unset($this->_arText[$domainChain]);
 					$refPrevNode[$nodeName] = array(
-						self::OVERRIDE_NODE_KEY => &$this->_arText[$initDomainChain.'.'.self::OVERRIDE_NODE_KEY]
+						self::OVERRIDE_NODE_KEY => &$this->_arText[$domainChain.'.'.self::OVERRIDE_NODE_KEY]
 					);
 					$refNode = &$refPrevNode[$nodeName];
 					$lastNodeName = $nodeName;
@@ -116,53 +115,109 @@ class JSLang
 		return '';
 	}
 
+	public function showHead($domain = '', $langID = LANGUAGE_ID) {
+		$this->showJSInitDomain($domain, $langID);
+		$this->showDomainScript($domain, $langID);
+	}
+
+	public function getHead($domain = '', $langID = LANGUAGE_ID) {
+		return $this->getJSInitDomain($domain, $langID, true).$this->getDomainScript($domain, $langID);
+	}
+
 	public function showJSInitDomain($domain = '', $langID = LANGUAGE_ID) {
 		/**
 		 * @var \CMain $APPLICATION
 		 */
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent(array(&$this, 'getJSInitDomain'));
-		$domain = $this->_moduleName.'.lang.'.$langID.((strlen($domain)>0)?'.':'').$domain;
+		$APPLICATION->AddBufferContent(array(&$this, 'getJSInitDomain'), $domain, $langID, true);
+	}
+	public function getJSInitDomain($domain = '', $langID = LANGUAGE_ID, $bCheckInit = false) {
+		$this->_initDomain($domain, $langID);
+		$return = '';
+		$bHeadReturned = false;
 		foreach($this->_arJSInitializedNodes as $nameChain => &$bInit) {
-			if( strpos($domain, $nameChain) !== false) {
-				$bInit = true;
+			if( !$bCheckInit || !$bInit ) { //&& ! array_key_exists($nameChain, $this->_arText) ) {
+				if( ! $bHeadReturned ) {
+					$return .= '<script type="text/javascript">'."\n";
+					$bHeadReturned = true;
+				}
+				$bCheckInit && $bInit = true;
+//				$return .=
+//<<<JS
+//	if( typeof( {$nameChain} ) == 'undefined' ) {
+//		{$nameChain} = {};
+//	}
+//
+//JS;
+				$return .= 'if( typeof( '.$nameChain.' ) == \'undefined\' ) { '.$nameChain.' = {}; }'."\n";
 			}
 		}
-		$debug=1;
-	}
-	public function getJSInitDomain() {
-		$return = '<script type="text/javascript">'."\n";
-		foreach($this->_arJSInitializedNodes as $nameChain => &$b_unused) {
-			if( ! array_key_exists($nameChain, $this->_arText) ) {
-				$return .=
-<<<JS
-	if( typeof( {$nameChain} ) == 'undefined' ) {
-		{$nameChain} = {};
-	}
-
-JS;
-			}
+		if( $bHeadReturned ) {
+			$return .= '</script>'."\n";
 		}
-		$return .= '</script>';
 		return $return;
 	}
 
+	protected function _initDomain($domain, $langID) {
+		$domain = $this->_moduleName.'.lang.'.$langID.((strlen($domain)>0)?'.':'').$domain;
+		$arDomain = explode('.', $domain);
+		$initDomainChain = null;
+		foreach($arDomain as $nodeName) {
+			$initDomainChain .= ($initDomainChain===null)?$nodeName:'.'.$nodeName;
+			if( !array_key_exists($initDomainChain, $this->_arJSInitializedNodes) ) {
+				$this->_arJSInitializedNodes[$initDomainChain] = false;
+			}
+		}
+		$arNode = $this->_getNode($domain, $langID);
+		$this->__initDomain($arNode['CONTAINER'][$arNode['NODE_NAME']], $domain);
+	}
+	protected function __initDomain(&$refNode, $parentDomain) {
+		foreach($refNode as $nodeName => &$message) {
+			if( is_array($message) ) {
+				if( !array_key_exists($parentDomain.'.'.$nodeName, $this->_arJSInitializedNodes) ) {
+					$this->_arJSInitializedNodes[$parentDomain.'.'.$nodeName] = false;
+				}
+				$this->__initDomain($message, $parentDomain.'.'.$nodeName);
+			}
+		}
+	}
 
 
-	public function showDomain($domain = '', $langID = LANGUAGE_ID) {
+	public function showDomainScript($domain = '', $langID = LANGUAGE_ID) {
 		/**
 		 * @var \CMain $APPLICATION
 		 */
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent(array(&$this, 'getDomain'), $domain, $langID);
+		$APPLICATION->AddBufferContent(array(&$this, 'getDomainScript'), $domain, $langID);
 	}
 
-	public function getDomain($domain = '', $langID = LANGUAGE_ID) {
+	public function getDomainScript($domain = '', $langID = LANGUAGE_ID, $bSingleObject = false) {
 		if( $domain != '' && ! preg_match('~[a-z0-9A-Z\_](\.[a-z0-9A-Z\_]){0,9}~', $domain) ) {
-			return false;
+			return '';
 		}
+		$return = '<script type="text/javascript">'."\n";
 		$domain = $this->_moduleName.'.lang.'.$langID.((strlen($domain)>0)?'.':'').$domain;
-		$refDomain = $this->_getNode($domain);
-		return $domain.' = '.json_encode($refDomain['CONTAINER'][$refDomain['NODE_NAME']]);
+		$arNode = $this->_getNode($domain);
+		if($bSingleObject) {
+			$return .= $domain.' = '.json_encode($arNode['CONTAINER'][$arNode['NODE_NAME']]);
+		}
+		else {
+			$return .= $this->_encodeDomain($arNode['CONTAINER'][$arNode['NODE_NAME']], $domain);
+		}
+		$return .= '</script>'."\n";
+		return $return;
+	}
+
+	protected function _encodeDomain(&$refNode, $parentDomainChain) {
+		$jsString = '';
+		foreach( $refNode as $nodeName => &$message ) {
+			if( is_string($message) ) {
+				$jsString .= $parentDomainChain.'.'.$nodeName.' = "'.$message.'";'."\n";
+			}
+			elseif( is_array($message) ) {
+				$jsString .= $this->_encodeDomain($message, $parentDomainChain.'.'.$nodeName);
+			}
+		}
+		return $jsString;
 	}
 }
