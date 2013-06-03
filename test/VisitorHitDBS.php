@@ -7,13 +7,15 @@
  * To change this template use File | Settings | File Templates.
  */
 
+use OBX\Core\VisitorHitDBS;
+
 final class OBX_Test_VisitorHitDBS extends OBX_Core_TestCase {
 
 	static private $_VisitorsHitDBS = null;
 	static private $_arVisitorsHitsData = array();
 
 	public static function setUpBeforeClass() {
-		self::$_VisitorsHitDBS = OBX_VisitorHitDBS::getInstance();
+		self::$_VisitorsHitDBS = VisitorHitDBS::getInstance();
 		self::$_arVisitorsHitsData = array();
 	}
 

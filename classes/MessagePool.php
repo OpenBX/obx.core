@@ -10,7 +10,9 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-interface OBX_IMessagePool
+namespace OBX\Core;
+
+interface IMessagePool
 {
 	function addMessage($text, $code = 0);
 	function addWarning($text, $code = 0);
@@ -40,7 +42,7 @@ interface OBX_IMessagePool
 	function clearMessagePool();
 }
 
-interface OBX_IMessagePoolStatic
+interface IMessagePoolStatic
 {
 	static function addMessage($text, $code = 0);
 	static function addWarning($text, $code = 0);
@@ -70,7 +72,7 @@ interface OBX_IMessagePoolStatic
 	static function clearMessagePool();
 }
 
-class OBX_CMessagePool implements OBX_IMessagePool
+class CMessagePool implements IMessagePool
 {
 	protected $_arMessages = array();
 	protected $_countMessages = 0;
@@ -261,24 +263,24 @@ class OBX_CMessagePool implements OBX_IMessagePool
 
 
 /**
- *
+ * @package OBX\Core
  */
-class OBX_CMessagePoolStatic implements OBX_IMessagePoolStatic {
+class CMessagePoolStatic implements IMessagePoolStatic {
 	static protected $MessagePool = array();
 
 	/**
-	 * @return OBX_CMessagePool
+	 * @return CMessagePool
 	 */
 	final static public function getMessagePool() {
 		$className = get_called_class();
 		if( !isset(self::$MessagePool[$className]) ) {
-			self::$MessagePool[$className] = new OBX_CMessagePool;
+			self::$MessagePool[$className] = new CMessagePool;
 		}
 		return self::$MessagePool[$className];
 	}
 	final static public function setMessagePool($MessPool) {
 		$className = get_called_class();
-		if($MessPool instanceof OBX_CMessagePool) {
+		if($MessPool instanceof CMessagePool) {
 			self::$MessagePool[$className] = $MessPool;
 		}
 	}
@@ -348,20 +350,20 @@ class OBX_CMessagePoolStatic implements OBX_IMessagePoolStatic {
 	}
 }
 
-class OBX_CMessagePoolDecorator implements OBX_IMessagePool {
+class CMessagePoolDecorator implements IMessagePool {
 	protected $MessagePool = null;
 
 	/**
-	 * @return OBX_CMessagePool
+	 * @return CMessagePool
 	 */
 	public function getMessagePool() {
 		if($this->MessagePool == null) {
-			$this->MessagePool = new OBX_CMessagePool;
+			$this->MessagePool = new CMessagePool;
 		}
 		return $this->MessagePool;
 	}
 	public function setMessagePool($MessPool) {
-		if($MessPool instanceof OBX_CMessagePool) {
+		if($MessPool instanceof CMessagePool) {
 			$this->MessagePool = $MessPool;
 		}
 	}

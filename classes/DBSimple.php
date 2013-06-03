@@ -8,9 +8,11 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+namespace OBX\Core;
+
 IncludeModuleLangFile(__FILE__);
 
-interface OBX_IDBSimple
+interface IDBSimple
 {
 	//static function getInstance();
 	function add($arFields);
@@ -23,7 +25,7 @@ interface OBX_IDBSimple
 	function getLastQueryString();
 }
 
-interface OBX_IDBSimpleStatic
+interface IDBSimpleStatic
 {
 	//static function getInstance();
 	static function add($arFields);
@@ -36,12 +38,12 @@ interface OBX_IDBSimpleStatic
 	static function getLastQueryString();
 }
 
-abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_IDBSimpleStatic {
+abstract class DBSimpleStatic extends CMessagePoolStatic implements IDBSimpleStatic {
 	static protected $_arDBSimple = array();
-	final static public function __initDBSimple(OBX_DBSimple $DBSimple) {
+	final static public function __initDBSimple(DBSimple $DBSimple) {
 		$className = get_called_class();
 		if( !isset(self::$_arDBSimple[$className]) ) {
-			if($DBSimple instanceof OBX_DBSimple) {
+			if($DBSimple instanceof DBSimple) {
 				self::$_arDBSimple[$className] = $DBSimple;
 				self::setMessagePool($DBSimple->getMessagePool());
 			}
@@ -49,7 +51,7 @@ abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_
 	}
 
 	/**
-	 * @return OBX_DBSimple
+	 * @return DBSimple
 	 * @throws Exception
 	 */
 	final static public function getInstance() {
@@ -100,7 +102,7 @@ abstract class OBX_DBSimpleStatic extends OBX_CMessagePoolStatic implements OBX_
 	}
 }
 
-class OBX_DBSResult extends CDBResult {
+class DBSResult extends \CDBResult {
 	protected $_obxAbstractionName = null;
 	function __construct($DBResult = null) {
 		parent::__construct($DBResult);
@@ -115,7 +117,7 @@ class OBX_DBSResult extends CDBResult {
 	}
 }
 
-abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
+abstract class DBSimple extends CMessagePoolDecorator
 {
 	protected function __construct() {}
 	final protected function __clone() {}
@@ -125,7 +127,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	/**
 	 * @final
 	 * @static
-	 * @return OBX_DBSimple
+	 * @return DBSimple
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
@@ -776,7 +778,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ID;
 							$fieldValue = intval($fieldValue);
-							$rs = CIBlock::GetByID($fieldValue);
+							$rs = \CIBlock::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 								$bValueIsCorrect = true;
@@ -785,7 +787,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						case self::FLD_T_IBLOCK_PROP_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_PROP_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_PROP_ID;
-							$rs = CIBlockProperty::GetByID($fieldValue);
+							$rs = \CIBlockProperty::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 								$bValueIsCorrect = true;
@@ -794,7 +796,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						case self::FLD_T_IBLOCK_ELEMENT_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ELEMENT_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ELEMENT_ID;
-							$rs = CIBlockElement::GetByID($fieldValue);
+							$rs = \CIBlockElement::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 								$bValueIsCorrect = true;
@@ -803,7 +805,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						case self::FLD_T_IBLOCK_SECTION_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_SECTION_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_SECTION_ID;
-							$rs = CIBlockSection::GetByID($fieldValue);
+							$rs = \CIBlockSection::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 								$bValueIsCorrect = true;
@@ -812,7 +814,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						case self::FLD_T_USER_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_USER_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_USER_ID;
-							$rs = CUser::GetByID($fieldValue);
+							$rs = \CUser::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 								$bValueIsCorrect = true;
@@ -821,7 +823,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 						case self::FLD_T_GROUP_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_GROUP_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_GROUP_ID;
-							$rs = CGroup::GetByID($fieldValue);
+							$rs = \CGroup::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
 								$bValueIsCorrect = true;
@@ -1053,7 +1055,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @param null | array $arPagination - массив для формирования постраничной навигации
 	 * @param null | array $arSelect - выбираемые поля
 	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
-	 * @return bool | OBX_DBSResult
+	 * @return bool | DBSResult
 	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		global $DB;
@@ -1232,7 +1234,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 		$sqlList = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sJoin.$sWhere.$sGroupBy.$sSort;
 		$this->_lastQueryString = $sqlList;
 		$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		$res = new OBX_DBSResult($res);
+		$res = new DBSResult($res);
 		$res->setAbstractionName(get_called_class());
 		return $res;
 	}
@@ -1273,7 +1275,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	 * @param string |int | float $PRIMARY_KEY_VALUE
 	 * @param array | null $arSelect
 	 * @param bool $bReturnCDBResult
-	 * @return array | OBX_DBSResult
+	 * @return array | DBSResult
 	 */
 	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false) {
 		global $DB;
@@ -1388,7 +1390,7 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 			}
 			return array();
 		}
-		$rsList = new OBX_DBSResult($rsList);
+		$rsList = new DBSResult($rsList);
 		$rsList->setAbstractionName(get_called_class());
 		return $rsList;
 	}
@@ -1621,6 +1623,12 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onBeforeUpdate(&$arFields, &$arCheckResult) { return true; }
 	protected function _onBeforeExecUpdate(&$arFields, &$arCheckResult) { return true; }
 	protected function _onAfterUpdate(&$arFields) { return true; }
+
+	/**
+	 * @param array $arFields
+	 * @param bool $bNotUpdateUniqueFields
+	 * @return bool
+	 */
 	public function update($arFields, $bNotUpdateUniqueFields = false) {
 		global $DB;
 		$bContinueAfterEvent = $this->_onStartUpdate($arFields); if(!$bContinueAfterEvent) return false;
@@ -1943,6 +1951,12 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	protected function _onStartDeleteByFilter(&$arFilter, &$bCheckExistence) { return true; }
 	protected function _onBeforeDeleteByFilter(&$arFilter, &$bCheckExistence, &$arDelete) { return true; }
 	protected function _onAfterDeleteByFilter(&$arFilter, &$bCheckExistence) { return true; }
+
+	/**
+	 * @param array $arFilter
+	 * @param bool $bCheckExistence
+	 * @return bool
+	 */
 	public function deleteByFilter($arFilter, $bCheckExistence = true) {
 		global $DB;
 
@@ -1984,11 +1998,11 @@ abstract class OBX_DBSimple extends OBX_CMessagePoolDecorator
 	}
 
 	/**
-	 * @param OBX_DBSResult $rs
+	 * @param DBSResult $rs
 	 * @param array $arErrors
 	 * @return bool
 	 */
-	public function deleteByDBResult(OBX_DBSResult $rs, Array &$arErrors = null) {
+	public function deleteByDBResult(DBSResult $rs, Array &$arErrors = null) {
 		$bResult = false;
 		$bSuccess = false;
 		$iCount = 0;

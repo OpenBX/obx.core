@@ -8,9 +8,11 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+namespace OBX\Core;
+
 IncludeModuleLangFile(__FILE__);
 
-class OBX_VisitorDBS extends OBX_DBSimple
+class VisitorDBS extends DBSimple
 {
 	protected $_arTableList = array(
 		'V' => 'obx_visitors'
@@ -131,5 +133,5 @@ class OBX_VisitorDBS extends OBX_DBSimple
 	}
 }
 
-class OBX_VisitorList extends OBX_DBSimpleStatic {}
-OBX_VisitorList::__initDBSimple(OBX_VisitorDBS::getInstance());
+class VisitorList extends DBSimpleStatic {}
+VisitorList::__initDBSimple(VisitorDBS::getInstance());

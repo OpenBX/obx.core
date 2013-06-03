@@ -8,6 +8,8 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+namespace OBX\Core;
+
 IncludeModuleLangFile(__FILE__);
 
 
@@ -15,10 +17,16 @@ IncludeModuleLangFile(__FILE__);
  * Внимание! Необходимо учитывать, что у нескольких посетителей с разным COOKIE_ID может быть одинаковый USER_ID.
  * Это возможно, если пользователь очищал куки и снова зашел на сайт, получив новый COOKIE_ID, а затем авторизовался.
  */
-class OBX_Visitor extends OBX_CMessagePoolDecorator
+class Visitor extends CMessagePoolDecorator
 {
 	const VISITOR_COOKIE_NAME = "OBX_VISITOR_COOKIE_ID";
+
+	/**
+	 * @var VisitorDBS
+	 * @access protected
+	 */
 	protected $_VisitorDBS;
+
 	protected $_arFields = array();
 	protected $_bDataIsOK = true;
 
@@ -27,7 +35,7 @@ class OBX_Visitor extends OBX_CMessagePoolDecorator
 	 */
 	public function __construct($arFields = array()) {
 		global $USER;
-		$this->_VisitorDBS = OBX_VisitorDBS::getInstance();
+		$this->_VisitorDBS = VisitorDBS::getInstance();
 		$this->_resetFields();
 		$arVisitor = array();
 		$cookieID = null;

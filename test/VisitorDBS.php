@@ -10,28 +10,31 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+use OBX\Core\Visitor;
+use OBX\Core\VisitorDBS;
+
 final class OBX_Test_VisitorDBS extends OBX_Core_TestCase {
 
 	static private $_VisitorsDBS = null;
 	static private $_arVisitorsData = array();
 
 	public static function setUpBeforeClass() {
-		self::$_VisitorsDBS = OBX_VisitorDBS::getInstance();
+		self::$_VisitorsDBS = VisitorDBS::getInstance();
 		self::$_arVisitorsData = array(
 			array(
-				"COOKIE_ID" => OBX_Visitor::generationCookieID(),
+				"COOKIE_ID" => Visitor::generationCookieID(),
 				"USER_ID" => "",
 			),
 			array(
-				"COOKIE_ID" => OBX_Visitor::generationCookieID(),
+				"COOKIE_ID" => Visitor::generationCookieID(),
 				"USER_ID" => "2",
 			),
 			array(
-				"COOKIE_ID" => OBX_Visitor::generationCookieID(),
+				"COOKIE_ID" => Visitor::generationCookieID(),
 				"USER_ID" => "",
 			),
 			array(
-				"COOKIE_ID" => OBX_Visitor::generationCookieID(),
+				"COOKIE_ID" => Visitor::generationCookieID(),
 				"USER_ID" => "1",
 			),
 		);
@@ -68,9 +71,9 @@ final class OBX_Test_VisitorDBS extends OBX_Core_TestCase {
 	 * @depends testAddVisitor
 	 */
 	public function testUpdateVisitor() {
-		self::$_arVisitorsData[0]["COOKIE_ID"] = OBX_Visitor::generationCookieID();
+		self::$_arVisitorsData[0]["COOKIE_ID"] = Visitor::generationCookieID();
 		self::$_arVisitorsData[0]["USER_ID"] = "3";
-		self::$_arVisitorsData[1]["COOKIE_ID"] = OBX_Visitor::generationCookieID();
+		self::$_arVisitorsData[1]["COOKIE_ID"] = Visitor::generationCookieID();
 		self::$_arVisitorsData[1]["USER_ID"] = "1";
 		for ($i = 0; $i < 2; $i++)
 			if (! self::$_VisitorsDBS->update(self::$_arVisitorsData[$i])) {

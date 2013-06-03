@@ -8,6 +8,8 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+namespace OBX\Core;
+
 IncludeModuleLangFile(__FILE__);
 
 /*
@@ -19,7 +21,7 @@ IncludeModuleLangFile(__FILE__);
  *      SITE_ID (varchar 5)
  *      URL (text) - часть адреса после первого слеша /
  */
-class OBX_VisitorHitDBS extends OBX_DBSimple
+class VisitorHitDBS extends DBSimple
 {
 	protected $_arTableList = array(
 		'H' => 'obx_visitors_hits'

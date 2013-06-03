@@ -464,7 +464,7 @@ namespace OBX\Core {
 						'CONTENT_FILE' => $contentFile
 					);
 					if(!self::$_bViewContentDispatcherActive) {
-						AddEventHandler('main', 'OnEpilog', 'OBX_Tools::dispatchViewTargetContents');
+						AddEventHandler('main', 'OnEpilog', 'OBX\Core\Tools::dispatchViewTargetContents');
 						self::$_bViewContentDispatcherActive = true;
 					}
 				}
@@ -515,10 +515,10 @@ namespace OBX\Core {
 		}
 		static public function showLessHead() {
 			global $APPLICATION;
-			$APPLICATION->AddBufferContent('OBX_Tools::getLessHead');
+			$APPLICATION->AddBufferContent('OBX\Core\Tools::getLessHead');
 			self::$_bLessFilesConnected = true;
 			if( self::$_bConnectLessJSFileAfterLessFiles ) {
-				$APPLICATION->AddBufferContent('OBX_Tools::getLessJSHead');
+				$APPLICATION->AddBufferContent('OBX\Core\Tools::getLessJSHead');
 				self::$_bConnectLessJSFileAfterLessFiles = false;
 				self::$_bLessJSHeadConnected = true;
 			}
@@ -529,7 +529,7 @@ namespace OBX\Core {
 				return;
 			}
 			global $APPLICATION;
-			$APPLICATION->AddBufferContent("OBX_Tools::getLessJSHead");
+			$APPLICATION->AddBufferContent('OBX\Core\Tools::getLessJSHead');
 			self::$_bLessJSHeadConnected = true;
 		}
 		static public function setLessJSPath($lessJSPath, $bShowLessHead = true) {
@@ -718,7 +718,7 @@ namespace OBX\Core {
 		}
 		static public function showDeferredJS() {
 			global $APPLICATION;
-			$APPLICATION->AddBufferContent('OBX_Tools::getDeferredJS');
+			$APPLICATION->AddBufferContent('OBX\Core\Tools::getDeferredJS');
 		}
 		/**
 		 * @static
@@ -728,7 +728,7 @@ namespace OBX\Core {
 		 */
 		static public function addComponentDeferredJS($component, $jsFilePath = null) {
 			/**
-			 * @var CMain $APPLICATION
+			 * @var \CMain $APPLICATION
 			 */
 			$templateFolder = null;
 			if($component instanceof \CBitrixComponent) {
