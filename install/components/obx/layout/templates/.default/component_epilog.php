@@ -9,4 +9,6 @@
  ** @mailto tashiro@yandex.ru       **
  *************************************/
 
-OBX\Core\Tools::addComponentLess(__FILE__);
+OBX_Tools::addComponentLess(__FILE__);
+
+?>
