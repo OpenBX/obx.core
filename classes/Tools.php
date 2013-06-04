@@ -254,7 +254,7 @@ namespace OBX\Core {
 		}
 
 		/**
-		 * Получить индекс массива
+		 * Построить индекс массива
 		 * @param $arList
 		 * @param string | array $str_arKey - ключ по которому проиндексировать массив
 		 * @param bool $bUniqueKeys
@@ -268,6 +268,9 @@ namespace OBX\Core {
 				$str_arKey = array($str_arKey);
 			}
 			foreach($arList as &$arItem) {
+				if( is_array($arItem) ) {
+					$arItem['__THIS_IS_VALUE_ARRAY'] = true;
+				}
 				$bFirst = true;
 				$complexKey = '';
 				foreach($str_arKey as &$keyItem) {
@@ -290,7 +293,7 @@ namespace OBX\Core {
 					}
 				}
 				else {
-					if( is_array($arListIndex[$complexKey]) ) {
+					if( is_array($arListIndex[$complexKey]) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arListIndex[$complexKey]) ) {
 						if($bSetReferences) {
 							$arListIndex[$complexKey][] = &$arItem;
 						}
@@ -300,19 +303,39 @@ namespace OBX\Core {
 					}
 					else {
 						if($bSetReferences) {
-							$elementBackup = &$arListIndex[$complexKey];
-							$arListIndex[$complexKey] = array(&$elementBackup);
-							unset($elementBackup);
+							$arNowElementIsArray = array(&$arListIndex[$complexKey]);
+							$arListIndex[$complexKey] = &$arNowElementIsArray;
+							$arListIndex[$complexKey][] = &$arItem;
 						}
 						else {
 							$arListIndex[$complexKey] = array($arListIndex[$complexKey]);
+							$arListIndex[$complexKey][] = $arItem;
 						}
+					}
+				}
+			}
+			self::__removeTmpDataFromListIndex($arListIndex);
+			if(!$bSetReferences) {
+				foreach($arList as &$arItem) {
+					if( is_array($arItem) ) {
+						unset($arItem['__THIS_IS_VALUE_ARRAY']);
 					}
 				}
 			}
 			return $arListIndex;
 		}
 
+		static protected function __removeTmpDataFromListIndex(&$arListIndex) {
+			foreach($arListIndex as $key => &$arItem) {
+				if( is_array($arItem) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arItem) ) {
+					self::__removeTmpDataFromListIndex($arItem);
+				}
+				else {
+					unset($arItem['__THIS_IS_VALUE_ARRAY']);
+				}
+			}
+			return;
+		}
 
 		//////////// РАБОТА С ФАЙЛАМИ И ПАПКАМИ
 		/**

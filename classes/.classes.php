@@ -32,5 +32,6 @@ $arModuleClasses = array(
 	,'OBX\Core\Visitor'						=> 'classes/Visitor.php'
 	,'OBX\Core\VisitorHitDBS'				=> 'classes/VisitorHitList.php'
 	,'OBX\Core\VisitorHitList'				=> 'classes/VisitorHitList.php'
+	,'OBX\Core\ModDeps'						=> 'classes/ModDeps.php'
 );
 return $arModuleClasses;

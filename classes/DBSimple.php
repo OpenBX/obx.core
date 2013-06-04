@@ -1765,9 +1765,12 @@ abstract class DBSimple extends CMessagePoolDecorator
 		$bContinueAfterEvent = $this->_onBeforeExecUpdate($arFields, $arCheckResult)!=false; if(!$bContinueAfterEvent) return false;
 		$strUpdate = $DB->PrepareUpdate($mainEntityTableName, $arFields);
 		$strUpdateSetNullFields = '';
+		$bFirstI = true;
+		$strUpdateLen = strlen($strUpdate);
 		foreach($arFields as $fieldName => &$fieldValue) {
 			if($fieldValue === null) {
-				$strUpdateSetNullFields .= ', `'.$fieldName.'` = NULL';
+				$strUpdateSetNullFields .= (($strUpdateLen<1&&$bFirstI)?' ':', ').'`'.$fieldName.'` = NULL';
+				$bFirstI = false;
 			}
 		}
 		$strUpdate = 'UPDATE `'

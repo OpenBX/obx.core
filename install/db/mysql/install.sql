@@ -1,3 +1,11 @@
+-- create table if not exists obx_moddeps (
+-- 	ID int(18) not null auto_increment,
+-- 	MODULE_NAME
+-- 	MODULE_VERSION
+-- 	DEPMOD_NAME
+-- 	DEPMOD_MIN_VERSION
+-- );
+
 -- Посетители сайта
 create table if not exists obx_visitors (
   ID int(18) not null auto_increment,

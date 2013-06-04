@@ -3,10 +3,8 @@
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
  **         Maksim S. Makarov aka pr0n1x      **
- **         Artem P. Morozov  aka tashiro     **
  ** @License GPLv3                            **
  ** @mailto rootfavell@gmail.com              **
- ** @mailto tashiro@yandex.ru                 **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
@@ -119,7 +117,7 @@ class OBX_Build {
 		if( is_file($buildModuleDir.'/install/resources.php') ) {
 			$strResources = file_get_contents($buildModuleDir.'/install/resources.php');
 			$arTmpResources = explode("\n", $strResources);
-			//print_r($arTmpResources);
+			//rint_r($arTmpResources);
 			$configSection = '__UNKNOWN__';
 			$lineNumber = 0;
 			
@@ -681,5 +679,171 @@ if(!defined("BX_ROOT")) {
 			return false;
 		$index = strlen($haystack) - strlen($needle) - $index;
 		return $index;
+	}
+
+	static public function replaceComponentParameters($path, $arComponentReplaces) {
+		if( !file_exists($path) ) {
+			return false;
+		}
+		$regComponent = '(\$APPLICATION\-\>IncludeComponent\((?:[\s\S]*?)\))';
+		$regParse4Components = '~[\s\S]*?'
+			.$regComponent
+		.'[\s\S]*?~mi';
+		$fileContent = file_get_contents($path);
+		preg_match_all($regParse4Components, $fileContent, $arMatches);
+		$arComponents = $arMatches[1];
+		$arComponentsRaw = array();
+		//$evalString = '$arComponentsRaw = array();'."\n";
+		$evalString = '';
+		$regVariable = '#\=\>[\s]*?(\$[a-zA-Z]([a-zA-Z0-9\_]|(\["|"\]))*)#i';
+		foreach($arComponents as $strComponentCall) {
+			$strComponentCall = str_replace('$APPLICATION->IncludeComponent(', '$arComponentsRaw[] = array(', $strComponentCall).');'."\n";
+			if( preg_match($regVariable, $strComponentCall) ) {
+				$strComponentCall = preg_replace($regVariable, '=> \'$1\'', $strComponentCall);
+			}
+			$evalString .= $strComponentCall;
+		}
+		eval($evalString);
+		$arComponents = array();
+		$componentIndex = 0;
+		foreach($arComponentsRaw as &$arCmpRaw) {
+			$arComponents[$componentIndex] = array(
+				'NAME' => $arCmpRaw[0],
+				'TEMPLATE' => (strlen(trim($arCmpRaw[1]))<1)?'.default':$arCmpRaw[1],
+				'PARAMS' => $arCmpRaw[2],
+				'INDEX' => $componentIndex
+			);
+			$componentIndex++;
+		}
+
+		$arComponentIndex = self::getListIndex($arComponents, array('NAME', 'TEMPLATE'), false, true);
+
+		foreach($arComponentReplaces as &$arComponentReplace) {
+			if( strlen(trim($arComponentReplace['TEMPLATE']))<1 ) {
+				$arComponentReplace['TEMPLATE'] = '.default';
+			}
+			$cmpComplexKey = $arComponentReplace['NAME'].'_'.$arComponentReplace['TEMPLATE'];
+			if( array_key_exists($cmpComplexKey, $arComponentIndex) ) {
+				if( array_key_exists('NAME', $arComponentIndex[$cmpComplexKey]) && $arComponentReplace['NUMBER'] == 0) {
+					$arComponentIndex[$cmpComplexKey]['PARAMS'] = array_merge(
+						$arComponentIndex[$cmpComplexKey]['PARAMS'], $arComponentReplace['PARAMS']
+					);
+				}
+				elseif( array_key_exists($arComponentReplace['NUMBER'], $arComponentIndex[$cmpComplexKey]) ) {
+					$arComponentIndex[$cmpComplexKey][$arComponentReplace['NUMBER']]['PARAMS'] = array_merge(
+						$arComponentIndex[$cmpComplexKey][$arComponentReplace['NUMBER']]['PARAMS'],
+						$arComponentReplace['PARAMS']
+					);
+				}
+			}
+		}
+
+		$arFileContent = preg_split('~'.$regComponent.'~im', $fileContent, -1, PREG_SPLIT_OFFSET_CAPTURE);
+		if( count($arFileContent) < (count($arComponents)+1) ) {
+			return false;
+		}
+		$newFileContent = '';
+		foreach($arFileContent as $key => $arContentChank) {
+			$newFileContent .= $arContentChank[0];
+			if( array_key_exists($key, $arComponents) ) {
+				$newFileContent .= '$APPLICATION->IncludeComponent('."\n";
+				$newFileContent .= "\t".'"'.$arComponents[$key]['NAME'].'",'."\n";
+				$newFileContent .= "\t".'"'.$arComponents[$key]['TEMPLATE'].'",'."\n";
+				$newFileContent .= "\t".'Array('."\n";
+				foreach($arComponents[$key]['PARAMS'] as $paramName => $paramValue) {
+					if( substr($paramValue, 0, 1) != '$' ) {
+						$paramValue = '"'.$paramValue.'"';
+					}
+					$newFileContent .= "\t\t".'"'.$paramName.'" => '.$paramValue.','."\n";
+				}
+				$newFileContent .= "\t".')';
+			}
+		}
+		//echo $newFileContent;
+		file_put_contents($path, $newFileContent);
+	}
+
+	/**
+	 * Построить индекс массива
+	 * @param $arList
+	 * @param string | array $str_arKey - ключ по которому проиндексировать массив
+	 * @param bool $bUniqueKeys
+	 * @param bool $bSetReferences
+	 * @return array
+	 */
+	static function getListIndex(&$arList, $str_arKey, $bUniqueKeys = true, $bSetReferences = false ) {
+		$arListIndex = array();
+		$complexKey = null;
+		if( !is_array($str_arKey) ) {
+			$str_arKey = array($str_arKey);
+		}
+		foreach($arList as &$arItem) {
+			if( is_array($arItem) ) {
+				$arItem['__THIS_IS_VALUE_ARRAY'] = true;
+			}
+			$bFirst = true;
+			$complexKey = '';
+			foreach($str_arKey as &$keyItem) {
+				$complexKey .= ($bFirst?'':'_');
+				$bFirst = false;
+				if( ! array_key_exists($keyItem, $arItem) || empty($arItem[$keyItem]) ) {
+					$complexKey .= 'NULL';
+				}
+				else {
+					$complexKey .= $arItem[$keyItem];
+				}
+			}
+
+			if( $bUniqueKeys || !array_key_exists($complexKey, $arListIndex) ) {
+				if($bSetReferences) {
+					$arListIndex[$complexKey] = &$arItem;
+				}
+				else {
+					$arListIndex[$complexKey] = $arItem;
+				}
+			}
+			else {
+				if( is_array($arListIndex[$complexKey]) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arListIndex[$complexKey]) ) {
+					if($bSetReferences) {
+						$arListIndex[$complexKey][] = &$arItem;
+					}
+					else {
+						$arListIndex[$complexKey][] = $arItem;
+					}
+				}
+				else {
+					if($bSetReferences) {
+						$arNowElementIsArray = array(&$arListIndex[$complexKey]);
+						$arListIndex[$complexKey] = &$arNowElementIsArray;
+						$arListIndex[$complexKey][] = &$arItem;
+					}
+					else {
+						$arListIndex[$complexKey] = array($arListIndex[$complexKey]);
+						$arListIndex[$complexKey][] = $arItem;
+					}
+				}
+			}
+		}
+		self::__removeTmpDataFromListIndex($arListIndex);
+		if(!$bSetReferences) {
+			foreach($arList as &$arItem) {
+				if( is_array($arItem) ) {
+					unset($arItem['__THIS_IS_VALUE_ARRAY']);
+				}
+			}
+		}
+		return $arListIndex;
+	}
+
+	static protected function __removeTmpDataFromListIndex(&$arListIndex) {
+		foreach($arListIndex as $key => &$arItem) {
+			if( is_array($arItem) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arItem) ) {
+				self::__removeTmpDataFromListIndex($arItem);
+			}
+			else {
+				unset($arItem['__THIS_IS_VALUE_ARRAY']);
+			}
+		}
+		return;
 	}
 }
