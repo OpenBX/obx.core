@@ -65,9 +65,15 @@ if(typeof(jQuery) == 'undefined') jQuery = false;
 	};
 	
 	// jQuery prototype implementation
-	$.fn.OBX_Fixing = function(top, conf){
+	$.fn.OBX_Fixing = function(top, conf, margin){
 		top=parseInt(top);
-		if(!top || top<0) return false;
+		margin = parseInt(margin);
+		if (top|0 == 0){
+			top = $(this).offset().top;
+		}
+		if (margin|0 != 0) {
+			top +=margin;
+		}
 
 		// jq namespace
 		if(!$.hasOwnProperty('obx')){

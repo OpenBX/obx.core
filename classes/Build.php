@@ -751,7 +751,7 @@ if(!defined("BX_ROOT")) {
 				$newFileContent .= '$APPLICATION->IncludeComponent('."\n";
 				$newFileContent .= "\t".'"'.$arComponents[$key]['NAME'].'",'."\n";
 				$newFileContent .= "\t".'"'.$arComponents[$key]['TEMPLATE'].'",'."\n";
-				$newFileContent .= "\t".self::convertArray2PhpCode($arComponents[$key]['PARAMS'], "\t");
+				$newFileContent .= "\t".self::convertArray2PhpCode($arComponents[$key]['PARAMS'], "\t")."\n";
 				$newFileContent .= ');';
 			}
 		}
