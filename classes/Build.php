@@ -685,7 +685,9 @@ if(!defined("BX_ROOT")) {
 		if( !file_exists($path) ) {
 			return false;
 		}
-		$regComponent = '(\$APPLICATION\-\>IncludeComponent\((?:[\s\S]*?)\))';
+		$regComponent = '('
+			.'\$APPLICATION\-\>IncludeComponent\((?:[\s\S]*?)\)\;'
+		.')';
 		$regParse4Components = '~[\s\S]*?'
 			.$regComponent
 		.'[\s\S]*?~mi';
@@ -697,7 +699,7 @@ if(!defined("BX_ROOT")) {
 		$evalString = '';
 		$regVariable = '#\=\>[\s]*?(\$[a-zA-Z]([a-zA-Z0-9\_]|(\["|"\]))*)#i';
 		foreach($arComponents as $strComponentCall) {
-			$strComponentCall = str_replace('$APPLICATION->IncludeComponent(', '$arComponentsRaw[] = array(', $strComponentCall).');'."\n";
+			$strComponentCall = str_replace('$APPLICATION->IncludeComponent(', '$arComponentsRaw[] = array(', $strComponentCall)."\n";
 			if( preg_match($regVariable, $strComponentCall) ) {
 				$strComponentCall = preg_replace($regVariable, '=> \'$1\'', $strComponentCall);
 			}
@@ -749,14 +751,8 @@ if(!defined("BX_ROOT")) {
 				$newFileContent .= '$APPLICATION->IncludeComponent('."\n";
 				$newFileContent .= "\t".'"'.$arComponents[$key]['NAME'].'",'."\n";
 				$newFileContent .= "\t".'"'.$arComponents[$key]['TEMPLATE'].'",'."\n";
-				$newFileContent .= "\t".'Array('."\n";
-				foreach($arComponents[$key]['PARAMS'] as $paramName => $paramValue) {
-					if( substr($paramValue, 0, 1) != '$' ) {
-						$paramValue = '"'.$paramValue.'"';
-					}
-					$newFileContent .= "\t\t".'"'.$paramName.'" => '.$paramValue.','."\n";
-				}
-				$newFileContent .= "\t".')';
+				$newFileContent .= "\t".self::convertArray2PhpCode($arComponents[$key]['PARAMS'], "\t");
+				$newFileContent .= ');';
 			}
 		}
 		//echo $newFileContent;
@@ -845,5 +841,34 @@ if(!defined("BX_ROOT")) {
 			}
 		}
 		return;
+	}
+
+	/**
+	 * Возвращает строку с php-кодом массива переданного на вход
+	 * @param Array $array - входной массив, для вывода в виде php-кода
+	 * @param String $whiteOffset - отступ от начала каждй строки(для красоты)
+	 * @return string
+	 * @author Maksim S. Makarov aka pr0n1x
+	 * @link https://code.google.com/p/scriptacid/
+	 * @link https://code.google.com/p/scriptacid/source/browse/branches/0.1/scriptacid/core/lib/class.ComponentTools.php
+	 * @license GPLv3
+	 * @created 12 apr 2011
+	 * @modified 4 jun 2013
+	 */
+	static protected function convertArray2PhpCode($array, $whiteOffset = '') {
+		$strResult = "array(\n";
+		foreach($array as $paramName => &$paramValue) {
+			if(!is_array($paramValue)) {
+				if( substr($paramValue, 0, 1) != '$' ) {
+					$paramValue = '"'.$paramValue.'"';
+				}
+				$strResult .= $whiteOffset."\t\"".$paramName."\" => ".$paramValue.",\n";
+			}
+			else {
+				$strResult .= $whiteOffset."\t\"".$paramName."\" => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t").",\n";
+			}
+		}
+		$strResult .= $whiteOffset.")";
+		return $strResult;
 	}
 }
