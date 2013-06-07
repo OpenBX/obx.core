@@ -486,8 +486,15 @@ class OBX_Build {
 					}
 				}
 			}
+			$arFolderCreated = array();
 			foreach($this->_arResources as &$arResource) {
 				foreach($arResource['FILES'] as $fsEntryName) {
+					if( !in_array($arResource['INSTALL_FOLDER'], $arFolderCreated) ) {
+						$backInstallCode .= 'if( ! is_dir($_SERVER["DOCUMENT_ROOT"]."'.$arResource['INSTALL_FOLDER'].'") ) {'
+							."\n\t".'@mkdir($_SERVER["DOCUMENT_ROOT"]."'.$arResource['INSTALL_FOLDER'].'", BX_DIR_PERMISSIONS, true);'
+							."\n".'}'."\n";
+						$arFolderCreated[] = $arResource['INSTALL_FOLDER'];
+					}
 					$backInstallCode .= 'OBX_CopyDirFilesEx('
 						.'$_SERVER["DOCUMENT_ROOT"]."'
 							.$arResource['TARGET_FOLDER'].'/'.$fsEntryName
