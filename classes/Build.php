@@ -322,6 +322,7 @@ class OBX_Build {
 				$DependencyModule->generateInstallCode();
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
+				self::DeleteDirFilesEx($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName());
 				self::CopyDirFilesEx(
 					 $this->_modulesDir.'/'.$DependencyModule->getModuleName()
 					,$this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName()
@@ -460,6 +461,10 @@ class OBX_Build {
 					'if( is_file('.$depBackInstallFilePathCode.') ) {'."\n"
 					."\t".'require_once '.$depBackInstallFilePathCode.";\n"
 					."}\n";
+				$backInstallCode .= 'DeleteDirFilesEx("'
+					.'/bitrix/modules/'.$this->getModuleName()
+					.'/install/modules/'.$DependencyModule->getModuleName()
+				.'");'."\n";
 				$backInstallCode .=
 					'OBX_CopyDirFilesEx('
 						.'$_SERVER["DOCUMENT_ROOT"]'
