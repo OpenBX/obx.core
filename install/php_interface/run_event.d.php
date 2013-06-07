@@ -1,13 +1,12 @@
 <?php
-/*************************************
- ** @product OBX:Core Bitrix Module **
- ** @authors                        **
- **         Maksim S. Makarov       **
- **         Morozov P. Artem        **
- ** @License GPLv3                  **
- ** @mailto rootfavell@gmail.com    **
- ** @mailto tashiro@yandex.ru       **
- *************************************/
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @License GPLv3                            **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
 class OBX_EventD {
 	const PATH_TO_USRINC_DIR = "/bitrix/php_interface/";

@@ -1,11 +1,12 @@
 <?php
-/**
- * Created by JetBrains PhpStorm.
- * User: maximum
- * Date: 26.04.13
- * Time: 16:34
- * To change this template use File | Settings | File Templates.
- */
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @License GPLv3                            **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
 use OBX\Core\VisitorHitDBS;
 
