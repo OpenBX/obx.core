@@ -275,7 +275,13 @@ class OBX_Build {
 
 	static protected function isEmptyDir($fullPath, $bRecursiveCheck4Files = false) {
 		$bEmpty = true;
-		while (($fsEntry = readdir($fullPath)) !== false) {
+		if(!is_dir($fullPath)) {
+			return false;
+		}
+		if( ! ($handle = opendir($fullPath)) ) {
+			return false;
+		}
+		while( ($fsEntry = readdir($handle)) !== false ) {
 			if( $fsEntry == '.' || $fsEntry == '..' ) continue;
 			if( is_dir($fullPath.'/'.$fsEntry) ) {
 				if($bRecursiveCheck4Files) {
@@ -292,18 +298,20 @@ class OBX_Build {
 		return $bEmpty;
 	}
 
-	static protected function deleteEmptyFSBranches($fullPath) {
-		while (($fsEntry = readdir($fullPath)) !== false) {
-			if( $fsEntry == '.' || $fsEntry == '..' ) continue;
-			if( is_dir($fullPath.'/'.$fsEntry) ) {
-				$bEmpty = self::isEmptyDir($fullPath.'/'.$fsEntry, false);
-			}
-			else {
-				$bEmpty = false;
-			}
-		}
-		return $bEmpty;
-	}
+//	static protected function deleteEmptyFSBranches($fullPath) {
+//		while (($fsEntry = readdir($fullPath)) !== false) {
+//			if( $fsEntry == '.' || $fsEntry == '..' ) continue;
+//			if( is_dir($fullPath.'/'.$fsEntry) ) {
+//				if( self::isEmptyDir($fullPath.'/'.$fsEntry, false) ) {
+//
+//				}
+//			}
+//			else {
+//				$bEmpty = false;
+//			}
+//		}
+//		return $bEmpty;
+//	}
 
 	public function backInstallResources() {
 		if( count($this->_arDepModules) ) {
@@ -328,11 +336,19 @@ class OBX_Build {
 					$arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install'
 					&& $arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install/'
 				) {
-					//self::DeleteDirFilesEx($arResource['INSTALL_FOLDER']);
+					foreach($arResource['INSTALL_FILES_EXIST'] as $installFSEntry) {
+						self::DeleteDirFilesEx($installFSEntry);
+					}
+					if( self::isEmptyDir($this->_docRootDir.$arResource['INSTALL_FOLDER'], true) ) {
+						self::DeleteDirFilesEx($arResource['INSTALL_FOLDER']);
+					}
 				}
 			}
 			foreach($this->_arResources as &$arResource) {
 				foreach($arResource['FILES'] as $fsEntryName) {
+					if( ! is_dir($this->_docRootDir.$arResource['INSTALL_FOLDER']) ) {
+						@mkdir($this->_docRootDir.$arResource['INSTALL_FOLDER'], BX_DIR_PERMISSIONS, true);
+					}
 					self::CopyDirFilesEx(
 						 $this->_docRootDir.$arResource['TARGET_FOLDER'].'/'.$fsEntryName
 						,$this->_docRootDir.$arResource['INSTALL_FOLDER'].'/'
@@ -462,7 +478,12 @@ class OBX_Build {
 					$arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install'
 					&& $arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install/'
 				) {
-					$backInstallCode .= 'DeleteDirFilesEx("'.$arResource['INSTALL_FOLDER']."\");\n";
+					foreach($arResource['INSTALL_FILES_EXIST'] as $installFSEntry) {
+						$backInstallCode .= 'DeleteDirFilesEx("'.$installFSEntry."\");\n";
+					}
+					if( self::isEmptyDir($this->_docRootDir.$arResource['INSTALL_FOLDER'], true) ) {
+						$backInstallCode .= 'DeleteDirFilesEx("'.$arResource['INSTALL_FOLDER']."\");\n";
+					}
 				}
 			}
 			foreach($this->_arResources as &$arResource) {
