@@ -4,7 +4,7 @@
  ** @authors                        **
  **         Maksim S. Makarov       **
  **         Morozov P. Artem        **
- ** @License GPLv3                  **
+ ** @license Affero GPLv3           **
  ** @mailto rootfavell@gmail.com    **
  ** @mailto tashiro@yandex.ru       **
  *************************************/
