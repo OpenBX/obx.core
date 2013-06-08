@@ -771,6 +771,7 @@ if(!defined("BX_ROOT")) {
 			}
 			$evalString .= $strComponentCall;
 		}
+		$component = null;
 		eval($evalString);
 		$arComponents = array();
 		$componentIndex = 0;
