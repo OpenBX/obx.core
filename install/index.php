@@ -322,6 +322,9 @@ class obx_core extends CModule
 			UnRegisterModule($this->MODULE_ID);
 		}
 	}
+	public function isInstalledModule() {
+		return IsModuleInstalled($this->MODULE_ID);
+	}
 
 	static public function getModuleCurDir() {
 		static $modCurDir = null;
