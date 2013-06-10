@@ -373,7 +373,7 @@ class OBX_Build {
 				$DependencyModule->generateInstallCode();
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
-				self::DeleteDirFilesEx($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName());
+				self::deleteDirFilesEx($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName());
 				self::CopyDirFilesEx(
 					 $this->_modulesDir.'/'.$DependencyModule->getModuleName()
 					,$this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName()
@@ -389,10 +389,10 @@ class OBX_Build {
 					&& $arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install/'
 				) {
 					foreach($arResource['INSTALL_FILES_EXIST'] as $installFSEntry) {
-						self::DeleteDirFilesEx($installFSEntry);
+						self::deleteDirFilesEx($installFSEntry);
 					}
 					if( self::isEmptyDir($this->_docRootDir.$arResource['INSTALL_FOLDER'], true) ) {
-						self::DeleteDirFilesEx($arResource['INSTALL_FOLDER']);
+						self::deleteDirFilesEx($arResource['INSTALL_FOLDER']);
 					}
 				}
 			}
@@ -729,12 +729,57 @@ if(!defined("BX_ROOT")) {
 		return false;
 	}
 
-	static function DeleteDirFilesEx($path)
+//	static function DeleteDirFilesEx($path)
+//	{
+//		if(strlen($path) == 0 || $path == '/')
+//			return false;
+//
+//		$full_path = $_SERVER["DOCUMENT_ROOT"].$path;
+//
+//		$f = true;
+//		if(is_file($full_path) || is_link($full_path))
+//		{
+//			if(@unlink($full_path))
+//				return true;
+//			return false;
+//		}
+//		elseif(is_dir($full_path))
+//		{
+//			if($handle = opendir($full_path))
+//			{
+//				while(($file = readdir($handle)) !== false)
+//				{
+//					if($file == "." || $file == "..")
+//						continue;
+//
+//					if(!self::DeleteDirFilesEx($path."/".$file))
+//						$f = false;
+//				}
+//				closedir($handle);
+//			}
+//			if(!@rmdir($full_path))
+//				return false;
+//			return $f;
+//		}
+//		return false;
+//	}
+
+	/**
+	 * Работает так же как битриксовская, но в отличие от неё, может принимать полный путь.
+	 * @param String $path - путь
+	 * @param bool $bIsPathFull - абсолюьный=true, относительный=false
+	 * @return boolean
+	 */
+	static public function deleteDirFilesEx($path, $bIsPathFull = false)
 	{
 		if(strlen($path) == 0 || $path == '/')
 			return false;
-
-		$full_path = $_SERVER["DOCUMENT_ROOT"].$path;
+		if(!$bIsPathFull) {
+			$full_path = $_SERVER["DOCUMENT_ROOT"].$path;
+		}
+		else {
+			$full_path = $path;
+		}
 
 		$f = true;
 		if(is_file($full_path) || is_link($full_path))
@@ -752,7 +797,7 @@ if(!defined("BX_ROOT")) {
 					if($file == "." || $file == "..")
 						continue;
 
-					if(!self::DeleteDirFilesEx($path."/".$file))
+					if(!self::deleteDirFilesEx($path."/".$file, $bIsPathFull))
 						$f = false;
 				}
 				closedir($handle);
@@ -991,13 +1036,8 @@ if(!defined("BX_ROOT")) {
 	}
 
 	public function addIBlockData($arIBlockData) {
-		print_r($arIBlockData);
 		if( !is_dir($this->_docRootDir.$arIBlockData['EXPORT_PATH']) ) {
 			$bSuccess = @mkdir($this->_docRootDir.$arIBlockData['EXPORT_PATH'], BX_DIR_PERMISSIONS, true);
-			if(!$bSuccess) {
-				return false;
-			}
-			$bSuccess = @mkdir($this->_docRootDir.$arIBlockData['EXPORT_PATH'].'/tmp', BX_DIR_PERMISSIONS, true);
 			if(!$bSuccess) {
 				return false;
 			}
@@ -1007,6 +1047,8 @@ if(!defined("BX_ROOT")) {
 		}
 		$arIBlockData['EXPORT_FULL_PATH'] = $this->_docRootDir.$arIBlockData['EXPORT_PATH'];
 		$arIBlockData['EXPORT_WORK_DIR'] = '/'.str_replace('.xml', '', $arIBlockData['XML_FILE']).'_files/';
+		$arIBlockData['EXPORT_WORK_DIR_FULL_PATH'] = $arIBlockData['EXPORT_FULL_PATH'].$arIBlockData['EXPORT_WORK_DIR'];
+		$arIBlockData['XML_FILE_FULL_PATH'] = $arIBlockData['EXPORT_FULL_PATH'].'/'.$arIBlockData['XML_FILE'];
 
 		$this->_arIBlockData[$arIBlockData['IBLOCK_CODE']] = $arIBlockData;
 		return true;
@@ -1014,19 +1056,23 @@ if(!defined("BX_ROOT")) {
 
 	protected function _exportIBlockXML($iblockCode) {
 		if( !array_key_exists($iblockCode, $this->_arIBlockData) ) {
-			echo "Iblock $iblockCode not found in resource file \n";
+			echo "Iblock \"$iblockCode\" not found in resource file \n";
 			return false;
 		}
 		$this->_includeProlog();
 		CModule::IncludeModule('iblock');
 		$rsIBlock = CIBlock::GetList(false, array('CODE' => $iblockCode));
 		if( !($arIBlock = $rsIBlock->GetNext()) ) {
-			echo "Iblock $iblockCode not found \n";
+			echo "Iblock \"$iblockCode\" not found \n";
 			return false;
 		}
 		$this->_arIBlockData[$iblockCode]['IBLOCK_ID'] = $arIBlock['ID'];
 		$arIB = &$this->_arIBlockData[$iblockCode];
-		$fpXmlFile = fopen($this->_docRootDir.$arIB['EXPORT_PATH'].'/'.$arIB['XML_FILE'], "ab");
+
+		self::deleteDirFilesEx($arIB['EXPORT_WORK_DIR_FULL_PATH'], true);
+		unlink($arIB['XML_FILE_FULL_PATH']);
+
+		$fpXmlFile = fopen($arIB['XML_FILE_FULL_PATH'], "ab");
 		if(!$fpXmlFile) {
 			echo "Can't create / open xml file \n";
 			return false;
@@ -1066,8 +1112,17 @@ if(!defined("BX_ROOT")) {
 		if($fpXmlFile)
 			fclose($fpXmlFile);
 	}
-	public function exportIBlockXML($iblockCode) {
-		return $this->_exportIBlockXML($iblockCode);
+	public function exportIBlockXML($iblockCode = null) {
+		$bSuccess = true;
+		if($iblockCode === null) {
+			foreach($this->_arIBlockData as $iblockCode => &$arIB) {
+				$bSuccess = $this->_exportIBlockXML($iblockCode) && $bSuccess;
+			}
+		}
+		else {
+			return $this->_exportIBlockXML($iblockCode);
+		}
+		return $bSuccess;
 	}
 
 	public function getIBlockListFormSettings() {
