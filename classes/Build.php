@@ -11,10 +11,12 @@
 class OBX_Build {
 
 	protected $_arResources = array();
+	protected $_arIBlockData = array();
 	protected $_moduleName = null;
 	protected $_moduleClass = null;
 
 	protected $_bInit = false;
+	protected $_bPrologBXIncluded = false;
 	protected $_bResourcesFileParsed = false;
 	protected $_docRootDir = null;
 	protected $_selfFolder = null;
@@ -38,7 +40,13 @@ class OBX_Build {
 		$this->_bxRootDir = $this->_docRootDir.$this->_bxRootFolder;
 		$this->_modulesDir = $this->_docRootDir.$this->_modulesFolder;
 
-		require_once $this->_bxRootDir.'/php_interface/dbconn.php';
+		// пришлось сделать так, поскольку в ядре битрикс данный файл подключается через require_once
+		// потому для дальнейшего подключения в билдере ядра битрикс простой require не подходит
+		$dbConnCode = file_get_contents($this->_bxRootDir.'/php_interface/dbconn.php');
+		$dbConnCode = preg_replace('~^[\s\S]*?\<\?(?:php)?~im', '', $dbConnCode);
+		$dbConnCode = preg_replace('~\?\>[\s\S]*?$~im', '', $dbConnCode);
+		eval($dbConnCode);
+
 
 		if($ParentModule instanceof self) {
 			if($ParentModule->isInit() == true) {
@@ -47,7 +55,7 @@ class OBX_Build {
 		}
 		$this->reInit($moduleName);
 	}
-	
+
 	public function reInit($moduleName = null) {
 		if($moduleName == null) {
 			if($this->_moduleName == null) {
@@ -79,6 +87,15 @@ class OBX_Build {
 	}
 	public function getModuleClass() {
 		return $this->_moduleClass;
+	}
+
+	protected function _includeProlog() {
+		if( !$this->_bPrologBXIncluded ) {
+			require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+			global $DB, $DBType;
+			$DBType = strtolower($DB->type);
+			$this->_bPrologBXIncluded = true;
+		}
 	}
 
 	public function isDependencyExists($moduleName) {
@@ -121,10 +138,10 @@ class OBX_Build {
 			//rint_r($arTmpResources);
 			$configSection = '__UNKNOWN__';
 			$lineNumber = 0;
-			
+
 			$this->_arResources = array();
 			$this->_arDepModules = array();
-			
+
 			foreach($arTmpResources as $strResource) {
 				$lineNumber++;
 				$strResource = trim($strResource);
@@ -140,6 +157,9 @@ class OBX_Build {
 					}
 					elseif( preg_match('~\[\s*DEPENDENCIES\s*\]~', $strResource) ) {
 						$configSection = 'DEPENDENCIES';
+					}
+					elseif( preg_match('~\[\s*IBLOCK\_DATA\s*\]~', $strResource) ) {
+						$configSection = 'IBLOCK_DATA';
 					}
 					elseif(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResource)) {
 						$configSection = '__UNKNOWN__';
@@ -204,6 +224,37 @@ class OBX_Build {
 					$subModuleName = $strResource;
 					$this->addDependency($subModuleName);
 					$debug = true;
+				}
+				elseif($configSection == 'IBLOCK_DATA') {
+					$arTmpResource = explode('::', $strResource);
+					if( count($arTmpResource)<3 ) {
+						//echo "Parse resource \"$buildModuleDir/install/resources.php\" error in line $lineNumber\n";
+						continue;
+					}
+					$arIBlockResource = array(
+						'IBLOCK_CODE' => null,
+						'IBLOCK_ID' => null,
+						'EXPORT_PATH' => null
+					);
+					$arTmpIBlockResource = explode('::', $strResource);
+					$arIBlockResource['IBLOCK_CODE'] = trim($arTmpIBlockResource[0]);
+					$arIBlockResource['EXPORT_PATH'] = trim($arTmpIBlockResource[1]);
+					$arIBlockResource['XML_FILE'] = trim($arTmpIBlockResource[2]);
+					$arIBlockResource['EDIT_FORM_FILE'] = trim($arTmpIBlockResource[3]);
+					$arIBlockResource["EXPORT_PATH"] = rtrim(str_replace(
+						array(
+							'%MODULE_FOLDER%',
+							'%INSTALL_FOLDER%',
+							'%BX_ROOT%'
+						),
+						array(
+							$this->_modulesFolder.'/'.$this->_moduleName,
+							$this->_modulesFolder.'/'.$this->_moduleName.'/install',
+							$this->_bxRootFolder
+						),
+						$arIBlockResource["EXPORT_PATH"]
+					), '/');
+					$this->addIBlockData($arIBlockResource);
 				}
 			}
 		}
@@ -937,5 +988,97 @@ if(!defined("BX_ROOT")) {
 		}
 		$strResult .= $whiteOffset.")";
 		return $strResult;
+	}
+
+	public function addIBlockData($arIBlockData) {
+		print_r($arIBlockData);
+		if( !is_dir($this->_docRootDir.$arIBlockData['EXPORT_PATH']) ) {
+			$bSuccess = @mkdir($this->_docRootDir.$arIBlockData['EXPORT_PATH'], BX_DIR_PERMISSIONS, true);
+			if(!$bSuccess) {
+				return false;
+			}
+			$bSuccess = @mkdir($this->_docRootDir.$arIBlockData['EXPORT_PATH'].'/tmp', BX_DIR_PERMISSIONS, true);
+			if(!$bSuccess) {
+				return false;
+			}
+		}
+		if( strrpos($arIBlockData['XML_FILE'], '.xml' ) === false ) {
+			$arIBlockData['XML_FILE'] = $arIBlockData['XML_FILE'].'.xml';
+		}
+		$arIBlockData['EXPORT_FULL_PATH'] = $this->_docRootDir.$arIBlockData['EXPORT_PATH'];
+		$arIBlockData['EXPORT_WORK_DIR'] = '/'.str_replace('.xml', '', $arIBlockData['XML_FILE']).'_files/';
+
+		$this->_arIBlockData[$arIBlockData['IBLOCK_CODE']] = $arIBlockData;
+		return true;
+	}
+
+	protected function _exportIBlockXML($iblockCode) {
+		if( !array_key_exists($iblockCode, $this->_arIBlockData) ) {
+			echo "Iblock $iblockCode not found in resource file \n";
+			return false;
+		}
+		$this->_includeProlog();
+		CModule::IncludeModule('iblock');
+		$rsIBlock = CIBlock::GetList(false, array('CODE' => $iblockCode));
+		if( !($arIBlock = $rsIBlock->GetNext()) ) {
+			echo "Iblock $iblockCode not found \n";
+			return false;
+		}
+		$this->_arIBlockData[$iblockCode]['IBLOCK_ID'] = $arIBlock['ID'];
+		$arIB = &$this->_arIBlockData[$iblockCode];
+		$fpXmlFile = fopen($this->_docRootDir.$arIB['EXPORT_PATH'].'/'.$arIB['XML_FILE'], "ab");
+		if(!$fpXmlFile) {
+			echo "Can't create / open xml file \n";
+			return false;
+		}
+		$start_time = time();
+		$nextStep = array();
+		$arSectionMap = false;
+		$arPropertyMap = false;
+		$arSectionFilter = array();
+		$arElementFilter = array();
+		$INTERVAL = 0;
+		$obExport = new CIBlockCMLExport;
+		if($obExport->Init($fpXmlFile, $arIB['IBLOCK_ID'], $nextStep, true, $arIB['EXPORT_FULL_PATH'], $arIB['EXPORT_WORK_DIR'])) {
+			$obExport->StartExport();
+			$obExport->StartExportMetadata();
+			$obExport->ExportProperties($arPropertyMap);
+			$result = $obExport->ExportSections(
+				$arSectionMap,
+				$start_time,
+				$INTERVAL,
+				$arSectionFilter
+			);
+			$result = $obExport->ExportElements(
+				$arPropertyMap,
+				$arSectionMap,
+				$start_time,
+				$INTERVAL,
+				0,
+				$arElementFilter
+			);
+			$obExport->EndExportCatalog();
+			$obExport->EndExport();
+		}
+		else {
+			echo 'Can\'t initialize xml-export';
+		}
+		if($fpXmlFile)
+			fclose($fpXmlFile);
+	}
+	public function exportIBlockXML($iblockCode) {
+		return $this->_exportIBlockXML($iblockCode);
+	}
+
+	public function getIBlockListFormSettings() {
+
+	}
+
+	public function getIBlockFormSettings($iblockCode) {
+
+	}
+
+	public function exportIBlockFormSettings() {
+
 	}
 }
