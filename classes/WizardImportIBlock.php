@@ -1,5 +1,6 @@
 <?php
 namespace OBX\Core\Wizard;
+use \OBX\Core\Tools;
 class ImportIBlock
 {
 	protected $_constructOK = false;
@@ -196,8 +197,8 @@ class ImportIBlock
 			return null;
 		}
 		if( !self::$_bConfigInitialized ) {
-			if( !CModule::IncludeModule('iblock') ) return false;
-			if( !CModule::IncludeModule('obx.core') ) return false;
+			if( !\CModule::IncludeModule('iblock') ) return false;
+			if( !\CModule::IncludeModule('obx.core') ) return false;
 			$arRawConfig = require_once $configFilePath;
 			if( !array_key_exists('IBLOCK_TYPE', $arRawConfig) ) {
 				return null;
@@ -257,7 +258,7 @@ class ImportIBlock
 		static $bInit = false;
 		static $arLanguages = Array();
 		if(!$bInit) {
-			$rsLanguage = CLanguage::GetList($by, $order, array());
+			$rsLanguage = \CLanguage::GetList($by, $order, array());
 			while( $arLanguage = $rsLanguage->Fetch() ) {
 				$arLanguages[] = $arLanguage['LID'];
 			}
@@ -267,7 +268,7 @@ class ImportIBlock
 	}
 
 	static public function getIBlockSites($iblockID) {
-		$db_res = CIBlock::GetSite($iblockID);
+		$db_res = \CIBlock::GetSite($iblockID);
 		while ($res = $db_res->Fetch()) {
 			$arSites[] = $res["LID"];
 		}
@@ -277,7 +278,7 @@ class ImportIBlock
 	static protected function setIBCombinedList() {
 		static $bInit = false;
 		if(!$bInit) {
-			COption::SetOptionString('iblock','combined_list_mode','Y');
+			\COption::SetOptionString('iblock','combined_list_mode','Y');
 			$bInit = true;
 		}
 	}
@@ -296,7 +297,7 @@ class ImportIBlock
 		if(self::$_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] == true) {
 			return true;
 		}
-		$dbType = CIBlockType::GetList(Array(),Array('=ID' => $arType['ID']));
+		$dbType = \CIBlockType::GetList(Array(),Array('=ID' => $arType['ID']));
 		if($dbType->Fetch()) {
 			self::$_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] = true;
 			return true;
@@ -304,7 +305,7 @@ class ImportIBlock
 		$arLanguages = self::getLanguages();
 		foreach($arLanguages as $languageID)
 		{
-			WizardServices::IncludeServiceLang('_iblock_types.php', $languageID);
+			\WizardServices::IncludeServiceLang('_iblock_types.php', $languageID);
 			$code = strtoupper($arType['ID']);
 			$arType['LANG'][$languageID]['NAME'] = GetMessage($code.'_TYPE_NAME');
 			$arType['LANG'][$languageID]['ELEMENT_NAME'] = GetMessage($code.'_ELEMENT_NAME');
@@ -312,7 +313,7 @@ class ImportIBlock
 			if ($arType['SECTIONS'] == 'Y')
 				$arType['LANG'][$languageID]['SECTION_NAME'] = GetMessage($code.'_SECTION_NAME');
 		}
-		$iblockType = new CIBlockType;
+		$iblockType = new \CIBlockType;
 		global $DB;
 		$DB->StartTransaction();
 		$res = $iblockType->Add($arType);
@@ -331,7 +332,7 @@ class ImportIBlock
 
 	static public function createIBlockTypes() {
 		if(
-			COption::GetOptionString('store', 'wizard_installed', 'N', WIZARD_SITE_ID) == 'Y'
+			\COption::GetOptionString('store', 'wizard_installed', 'N', WIZARD_SITE_ID) == 'Y'
 			&& !WIZARD_INSTALL_DEMO_DATA
 		) return true;
 
@@ -353,7 +354,7 @@ class ImportIBlock
 		if ($this->_iblockID > 0) {
 			if (WIZARD_INSTALL_DEMO_DATA) {
 				$DB->StartTransaction();
-				$bDeleteSuccess = CIBlock::Delete($this->_iblockID);
+				$bDeleteSuccess = \CIBlock::Delete($this->_iblockID);
 				if($bDeleteSuccess) {
 					$this->_iblockID = 0;
 					$DB->Commit();
@@ -376,7 +377,7 @@ class ImportIBlock
 		if( $this->_iblockID == 0 ) {
 			$arFields = Tools::arrayMergeRecursiveDistinct(self::$_arDefaultIBlockFields, self::$_arConfig['IBLOCK'][$this->_iblockCode]);
 			$arPermissions = $arFields['PERMISSIONS'];
-			$dbGroup = CGroup::GetList($by = "", $order = "", Array("STRING_ID" => "content_editor"));
+			$dbGroup = \CGroup::GetList($by = "", $order = "", Array("STRING_ID" => "content_editor"));
 			if($arGroup = $dbGroup -> Fetch())
 			{
 				$arPermissions[$arGroup["ID"]] = 'W';
@@ -386,7 +387,7 @@ class ImportIBlock
 			unset($arFields['FORM_SETTINGS']);
 			unset($arFields['PERMISSIONS']);
 
-			$this->_iblockID = WizardServices::ImportIBlockFromXML(
+			$this->_iblockID = \WizardServices::ImportIBlockFromXML(
 				$this->_iblockXMLFile,
 				$this->_iblockCode,
 				$this->_iblockType,
@@ -406,7 +407,7 @@ class ImportIBlock
 			if (!in_array(WIZARD_SITE_ID, $arSites))
 			{
 				$arSites[] = WIZARD_SITE_ID;
-				$iblock = new CIBlock;
+				$iblock = new \CIBlock;
 				$iblock->Update($this->_iblockID, array("LID" => $arSites));
 			}
 		}
