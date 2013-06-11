@@ -181,7 +181,7 @@ class ImportIBlock
 		if( !is_dir($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLDir) || !file_exists($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLDir) ) {
 			return;
 		}
-		$rsIBlock = CIBlock::GetList(array(), array("XML_ID" => $this->_iblockXmlID, "TYPE" => $this->_iblockType));
+		$rsIBlock = \CIBlock::GetList(array(), array("XML_ID" => $this->_iblockXmlID, "TYPE" => $this->_iblockType));
 		if( ($arIBlock = $rsIBlock->Fetch()) ) {
 			$this->_iblockID = $arIBlock['ID'];
 		}
@@ -189,7 +189,7 @@ class ImportIBlock
 	}
 
 	static public function generateXmlID($iblockCode) {
-		return md5('obx_'.$iblockCode);
+		return md5('obx_wiz_ib_xml_id'.$iblockCode);
 	}
 
 	static public function readConfig($configFilePath) {
@@ -398,7 +398,7 @@ class ImportIBlock
 			if ($this->_iblockID < 1) {
 				die('Error importing xml-data');
 			}
-			$iblock = new CIBlock;
+			$iblock = new \CIBlock;
 			$iblock->Update($this->_iblockID, $arFields);
 		}
 		// это если данные уже становлены просто добавим недостающие привязки к сайтам
@@ -413,3 +413,79 @@ class ImportIBlock
 		}
 	}
 }
+
+///////////// ПРИМЕР КОНФИГА /////////////
+//<?php
+//$arIBlockInstallerConfig = array(
+//	'IBLOCK_TYPE' => array(
+//		'dvt_smoke_catalog' => array(
+//			'SECTIONS' => 'Y',
+//			'IN_RSS' => 'Y',
+//			'SORT' => 200,
+//		),
+//		'dvt_articles' => array(
+//			'SECTIONS' => 'Y',
+//			'IN_RSS' => 'N',
+//			'SORT' => 300,
+//		)
+//	),
+//	'IBLOCK' => array(
+//		'cig' => array(
+//			'IBLOCK_TYPE_ID' => 'dvt_smoke_catalog',
+//			'XML_FILE' => 'cig.xml',
+//			'FORM_SETTINGS' => 'cig.form_settings',
+//			'PERMISSIONS' => array(
+//				'1' => 'X',
+//				'2' => 'R'
+//			),
+//			'FIELDS' => array(
+//				'PREVIEW_PICTURE' => array(
+//					'FROM_DETAIL' => 'Y'
+//				)
+//			)
+//		),
+//		'fluid' => array(
+//			'IBLOCK_TYPE_ID' => 'dvt_smoke_catalog',
+//			'XML_FILE' => 'liq.xml',
+//			'FORM_SETTINGS' => 'liq.form_settings',
+//			'PERMISSIONS' => array(
+//				'1' => 'X',
+//				'2' => 'R'
+//			),
+//			'FIELDS' => array(
+//				'PREVIEW_PICTURE' => array(
+//					'FROM_DETAIL' => 'Y'
+//				)
+//			)
+//		),
+//		'kit' => array(
+//			'IBLOCK_TYPE_ID' => 'dvt_smoke_catalog',
+//			'XML_FILE' => 'kit.xml',
+//			'FORM_SETTINGS' => 'kit.form_settings',
+//			'PERMISSIONS' => array(
+//				'1' => 'X',
+//				'2' => 'R'
+//			),
+//			'FIELDS' => array(
+//				'PREVIEW_PICTURE' => array(
+//					'FROM_DETAIL' => 'Y'
+//				)
+//			)
+//		),
+//		'accessories' => array(
+//			'IBLOCK_TYPE_ID' => 'dvt_smoke_catalog',
+//			'XML_FILE' => 'acc.xml',
+//			'FORM_SETTINGS' => 'acc.form_settings',
+//			'PERMISSIONS' => array(
+//				'1' => 'X',
+//				'2' => 'R'
+//			),
+//			'FIELDS' => array(
+//				'PREVIEW_PICTURE' => array(
+//					'FROM_DETAIL' => 'Y'
+//				)
+//			)
+//		)
+//	)
+//);
+//return $arIBlockInstallerConfig;
