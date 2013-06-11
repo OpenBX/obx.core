@@ -29,6 +29,8 @@ class OBX_Build {
 	protected $_ParentModule = null;
 
 	function __construct($moduleName, OBX_Build $ParentModule = null) {
+		error_reporting(E_ALL ^ E_NOTICE);
+
 		$this->_selfDir = dirname(__FILE__);
 		$this->_selfDir = str_replace(array("\\", "//"), "/", $this->_selfDir);
 		$this->_selfFolder = '';
