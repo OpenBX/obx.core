@@ -97,8 +97,8 @@ class ImportIBlock
 					'TRANSLITERATION' => 'Y',
 					'TRANS_LEN' => 100,
 					'TRANS_CASE' => 'L',
-					'TRANS_SPACE' => '_',
-					'TRANS_OTHER' => '_',
+					'TRANS_SPACE' => '-',
+					'TRANS_OTHER' => '-',
 					'TRANS_EAT' => 'Y',
 					'USE_GOOGLE' => 'Y',
 				),
@@ -155,8 +155,8 @@ class ImportIBlock
 					'TRANSLITERATION' => 'N',
 					'TRANS_LEN' => 100,
 					'TRANS_CASE' => 'L',
-					'TRANS_SPACE' => '_',
-					'TRANS_OTHER' => '_',
+					'TRANS_SPACE' => '-',
+					'TRANS_OTHER' => '-',
 					'TRANS_EAT' => 'Y',
 					'USE_GOOGLE' => 'N',
 				),
@@ -186,6 +186,18 @@ class ImportIBlock
 			$this->_iblockID = $arIBlock['ID'];
 		}
 		$this->_constructOK = true;
+	}
+
+	public function getFields() {
+		if($this->_constructOK) return array();
+		return array(
+			'CODE' => $this->_iblockCode,
+			'ID' => $this->_iblockID,
+			'IBLOCK_TYPE_ID' => $this->_iblockType,
+			'XML_ID' => $this->_iblockXmlID,
+			'XML_FILE' => $this->_iblockXMLFile,
+			'XML_DIR' => $this->_iblockXMLDir,
+		);
 	}
 
 	static public function generateXmlID($iblockCode) {
@@ -449,7 +461,6 @@ class ImportIBlock
 }
 
 ///////////// ПРИМЕР КОНФИГА /////////////
-//	<?php
 //	$arIBlockInstallerConfig = array(
 //		'IBLOCK_TYPE' => array(
 //			'dvt_smoke_catalog' => array(
