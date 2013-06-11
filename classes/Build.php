@@ -1109,7 +1109,7 @@ if(!defined("BX_ROOT")) {
 			$obExport->EndExport();
 		}
 		else {
-			echo 'Can\'t initialize xml-export';
+			echo "\nCan't initialize xml-export for \"{$arIB['IBLOCK_ID']}\".\n Perhaps Minimal access for IBlock lower than \"W\"\n";
 		}
 		if($fpXmlFile)
 			fclose($fpXmlFile);

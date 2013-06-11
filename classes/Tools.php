@@ -335,6 +335,19 @@ namespace OBX\Core {
 			return;
 		}
 
+		static public function arrayMergeRecursiveDistinct( array &$array1, array &$array2) {
+			$arMerged = $array1;
+			foreach( $array2 as $key => &$value ) {
+				if ( is_array($value) && isset($arMerged[$key]) && is_array($arMerged[$key]) ) {
+					$arMerged[$key] = array_merge_recursive_distinct( $arMerged[$key], $value );
+				}
+				else {
+					$arMerged[$key] = $value;
+				}
+			}
+			return $arMerged;
+		}
+
 		//////////// РАБОТА С ФАЙЛАМИ И ПАПКАМИ
 		/**
 		 *
@@ -628,6 +641,7 @@ namespace OBX\Core {
 		 * @static
 		 * @param $component
 		 * @param null $lessFilePath
+		 * @return bool
 		 */
 		static public function addComponentLess($component, $lessFilePath = null) {
 			/**
@@ -977,9 +991,9 @@ namespace OBX\Core {
 		 ****************************************************/
 		/**
 		 *	Ф-ия показывает порядкоывай номер ключа массива
-		 * @param <array> $array	- массив
-		 * @param <string> $key		- искомый ключ
-		 * @return <int | false>	- проядковый номер ключа
+		 * @param array $array	- массив
+		 * @param string $key		- искомый ключ
+		 * @return int | false	- проядковый номер ключа
 		 */
 		static public function getNumOfKey($array, $key) {
 			$array = array_keys($array);
@@ -992,9 +1006,9 @@ namespace OBX\Core {
 
 		/**
 		 * Ф-ия получает имя ключа по порядковому номеру элемента
-		 * @param <array> $array			- масстив
-		 * @param <int> $num				- порядковый номер элемента
-		 * @return <string | int |false>	- ключ элемента под искомым порядковым номером
+		 * @param array $array			- масстив
+		 * @param int $num				- порядковый номер элемента
+		 * @return string | int |false	- ключ элемента под искомым порядковым номером
 		 */
 		static public function getKeyBySeqNum($array, $num) {
 			$arrayNums = array_keys($array);
@@ -1007,10 +1021,10 @@ namespace OBX\Core {
 		/**
 		 *	Ф-ия находит имя ключа в массиве $arrayHaystack порядковый номер которого
 		 *	тот же что и у ключа $needleKey в массиве $arrayWithKey
-		 * @param <array> $arrayHaystack
-		 * @param <string | int> $needleKey
-		 * @param <array> $arrayWithKey
-		 * @return <string | int | false>
+		 * @param array $arrayHaystack
+		 * @param string | int $needleKey
+		 * @param array $arrayWithKey
+		 * @return string | int | false
 		 */
 		static public function getKeyOfSameNumber($arrayHaystack, $needleKey, $arrayWithKey) {
 			//d($arrayHaystack, true);
@@ -1042,6 +1056,7 @@ namespace OBX\Core {
 		 * Debug data print
 		 * @param mixed $mixed
 		 * @param mixed $collapse
+		 * @param bool $bPrint
 		 */
 		static public function debug($mixed, $collapse = null, $bPrint = true) {
 			if(!$bPrint) {
