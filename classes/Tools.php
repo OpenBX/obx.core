@@ -339,7 +339,7 @@ namespace OBX\Core {
 			$arMerged = $array1;
 			foreach( $array2 as $key => &$value ) {
 				if ( is_array($value) && isset($arMerged[$key]) && is_array($arMerged[$key]) ) {
-					$arMerged[$key] = arrayMergeRecursiveDistinct($arMerged[$key], $value);
+					$arMerged[$key] = self::arrayMergeRecursiveDistinct($arMerged[$key], $value);
 				}
 				else {
 					$arMerged[$key] = $value;
