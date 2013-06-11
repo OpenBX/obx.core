@@ -33,5 +33,6 @@ $arModuleClasses = array(
 	,'OBX\Core\VisitorHitDBS'				=> 'classes/VisitorHitList.php'
 	,'OBX\Core\VisitorHitList'				=> 'classes/VisitorHitList.php'
 	,'OBX\Core\ModDeps'						=> 'classes/ModDeps.php'
+	,'OBX\Core\Wizard\ImportIBlock'			=> 'classes/WizardImportIBlock.php'
 );
 return $arModuleClasses;
