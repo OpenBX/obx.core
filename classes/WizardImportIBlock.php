@@ -175,12 +175,16 @@ class ImportIBlock
 	}
 
 	public function selectIBlock($iblockCode) {
+		$this->_bIBlockSelected = false;
+		if( ! array_key_exists($iblockCode, $this->_arConfig['IBLOCK']) ) {
+			return false;
+		}
 		$arConfig = &$this->_arConfig['IBLOCK'][$iblockCode];
 		$this->_iblockCode = $iblockCode;
 		$this->_iblockXmlID = $arConfig['XML_ID'];
 		$this->_iblockType = $arConfig['IBLOCK_TYPE_ID'];
-		$this->_iblockXMLFile = WIZARD_SERVICE_RELATIVE_PATH.'/xml/'.LANGUAGE_ID.'/'.$arConfig['XML_FILE'];
-		$this->_iblockXMLDir = WIZARD_SERVICE_RELATIVE_PATH.'/xml/'.LANGUAGE_ID.'/'.str_replace('.xml', '_files', $arConfig['XML_FILE']);
+		$this->_iblockXMLFile	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['XML_FILE'];
+		$this->_iblockXMLDir	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.str_replace('.xml', '_files', $arConfig['XML_FILE']);
 		if( !is_file($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) || !file_exists($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) ) {
 			return false;
 		}
@@ -195,9 +199,9 @@ class ImportIBlock
 		return true;
 	}
 
-	public function getIBlockFields() {
+	public function getIBlockFields($fieldName = null) {
 		if($this->_bIBlockSelected) return array();
-		return array(
+		$arResult = array(
 			'CODE' => $this->_iblockCode,
 			'ID' => $this->_iblockID,
 			'IBLOCK_TYPE_ID' => $this->_iblockType,
@@ -205,6 +209,15 @@ class ImportIBlock
 			'XML_FILE' => $this->_iblockXMLFile,
 			'XML_DIR' => $this->_iblockXMLDir,
 		);
+		if( $fieldName !== null ) {
+			if( array_key_exists($fieldName, $arResult) ) {
+				return $arResult[$fieldName];
+			}
+			else {
+				return null;
+			}
+		}
+		return $arResult;
 	}
 
 	static public function generateXmlID($iblockCode) {
