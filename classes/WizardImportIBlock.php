@@ -3,7 +3,7 @@ namespace OBX\Core\Wizard;
 use \OBX\Core\Tools;
 class ImportIBlock
 {
-	protected $_constructOK = false;
+	protected $_bIBlockSelected = false;
 	protected $_iblockID = 0;
 	protected $_iblockCode = null;
 	protected $_iblockXmlID = null;
@@ -12,11 +12,11 @@ class ImportIBlock
 	protected $_iblockXMLDir = null;
 	protected $_bReinstallData = null;
 
-	static protected $_arConfig = array(
+	protected $_arConfig = array(
 		'IBLOCK_TYPE' => array(),
 		'IBLOCK' => array()
 	);
-	static protected $_bConfigInitialized = false;
+	protected $_bConfigInitialized = false;
 
 	static protected $_arDefaultIBlockFields = Array(
 		"ACTIVE" => "Y",
@@ -164,32 +164,39 @@ class ImportIBlock
 		),
 	);
 
-	public function __construct($iblockCode, $configFilePath) {
-		$arConfigFull = self::readConfig($configFilePath);
-		if( $arConfigFull === null || !array_key_exists($iblockCode, $arConfigFull['IBLOCK']) ) {
+	public function __construct($configFilePath, $iblockCode = null) {
+		$bConfigInitialized = $this->readConfig($configFilePath);
+		if( !$bConfigInitialized ) {
 			return;
 		}
-		$arConfig = &$arConfigFull['IBLOCK'][$iblockCode];
+		if( $iblockCode !== null && array_key_exists($iblockCode, $this->_arConfig['IBLOCK']) ) {
+			$this->selectIBlock($iblockCode);
+		}
+	}
+
+	public function selectIBlock($iblockCode) {
+		$arConfig = &$this->_arConfig['IBLOCK'][$iblockCode];
 		$this->_iblockCode = $iblockCode;
 		$this->_iblockXmlID = $arConfig['XML_ID'];
 		$this->_iblockType = $arConfig['IBLOCK_TYPE_ID'];
 		$this->_iblockXMLFile = WIZARD_SERVICE_RELATIVE_PATH.'/xml/'.LANGUAGE_ID.'/'.$arConfig['XML_FILE'];
 		$this->_iblockXMLDir = WIZARD_SERVICE_RELATIVE_PATH.'/xml/'.LANGUAGE_ID.'/'.str_replace('.xml', '_files', $arConfig['XML_FILE']);
 		if( !is_file($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) || !file_exists($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) ) {
-			return;
+			return false;
 		}
 		if( !is_dir($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLDir) || !file_exists($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLDir) ) {
-			return;
+			return false;
 		}
 		$rsIBlock = \CIBlock::GetList(array(), array("XML_ID" => $this->_iblockXmlID, "TYPE" => $this->_iblockType));
 		if( ($arIBlock = $rsIBlock->Fetch()) ) {
 			$this->_iblockID = $arIBlock['ID'];
 		}
-		$this->_constructOK = true;
+		$this->_bIBlockSelected = true;
+		return true;
 	}
 
-	public function getFields() {
-		if($this->_constructOK) return array();
+	public function getIBlockFields() {
+		if($this->_bIBlockSelected) return array();
 		return array(
 			'CODE' => $this->_iblockCode,
 			'ID' => $this->_iblockID,
@@ -204,73 +211,81 @@ class ImportIBlock
 		return md5('obx_wiz_ib_xml_id'.$iblockCode);
 	}
 
-	static public function readConfig($configFilePath) {
+	/**
+	 * @param $configFilePath
+	 * @return bool
+	 */
+	public function readConfig($configFilePath) {
 		if( !file_exists($configFilePath) ) {
-			return null;
+			return false;
 		}
-		if( !self::$_bConfigInitialized ) {
+		if( !$this->_bConfigInitialized ) {
 			if( !\CModule::IncludeModule('iblock') ) return false;
 			if( !\CModule::IncludeModule('obx.core') ) return false;
 			$arRawConfig = require_once $configFilePath;
-			if( !array_key_exists('IBLOCK_TYPE', $arRawConfig) ) {
-				return null;
-			}
-			if( !array_key_exists('IBLOCK', $arRawConfig) ) {
-				return null;
-			}
-			foreach($arRawConfig['IBLOCK_TYPE'] as $typeID => &$arRawIBType) {
-				$arRawIBType['ID'] = $arRawIBType;
-				if(
-					!array_key_exists('SECTIONS', $arRawIBType)
-					|| (
-						$arRawIBType['SECTIONS'] != 'Y'
-						&& $arRawIBType['SECTIONS'] != 'N'
-					)
-				) {
-					$arRawIBType['SECTIONS'] = 'Y';
-				}
-				if(
-					!array_key_exists('IN_RSS', $arRawIBType)
-					|| (
-						$arRawIBType['IN_RSS'] != 'Y'
-						&& $arRawIBType['IN_RSS'] != 'N'
-					)
-				) {
-					$arRawIBType['IN_RSS'] = 'Y';
-				}
-				if( !array_key_exists('IN_RSS', $arRawIBType) || !is_numeric($arRawIBType['IN_RSS'])) {
-					$arRawIBType['IN_RSS'] = 100;
-				}
-				$arRawIBType['IS_EXISTS'] = false;
-				$arRawIBType['__IBLOCKS'] = array();
-				self::$_arConfig['IBLOCK_TYPE'][$typeID] = $arRawIBType;
-			}
-			foreach($arRawConfig['IBLOCK'] as $iblockCode => &$arRawIB) {
-				if( !array_key_exists('IBLOCK_TYPE_ID', $arRawIB) || !array_key_exists($arRawIB['IBLOCK_TYPE_ID'], self::$_arConfig['IBLOCK_TYPE']) ) {
-					continue;
-				}
-				if( !array_key_exists('XML_ID', $arRawIB) ) {
-					$arRawIB['XML_ID'] = self::generateXmlID($iblockCode);
-				}
-				self::$_arConfig['IBLOCK'][$iblockCode] = $arRawIB;
-				self::$_arConfig['IBLOCK_TYPE'][$arRawIB['IBLOCK_TYPE_ID']]['__IBLOCKS'][] = &self::$_arConfig['IBLOCK'][$iblockCode];
-			}
-			foreach($arRawConfig['IBLOCK_TYPE'] as $typeID => &$arRawIBType) {
-				if( count(self::$_arConfig['IBLOCK_TYPE'][$typeID]['__IBLOCKS']) < 1 ) {
-					unset(self::$_arConfig['IBLOCK_TYPE'][$typeID]);
-				}
-			}
-			self::$_arConfig['PUBLIC_FILE_MACROS'] = array();
-			if( array_key_exists('PUBLIC_FILE_MACROS', $arRawConfig) && is_array($arRawConfig['PUBLIC_FILE_MACROS']) ) {
-				foreach($arRawConfig['PUBLIC_FILE_MACROS'] as $iblockCode => &$arRawPubFPH) {
-					if( array_key_exists($iblockCode, self::$_arConfig['IBLOCK']) ) {
-						self::$_arConfig['PUBLIC_FILE_MACROS'][$iblockCode] = $arRawPubFPH;
-					}
-				}
-			}
-			self::$_bConfigInitialized = true;
+			$this->_readIBlockConfig($arRawConfig);
+			$this->_bConfigInitialized = true;
 		}
-		return self::$_arConfig;
+		return $this->_bConfigInitialized;
+	}
+
+	protected function _readIBlockConfig(&$arRawConfig){
+		if( !array_key_exists('IBLOCK_TYPE', $arRawConfig) ) {
+			return false;
+		}
+		if( !array_key_exists('IBLOCK', $arRawConfig) ) {
+			return false;
+		}
+		foreach($arRawConfig['IBLOCK_TYPE'] as $typeID => &$arRawIBType) {
+			$arRawIBType['ID'] = $arRawIBType;
+			if(
+				!array_key_exists('SECTIONS', $arRawIBType)
+				|| (
+					$arRawIBType['SECTIONS'] != 'Y'
+					&& $arRawIBType['SECTIONS'] != 'N'
+				)
+			) {
+				$arRawIBType['SECTIONS'] = 'Y';
+			}
+			if(
+				!array_key_exists('IN_RSS', $arRawIBType)
+				|| (
+					$arRawIBType['IN_RSS'] != 'Y'
+					&& $arRawIBType['IN_RSS'] != 'N'
+				)
+			) {
+				$arRawIBType['IN_RSS'] = 'Y';
+			}
+			if( !array_key_exists('IN_RSS', $arRawIBType) || !is_numeric($arRawIBType['IN_RSS'])) {
+				$arRawIBType['IN_RSS'] = 100;
+			}
+			$arRawIBType['IS_EXISTS'] = false;
+			$arRawIBType['__IBLOCKS'] = array();
+			$this->_arConfig['IBLOCK_TYPE'][$typeID] = $arRawIBType;
+		}
+		foreach($arRawConfig['IBLOCK'] as $iblockCode => &$arRawIB) {
+			if( !array_key_exists('IBLOCK_TYPE_ID', $arRawIB) || !array_key_exists($arRawIB['IBLOCK_TYPE_ID'], $this->_arConfig['IBLOCK_TYPE']) ) {
+				continue;
+			}
+			if( !array_key_exists('XML_ID', $arRawIB) ) {
+				$arRawIB['XML_ID'] = self::generateXmlID($iblockCode);
+			}
+			$this->_arConfig['IBLOCK'][$iblockCode] = $arRawIB;
+			$this->_arConfig['IBLOCK_TYPE'][$arRawIB['IBLOCK_TYPE_ID']]['__IBLOCKS'][] = &$this->_arConfig['IBLOCK'][$iblockCode];
+		}
+		foreach($arRawConfig['IBLOCK_TYPE'] as $typeID => &$arRawIBType) {
+			if( count($this->_arConfig['IBLOCK_TYPE'][$typeID]['__IBLOCKS']) < 1 ) {
+				unset($this->_arConfig['IBLOCK_TYPE'][$typeID]);
+			}
+		}
+		$this->_arConfig['PUBLIC_FILE_MACROS'] = array();
+		if( array_key_exists('PUBLIC_FILE_MACROS', $arRawConfig) && is_array($arRawConfig['PUBLIC_FILE_MACROS']) ) {
+			foreach($arRawConfig['PUBLIC_FILE_MACROS'] as $iblockCode => &$arRawPubFPH) {
+				if( array_key_exists($iblockCode, $this->_arConfig['IBLOCK']) ) {
+					$this->_arConfig['PUBLIC_FILE_MACROS'][$iblockCode] = $arRawPubFPH;
+				}
+			}
+		}
 	}
 
 	static protected function getLanguages() {
@@ -302,23 +317,23 @@ class ImportIBlock
 		}
 	}
 
-	static protected function __createIBlockType($typeID) {
-		if( !array_key_exists($typeID, self::$_arConfig['IBLOCK_TYPE']) ) {
+	protected function __createIBlockType($typeID) {
+		if( !array_key_exists($typeID, $this->_arConfig['IBLOCK_TYPE']) ) {
 			return false;
 		}
 		$arType = array(
 			'ID' => $typeID,
-			'SECTIONS' => self::$_arConfig['IBLOCK_TYPE'][$typeID]['SECTIONS'],
-			'IN_RSS' => self::$_arConfig['IBLOCK_TYPE'][$typeID]['IN_RSS'],
-			'SORT' => self::$_arConfig['IBLOCK_TYPE'][$typeID]['SORT'],
+			'SECTIONS' => $this->_arConfig['IBLOCK_TYPE'][$typeID]['SECTIONS'],
+			'IN_RSS' => $this->_arConfig['IBLOCK_TYPE'][$typeID]['IN_RSS'],
+			'SORT' => $this->_arConfig['IBLOCK_TYPE'][$typeID]['SORT'],
 			'LANG' => Array(),
 		);
-		if(self::$_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] == true) {
+		if($this->_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] == true) {
 			return true;
 		}
 		$dbType = \CIBlockType::GetList(Array(),Array('=ID' => $arType['ID']));
 		if($dbType->Fetch()) {
-			self::$_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] = true;
+			$this->_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] = true;
 			return true;
 		}
 		$arLanguages = self::getLanguages();
@@ -343,33 +358,33 @@ class ImportIBlock
 			die();
 		}
 		else {
-			self::$_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] = true;
+			$this->_arConfig['IBLOCK_TYPE'][$typeID]['IS_EXISTS'] = true;
 			$DB->Commit();
 		}
 		return true;
 	}
 
-	static public function createIBlockTypes() {
+	public function createIBlockTypes() {
 		if(
 			\COption::GetOptionString('store', 'wizard_installed', 'N', WIZARD_SITE_ID) == 'Y'
 			&& !WIZARD_INSTALL_DEMO_DATA
 		) return true;
 
-		foreach(self::$_arConfig['IBLOCK_TYPE'] as $typeID => &$arTypeConfig) {
-			self::__createIBlockType($typeID);
+		foreach($this->_arConfig['IBLOCK_TYPE'] as $typeID => &$arTypeConfig) {
+			$this->__createIBlockType($typeID);
 		}
 		self::setIBCombinedList();
 	}
 
 	public function createIBlockType() {
-		if(!$this->_constructOK) return false;
-		if( ! self::__createIBlockType($this->_iblockType) )  return false;
+		if(!$this->_bIBlockSelected) return false;
+		if( ! $this->__createIBlockType($this->_iblockType) )  return false;
 		return true;
 	}
 
 	protected function deleteOldIBlockData() {
 		global $DB;
-		if(!$this->_constructOK) return false;
+		if(!$this->_bIBlockSelected) return false;
 		if ($this->_iblockID > 0) {
 			if (WIZARD_INSTALL_DEMO_DATA) {
 				$DB->StartTransaction();
@@ -388,13 +403,13 @@ class ImportIBlock
 	}
 
 	public function importXMLData() {
-		if(!$this->_constructOK) return false;
+		if(!$this->_bIBlockSelected) return false;
 		$bTypeSuccess = $this->createIBlockType();
 		if(!$bTypeSuccess) return false;
 		if( ! $this->deleteOldIBlockData() ) return false;
 		// Это если мы реинсталлируем данные инфоблоков
 		if( $this->_iblockID == 0 ) {
-			$arFields = Tools::arrayMergeRecursiveDistinct(self::$_arDefaultIBlockFields, self::$_arConfig['IBLOCK'][$this->_iblockCode]);
+			$arFields = Tools::arrayMergeRecursiveDistinct(self::$_arDefaultIBlockFields, $this->_arConfig['IBLOCK'][$this->_iblockCode]);
 			$arPermissions = $arFields['PERMISSIONS'];
 			$dbGroup = \CGroup::GetList($by = "", $order = "", Array("STRING_ID" => "content_editor"));
 			if($arGroup = $dbGroup -> Fetch())
@@ -405,6 +420,8 @@ class ImportIBlock
 			unset($arFields['XML_FILE']);
 			unset($arFields['FORM_SETTINGS']);
 			unset($arFields['PERMISSIONS']);
+			$arFields['CODE'] = $this->_iblockCode;
+			$arFields['LID'] = WIZARD_SITE_ID;
 
 			$this->_iblockID = \WizardServices::ImportIBlockFromXML(
 				$this->_iblockXMLFile,
@@ -434,8 +451,8 @@ class ImportIBlock
 
 	public function replacePublicFilesMacros() {
 		//CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/catalog/index.php", array("MACROS" => $iblockID));
-		if( array_key_exists($this->_iblockCode, self::$_arConfig['PUBLIC_FILE_MACROS']) ) {
-			foreach(self::$_arConfig['PUBLIC_FILE_MACROS'][$this->_iblockCode] as &$arMacrosReplace) {
+		if( array_key_exists($this->_iblockCode, $this->_arConfig['PUBLIC_FILE_MACROS']) ) {
+			foreach($this->_arConfig['PUBLIC_FILE_MACROS'][$this->_iblockCode] as &$arMacrosReplace) {
 				$arReplace = array();
 				if( array_key_exists('IBLOCK_TYPE_ID', $arMacrosReplace) ) {
 					$arReplace[trim($arMacrosReplace['IBLOCK_TYPE_ID'], '# ')] = $this->_iblockType;
@@ -477,6 +494,8 @@ class ImportIBlock
 //		'IBLOCK' => array(
 //			'cig' => array(
 //				'IBLOCK_TYPE_ID' => 'dvt_smoke_catalog',
+//				// Также можно передать XML_ID
+//				// если не передавать, будет сгенерирован автоматически
 //				'XML_FILE' => 'cig.xml',
 //				'FORM_SETTINGS' => 'cig.form_settings',
 //				'PERMISSIONS' => array(
@@ -554,14 +573,14 @@ class ImportIBlock
 //			),
 //			'kit' => array(
 //				array(
-//					'PUBLIC_DIR' => '/catalog/kit/index.php',
+//					'PUBLIC_DIR' => '/catalog/kit/',
 //					'IBLOCK_TYPE_ID' => '#DVT_SMOKE_KIT_CATALOG_IBLOCK_TYPE#',
 //					'IBLOCK_ID'	=> '#DVT_SMOKE_KIT_CATALOG_IBLOCK_ID#'
 //				),
 //			),
 //			'accessories' => array(
 //				array(
-//					'PUBLIC_FILE' => '/catalog/accessories/index.php',
+//					'PUBLIC_FILE' => '/catalog/accessories/',
 //					'IBLOCK_TYPE_ID' => '#DVT_SMOKE_ACC_CATALOG_IBLOCK_TYPE#',
 //					'IBLOCK_ID'	=> '#DVT_SMOKE_ACC_CATALOG_IBLOCK_ID#'
 //				),
