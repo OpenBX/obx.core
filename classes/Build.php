@@ -375,7 +375,7 @@ class OBX_Build {
 				$DependencyModule->generateInstallCode();
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
-				self::deleteDirFilesEx($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName());
+				self::deleteDirFilesEx($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName(), true);
 				self::CopyDirFilesEx(
 					 $this->_modulesDir.'/'.$DependencyModule->getModuleName()
 					,$this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName()
