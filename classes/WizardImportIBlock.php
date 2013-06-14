@@ -20,6 +20,10 @@ class ImportIBlock
 
 	static protected $_arDefaultIBlockFields = Array(
 		"ACTIVE" => "Y",
+		'PERMISSIONS' => array(
+			'1' => 'X',
+			'2' => 'R'
+		),
 		"FIELDS" => array(
 			'IBLOCK_SECTION' => array(
 				'IS_REQUIRED' => 'N',
@@ -282,6 +286,12 @@ class ImportIBlock
 			}
 			if( !array_key_exists('XML_ID', $arRawIB) ) {
 				$arRawIB['XML_ID'] = self::generateXmlID($iblockCode);
+			}
+			if( !array_key_exists('XML_FILE', $arRawIB) || strlen($arRawIB['XML_FILE']) ) {
+				$arRawIB['XML_FILE'] = $iblockCode.'.xml';
+			}
+			if( !array_key_exists('FORM_SETTINGS', $arRawIB) || strlen($arRawIB['FORM_SETTINGS']) ) {
+				$arRawIB['FORM_SETTINGS'] = $iblockCode.'.form_settings';
 			}
 			$this->_arConfig['IBLOCK'][$iblockCode] = $arRawIB;
 			$this->_arConfig['IBLOCK_TYPE'][$arRawIB['IBLOCK_TYPE_ID']]['__IBLOCKS'][] = &$this->_arConfig['IBLOCK'][$iblockCode];
