@@ -1083,8 +1083,8 @@ if(!defined("BX_ROOT")) {
 		$nextStep = array();
 		$arSectionMap = false;
 		$arPropertyMap = false;
-		$arSectionFilter = array();
-		$arElementFilter = array();
+		$arSectionFilter = array('IBLOCK_ID' => $arIB['IBLOCK_ID']);
+		$arElementFilter = array('IBLOCK_ID' => $arIB['IBLOCK_ID']);
 		$INTERVAL = 0;
 		$obExport = new CIBlockCMLExport;
 		if($obExport->Init($fpXmlFile, $arIB['IBLOCK_ID'], $nextStep, true, $arIB['EXPORT_FULL_PATH'], $arIB['EXPORT_WORK_DIR'])) {
