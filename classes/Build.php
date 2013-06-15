@@ -1091,19 +1091,28 @@ if(!defined("BX_ROOT")) {
 		 */
 		$obExport = new CIBlockCMLExport;
 		if($obExport->Init($fpXmlFile, $arIB['IBLOCK_ID'], $nextStep, true, $arIB['EXPORT_FULL_PATH'], $arIB['EXPORT_WORK_DIR'])) {
+			// <КоммерческаяИнформация>
 			$obExport->StartExport();
 
+				// <Классификатор>
 				$obExport->StartExportMetadata();
-					$obExport->ExportProperties($arPropertyMap);
+					// <Свойства>
+				 	$obExport->ExportProperties($arPropertyMap);
+					// </Свойства>
+					// <Группы>
 					$result = $obExport->ExportSections(
 						$arSectionMap,
 						$start_time,
 						$INTERVAL,
 						$arSectionFilter
 					);
+					// </Группы>
+				// </Классификатор>
 				$obExport->EndExportMetadata();
 
+				// <Каталог>
 				$obExport->StartExportCatalog();
+					// <Товары>
 					$result = $obExport->ExportElements(
 						$arPropertyMap,
 						$arSectionMap,
@@ -1112,8 +1121,11 @@ if(!defined("BX_ROOT")) {
 						0,
 						$arElementFilter
 					);
+					// </Товары>
+				// </Каталог>
 				$obExport->EndExportCatalog();
 
+			// </КоммерческаяИнформация>
 			$obExport->EndExport();
 		}
 		else {
