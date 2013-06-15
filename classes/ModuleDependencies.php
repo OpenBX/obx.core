@@ -11,7 +11,6 @@
 
 namespace OBX\Core;
 
-
-class ModDeps extends DBSimple {
+class ModuleDependencies extends DBSimple {
 
 }
