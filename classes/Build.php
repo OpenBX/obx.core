@@ -1086,26 +1086,34 @@ if(!defined("BX_ROOT")) {
 		$arSectionFilter = array('IBLOCK_ID' => $arIB['IBLOCK_ID']);
 		$arElementFilter = array('IBLOCK_ID' => $arIB['IBLOCK_ID']);
 		$INTERVAL = 0;
+		/**
+		 * @var CIBlockCMLExport $obExport
+		 */
 		$obExport = new CIBlockCMLExport;
 		if($obExport->Init($fpXmlFile, $arIB['IBLOCK_ID'], $nextStep, true, $arIB['EXPORT_FULL_PATH'], $arIB['EXPORT_WORK_DIR'])) {
 			$obExport->StartExport();
-			$obExport->StartExportMetadata();
-			$obExport->ExportProperties($arPropertyMap);
-			$result = $obExport->ExportSections(
-				$arSectionMap,
-				$start_time,
-				$INTERVAL,
-				$arSectionFilter
-			);
-			$result = $obExport->ExportElements(
-				$arPropertyMap,
-				$arSectionMap,
-				$start_time,
-				$INTERVAL,
-				0,
-				$arElementFilter
-			);
-			$obExport->EndExportCatalog();
+
+				$obExport->StartExportMetadata();
+					$obExport->ExportProperties($arPropertyMap);
+					$result = $obExport->ExportSections(
+						$arSectionMap,
+						$start_time,
+						$INTERVAL,
+						$arSectionFilter
+					);
+				$obExport->EndExportMetadata();
+
+				$obExport->StartExportCatalog();
+					$result = $obExport->ExportElements(
+						$arPropertyMap,
+						$arSectionMap,
+						$start_time,
+						$INTERVAL,
+						0,
+						$arElementFilter
+					);
+				$obExport->EndExportCatalog();
+
 			$obExport->EndExport();
 		}
 		else {
