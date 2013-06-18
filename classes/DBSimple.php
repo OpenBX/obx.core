@@ -227,6 +227,11 @@ abstract class DBSimple extends CMessagePoolDecorator
 	 */
 
 	/**
+	 * @var bool
+	 */
+	protected $_bDistinctGetList = false;
+
+	/**
 	 * Массив с описанием таблиц сущности
 	 * В качестве ключа используется alias таблица (long_table_name as ARKEY)
 	 * <code>
@@ -1231,10 +1236,25 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$sWhere = "\nWHERE (1=1)".$sWhereTblLink.$sWhereFilter;
 		}
 
-		$sqlList = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sJoin.$sWhere.$sGroupBy.$sSort;
+		$sqlList = $sFields."\nFROM ".$sSelectFrom.$sJoin.$sWhere.$sGroupBy.$sSort;
+
+		$strDistinct = $this->_bDistinctGetList?'DISTINCT ':'';
+		if(is_array($arPagination) && $this->_mainTablePrimaryKey !== null) {
+			$sqlCount = 'SELECT COUNT('.$strDistinct.$this->_mainTablePrimaryKey.') as C FROM '.$sSelectFrom.' '.$sWhere.$sGroupBy.$sSort;
+			$res_cnt = $DB->Query($sqlCount);
+			$res_cnt = $res_cnt->Fetch();
+			$res = new DBSResult();
+			$sqlList = 'SELECT '.$strDistinct.$sqlList;
+			$res->NavQuery($sqlList, $res_cnt["C"], $arPagination);
+		}
+		else {
+			$sqlList = 'SELECT '.$strDistinct.$sqlList;
+			$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
+			$res = new DBSResult($res);
+		}
 		$this->_lastQueryString = $sqlList;
-		$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		$res = new DBSResult($res);
+		//$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
+
 		$res->setAbstractionName(get_called_class());
 		return $res;
 	}

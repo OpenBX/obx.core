@@ -266,9 +266,6 @@ namespace OBX\Core {
 				$str_arKey = array($str_arKey);
 			}
 			foreach($arList as &$arItem) {
-				if( is_array($arItem) ) {
-					$arItem['__THIS_IS_VALUE_ARRAY'] = true;
-				}
 				$bFirst = true;
 				$complexKey = '';
 				foreach($str_arKey as &$keyItem) {
@@ -282,7 +279,7 @@ namespace OBX\Core {
 					}
 				}
 
-				if( $bUniqueKeys || !array_key_exists($complexKey, $arListIndex) ) {
+				if( $bUniqueKeys ) {
 					if($bSetReferences) {
 						$arListIndex[$complexKey] = &$arItem;
 					}
@@ -291,48 +288,18 @@ namespace OBX\Core {
 					}
 				}
 				else {
-					if( is_array($arListIndex[$complexKey]) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arListIndex[$complexKey]) ) {
-						if($bSetReferences) {
-							$arListIndex[$complexKey][] = &$arItem;
-						}
-						else {
-							$arListIndex[$complexKey][] = $arItem;
-						}
+					if( !array_key_exists($complexKey, $arListIndex) ) {
+						$arListIndex[$complexKey] = array();
+					}
+					if($bSetReferences) {
+						$arListIndex[$complexKey][] = &$arItem;
 					}
 					else {
-						if($bSetReferences) {
-							$arNowElementIsArray = array(&$arListIndex[$complexKey]);
-							$arListIndex[$complexKey] = &$arNowElementIsArray;
-							$arListIndex[$complexKey][] = &$arItem;
-						}
-						else {
-							$arListIndex[$complexKey] = array($arListIndex[$complexKey]);
-							$arListIndex[$complexKey][] = $arItem;
-						}
-					}
-				}
-			}
-			self::__removeTmpDataFromListIndex($arListIndex);
-			if(!$bSetReferences) {
-				foreach($arList as &$arItem) {
-					if( is_array($arItem) ) {
-						unset($arItem['__THIS_IS_VALUE_ARRAY']);
+						$arListIndex[$complexKey][] = $arItem;
 					}
 				}
 			}
 			return $arListIndex;
-		}
-
-		static protected function __removeTmpDataFromListIndex(&$arListIndex) {
-			foreach($arListIndex as $key => &$arItem) {
-				if( is_array($arItem) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arItem) ) {
-					self::__removeTmpDataFromListIndex($arItem);
-				}
-				else {
-					unset($arItem['__THIS_IS_VALUE_ARRAY']);
-				}
-			}
-			return;
 		}
 
 		static public function arrayMergeRecursiveDistinct( array &$array1, array &$array2) {
