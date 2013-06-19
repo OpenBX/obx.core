@@ -989,11 +989,29 @@ abstract class DBSimple extends CMessagePoolDecorator
 					$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 					list($asName, $tblFieldName) = each($arTblField);
 					$isSubQuery = (strpos($tblFieldName,'(')!==false);
+					$sqlField = $asName.'.'.$tblFieldName;
 					// Нельзя сделать фильтр по полю, которое является подзапросом
 					if($isSubQuery) {
-						continue;
+						// [pronix:2013-06-19]если конечно не указать явный подзапрос специально для фильтра :)
+						if( !array_key_exists('GET_LIST_FILTER', $arTblField) ) {
+							continue;
+						}
+						else {
+							if($arTblField['GET_LIST_FILTER'] === true) {
+								$sqlField = '('.$tblFieldName.')';
+							}
+							elseif( is_string($arTblField['GET_LIST_FILTER'])) {
+								$sqlField = '('.$arTblField['GET_LIST_FILTER'].')';
+							}
+							else {
+								continue;
+							}
+						}
 					}
-					$sqlField = $asName.'.'.$tblFieldName;
+					else {
+						$sqlField = $asName.'.'.$tblFieldName;
+					}
+
 					if( !is_array($filterFieldValue) ) {
 						$bFieldValueNullCheck = false;
 						if( $filterFieldValue === null || $filterFieldValue == '__null__' ) {
@@ -1174,25 +1192,12 @@ abstract class DBSimple extends CMessagePoolDecorator
 			}
 		}
 		$sGroupBy = '';
-		$sRecordCounterGroupBy = '';
 		$arSqlGroupedByField = array();
-		$arSqlRecordCounterGroupBy = array();
 		foreach($arGroupByFields as $tblAlias => $tblFieldName) {
 			$arSqlGroupedByField[] = $tblAlias.'.'.$tblFieldName;
-			// Строим отдельную группировку для предварительного запроса
-			// на количество записей по запросу для постранички
-			if( $bUsePagination
-				&& $tblAlias != $this->_mainTable
-				&& $tblFieldName != $this->_mainTablePrimaryKey
-			) {
-				$arSqlRecordCounterGroupBy[] = $tblAlias.'.'.$tblFieldName;
-			}
 		}
 		if( count($arSqlGroupedByField) > 0 ) {
 			$sGroupBy = "\nGROUP BY ( ".implode(", ",$arSqlGroupedByField)." )";
-		}
-		if( count($arSqlRecordCounterGroupBy) > 0 ) {
-			$sRecordCounterGroupBy = "\nGROUP BY ( ".implode(", ",$arSqlRecordCounterGroupBy)." )";
 		}
 
 		// Часть WHERE в которой связываем таблицы
@@ -1255,17 +1260,13 @@ abstract class DBSimple extends CMessagePoolDecorator
 
 		$strDistinct = $this->_bDistinctGetList?'DISTINCT ':'';
 		if($bUsePagination && $this->_mainTablePrimaryKey !== null) {
-			$sqlCount = 'SELECT COUNT('.$strDistinct
-									.$this->_mainTable
-									.'.'
-									.$this->_mainTablePrimaryKey
-								.') as C '
-						.'FROM '.$sSelectFrom.' '
-						.$sWhere.$sRecordCounterGroupBy.$sSort;
+			$sqlList = 'SELECT '.$strDistinct.$sqlList;
+			$sqlCount = 'SELECT COUNT(*) as C '
+						.'FROM ('.$sqlList.') as SELECTION';
 			$res_cnt = $DB->Query($sqlCount);
 			$res_cnt = $res_cnt->Fetch();
 			$res = new DBSResult();
-			$sqlList = 'SELECT '.$strDistinct.$sqlList;
+
 			$res->NavQuery($sqlList, $res_cnt["C"], $arPagination);
 		}
 		else {
