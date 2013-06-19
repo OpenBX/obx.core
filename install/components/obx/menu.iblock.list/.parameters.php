@@ -66,7 +66,11 @@ $arComponentParameters = array(
 );
 
 foreach($arSelectedIBlockList as $arIBlock) {
-	$arComponentParameters['PARAMETERS']['IBLOCK_LIST_PAGE_URL_'.$arIBlock['ID']] = CIBlockParameters::GetPathTemplateParam(
+	$iblockCode = trim($arIBlock['CODE']);
+	if(empty($iblockCode)) {
+		$iblockCode = $arIBlock['ID'];
+	}
+	$arComponentParameters['PARAMETERS']['IBLOCK_LIST_PAGE_URL_'.$iblockCode] = CIBlockParameters::GetPathTemplateParam(
 		"BASE",
 		"LIST_PAGE_URL",
 		(($bAddTypeName2IBlocks)?'['.$arTypesEx[$arIBlock['IBLOCK_TYPE_ID']].'] ':'').$arIBlock['NAME'],
