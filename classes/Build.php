@@ -236,13 +236,14 @@ class OBX_Build {
 					$arIBlockResource = array(
 						'IBLOCK_CODE' => null,
 						'IBLOCK_ID' => null,
+						'IBLOCK_TYPE' => null,
 						'EXPORT_PATH' => null
 					);
 					$arTmpIBlockResource = explode('::', $strResource);
 					$arIBlockResource['IBLOCK_CODE'] = trim($arTmpIBlockResource[0]);
 					$arIBlockResource['EXPORT_PATH'] = trim($arTmpIBlockResource[1]);
 					$arIBlockResource['XML_FILE'] = trim($arTmpIBlockResource[2]);
-					$arIBlockResource['EDIT_FORM_FILE'] = trim($arTmpIBlockResource[3]);
+					$arIBlockResource['FORM_SETTINGS_FILE'] = trim($arTmpIBlockResource[3]);
 					$arIBlockResource["EXPORT_PATH"] = rtrim(str_replace(
 						array(
 							'%MODULE_FOLDER%',
@@ -1116,19 +1117,37 @@ if(!defined("BX_ROOT")) {
 		if( strrpos($arIBlockData['XML_FILE'], '.xml' ) === false ) {
 			$arIBlockData['XML_FILE'] = $arIBlockData['XML_FILE'].'.xml';
 		}
+		if( strlen($arIBlockData['FORM_SETTINGS_FILE'])<1 ) {
+			$arIBlockData['FORM_SETTINGS_FILE'] = $arIBlockData['IBLOCK_CODE'].'.form_settings';
+		}
+		elseif(strrpos($arIBlockData['FORM_SETTINGS_FILE'], '.form_settings' ) === false) {
+			$arIBlockData['FORM_SETTINGS_FILE'] = $arIBlockData['FORM_SETTINGS_FILE'].'.form_settings';
+		}
 		$arIBlockData['EXPORT_FULL_PATH'] = $this->_docRootDir.$arIBlockData['EXPORT_PATH'];
 		$arIBlockData['EXPORT_WORK_DIR'] = '/'.str_replace('.xml', '', $arIBlockData['XML_FILE']).'_files/';
 		$arIBlockData['EXPORT_WORK_DIR_FULL_PATH'] = $arIBlockData['EXPORT_FULL_PATH'].$arIBlockData['EXPORT_WORK_DIR'];
 		$arIBlockData['XML_FILE_FULL_PATH'] = $arIBlockData['EXPORT_FULL_PATH'].'/'.$arIBlockData['XML_FILE'];
+		$arIBlockData['FORM_SETTINGS_FILE_FULL_PATH'] = $arIBlockData['EXPORT_FULL_PATH'].'/'.$arIBlockData['FORM_SETTINGS_FILE'];
 
 		$this->_arIBlockData[$arIBlockData['IBLOCK_CODE']] = $arIBlockData;
 		return true;
 	}
 
-	protected function _exportIBlockXML($iblockCode) {
+	protected function _checkConfig4IBlockCode($iblockCode) {
 		if( !array_key_exists($iblockCode, $this->_arIBlockData) ) {
 			echo "Iblock \"$iblockCode\" not found in resource file \n";
 			return false;
+		}
+		return true;
+	}
+
+	protected function _checkIBlockCode($iblockCode) {
+		if( !$this->_checkConfig4IBlockCode($iblockCode) ) return false;
+		if(
+			$this->_arIBlockData[$iblockCode]['IBLOCK_TYPE'] != null
+			&& $this->_arIBlockData[$iblockCode]['IBLOCK_ID'] != null
+		) {
+			return true;
 		}
 		$this->_includeProlog();
 		CModule::IncludeModule('iblock');
@@ -1138,6 +1157,12 @@ if(!defined("BX_ROOT")) {
 			return false;
 		}
 		$this->_arIBlockData[$iblockCode]['IBLOCK_ID'] = $arIBlock['ID'];
+		$this->_arIBlockData[$iblockCode]['IBLOCK_TYPE'] = $arIBlock['IBLOCK_TYPE_ID'];
+		return true;
+	}
+
+	protected function _exportIBlockXML($iblockCode) {
+		if(!$this->_checkIBlockCode($iblockCode)) return false;
 		$arIB = &$this->_arIBlockData[$iblockCode];
 
 		self::deleteDirFilesEx($arIB['EXPORT_WORK_DIR_FULL_PATH'], true);
@@ -1216,35 +1241,90 @@ if(!defined("BX_ROOT")) {
 		return $bSuccess;
 	}
 
-	public function getIBlockListFormSettings() {
-
-	}
-
 	public function getIBlockFormSettings($iblockCode) {
+		if(!$this->_checkIBlockCode($iblockCode)) return null;
+		$arIB = &$this->_arIBlockData[$iblockCode];
+		$arFormSettings = array(
+			'LIST' => CUserOptions::GetOption('list', 'tbl_iblock_list_'.md5($arIB['IBLOCK_TYPE'].'.'.$arIB['IBLOCK_ID']), false, 0),
+			'DETAIL' => CUserOptions::GetOption('form', 'form_element_'.$arIB['IBLOCK_ID'], false, 0),
+			'PROPERTIES' => array()
+		);
+		preg_match_all('~PROPERTY\_([\d]{1,10})~', $arFormSettings['DETAIL']['tabs'], $arDetailMatches);
 
+		$arPropertyIDList = $arDetailMatches[1];
+		$rsProperties = CIBlockProperty::GetList(array('id' => 'asc'), array('IBLOCK_ID' => $arIB['IBLOCK_ID']));
+		while($arProperty = $rsProperties->Fetch()) {
+			if( in_array($arProperty['ID'], $arPropertyIDList) ) {
+				if( strlen(trim($arProperty['CODE']))<1 ) {
+					echo 'CODE for property "'.$arProperty['NAME'].'" not set';
+					return null;
+				}
+				$arFormSettings['PROPERTIES'][] = $arProperty['CODE'];
+				$arFormSettings['DETAIL']['tabs'] = str_replace('PROPERTY_'.$arProperty['ID'], 'PROPERTY_%'.$arProperty['CODE'].'%', $arFormSettings['DETAIL']['tabs']);
+				$arFormSettings['LIST']['columns'] = str_replace('PROPERTY_'.$arProperty['ID'], 'PROPERTY_%'.$arProperty['CODE'].'%', $arFormSettings['LIST']['columns']);
+			}
+		}
+		return $arFormSettings;
 	}
 
-	public function exportIBlockFormSettings() {
 
+	protected function _exportIBlockFormSettings($iblockCode) {
+		$arFormSettings = $this->getIBlockFormSettings($iblockCode);
+		if($arFormSettings === null) return false;
+		$arIB = &$this->_arIBlockData[$iblockCode];
+		$fpFormSettFile = fopen($arIB['FORM_SETTINGS_FILE_FULL_PATH'], 'wb');
+		if(!$fpFormSettFile) {
+			echo "Can't create / open form-settings file \n";
+			return false;
+		}
+		$serFormSettings = serialize($arFormSettings);
+		fwrite($fpFormSettFile, $serFormSettings);
+		if($fpFormSettFile) fclose($fpFormSettFile);
+	}
+
+	public function exportIBlockFormSettings($iblockCode = null) {
+		$bSuccess = true;
+		if($iblockCode === null) {
+			foreach($this->_arIBlockData as $iblockCode => &$arIB) {
+				$bSuccess = $this->_exportIBlockFormSettings($iblockCode) && $bSuccess;
+			}
+		}
+		else {
+			return $this->_exportIBlockFormSettings($iblockCode);
+		}
+		return $bSuccess;
 	}
 
 
 	public function processCommandOptions() {
-		$arCommandOptions = getopt('', array(
-			'build-cml::'
+		$arCommandOptions = getopt('h', array(
+			'iblock-cml::',
+			'iblock-form-settings::'
 		));
 
-		$arBuildXML4IBlocks = array();
-		if( array_key_exists('build-cml', $arCommandOptions) ) {
-			$arCommandOptions['build-cml'] = trim($arCommandOptions['build-cml']);
-			if( strlen($arCommandOptions['build-cml']) > 0 ) {
-				$arBuildXML4IBlocks = explode(',', $arCommandOptions['build-cml']);
+		if( array_key_exists('iblock-cml', $arCommandOptions) ) {
+			$arCommandOptions['iblock-cml'] = trim($arCommandOptions['iblock-cml']);
+			if( strlen($arCommandOptions['iblock-cml']) > 0 ) {
+				$arBuildXML4IBlocks = explode(',', $arCommandOptions['iblock-cml']);
 				foreach($arBuildXML4IBlocks as $iblockCode) {
 					$this->exportIBlockCML($iblockCode);
 				}
 			}
 			else {
 				$this->exportIBlockCML();
+			}
+		}
+
+		if( array_key_exists('iblock-form-settings', $arCommandOptions) ) {
+			$arCommandOptions['iblock-form-settings'] = trim($arCommandOptions['iblock-form-settings']);
+			if( strlen($arCommandOptions['iblock-form-settings']) > 0 ) {
+				$arBuildIBFormSettings = explode(',', $arCommandOptions['iblock-form-settings']);
+				foreach($arBuildIBFormSettings as $iblockCode) {
+					$this->exportIBlockFormSettings($iblockCode);
+				}
+			}
+			else {
+				$this->exportIBlockFormSettings();
 			}
 		}
 	}
