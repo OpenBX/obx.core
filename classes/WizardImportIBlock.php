@@ -1,4 +1,13 @@
 <?php
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @license Affero GPLv3                     **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
+
 namespace OBX\Core\Wizard;
 use \OBX\Core\Tools;
 class ImportIBlock
@@ -10,6 +19,7 @@ class ImportIBlock
 	protected $_iblockType = null;
 	protected $_iblockXMLFile = null;
 	protected $_iblockXMLDir = null;
+	protected $_iblockFormSettingsFile = null;
 	protected $_bReinstallData = null;
 
 	protected $_arConfig = array(
@@ -184,11 +194,12 @@ class ImportIBlock
 			return false;
 		}
 		$arConfig = &$this->_arConfig['IBLOCK'][$iblockCode];
-		$this->_iblockCode = $iblockCode;
-		$this->_iblockXmlID = $arConfig['XML_ID'];
-		$this->_iblockType = $arConfig['IBLOCK_TYPE_ID'];
+		$this->_iblockCode		= $iblockCode;
+		$this->_iblockXmlID		= $arConfig['XML_ID'];
+		$this->_iblockType		= $arConfig['IBLOCK_TYPE_ID'];
 		$this->_iblockXMLFile	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['XML_FILE'];
 		$this->_iblockXMLDir	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.str_replace('.xml', '_files', $arConfig['XML_FILE']);
+		$this->_iblockFormSettingsFile = $this->_iblockXMLFile	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['FORM_SETTINGS'];
 		if( !is_file($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) || !file_exists($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) ) {
 			return false;
 		}
@@ -497,6 +508,50 @@ class ImportIBlock
 				}
 			}
 		}
+	}
+
+	protected function getFormSettings() {
+		if(!$this->_bIBlockSelected || $this->_iblockID <= 0) return null;
+		if( is_file($_SERVER['DOCUMENT_ROOT'].$this->_iblockFormSettingsFile) ) {
+			$serFormSettings = file_get_contents($_SERVER['DOCUMENT_ROOT'].$this->_iblockFormSettingsFile);
+			$arFormSettings = unserialize($serFormSettings);
+			if($arFormSettings == false) return null;
+			foreach($arFormSettings['PROPERTIES'] as $propertyCode) {
+				$dbProperty = \CIBlockProperty::GetList(
+					array('ID' => 'ASC'),
+					array(
+						'IBLOCK_ID' => $this->_iblockID,
+						'CODE' => $propertyCode
+					)
+				);
+				if( !($arProperty = $dbProperty->Fetch()) ) {
+					return null;
+				}
+				$arFormSettings['DETAIL']['tabs'] = str_replace('PROPERTY_%'.$arProperty['CODE'].'%', 'PROPERTY_'.$arProperty['ID'], $arFormSettings['DETAIL']['tabs']);
+				$arFormSettings['LIST']['columns'] = str_replace('PROPERTY_%'.$arProperty['CODE'].'%', 'PROPERTY_'.$arProperty['ID'], $arFormSettings['LIST']['columns']);
+			}
+			return $arFormSettings;
+		}
+		return null;
+	}
+
+	public function setFormSettings() {
+		$arFormSettings = $this->getFormSettings();
+		if( $arFormSettings === null ) {
+			return false;
+		}
+		\CUserOptions::SetOption(
+			'list',
+			'tbl_iblock_list_'.md5($this->_iblockType.'.'.$this->_iblockID),
+			$arFormSettings['LIST'],
+			true
+		);
+		\CUserOptions::SetOption(
+			'form',
+			'form_element_'.$this->_iblockID,
+			$arFormSettings['DETAIL'],
+			true
+		);
 	}
 }
 
