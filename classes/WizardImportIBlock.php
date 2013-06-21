@@ -194,12 +194,12 @@ class ImportIBlock
 			return false;
 		}
 		$arConfig = &$this->_arConfig['IBLOCK'][$iblockCode];
-		$this->_iblockCode		= $iblockCode;
-		$this->_iblockXmlID		= $arConfig['XML_ID'];
-		$this->_iblockType		= $arConfig['IBLOCK_TYPE_ID'];
-		$this->_iblockXMLFile	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['XML_FILE'];
-		$this->_iblockXMLDir	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.str_replace('.xml', '_files', $arConfig['XML_FILE']);
-		$this->_iblockFormSettingsFile = $this->_iblockXMLFile	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['FORM_SETTINGS'];
+		$this->_iblockCode				= $iblockCode;
+		$this->_iblockXmlID				= $arConfig['XML_ID'];
+		$this->_iblockType				= $arConfig['IBLOCK_TYPE_ID'];
+		$this->_iblockXMLFile			= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['XML_FILE'];
+		$this->_iblockXMLDir			= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.str_replace('.xml', '_files', $arConfig['XML_FILE']);
+		$this->_iblockFormSettingsFile	= WIZARD_RELATIVE_PATH.'/site/services/iblock/xml/'.LANGUAGE_ID.'/'.$arConfig['FORM_SETTINGS'];
 		if( !is_file($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) || !file_exists($_SERVER['DOCUMENT_ROOT'].$this->_iblockXMLFile) ) {
 			return false;
 		}
