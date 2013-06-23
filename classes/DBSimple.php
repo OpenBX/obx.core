@@ -566,6 +566,47 @@ abstract class DBSimple extends CMessagePoolDecorator
 	}
 
 	/**
+	 * @var null | string
+	 * Модуль к которому принадлежит сущность
+	 */
+	protected $_entityModuleID = null;
+
+	/**
+	 * @var null | string
+	 * Идентификатор используемый для создания событий приисходящих в сущности
+	 * список генерируемых событий
+	 * on<EventsID>StartAdd
+	 * on<EventsID>BeforeAdd
+	 * on<EventsID>AfterAdd
+	 * ---
+	 * on<EventsID>StartUpdate
+	 * on<EventsID>BeforeUpdate
+	 * on<EventsID>BeforeExecUpdate
+	 * on<EventsID>AfterUpdate
+	 * ---
+	 * on<EventsID>StartDelete
+	 * on<EventsID>BeforeDelete
+	 * on<EventsID>AfterDelete
+	 * ---
+	 * on<EventsID>StartDeleteByFilter
+	 * on<EventsID>BeforeDeleteByFilter
+	 * on<EventsID>AfterDeleteByFilter
+	 */
+	protected $_entityEventsID = null;
+
+	/**
+	 * @var array
+	 * Список событий сущности
+	 */
+	protected $_arEntityEvents = array();
+
+	/**
+	 * @var bool
+	 * Признак того, что стандартные события сущности инициализированы
+	 */
+	protected $_bEntityEventsInit = false;
+
+	/**
 	 * Массив содержит имена полей таблицы сущности, которые доступны для редактрирования в административной панели
 	 * @var array
 	 * @access protected
@@ -575,6 +616,87 @@ abstract class DBSimple extends CMessagePoolDecorator
 	protected $_lastQueryString = '';
 	final public function getLastQueryString() {
 		return $this->_lastQueryString;
+	}
+
+	/**
+	 * Получить в сущности объект списка событий
+	 * Для автоматической генерации стандартного списка собйтий
+	 * данный метод должен быть выполнен в конструкторе сущности
+	 */
+	protected function _getEntityEvents() {
+		if($this->_entityModuleID === null || $this->_entityEventsID === null) {
+			return false;
+		}
+		////////////////////////////////////////////////////////////////////
+		$this->_arEntityEvents['onStartAdd'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onStart'.$this->_entityEventsID.'Add',
+			true
+		);
+		$this->_arEntityEvents['onBeforeAdd'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onBefore'.$this->_entityEventsID.'Add',
+			true
+		);
+		$this->_arEntityEvents['onAfterAdd'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onAfter'.$this->_entityEventsID.'Add',
+			true
+		);
+		////////////////////////////////////////////////////////////////////
+		$this->_arEntityEvents['onStartUpdate'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onStart'.$this->_entityEventsID.'Update',
+			true
+		);
+		$this->_arEntityEvents['onBeforeUpdate'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onBefore'.$this->_entityEventsID.'Update',
+			true
+		);
+		$this->_arEntityEvents['onBeforeExecUpdate'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onBeforeExec'.$this->_entityEventsID.'Update',
+			true
+		);
+		$this->_arEntityEvents['onAfterUpdate'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onAfter'.$this->_entityEventsID.'Update',
+			true
+		);
+		////////////////////////////////////////////////////////////////////
+		$this->_arEntityEvents['onStartDelete'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onStart'.$this->_entityEventsID.'Delete',
+			true
+		);
+		$this->_arEntityEvents['onBeforeDelete'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onBefore'.$this->_entityEventsID.'Delete',
+			true
+		);
+		$this->_arEntityEvents['onAfterDelete'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onAfter'.$this->_entityEventsID.'Delete',
+			true
+		);
+		////////////////////////////////////////////////////////////////////
+		$this->_arEntityEvents['onStartDeleteByFilter'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onStart'.$this->_entityEventsID.'DeleteByFilter',
+			true
+		);
+		$this->_arEntityEvents['onBeforeDeleteByFilter'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onBefore'.$this->_entityEventsID.'DeleteByFilter',
+			true
+		);
+		$this->_arEntityEvents['onAfterDeleteByFilter'] = GetModuleEvents(
+			$this->_entityModuleID,
+			'onAfter'.$this->_entityEventsID.'DeleteByFilter',
+			true
+		);
+		$this->_bEntityEventsInit = true;
 	}
 
 	protected function __checkNumericField($bFloat = false, &$fieldValue, &$bUnsignedType, &$bNotNull, &$bNotZero) {
@@ -1437,9 +1559,36 @@ abstract class DBSimple extends CMessagePoolDecorator
 		return $rsList;
 	}
 
-	protected function _onStartAdd(&$arFields) { return true; }
-	protected function _onBeforeAdd(&$arFields, &$arCheckResult) { return true; }
-	protected function _onAfterAdd(&$arFields) { return true; }
+	protected function _onStartAdd(&$arFields) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onStartAdd'], array(&$arFields, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
+	protected function _onBeforeAdd(&$arFields, &$arCheckResult) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx(
+				$this->_arEntityEvents['onBeforeAdd'],
+				array(&$arFields, &$arCheckResult, &$this->MessagePool)
+			);
+		}
+		return $bSuccess;
+	}
+	protected function _onAfterAdd(&$arFields) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onAfterAdd'], array(&$arFields, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
 
 	protected function _getLangMessageReplace($field, $bReturn2Arrays4StrReplace = true) {
 		if( $bReturn2Arrays4StrReplace ) {
@@ -1516,7 +1665,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 	public function add($arFields) {
 		global $DB;
 
-		$bContinueAfterEvent = $this->_onStartAdd($arFields)!=false; if(!$bContinueAfterEvent) return 0;
+		$bContinueAfterEvent = ($this->_onStartAdd($arFields)!=false); if(!$bContinueAfterEvent) return 0;
 		$mainTableAutoIncrement = $this->_mainTableAutoIncrement;
 		$mainTablePrimaryKey = $this->_mainTablePrimaryKey;
 		if( $mainTableAutoIncrement != null && isset($arFields[$mainTableAutoIncrement]) ) {
@@ -1525,7 +1674,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_ADD, $arFields);
 		if($arCheckResult['__BREAK']) return 0;
 
-		$bContinueAfterEvent = $this->_onBeforeAdd($arFields, $arCheckResult)!=false; if(!$bContinueAfterEvent) return 0;
+		$bContinueAfterEvent = ($this->_onBeforeAdd($arFields, $arCheckResult)!=false); if(!$bContinueAfterEvent) return 0;
 
 		$arLangMessages = $this->_arDBSimpleLangMessages;
 		$arMissedFields = $this->checkRequiredFields($arFields, $arCheckResult);
@@ -1650,7 +1799,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 		$this->_lastQueryString = $sqlInsert;
 		$DB->Query($sqlInsert, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 
-		$bContinueAfterEvent = $this->_onAfterAdd($arFields)!=false; if(!$bContinueAfterEvent) return 0;
+		$bContinueAfterEvent = ($this->_onAfterAdd($arFields)!=false); if(!$bContinueAfterEvent) return 0;
 
 		if($mainTablePrimaryKey !== null) {
 			if($mainTablePrimaryKey == $mainTableAutoIncrement ) {
@@ -1661,10 +1810,48 @@ abstract class DBSimple extends CMessagePoolDecorator
 		return true;
 	}
 
-	protected function _onStartUpdate(&$arFields) { return true; }
-	protected function _onBeforeUpdate(&$arFields, &$arCheckResult) { return true; }
-	protected function _onBeforeExecUpdate(&$arFields, &$arCheckResult) { return true; }
-	protected function _onAfterUpdate(&$arFields) { return true; }
+	protected function _onStartUpdate(&$arFields) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onStartUpdate'], array(&$arFields, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
+	protected function _onBeforeUpdate(&$arFields, &$arCheckResult) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx(
+				$this->_arEntityEvents['onBeforeUpdate'],
+				array(&$arFields, &$arCheckResult, &$this->MessagePool)
+			);
+		}
+		return $bSuccess;
+	}
+	protected function _onBeforeExecUpdate(&$arFields, &$arCheckResult) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx(
+				$this->_arEntityEvents['onBeforeExecUpdate'],
+				array(&$arFields, &$arCheckResult, &$this->MessagePool)
+			);
+		}
+		return $bSuccess;
+	}
+	protected function _onAfterUpdate(&$arFields) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onAfterUpdate'], array(&$arFields, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
 
 	/**
 	 * @param array $arFields
@@ -1673,10 +1860,10 @@ abstract class DBSimple extends CMessagePoolDecorator
 	 */
 	public function update($arFields, $bNotUpdateUniqueFields = false) {
 		global $DB;
-		$bContinueAfterEvent = $this->_onStartUpdate($arFields)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onStartUpdate($arFields)!=false); if(!$bContinueAfterEvent) return false;
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_UPDATE, $arFields);
 		if($arCheckResult['__BREAK']) return false;
-		$bContinueAfterEvent = $this->_onBeforeUpdate($arFields, $arCheckResult)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onBeforeUpdate($arFields, $arCheckResult)!=false); if(!$bContinueAfterEvent) return false;
 
 		$mainTablePrimaryKey = $this->_mainTablePrimaryKey;
 		$arTableList = $this->_arTableList;
@@ -1804,7 +1991,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 				}
 			}
 		}
-		$bContinueAfterEvent = $this->_onBeforeExecUpdate($arFields, $arCheckResult)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onBeforeExecUpdate($arFields, $arCheckResult)!=false); if(!$bContinueAfterEvent) return false;
 		$strUpdate = $DB->PrepareUpdate($mainEntityTableName, $arFields);
 		$strUpdateSetNullFields = '';
 		$bFirstI = true;
@@ -1826,13 +2013,37 @@ abstract class DBSimple extends CMessagePoolDecorator
 			.';';
 		$this->_lastQueryString = $strUpdate;
 		$DB->Query($strUpdate, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		$bContinueAfterEvent = $this->_onAfterUpdate($arFields)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onAfterUpdate($arFields)!=false); if(!$bContinueAfterEvent) return false;
 		return true;
 	}
 
-	protected function _onStartDelete(&$PRIMARY_KEY_VALUE) { return true; }
-	protected function _onBeforeDelete(&$arItem) { return true; }
-	protected function _onAfterDelete(&$arItem) { return true; }
+	protected function _onStartDelete(&$PRIMARY_KEY_VALUE) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onStartDelete'], array($PRIMARY_KEY_VALUE, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
+	protected function _onBeforeDelete(&$arItem) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onBeforeDelete'], array(&$arItem, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
+	protected function _onAfterDelete(&$arItem) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx($this->_arEntityEvents['onAfterDelete'], array(&$arItem, &$this->MessagePool));
+		}
+		return $bSuccess;
+	}
 
 	/**
 	 * @param $PRIMARY_KEY_VALUE
@@ -1853,7 +2064,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			)), self::ERR_CANT_DEL_WITHOUT_PK);
 			return false;
 		}
-		$bContinueAfterEvent = $this->_onStartDelete($PRIMARY_KEY_VALUE)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onStartDelete($PRIMARY_KEY_VALUE)!=false); if(!$bContinueAfterEvent) return false;
 		if( $mainTableAutoIncrement == $mainTablePrimaryKey ) {
 			$PRIMARY_KEY_VALUE = intval($PRIMARY_KEY_VALUE);
 		}
@@ -1882,11 +2093,11 @@ abstract class DBSimple extends CMessagePoolDecorator
 				return false;
 			}
 		}
-		$bContinueAfterEvent = $this->_onBeforeDelete($arExists)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onBeforeDelete($arExists)!=false); if(!$bContinueAfterEvent) return false;
 		$sqlDelete = 'DELETE FROM '.$tableName.' WHERE '.$tblFieldName.' = \''.$PRIMARY_KEY_VALUE.'\';';
 		$this->_lastQueryString = $sqlDelete;
 		$DB->Query($sqlDelete, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		$bContinueAfterEvent = $this->_onAfterDelete($arExists)!=false; if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onAfterDelete($arExists)!=false); if(!$bContinueAfterEvent) return false;
 		return true;
 	}
 
@@ -1993,9 +2204,42 @@ abstract class DBSimple extends CMessagePoolDecorator
 		return null;
 	}
 
-	protected function _onStartDeleteByFilter(&$arFilter, &$bCheckExistence) { return true; }
-	protected function _onBeforeDeleteByFilter(&$arFilter, &$bCheckExistence, &$arDelete) { return true; }
-	protected function _onAfterDeleteByFilter(&$arFilter, &$bCheckExistence) { return true; }
+	protected function _onStartDeleteByFilter(&$arFilter, &$bCheckExistence) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx(
+				$this->_arEntityEvents['onStartDeleteByFilter'],
+				array(&$arFilter, &$bCheckExistence, &$this->MessagePool)
+			);
+		}
+		return $bSuccess;
+	}
+	protected function _onBeforeDeleteByFilter(&$arFilter, &$bCheckExistence, &$arDelete) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx(
+				$this->_arEntityEvents['onBeforeDeleteByFilter'],
+				array(&$arFilter, &$bCheckExistence, &$this->MessagePool)
+			);
+		}
+		return $bSuccess;
+	}
+	protected function _onAfterDeleteByFilter(&$arFilter, &$bCheckExistence) {
+		if(!$this->_bEntityEventsInit) {
+			$bSuccess = true;
+		}
+		else {
+			$bSuccess = ExecuteModuleEventEx(
+				$this->_arEntityEvents['onAfterDeleteByFilter'],
+				array(&$arFilter, &$bCheckExistence, &$this->MessagePool)
+			);
+		}
+		return $bSuccess;
+	}
 
 	/**
 	 * @param array $arFilter
@@ -2005,7 +2249,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 	public function deleteByFilter($arFilter, $bCheckExistence = true) {
 		global $DB;
 
-		$bContinueAfterEvent = $this->_onStartDeleteByFilter($arFilter, $bCheckExistence)!=false;
+		$bContinueAfterEvent = ($this->_onStartDeleteByFilter($arFilter, $bCheckExistence)!=false);
 		if(!$bContinueAfterEvent) return false;
 		$arDelete = $this->_deleteByFilterPrepare($arFilter);
 		$arLangMessages = $this->_arDBSimpleLangMessages;
@@ -2032,12 +2276,12 @@ abstract class DBSimple extends CMessagePoolDecorator
 				return false;
 			}
 		}
-		$bContinueAfterEvent = $this->_onBeforeDeleteByFilter($arFilter, $bCheckExistence, $arDelete)!=false;
+		$bContinueAfterEvent = ($this->_onBeforeDeleteByFilter($arFilter, $bCheckExistence, $arDelete)!=false);
 		if(!$bContinueAfterEvent) return false;
 		$sqlDelete = 'DELETE FROM '.$arDelete['TABLE_NAME'].' WHERE'.$arDelete['WHERE_STRING'];
 		$this->_lastQueryString = $sqlDelete;
 		$DB->Query($sqlDelete, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		$bContinueAfterEvent = $this->_onAfterDeleteByFilter($arFilter, $bCheckExistence)!=false;
+		$bContinueAfterEvent = ($this->_onAfterDeleteByFilter($arFilter, $bCheckExistence)!=false);
 		if(!$bContinueAfterEvent) return false;
 		return true;
 	}
@@ -2073,17 +2317,6 @@ abstract class DBSimple extends CMessagePoolDecorator
 			// TODO: Тут выкидываем ошибку. Потому что нельзя удалять записи сущности плученные с помощью класса другой сущности
 		}
 		return $bResult;
-	}
-
-	protected function _onStartUpdateByFilter() { return true; }
-	protected function _onBeforeUpdateByFilter() { return true; }
-	protected function _onAfterUpdateByFilter() { return true; }
-	protected function updateByFilterLowLevel($arFields, $arFilter) {
-		// TODO:этот метод делает тоже что и updateByFilter, но не проверяет на уникальные поля $arFields
-	}
-
-	public function updateByFilter($arFields, $arFilter) {
-		// TODO: В этои методе мы или ислючаем поля $arFields входящие в уникальные ключи
 	}
 
 	public function getFieldNames($arSelect = null) {
