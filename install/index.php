@@ -206,8 +206,14 @@ class obx_core extends CModule
 		return $this->bSuccessUnInstallDB;
 	}
 
-	public function InstallEvents() { $this->bSuccessInstallEvents = true; return $this->bSuccessInstallEvents; }
-	public function UnInstallEvents() { $this->bSuccessUnInstallEvents = true; return $this->bSuccessUnInstallEvents; }
+	public function InstallEvents() {
+		RegisterModuleDependences('main', 'OnPageStart', 'obx.core', 'OBX\Core\EventD', 'connectAllEvents', '10');
+		$this->bSuccessInstallEvents = true; return $this->bSuccessInstallEvents;
+	}
+	public function UnInstallEvents() {
+		UnRegisterModuleDependences('main', 'OnPageStart', 'obx.core', 'OBX\Core\EventD', 'connectAllEvents');
+		$this->bSuccessUnInstallEvents = true; return $this->bSuccessUnInstallEvents;
+	}
 	public function InstallTasks() { $this->bSuccessInstallTasks = true; return $this->bSuccessInstallTasks; }
 	public function UnInstallTasks() { $this->bSuccessUnInstallTasks = true; return $this->bSuccessUnInstallTasks; }
 	public function InstallData() { $this->bSuccessInstallData = true; return $this->bSuccessInstallData; }

@@ -16,6 +16,7 @@ define('I_KNOW_WHAT_I_DO', '__I_KNOW_WHAT_I_DO__');
 $arModuleClasses = array(
 	 'OBX_Tools'						=> 'classes/Tools.php'
 	,'OBX\Core\Tools'					=> 'classes/Tools.php'
+	,'OBX\Core\EventD'					=> 'classes/EventD.php'
 	,'OBX\Core\JSLang'					=> 'classes/JSLang.php'
 	,'OBX\Core\IMessagePool'			=> 'classes/MessagePool.php'
 	,'OBX\Core\IMessagePoolStatic'		=> 'classes/MessagePool.php'
