@@ -27,7 +27,6 @@ if(!function_exists("OBX_CopyDirFilesEx")) {
 }
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d/obx.core.debug.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/event.d/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d/obx.core.parse_ini_string.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/event.d/", true, true);
-OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/run_event.d.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/js/obx.core", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/layout", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/breadcrumb.get", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/", true, true);
