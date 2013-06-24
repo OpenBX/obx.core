@@ -1559,7 +1559,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 		return $rsList;
 	}
 
-	static protected function ExecuteModuleEventEx(&$arEventList, $arParams) {
+	static protected function _executeModuleEvents(&$arEventList, $arParams) {
 		$bSuccess = true;
 		foreach($arEventList as &$arEvent) {
 			$bSuccess = (ExecuteModuleEventEx($arEvent, $arParams)!==false) && $bSuccess;
@@ -1572,7 +1572,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onStartAdd'], array(&$arFields, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onStartAdd'], array(&$arFields, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -1581,7 +1581,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx(
+			$bSuccess = self::_executeModuleEvents(
 				$this->_arEntityEvents['onBeforeAdd'],
 				array(&$arFields, &$arCheckResult, &$this->MessagePool)
 			);
@@ -1593,7 +1593,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onAfterAdd'], array(&$arFields, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onAfterAdd'], array(&$arFields, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -1823,7 +1823,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onStartUpdate'], array(&$arFields, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onStartUpdate'], array(&$arFields, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -1832,7 +1832,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx(
+			$bSuccess = self::_executeModuleEvents(
 				$this->_arEntityEvents['onBeforeUpdate'],
 				array(&$arFields, &$arCheckResult, &$this->MessagePool)
 			);
@@ -1844,7 +1844,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx(
+			$bSuccess = self::_executeModuleEvents(
 				$this->_arEntityEvents['onBeforeExecUpdate'],
 				array(&$arFields, &$arCheckResult, &$this->MessagePool)
 			);
@@ -1856,7 +1856,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onAfterUpdate'], array(&$arFields, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onAfterUpdate'], array(&$arFields, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -2030,7 +2030,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onStartDelete'], array($PRIMARY_KEY_VALUE, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onStartDelete'], array($PRIMARY_KEY_VALUE, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -2039,7 +2039,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onBeforeDelete'], array(&$arItem, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onBeforeDelete'], array(&$arItem, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -2048,7 +2048,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx($this->_arEntityEvents['onAfterDelete'], array(&$arItem, &$this->MessagePool));
+			$bSuccess = self::_executeModuleEvents($this->_arEntityEvents['onAfterDelete'], array(&$arItem, &$this->MessagePool));
 		}
 		return $bSuccess;
 	}
@@ -2217,7 +2217,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx(
+			$bSuccess = self::_executeModuleEvents(
 				$this->_arEntityEvents['onStartDeleteByFilter'],
 				array(&$arFilter, &$bCheckExistence, &$this->MessagePool)
 			);
@@ -2229,7 +2229,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx(
+			$bSuccess = self::_executeModuleEvents(
 				$this->_arEntityEvents['onBeforeDeleteByFilter'],
 				array(&$arFilter, &$bCheckExistence, &$this->MessagePool)
 			);
@@ -2241,7 +2241,7 @@ abstract class DBSimple extends CMessagePoolDecorator
 			$bSuccess = true;
 		}
 		else {
-			$bSuccess = self::ExecuteModuleEventEx(
+			$bSuccess = self::_executeModuleEvents(
 				$this->_arEntityEvents['onAfterDeleteByFilter'],
 				array(&$arFilter, &$bCheckExistence, &$this->MessagePool)
 			);
