@@ -5,11 +5,12 @@
 	@License GPLv3
 	@mailto rootfavell@gmail.com
 -->
-<phpunit bootstrap="./bootstrap_tests.php">
+<phpunit bootstrap="./__bootstrap_tests.php">
 	<testsuites>
-		<testsuite name="OBX Core API Tests">
+		<testsuite name="OBX_Core_API_Tests">
 			<!-- <directory></directory> -->
-			<file>Visitors.php</file>
+			<file>JSLang.php</file>
+			<file>Settings.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>

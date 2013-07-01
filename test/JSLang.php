@@ -1,8 +1,18 @@
 <?php
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @license Affero GPLv3                     **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
+namespace OBX\Core\Test;
+use TestCase;
 use OBX\Core\JSLang;
 
-class OBX_Core_Test_JSLang extends OBX_Core_TestCase
+class JSLangTest extends TestCase
 {
 	public function testBuffer(){
 		$JSLang = JSLang::getInstance('obx.market');

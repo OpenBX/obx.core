@@ -35,5 +35,9 @@ $arModuleClasses = array(
 	,'OBX\Core\VisitorHitList'			=> 'classes/VisitorHitList.php'
 	,'OBX\Core\ModuleDependencies'		=> 'classes/ModuleDependencies.php'
 	,'OBX\Core\Wizard\ImportIBlock'		=> 'classes/WizardImportIBlock.php'
+	,'OBX\Core\Settings\ISettings'		=> 'classes/Settings.php'
+	,'OBX\Core\Settings\Settings'		=> 'classes/Settings.php'
+	,'OBX\Core\Settings\ITab'			=> 'classes/Settings.php'
+	,'OBX\Core\Settings\ATab'			=> 'classes/Settings.php'
 );
 return $arModuleClasses;
