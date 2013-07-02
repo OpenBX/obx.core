@@ -14,8 +14,8 @@ define('OBX_MAGIC_WORD', '__I_KNOW_WHAT_I_DO__');
 define('I_KNOW_WHAT_I_DO', '__I_KNOW_WHAT_I_DO__');
 
 $arModuleClasses = array(
-	 'OBX_Tools'						=> 'classes/Tools.php'
-	,'OBX\Core\Tools'					=> 'classes/Tools.php'
+	 'OBX\Core\Tools'					=> 'classes/Tools.php'
+	,'OBX_Tools'						=> 'classes/Tools.php'
 	,'OBX\Core\EventD'					=> 'classes/EventD.php'
 	,'OBX\Core\JSLang'					=> 'classes/JSLang.php'
 	,'OBX\Core\IMessagePool'			=> 'classes/MessagePool.php'
@@ -28,16 +28,14 @@ $arModuleClasses = array(
 	,'OBX\Core\IDBSimpleStatic'			=> 'classes/DBSimple.php'
 	,'OBX\Core\DBSimple'				=> 'classes/DBSimple.php'
 	,'OBX\Core\DBSimpleStatic'			=> 'classes/DBSimple.php'
-	,'OBX\Core\VisitorDBS'				=> 'classes/VisitorList.php'
-	,'OBX\Core\VisitorList'				=> 'classes/VisitorList.php'
-	,'OBX\Core\Visitor'					=> 'classes/Visitor.php'
-	,'OBX\Core\VisitorHitDBS'			=> 'classes/VisitorHitList.php'
-	,'OBX\Core\VisitorHitList'			=> 'classes/VisitorHitList.php'
 	,'OBX\Core\ModuleDependencies'		=> 'classes/ModuleDependencies.php'
 	,'OBX\Core\Wizard\ImportIBlock'		=> 'classes/WizardImportIBlock.php'
 	,'OBX\Core\Settings\ISettings'		=> 'classes/Settings.php'
 	,'OBX\Core\Settings\Settings'		=> 'classes/Settings.php'
 	,'OBX\Core\Settings\ITab'			=> 'classes/Settings.php'
 	,'OBX\Core\Settings\ATab'			=> 'classes/Settings.php'
+	,'OBX\Core\Settings\Tab'			=> 'classes/Settings.php'
+	,'OBX\Core\Settings\IModulePage'	=> 'classes/Settings.php'
+	,'OBX\Core\Settings\ModulePage'		=> 'classes/Settings.php'
 );
 return $arModuleClasses;

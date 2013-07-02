@@ -10,11 +10,15 @@
 
 namespace {
 	IncludeModuleLangFile(__FILE__);
+
+	/**
+	 * Class OBX_Tools
+	 * @deprecated
+	 */
 	class OBX_Tools extends OBX\Core\Tools {}
 }
 
 namespace OBX\Core {
-
 	class Tools
 	{
 

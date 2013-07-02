@@ -12,15 +12,19 @@ namespace OBX\Core\Settings;
 use OBX\Core\CMessagePoolDecorator;
 
 interface ISettings {
-	public function __construct($moduleID, $settingsID, $arSettings);
-	public function getSettingModuleID();
-	public function getSettingsID();
-	public function syncSettings();
-	public function getSettings();
-	public function getOption($optionCode, $bReturnOptionArray = false);
-	public function saveSettings($arSettings);
-	public function getOptionInput($optionCode, $arAttributes = array());
-	public function saveSettingsRequestData();
+	function __construct($moduleID, $settingsID, $arSettings);
+	function getSettingModuleID();
+	function getSettingsID();
+	function syncSettings();
+	function getSettings();
+	function getOption($optionCode, $bReturnOptionArray = false);
+	function saveSettings($arSettings);
+	function getOptionInput($optionCode, $arAttributes = array());
+	function saveSettingsRequestData();
+}
+
+interface ISettingsConfig extends ISettings {
+	function readConfig($configRelativePath = null);
 }
 
 class Settings implements ISettings {
@@ -75,11 +79,16 @@ class Settings implements ISettings {
 					'TYPE' => $arOption['TYPE'],
 					'VALUE' => (array_key_exists('VALUE', $arOption)?$arOption['VALUE']:'')
 				);
-				if( array_key_exists('INPUT_ATTRIBUTES', $arOption) ) {
-					// TODO: Добавить в настройки параметры вывода инпутов по умолчанию
+				$this->_arSettings[$optionCode]['INPUT_ATTR'] = null;
+				if( array_key_exists('INPUT_ATTR', $arOption) && !empty($arOption['INPUT_ATTR']) ) {
+					$this->_arSettings[$optionCode]['INPUT_ATTR'] = array();
+					foreach($arOption['INPUT_ATTR'] as $attr => $attrValue) {
+						$this->_arSettings[$optionCode]['INPUT_ATTR'][$attr] = $attrValue;
+					}
 				}
 			}
 		}
+		$this->syncSettings();
 	}
 	final protected function __clone() {}
 
@@ -173,12 +182,15 @@ class Settings implements ISettings {
 		if( empty($arOption) ) {
 			return '';
 		}
+		if($arOption['INPUT_ATTR'] != null) {
+			$arAttributes = array_merge($arAttributes, $arOption['INPUT_ATTR']);
+		}
 		switch ($arOption['TYPE']) {
 			case 'STRING':
 				echo '<input type="text"'
-					.$this->_getOptionInputName($optionCode)
-					.' value="'.$arOption['VALUE'].'"'
-					.$this->_implodeInputAttributes($arAttributes).' />';
+						.$this->_getOptionInputName($optionCode)
+						.' value="'.$arOption['VALUE'].'"'
+						.$this->_implodeInputAttributes($arAttributes).' />';
 				break;
 			case 'CHECKBOX':
 				echo '<input type="checkbox"'
@@ -190,9 +202,9 @@ class Settings implements ISettings {
 				break;
 			case 'TEXT':
 				echo '<textarea'
-					.$this->_getOptionInputName($optionCode)
-					.$this->_implodeInputAttributes($arAttributes)
-					.'>'.$arOption['VALUE'].'</textarea>';
+						.$this->_getOptionInputName($optionCode)
+						.$this->_implodeInputAttributes($arAttributes)
+						.'>'.$arOption['VALUE'].'</textarea>';
 			default:
 				break;
 		}
@@ -202,6 +214,7 @@ class Settings implements ISettings {
 		foreach($arAttributes as $attr => &$value) {
 			$attrString .= ' '.$attr.'="'.htmlspecialchars($value).'"';
 		}
+		return $attrString;
 	}
 
 	protected function _getOptionInputName($optionCode) {
@@ -239,16 +252,24 @@ class Settings implements ISettings {
 }
 
 interface ITab {
-	public function showTabContent();
-	public function showTabScripts();
-	public function saveTabData();
-	public function showMessages($colspan = -1);
-	public function showWarnings($colspan = -1);
-	public function showErrors($colspan = -1);
+	function getTitle();
+	function getDescription();
+	function getIcon();
+	function getHtmlContainer();
+	function showTabContent();
+	function showTabScripts();
+	function saveTabData();
+	function showMessages($colspan = -1);
+	function showWarnings($colspan = -1);
+	function showErrors($colspan = -1);
 }
 
 abstract class ATab extends CMessagePoolDecorator implements ITab {
 	static protected $_arTabInstances = array();
+	protected $_title = '';
+	protected $_description = '';
+	protected $_htmlContainer = '';
+	protected $_iconPath = '';
 
 	/**
 	 * @param $tabClassName
@@ -260,10 +281,10 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 		}
 		if (!preg_match(
 			'~^'
-			.'(?:[a-zA-Z\_][a-zA-Z0-9\_]*){1}'
-			.'(?:'
-			.'(?:\\\\[a-zA-Z\_][a-zA-Z0-9\_]*){1}'
-			.')*'
+				.'(?:[a-zA-Z\_][a-zA-Z0-9\_]*){1}'
+				.'(?:'
+					.'(?:\\\\[a-zA-Z\_][a-zA-Z0-9\_]*){1}'
+				.')*'
 			.'$~', $tabClassName)) {
 			return null;
 		}
@@ -283,6 +304,37 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 			}
 		}
 		return self::$_arTabInstances[$tabClassName];
+	}
+
+	public function setConfig($arTabControl) {
+		$this->_title = $arTabControl['TITLE'];
+		$this->_description = $arTabControl['DESCRIPTION'];
+		$this->_iconPath = $arTabControl['ICON'];
+		$this->_htmlContainer = $arTabControl['DIV'];
+	}
+
+	public function getConfig() {
+		return array(
+			'TITLE' => $this->_title,
+			'DESCRIPTION' => $this->_description,
+			'ICON' => $this->_iconPath,
+			'DIV' => $this->_htmlContainer
+		);
+	}
+
+	public function getTitle() {
+		return $this->_title;
+	}
+
+	public function getDescription() {
+		return $this->_description;
+	}
+
+	public function getIcon() {
+		return $this->_iconPath;
+	}
+	public function getHtmlContainer() {
+		return $this->_htmlContainer;
 	}
 
 	abstract public function showTabContent();
@@ -346,22 +398,92 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 
 
 
-class Tab extends ATab /*implements Settings*/{
+class Tab extends ATab implements ISettings {
 	protected $_Settings = null;
 
-	public function __construct(ISettings $Settings) {
-
+	// +++ ISettings implementation
+	public function __construct($moduleID, $settingsID, $arSettings) {
+		$this->_Settings = new Settings($moduleID, $settingsID, &$arSettings);
 	}
+	public function getSettingModuleID() {
+		return $this->_Settings->getSettingModuleID();
+	}
+	public function getSettingsID() {
+		return $this->_Settings->getSettingsID();
+	}
+	public function syncSettings() {
+		$this->_Settings->syncSettings();
+	}
+	public function getSettings() {
+		return $this->_Settings->getSettings();
+	}
+	public function getOption($optionCode, $bReturnOptionArray = false) {
+		return $this->_Settings->getOption($optionCode, $bReturnOptionArray);
+	}
+	public function saveSettings($arSettings) {
+		$this->_Settings->saveSettings($arSettings);
+	}
+	public function getOptionInput($optionCode, $arAttributes = array()) {
+		return $this->_Settings->getOptionInput($optionCode, $arAttributes);
+	}
+	public function saveSettingsRequestData() {
+		$this->_Settings->saveSettingsRequestData();
+	}
+	// ^^^ ISettings implementation
 
+	// +++ ATab implementation
 	public function showTabContent() {
-
+		$arSettings = $this->_Settings->getSettings();
+		foreach($arSettings as $optionCode => &$arOption):?>
+		<tr>
+			<td>
+				<?=$arOption['NAME']?>
+				<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
+					<br /><small><?=$arOption['DESCRIPTION']?></small>
+				<?endif?>
+			</td>
+			<td></td>
+		</tr>
+		<?endforeach;
 	}
-
 	public function showTabScripts() {
+		return '';
+	}
+	public function saveTabData() {
+		$this->_Settings->saveSettingsRequestData();
+	}
+	// ^^^ ATab implementation
+}
+
+interface IModulePage {
+	function readConfig();
+	function addTab();
+	function saveModuleSettings();
+}
+
+class ModulePage {
+	protected $_arTabs = array();
+
+	public function readConfig($configRelativePath) {
 
 	}
 
-	public function saveTabData() {
+	public function addTab(ITab $Tab) {
+		if($Tab instanceof ITab) {
+			$this->_arTabs[] = $Tab;
+		}
+	}
+
+	public function addTabList($arTabs) {
+		foreach($arTabs as $Tab) {
+			/**
+			 * @var Tab $Tab
+			 */
+			$this->addTab($Tab);
+		}
+	}
+
+	public function saveModuleSettings() {
 
 	}
 }
