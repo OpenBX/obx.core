@@ -65,6 +65,7 @@ class Settings implements ISettings {
 				&& array_key_exists('TYPE', $arOption)
 				&& (
 					$arOption['TYPE'] == 'STRING'
+					|| $arOption['TYPE'] == 'PASSWORD'
 					|| $arOption['TYPE'] == 'TEXT'
 					|| $arOption['TYPE'] == 'CHECKBOX'
 				)
@@ -191,6 +192,12 @@ class Settings implements ISettings {
 						.$this->_getOptionInputName($optionCode)
 						.' value="'.$arOption['VALUE'].'"'
 						.$this->_implodeInputAttributes($arAttributes).' />';
+				break;
+			case 'PASSWORD':
+				echo '<input type="password"'
+					.$this->_getOptionInputName($optionCode)
+					.' value="'.$arOption['VALUE'].'"'
+					.$this->_implodeInputAttributes($arAttributes).' />';
 				break;
 			case 'CHECKBOX':
 				echo '<input type="checkbox"'

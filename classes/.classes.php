@@ -37,5 +37,6 @@ $arModuleClasses = array(
 	,'OBX\Core\Settings\Tab'			=> 'classes/Settings.php'
 	,'OBX\Core\Settings\IModulePage'	=> 'classes/Settings.php'
 	,'OBX\Core\Settings\ModulePage'		=> 'classes/Settings.php'
+	,'OBX\Core\Test\TestCase'			=> 'classes/TestCase.php'
 );
 return $arModuleClasses;
