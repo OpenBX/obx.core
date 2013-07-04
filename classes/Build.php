@@ -1330,4 +1330,130 @@ if(!defined("BX_ROOT")) {
 	}
 
 
+	/**
+	 * @param $needleCharList
+	 * @param $haystack
+	 * @param int $offset
+	 * @return bool|int
+	 */
+	protected function _strpos($haystack, $needleCharList, $offset = 0) {
+		$strLen = strlen($needleCharList);
+		for($i=0; $i<$strLen;$i++){
+			$pos = strpos($haystack, substr($needleCharList, $i, 1), $offset);
+			if( $pos !== false ) {
+				return $pos;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @param $curPath
+	 * @param array $arExclude
+	 * @param array $arPathExclude
+	 * @param array|null $arExcludeEntries - не трогать этот аргумент. Нуженя для рекурсии
+	 * @return array
+	 */
+	public function _findRawLangText($curPath, $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
+		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяФБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
+
+		$curPath = rtrim($curPath, '/');
+		$arFiles = array();
+		if( is_dir($curPath) ) {
+			$dir = opendir($curPath);
+			if($arExcludeEntries === null) {
+				$arExcludeEntries = array();
+				foreach($arPathExclude as $excludePattern) {
+					$excludePattern = trim($excludePattern);
+					if( strlen($excludePattern)<1 ) {
+						continue;
+					}
+					if( substr($excludePattern, 0, 1) != '/' ) {
+						$excludePattern = $curPath.'/'.$excludePattern;
+					}
+					$arFoundPatterns = glob($excludePattern);
+					foreach($arFoundPatterns as $excludePath) {
+						$arExcludeEntries[] = $excludePath;
+					}
+				}
+			}
+			while($fsEntry = readdir($dir)) {
+				$fsEntryPath = $curPath.'/'.$fsEntry;
+				if(
+					$fsEntry == '.' || $fsEntry == '..'
+					|| $fsEntry == '.git' || $fsEntry == '.gitignore' || $fsEntry == '.gitmodules' || $fsEntry == '.gitkeep'
+					|| in_array($fsEntry, $arExclude)
+					|| in_array($fsEntryPath, $arExcludeEntries)
+				) {
+					continue;
+				}
+				if(is_dir($fsEntryPath)) {
+					if( in_array($fsEntry.'/', $arExclude) ) {
+						continue;
+					}
+					$arFiles = array_merge($arFiles, $this->_findRawLangText($fsEntryPath, $arExclude, $arPathExclude, $arExcludeEntries));
+				}
+				else {
+					$fsEntryExt = substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry));
+					if($fsEntryExt != '.php') {
+						continue;
+					}
+
+					$bMultiLineComment = false;
+					$file = fopen($fsEntryPath, 'r');
+					$iLine = 0;
+					while( $lineContent = fgets($file) ) {
+						$iLine++;
+						$posMLCClose = strpos($lineContent, '*/');
+						if($posMLCClose!==false) $bMultiLineComment = false;
+						if($bMultiLineComment) continue;
+
+						$posMLCOpen = strpos($lineContent, '/*');
+						if( $posMLCOpen !== false ) {
+							$bMultiLineComment = true;
+						}
+						$posRusSymbol = $this->_strpos($lineContent, $rusLit);
+						$posComment = strpos($lineContent, '//');
+						if( $posRusSymbol !== false ) {
+							if($posMLCClose !== false && $posRusSymbol < $posMLCClose) {
+								continue;
+							}
+							if(
+								($posMLCOpen !== false && $posRusSymbol > $posMLCOpen)
+								&&
+								($posMLCClose===false || $posRusSymbol < $posMLCClose)
+							) {
+								$bMultiLineComment = true;
+								continue;
+							}
+							if($posComment !== false && $posRusSymbol > $posComment) {
+								continue;
+							}
+							/////
+							$arFiles[] = array(
+								'FILE' => $fsEntryPath,
+								'LINE' => $iLine,
+								'NEAR' => $lineContent
+							);
+						}
+					}
+				}
+			}
+		}
+		return $arFiles;
+	}
+
+	public function findRawLangText($bCheckSubModules = false, $arExclude = array(), $arPathExclude = array()) {
+		$arExclude[] = 'ru/';
+		$arExclude[] = 'lang/';
+		$arPathExclude[] = 'install/modules/*';
+		$arPathExclude[] = 'test/*';
+		$arFiles = $this->_findRawLangText(
+			$this->_modulesDir.'/'.$this->_moduleName,
+			$arExclude,
+			$arPathExclude
+		);
+		print_r($arFiles);
+	}
+
 }

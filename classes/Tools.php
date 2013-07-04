@@ -13,7 +13,7 @@ namespace {
 
 	/**
 	 * Class OBX_Tools
-	 * @deprecated
+	 * @deprecated use OBX\Core\Tools
 	 */
 	class OBX_Tools extends OBX\Core\Tools {}
 }
