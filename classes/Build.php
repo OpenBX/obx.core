@@ -12,6 +12,7 @@ class OBX_Build {
 
 	protected $_arResources = array();
 	protected $_arIBlockData = array();
+	protected $_arRawLangCheck = array();
 	protected $_moduleName = null;
 	protected $_moduleClass = null;
 
@@ -127,6 +128,36 @@ class OBX_Build {
 		return true;
 	}
 
+	/**
+	 * @param null $moduleName
+	 * @return array|null|self
+	 */
+	public function getDependency($moduleName = null) {
+		if($moduleName == null) {
+			return $this->_arDepModules;
+		}
+		if( array_key_exists($moduleName, $this->_arDepModules) ) {
+			return $this->_arDepModules[$moduleName];
+		}
+		return null;
+	}
+
+	protected function replacePathMacros($path) {
+		return str_replace(
+			array(
+				'%MODULE_FOLDER%',
+				'%INSTALL_FOLDER%',
+				'%BX_ROOT%'
+			),
+			array(
+				$this->_modulesFolder.'/'.$this->_moduleName,
+				$this->_modulesFolder.'/'.$this->_moduleName.'/install',
+				$this->_bxRootFolder
+			),
+			$path
+		);
+	}
+
 	public function parseResourcesFile() {
 		if( !$this->isInit() ) {
 			echo "Error: Build system not initialized!\n";
@@ -134,15 +165,18 @@ class OBX_Build {
 		}
 		$buildModuleDir = $this->_modulesDir."/".$this->_moduleName;
 
-		if( is_file($buildModuleDir.'/install/resources.php') ) {
-			$strResources = file_get_contents($buildModuleDir.'/install/resources.php');
+		if( is_file($buildModuleDir.'/install/module.res') ) {
+			$strResources = file_get_contents($buildModuleDir.'/install/module.res');
 			$arTmpResources = explode("\n", $strResources);
 			//rint_r($arTmpResources);
-			$configSection = '__UNKNOWN__';
+			$configSection = null;
 			$lineNumber = 0;
 
 			$this->_arResources = array();
 			$this->_arDepModules = array();
+
+			$bOpenedBlock = false;
+			$blockSection = null;
 
 			foreach($arTmpResources as $strResource) {
 				$lineNumber++;
@@ -153,18 +187,41 @@ class OBX_Build {
 				if( substr($strResource, 0, 1) == "#" ) {
 					continue;
 				}
+
+				if(strpos($strResource, '{') !== false) {
+					if(trim($strResource) != '{') {
+						echo 'Config parse error in line '.$lineNumber.': symbol "{" must be alone at the line '."\n";
+						die();
+					}
+					if($bOpenedBlock == true) {
+						echo 'Config parse error in line '.$lineNumber.': trying to open block when it\'s already opened'."\n";
+						die();
+					}
+					$bOpenedBlock = true;
+				}
+
+				if(strpos($strResource, '}') !== false) {
+					if(trim($strResource) != '}') {
+						echo 'Config parse error in line '.$lineNumber.': symbol "}" must be alone at the line '."\n";
+						die();
+					}
+					if($bOpenedBlock == false) {
+						echo 'Config parse error in line '.$lineNumber.': trying to close block "}" when it\'s not opened'."\n";
+						die();
+					}
+					$blockSection = null;
+					$bOpenedBlock = false;
+					continue;
+				}
+
 				if( substr($strResource, 0, 1) == "[" ) {
-					if( preg_match('~\[\s*RESOURCES\s*\]~', $strResource) ) {
-						$configSection = 'RESOURCES';
-					}
-					elseif( preg_match('~\[\s*DEPENDENCIES\s*\]~', $strResource) ) {
-						$configSection = 'DEPENDENCIES';
-					}
-					elseif( preg_match('~\[\s*IBLOCK\_DATA\s*\]~', $strResource) ) {
-						$configSection = 'IBLOCK_DATA';
-					}
-					elseif(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResource)) {
-						$configSection = '__UNKNOWN__';
+					if(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResource, $arSectionMatches)) {
+						if($bOpenedBlock) {
+							$blockSection = $arSectionMatches[1];
+						}
+						else {
+							$configSection = $arSectionMatches[1];
+						}
 					}
 					continue;
 				}
@@ -193,32 +250,8 @@ class OBX_Build {
 					$arResource["PATTERN"] = trim($arTmpResource[1]);
 					$arResource["TARGET_FOLDER"] = trim($arTmpResource[2]);
 
-					$arResource["INSTALL_FOLDER"] = rtrim(str_replace(
-						array(
-							'%MODULE_FOLDER%',
-							'%INSTALL_FOLDER%',
-							'%BX_ROOT%'
-						),
-						array(
-							$this->_modulesFolder.'/'.$this->_moduleName,
-							$this->_modulesFolder.'/'.$this->_moduleName.'/install',
-							$this->_bxRootFolder
-						),
-						$arResource["INSTALL_FOLDER"]
-					), '/');
-					$arResource["TARGET_FOLDER"] = rtrim(str_replace(
-						array(
-							'%MODULE_FOLDER%',
-							'%INSTALL_FOLDER%',
-							'%BX_ROOT%'
-						),
-						array(
-							$this->_modulesFolder.'/'.$this->_moduleName,
-							$this->_modulesFolder.'/'.$this->_moduleName.'/install',
-							$this->_bxRootFolder
-						),
-						$arResource["TARGET_FOLDER"]
-					), '/');
+					$arResource["INSTALL_FOLDER"] = rtrim($this->replacePathMacros($arResource["INSTALL_FOLDER"]), '/');
+					$arResource["TARGET_FOLDER"] = rtrim($this->replacePathMacros($arResource["TARGET_FOLDER"]), '/');
 
 					$this->_arResources[] = $arResource;
 				}
@@ -244,21 +277,38 @@ class OBX_Build {
 					$arIBlockResource['EXPORT_PATH'] = trim($arTmpIBlockResource[1]);
 					$arIBlockResource['XML_FILE'] = trim($arTmpIBlockResource[2]);
 					$arIBlockResource['FORM_SETTINGS_FILE'] = trim($arTmpIBlockResource[3]);
-					$arIBlockResource["EXPORT_PATH"] = rtrim(str_replace(
-						array(
-							'%MODULE_FOLDER%',
-							'%INSTALL_FOLDER%',
-							'%BX_ROOT%'
-						),
-						array(
-							$this->_modulesFolder.'/'.$this->_moduleName,
-							$this->_modulesFolder.'/'.$this->_moduleName.'/install',
-							$this->_bxRootFolder
-						),
-						$arIBlockResource["EXPORT_PATH"]
-					), '/');
+					$arIBlockResource["EXPORT_PATH"] = rtrim($this->replacePathMacros($arIBlockResource["EXPORT_PATH"]), '/');
 					$this->addIBlockData($arIBlockResource);
 				}
+				elseif($configSection == 'RAW_LANG_CHECK') {
+					if( strlen($blockSection)>0 ) {
+						if( !isset($arCheckPath) ) {
+							$arCheckPath = array();
+						}
+						if( !array_key_exists($blockSection, $arCheckPath) ) {
+							$arCheckPath[$blockSection] = array(
+								'PATH' => null,
+								'EXCLUDE' => array(),
+								'EXCLUDE_PATH' => array()
+							);
+						}
+						$arTmpCheckPathOpt = explode(':', $strResource);
+						$checkPathOptName = trim($arTmpCheckPathOpt[0]);
+						$checkPathOptValue = trim($arTmpCheckPathOpt[1]);
+						if($checkPathOptName == 'path') {
+							$arCheckPath[$blockSection]['PATH'] = $this->replacePathMacros($checkPathOptValue);
+						}
+						elseif($checkPathOptName == 'exclude_path') {
+							$arCheckPath[$blockSection]['EXCLUDE_PATH'][] = $this->replacePathMacros($checkPathOptValue);
+						}
+						elseif($checkPathOptName == 'exclude') {
+							$arCheckPath[$blockSection]['EXCLUDE'][] = $checkPathOptValue;
+						}
+					}
+				}
+			}
+			if(isset($arCheckPath)) {
+				$this->addPathToRawLangCheck($arCheckPath);
 			}
 		}
 	}
@@ -888,19 +938,7 @@ if(!defined("BX_ROOT")) {
 	 * 		);
 	 */
 	public function replaceComponentParameters($configPath) {
-		$configPath = rtrim(str_replace(
-			array(
-				'%MODULE_FOLDER%',
-				'%INSTALL_FOLDER%',
-				'%BX_ROOT%'
-			),
-			array(
-				$this->_modulesFolder.'/'.$this->_moduleName,
-				$this->_modulesFolder.'/'.$this->_moduleName.'/install',
-				$this->_bxRootFolder
-			),
-			$configPath
-		), '/');
+		$configPath = rtrim($this->replacePathMacros($configPath), '/');
 		$path = dirname($configPath);
 		$configPath = $this->_docRootDir.$configPath;
 		$path = $this->_docRootDir.$path;
@@ -1348,16 +1386,17 @@ if(!defined("BX_ROOT")) {
 	}
 
 	/**
-	 * @param $curPath
+	 * @param $relPath
 	 * @param array $arExclude
 	 * @param array $arPathExclude
 	 * @param array|null $arExcludeEntries - не трогать этот аргумент. Нуженя для рекурсии
 	 * @return array
 	 */
-	public function _findRawLangText($curPath, $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
+	public function findRawLangText($relPath = '', $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
 		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяФБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
-
-		$curPath = rtrim($curPath, '/');
+		if($relPath == '.') $relPath = '';
+		$relPath = '/'.trim($relPath, '/ ');
+		$curPath = rtrim($this->_docRootDir.$relPath, '/ ');
 		$arFiles = array();
 		if( is_dir($curPath) ) {
 			$dir = opendir($curPath);
@@ -1379,6 +1418,7 @@ if(!defined("BX_ROOT")) {
 			}
 			while($fsEntry = readdir($dir)) {
 				$fsEntryPath = $curPath.'/'.$fsEntry;
+				$fsEntryRelPath = $relPath.'/'.$fsEntry;
 				if(
 					$fsEntry == '.' || $fsEntry == '..'
 					|| $fsEntry == '.git' || $fsEntry == '.gitignore' || $fsEntry == '.gitmodules' || $fsEntry == '.gitkeep'
@@ -1391,69 +1431,108 @@ if(!defined("BX_ROOT")) {
 					if( in_array($fsEntry.'/', $arExclude) ) {
 						continue;
 					}
-					$arFiles = array_merge($arFiles, $this->_findRawLangText($fsEntryPath, $arExclude, $arPathExclude, $arExcludeEntries));
+					$arFiles = array_merge($arFiles, $this->findRawLangText($fsEntryRelPath, $arExclude, $arPathExclude, $arExcludeEntries));
 				}
 				else {
 					$fsEntryExt = substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry));
 					if($fsEntryExt != '.php') {
 						continue;
 					}
-
-					$bMultiLineComment = false;
-					$file = fopen($fsEntryPath, 'r');
-					$iLine = 0;
-					while( $lineContent = fgets($file) ) {
-						$iLine++;
-						$posMLCClose = strpos($lineContent, '*/');
-						if($posMLCClose!==false) $bMultiLineComment = false;
-						if($bMultiLineComment) continue;
-
-						$posMLCOpen = strpos($lineContent, '/*');
-						if( $posMLCOpen !== false ) {
-							$bMultiLineComment = true;
-						}
-						$posRusSymbol = $this->_strpos($lineContent, $rusLit);
-						$posComment = strpos($lineContent, '//');
-						if( $posRusSymbol !== false ) {
-							if($posMLCClose !== false && $posRusSymbol < $posMLCClose) {
-								continue;
-							}
-							if(
-								($posMLCOpen !== false && $posRusSymbol > $posMLCOpen)
-								&&
-								($posMLCClose===false || $posRusSymbol < $posMLCClose)
-							) {
-								$bMultiLineComment = true;
-								continue;
-							}
-							if($posComment !== false && $posRusSymbol > $posComment) {
-								continue;
-							}
-							/////
-							$arFiles[] = array(
-								'FILE' => $fsEntryPath,
-								'LINE' => $iLine,
-								'NEAR' => $lineContent
-							);
-						}
-					}
+					$this->__checkRawLangTextInFile($arFiles, $fsEntryPath, $fsEntryRelPath, $rusLit);
 				}
+			}
+		}
+		elseif(is_file($curPath)) {
+			if( substr($curPath, strlen($curPath) - 4, strlen($curPath)) == '.php' ) {
+				$this->__checkRawLangTextInFile($arFiles, $curPath, $relPath, $rusLit);
 			}
 		}
 		return $arFiles;
 	}
 
-	public function findRawLangText($bCheckSubModules = false, $arExclude = array(), $arPathExclude = array()) {
-		$arExclude[] = 'ru/';
-		$arExclude[] = 'lang/';
-		$arPathExclude[] = 'install/modules/*';
-		$arPathExclude[] = 'test/*';
-		$arFiles = $this->_findRawLangText(
-			$this->_modulesDir.'/'.$this->_moduleName,
-			$arExclude,
-			$arPathExclude
-		);
-		print_r($arFiles);
+	protected function __checkRawLangTextInFile(&$arFiles, &$fsEntryPath, &$fsEntryRelPath, &$rusLit) {
+		$bMultiLineComment = false;
+		$file = fopen($fsEntryPath, 'r');
+		$iLine = 0;
+		while( $lineContent = fgets($file) ) {
+			$iLine++;
+			$posMLCClose = strpos($lineContent, '*/');
+			if($posMLCClose!==false) $bMultiLineComment = false;
+			if($bMultiLineComment) continue;
+
+			$posMLCOpen = strpos($lineContent, '/*');
+			if( $posMLCOpen !== false ) {
+				$bMultiLineComment = true;
+			}
+			$posRusSymbol = $this->_strpos($lineContent, $rusLit);
+			$posComment = strpos($lineContent, '//');
+			if( $posRusSymbol !== false ) {
+				if($posMLCClose !== false && $posRusSymbol < $posMLCClose) {
+					continue;
+				}
+				if(
+					($posMLCOpen !== false && $posRusSymbol > $posMLCOpen)
+					&&
+					($posMLCClose===false || $posRusSymbol < $posMLCClose)
+				) {
+					$bMultiLineComment = true;
+					continue;
+				}
+				if($posComment !== false && $posRusSymbol > $posComment) {
+					continue;
+				}
+				/////
+				$arFiles[] = array(
+					'FILE' => '.'.$fsEntryRelPath,
+					'LINE' => $iLine,
+					'NEAR' => trim($lineContent, ' 	'."\n")
+				);
+			}
+		}
 	}
 
+	public function findModuleRawLangText(){
+		$arFiles = array();
+		foreach($this->_arRawLangCheck as $checkName => $arCheck) {
+			$arCheck['EXCLUDE'][] = 'ru/';
+			$arCheck['EXCLUDE'][] = 'lang/';
+			$arFiles[$checkName] = $this->findRawLangText($arCheck['PATH'], $arCheck['EXCLUDE'], $arCheck['EXCLUDE_PATH']);
+		}
+		return $arFiles;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getModuleRawLangText() {
+		$arChecks = $this->findModuleRawLangText();
+		$result = '';
+		foreach($arChecks as $checkName => $arFiles) {
+			if(!empty($arFiles)) {
+				$title = $checkName.': '.$this->_arRawLangCheck[$checkName]['PATH'];
+				$result .= "\n";
+				$result .= '####################'.str_repeat('#', strlen($title)+4).'####################'."\n";
+				$result .= '#################### ['.$title.'] ####################'."\n";
+				$result .= '####################'.str_repeat('#', strlen($title)+4).'####################'."\n";
+			}
+			foreach($arFiles as $arFile) {
+				$result .= ''
+					.'File: '.$arFile['FILE']."\n"
+					.'Line: №'.$arFile['LINE']."\n"
+					.'Text: '.$arFile['NEAR']."\n"
+					.'------------------------------------------------------------'
+					.'------------------------------------------------------------'
+				."\n";
+			}
+		}
+		return $result;
+	}
+
+	protected function addPathToRawLangCheck($arCheckPath) {
+		foreach($arCheckPath as $checkName => &$arPath) {
+			if($arPath['PATH'] != null) {
+				$this->_arRawLangCheck[$checkName] = $arPath;
+			}
+		}
+	}
 }
