@@ -331,6 +331,9 @@ class OBX_Build {
 				foreach($arInstallFiles as $installFileFullPath) {
 					$fsEntry = str_replace($this->_docRootDir.$arResource['INSTALL_FOLDER'], '', $installFileFullPath);
 					$fsEntry = trim($fsEntry, '/');
+					if( substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry)) == '.git' ) {
+						continue;
+					}
 					if( !in_array($fsEntry, $arResource['FILES']) ) {
 						$arResource['FILES'][] = $fsEntry;
 					}
@@ -340,6 +343,9 @@ class OBX_Build {
 				foreach($arTargetFiles as $targetFileFullPath) {
 					$fsEntry = str_replace($this->_docRootDir.$arResource['TARGET_FOLDER'], '', $targetFileFullPath);
 					$fsEntry = trim($fsEntry, '/');
+					if( substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry)) == '.git' ) {
+						continue;
+					}
 					if( !in_array($fsEntry, $arResource['FILES']) ) {
 						$arResource['FILES'][] = $fsEntry;
 					}
@@ -461,6 +467,7 @@ class OBX_Build {
 					$debug = 1;
 				}
 			}
+			$this->_removeGitSubModuleLinks();
 		}
 	}
 
@@ -1532,6 +1539,25 @@ if(!defined("BX_ROOT")) {
 		foreach($arCheckPath as $checkName => &$arPath) {
 			if($arPath['PATH'] != null) {
 				$this->_arRawLangCheck[$checkName] = $arPath;
+			}
+		}
+	}
+
+	protected function _removeGitSubModuleLinks($path = null) {
+		if($path === null) {
+			$path = $this->_modulesDir.'/'.$this->_moduleName.'/install';
+		}
+		if(is_dir($path) ) {
+			$dir = opendir($path);
+			while( $fsEntry = readdir($dir) ) {
+				if($fsEntry == '.' || $fsEntry == '..') continue;
+				if($fsEntry == '.git') {
+					@unlink($path.'/'.$fsEntry);
+					continue;
+				}
+				if( is_dir($path.'/'.$fsEntry) ) {
+					$this->_removeGitSubModuleLinks($path.'/'.$fsEntry);
+				}
 			}
 		}
 	}
