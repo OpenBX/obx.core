@@ -22,9 +22,6 @@
 $arFiles = array(
 	 './classes/DBSimple.php'
 	,'./classes/Build.php'
-	,'./classes/MessagePool.php'
-	,'./classes/Tools.php'
-	,'./classes/WizardImportIBlock.php'
 );
 
 $printContent = <<<HTML
