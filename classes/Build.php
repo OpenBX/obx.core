@@ -9,10 +9,6 @@
  ***********************************************/
 
 class OBX_Build {
-
-	protected $_arResources = array();
-	protected $_arIBlockData = array();
-	protected $_arRawLangCheck = array();
 	protected $_moduleName = null;
 	protected $_moduleClass = null;
 
@@ -28,6 +24,11 @@ class OBX_Build {
 	protected $_bxRootDir = null;
 	protected $_arDepModules = array();
 	protected $_ParentModule = null;
+
+	protected $_arResources = array();
+	protected $_arIBlockData = array();
+	protected $_arRawLangCheck = array();
+	protected $_arCompParamsConfig = array();
 
 	function __construct($moduleName, OBX_Build $ParentModule = null) {
 		error_reporting(E_ALL ^ E_NOTICE);
@@ -255,6 +256,9 @@ class OBX_Build {
 
 					$this->_arResources[] = $arResource;
 				}
+				elseif($configSection == 'COMPONENT_PARAMETERS') {
+					$this->addCompParamsConfig($strResource);
+				}
 				elseif($configSection == 'DEPENDENCIES') {
 					$subModuleName = $strResource;
 					$this->addDependency($subModuleName);
@@ -353,6 +357,13 @@ class OBX_Build {
 				}
 
 			}
+		}
+	}
+
+	protected function addCompParamsConfig($path) {
+		$configRelPath = rtrim($this->replacePathMacros($path), '/');
+		if( is_file($this->_docRootDir.$configRelPath) ) {
+			$this->_arCompParamsConfig[] = $path;
 		}
 	}
 
@@ -904,6 +915,30 @@ if(!defined("BX_ROOT")) {
 	}
 
 	/**
+	 * Работает так же как _replaceComponentParameters
+	 * с тем отличием, что может принять в аргумент:
+	 * 		1. массив с файлами
+	 * 		2. файл
+	 * 		3. если аргумент не задан, пути до массива буду прочитаны из конфига ресурсов модуля
+	 * @param bool|array|string $Config
+	 */
+	public function replaceComponentParameters($Config = false) {
+		if($Config === false) {
+			foreach($this->_arCompParamsConfig as $path) {
+				$this->_replaceComponentParameters($path);
+			}
+		}
+		if( is_array($Config) ) {
+			foreach($Config as $path) {
+				$this->_replaceComponentParameters($path);
+			}
+		}
+		if(is_string($Config)) {
+			$this->_replaceComponentParameters($Config);
+		}
+	}
+
+	/**
 	 * Заменяет параметры компонентов в файлах, указанных в конфиге
 	 * @param $configPath
 	 * Пример конфига
@@ -944,7 +979,7 @@ if(!defined("BX_ROOT")) {
 	 * 			),
 	 * 		);
 	 */
-	public function replaceComponentParameters($configPath) {
+	public function _replaceComponentParameters($configPath) {
 		$configPath = rtrim($this->replacePathMacros($configPath), '/');
 		$path = dirname($configPath);
 		$configPath = $this->_docRootDir.$configPath;
@@ -1342,10 +1377,72 @@ if(!defined("BX_ROOT")) {
 
 
 	public function processCommandOptions() {
-		$arCommandOptions = getopt('h', array(
+		$arCommandOptions = getopt('bfh', array(
+			'help',
+			'build',
+			'full',
 			'iblock-cml::',
-			'iblock-form-settings::'
+			'iblock-form-settings::',
+			'replace-cmp-params::',
+			'raw-lang-check',
 		));
+
+		if( empty($arCommandOptions) ) {
+			$arCommandOptions['build'] = false;
+		}
+
+		if(
+			array_key_exists('full', $arCommandOptions)
+			|| array_key_exists('f', $arCommandOptions)
+		) {
+			$arCommandOptions['build'] = false;
+			$arCommandOptions['iblock-cml'] = false;
+			$arCommandOptions['iblock-form-settings'] = false;
+		}
+
+		if(
+			array_key_exists('help', $arCommandOptions)
+			|| array_key_exists('h', $arCommandOptions)
+		) {
+
+			$scriptName = basename($_SERVER['argv'][0]);
+			$whiteSpace = str_repeat(' ', strlen($scriptName));
+			echo <<<HELP
+$scriptName [bfh] [--help] [--build] [--full]
+$whiteSpace [--iblock-cml=ibcode1,ibcode2...] [--iblock-form-settings=ibcode1,ibcode2...]
+$whiteSpace [--raw-lang-check] [--replace-cmp-params]
+SHORT OPTIONS
+    -h: alias --help
+    -b: alias --build
+    -f: alias --full
+OPTIONS
+    --build:
+         Собирает файлы из установленного битрикса внутрь модуля
+    --full:
+         alias: --build --iblock-cml --iblock-form-settings
+    --replace-cmp-params=[config_path]:
+         Заменяет параметры компонентов собранной публички на плейсхолдеры
+         Возможно явно указать путь до конфига с параметрами
+         Так же выполняется внутри --build
+    --raw-lang-check
+         Выявляет наличие языкового текста там, где должны быть GetMessage('LANG_CODE')
+
+HELP;
+;
+			return;
+		}
+
+		if(
+			array_key_exists('build', $arCommandOptions)
+			|| array_key_exists('b', $arCommandOptions)
+		) {
+			$this->backInstallResources();
+			$this->reInit();
+			$this->generateInstallCode();
+			$this->generateUnInstallCode();
+			$this->generateBackInstallCode();
+			$this->replaceComponentParameters();
+		}
 
 		if( array_key_exists('iblock-cml', $arCommandOptions) ) {
 			$arCommandOptions['iblock-cml'] = trim($arCommandOptions['iblock-cml']);
@@ -1371,6 +1468,24 @@ if(!defined("BX_ROOT")) {
 			else {
 				$this->exportIBlockFormSettings();
 			}
+		}
+
+		if( array_key_exists('replace-cmp-params', $arCommandOptions) ) {
+			$arCommandOptions['replace-cmp-params'] = trim($arCommandOptions['replace-cmp-params']);
+			if( strlen($arCommandOptions['replace-cmp-params']) > 0 ) {
+				$this->replaceComponentParameters($arCommandOptions['replace-cmp-params']);
+			}
+			else {
+				$this->replaceComponentParameters();
+			}
+		}
+
+		if( array_key_exists('raw-lang-check', $arCommandOptions) ) {
+			$rawLangCheckResult = $this->getModuleRawLangText();
+			if(strlen($rawLangCheckResult)>0) {
+				echo 'Найдены файлы в которых языковый текст не перемещен в LANG-файлы:'."\n".$rawLangCheckResult."\n";
+			}
+
 		}
 	}
 
