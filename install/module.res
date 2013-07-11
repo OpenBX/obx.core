@@ -14,4 +14,5 @@
 	%INSTALL_FOLDER%/components/obx/ :: layout :: %BX_ROOT%/components/obx/
 	%INSTALL_FOLDER%/components/obx/ :: breadcrumb.get :: %BX_ROOT%/components/obx/
 	%INSTALL_FOLDER%/components/obx/ :: menu.iblock.list :: %BX_ROOT%/components/obx/
+	%INSTALL_FOLDER%/components/obx/ :: social.links :: %BX_ROOT%/components/obx/
 
