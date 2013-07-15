@@ -669,9 +669,7 @@ namespace OBX\Core {
 						$templateFolder = substr($component, 0, $dirseppos);
 						if($lessFilePath == null && strrpos($component, ".less") !== false) {
 							$lessFilePath = substr($component, $dirseppos);
-							while( substr($lessFilePath, 0, 1) == "/" ) {
-								$lessFilePath = substr($lessFilePath, 1);
-							}
+							$lessFilePath = ltrim($lessFilePath, '/');
 						}
 					}
 				}
