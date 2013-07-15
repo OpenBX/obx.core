@@ -11,14 +11,16 @@
 namespace OBX\Core;
 
 
-class JSLang
+class JSMessages
 {
 	const DEFAULT_MODULE = 'obx';
 	const OVERRIDE_NODE_KEY = '__node_name__';
 
 	static protected $_arInstances = array();
 	protected $_moduleName = self::DEFAULT_MODULE;
-	protected $_arText = array();
+	protected $_arText = array(
+		'obx.lang_id' => LANGUAGE_ID
+	);
 	protected $_arDomains = array();
 	protected $_arJSInitializedNodes = array();
 
@@ -48,7 +50,7 @@ class JSLang
 		return $this->_arDomains;
 	}
 
-	protected function _getNode($domain, $langID = LANGUAGE_ID, $bCreateInitArray = false) {
+	protected function _getNode($domain, $bCreateInitArray = false) {
 		$arDomain = explode('.', $domain);
 		$refNode = &$this->_arDomains;
 		$refPrevNode = null;
@@ -86,13 +88,13 @@ class JSLang
 		);
 	}
 
-	public function addMessage($domain, $text, $langID = LANGUAGE_ID) {
+	public function addMessage($domain, $text) {
 		if( ! preg_match('~[a-z0-9A-Z\_](\.[a-z0-9A-Z\_]){0,9}~', $domain) ) {
 			return false;
 		}
-		$domain = $this->_moduleName.'.lang.'.$langID.((strlen($domain)>0)?'.':'').$domain;
+		$domain = $this->_moduleName.'.'.$domain;
 		$this->_arText[$domain] = $text;
-		$arNode = $this->_getNode($domain, $langID);
+		$arNode = $this->_getNode($domain);
 		if( array_key_exists($arNode['NODE_NAME'], $arNode['CONTAINER'])
 			&& is_array($arNode['CONTAINER'][$arNode['NODE_NAME']])
 			&& !empty($arNode['CONTAINER'][$arNode['NODE_NAME']])
@@ -107,32 +109,32 @@ class JSLang
 		return true;
 	}
 
-	public function getMessage($domain, $langID = LANGUAGE_ID) {
-		$domain = $this->_moduleName.'.lang.'.$langID.'.'.$domain;
+	public function getMessage($domain) {
+		$domain = $this->_moduleName.'.'.$domain;
 		if( array_key_exists($domain, $this->_arText) ) {
 			return $this->_arText[$domain];
 		}
 		return '';
 	}
 
-	public function showHead($domain = '', $langID = LANGUAGE_ID) {
-		$this->showJSInitDomain($domain, $langID);
-		$this->showDomainScript($domain, $langID);
+	public function showHead($domain = '') {
+		$this->showJSInitDomain($domain);
+		$this->showDomainScript($domain);
 	}
 
-	public function getHead($domain = '', $langID = LANGUAGE_ID) {
-		return $this->getJSInitDomain($domain, $langID, true).$this->getDomainScript($domain, $langID);
+	public function getHead($domain = '') {
+		return $this->getJSInitDomain($domain, true).$this->getDomainScript($domain);
 	}
 
-	public function showJSInitDomain($domain = '', $langID = LANGUAGE_ID) {
+	public function showJSInitDomain($domain = '') {
 		/**
 		 * @var \CMain $APPLICATION
 		 */
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent(array(&$this, 'getJSInitDomain'), $domain, $langID, true);
+		$APPLICATION->AddBufferContent(array(&$this, 'getJSInitDomain'), $domain, true);
 	}
-	public function getJSInitDomain($domain = '', $langID = LANGUAGE_ID, $bCheckInit = false) {
-		$this->_initDomain($domain, $langID);
+	public function getJSInitDomain($domain = '', $bCheckInit = false) {
+		$this->_initDomain($domain);
 		$return = '';
 		$bHeadReturned = false;
 		foreach($this->_arJSInitializedNodes as $nameChain => &$bInit) {
@@ -142,13 +144,6 @@ class JSLang
 					$bHeadReturned = true;
 				}
 				$bCheckInit && $bInit = true;
-//				$return .=
-//<<<JS
-//	if( typeof( {$nameChain} ) == 'undefined' ) {
-//		{$nameChain} = {};
-//	}
-//
-//JS;
 				$return .= 'if( typeof( '.$nameChain.' ) == \'undefined\' ) { '.$nameChain.' = {}; }'."\n";
 			}
 		}
@@ -158,8 +153,9 @@ class JSLang
 		return $return;
 	}
 
-	protected function _initDomain($domain, $langID) {
-		$domain = $this->_moduleName.'.lang.'.$langID.((strlen($domain)>0)?'.':'').$domain;
+	protected function _initDomain($domain) {
+		$domain = trim($domain);
+		$domain = $this->_moduleName.((strlen($domain)>0)?'.'.$domain:'');
 		$arDomain = explode('.', $domain);
 		$initDomainChain = null;
 		foreach($arDomain as $nodeName) {
@@ -168,7 +164,7 @@ class JSLang
 				$this->_arJSInitializedNodes[$initDomainChain] = false;
 			}
 		}
-		$arNode = $this->_getNode($domain, $langID);
+		$arNode = $this->_getNode($domain);
 		$this->__initDomain($arNode['CONTAINER'][$arNode['NODE_NAME']], $domain);
 	}
 	protected function __initDomain(&$refNode, $parentDomain) {
@@ -183,20 +179,21 @@ class JSLang
 	}
 
 
-	public function showDomainScript($domain = '', $langID = LANGUAGE_ID) {
+	public function showDomainScript($domain = '') {
 		/**
 		 * @var \CMain $APPLICATION
 		 */
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent(array(&$this, 'getDomainScript'), $domain, $langID);
+		$APPLICATION->AddBufferContent(array(&$this, 'getDomainScript'), $domain);
 	}
 
-	public function getDomainScript($domain = '', $langID = LANGUAGE_ID, $bSingleObject = false) {
+	public function getDomainScript($domain = '', $bSingleObject = false) {
 		if( $domain != '' && ! preg_match('~[a-z0-9A-Z\_](\.[a-z0-9A-Z\_]){0,9}~', $domain) ) {
 			return '';
 		}
 		$return = '<script type="text/javascript">'."\n";
-		$domain = $this->_moduleName.'.lang.'.$langID.((strlen($domain)>0)?'.':'').$domain;
+		$domain = trim($domain);
+		$domain = $this->_moduleName.((strlen($domain)>0)?'.'.$domain:'');
 		$arNode = $this->_getNode($domain);
 		if($bSingleObject) {
 			$return .= $domain.' = '.json_encode($arNode['CONTAINER'][$arNode['NODE_NAME']]);

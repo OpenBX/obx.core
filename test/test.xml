@@ -9,7 +9,7 @@
 	<testsuites>
 		<testsuite name="OBX_Core_API_Tests">
 			<!-- <directory></directory> -->
-			<file>JSLang.php</file>
+			<file>JSMessages.php</file>
 			<file>Settings.php</file>
 		</testsuite>
 	</testsuites>
