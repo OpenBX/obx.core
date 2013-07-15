@@ -461,7 +461,13 @@ namespace OBX\Core {
 		static private $_arContentViewTargets = array();
 		static public function showViewContent($view) {
 			if(preg_match('~^[a-zA-Z\_\-]{1,30}$~', $view)) {
-				$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target.'.$view.'.php';
+				if( is_dir($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target') ) {
+					$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target/'.$view.'.php';
+				}
+				else {
+					$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target.'.$view.'.php';
+				}
+
 				if( file_exists($contentFile) ) {
 					global $APPLICATION;
 					$APPLICATION->ShowViewContent($view);
@@ -490,14 +496,24 @@ namespace OBX\Core {
 		/////////////////////////////
 		/// CONNECTING LESS FILES ///
 		static private $_arLessFiles = array();
+		static private $_arLessFilesSort = array();
+		static private $_lessFilesCounter = 0;
 		static private $_bLessProduction = false;
 		static private $_lessCompiledExt = '.css';
 		static private $_lessJSPath = null;
 		static private $_bLessFilesConnected = false;
 		static private $_bLessJSHeadConnected = false;
 		static private $_bConnectLessJSFileAfterLessFiles = false;
+
+		static public function __sortLessFiles($fileIndexA, $fileIndexB) {
+			$sortA = intval(self::$_arLessFilesSort[$fileIndexA] * 100 + $fileIndexA);
+			$sortB = intval(self::$_arLessFilesSort[$fileIndexB] * 100 + $fileIndexB);
+			if($sortA == $sortB) return 0;
+			return ($sortA < $sortB)? -1 : 1;
+		}
 		static public function getLessHead() {
 			$returnString = '';
+			uksort(self::$_arLessFiles, '\OBX\Core\Tools::__sortLessFiles');
 			foreach(self::$_arLessFiles as $lessFilePath) {
 				$compiledLessFilePath = substr($lessFilePath, 0, -5).self::$_lessCompiledExt;
 				if(!self::$_bLessProduction) {
@@ -570,16 +586,24 @@ namespace OBX\Core {
 				self::$_lessCompiledExt = $ext;
 			}
 		}
-		static public function addLess($lessFilePath) {
+		/**
+		 * @param $lessFilePath
+		 * @param int $sort
+		 * @return bool
+		 */
+		static public function addLess($lessFilePath, $sort = 500) {
 			if( !in_array($lessFilePath, self::$_arLessFiles) ) {
 				if( substr($lessFilePath, -5) == ".less" ) {
 					$compiledLessFilePath = substr($lessFilePath, 0, -5).self::$_lessCompiledExt;
+					$sort = intval($sort);
 					if( is_file($_SERVER["DOCUMENT_ROOT"].$lessFilePath)
 						|| (
 							is_file($_SERVER["DOCUMENT_ROOT"].$compiledLessFilePath)
 							&& self::$_bLessProduction)
 					) {
-						self::$_arLessFiles[] = $lessFilePath;
+						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
+						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
+						self::$_lessFilesCounter++;
 						return true;
 					}
 					elseif(
@@ -595,7 +619,9 @@ namespace OBX\Core {
 	//						&& is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/css/".substr($compiledLessFilePath, 5))
 	//					)
 					) {
-						self::$_arLessFiles[] = SITE_TEMPLATE_PATH."/".$lessFilePath;
+						self::$_arLessFiles[self::$_lessFilesCounter] = SITE_TEMPLATE_PATH."/".$lessFilePath;
+						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
+						self::$_lessFilesCounter++;
 						return true;
 					}
 				}
@@ -612,9 +638,10 @@ namespace OBX\Core {
 		 * @static
 		 * @param $component
 		 * @param null $lessFilePath
+		 * @param $sort
 		 * @return bool
 		 */
-		static public function addComponentLess($component, $lessFilePath = null) {
+		static public function addComponentLess($component, $lessFilePath = null, $sort = 500) {
 			/**
 			 * @var \CMain $APPLICATION
 			 * @var \CBitrixComponent $component
@@ -652,6 +679,7 @@ namespace OBX\Core {
 					$templateFolder = $component;
 				}
 			}
+			$sort = intval($sort);
 			if( $lessFilePath == null ) {
 				if( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/style.less")
 					|| (is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/style.less.css")
@@ -662,7 +690,9 @@ namespace OBX\Core {
 						$templateFolder."/style.less"
 					);
 					if( !in_array($lessFilePath, self::$_arLessFiles) ) {
-						self::$_arLessFiles[] = $lessFilePath;
+						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
+						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
+						self::$_lessFilesCounter++;
 						return true;
 					}
 					return true;
@@ -678,7 +708,9 @@ namespace OBX\Core {
 				);
 				if( substr($lessFilePath, -5) == ".less" ) {
 					if( !in_array($lessFilePath, self::$_arLessFiles) ) {
-						self::$_arLessFiles[] = $lessFilePath;
+						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
+						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
+						self::$_lessFilesCounter++;
 						return true;
 					}
 				}
@@ -692,28 +724,43 @@ namespace OBX\Core {
 		///////////////////////////////////
 		/// CONNECTNG DEFERRED JS FILES ///
 		static private $_arDeferredJSFiles = array();
+		static private $_deferredFileCounter = 0;
+		static private $_arDeferredJSFilesSort = array();
 
 		/**
 		 * @param string $jsFilePath
+		 * @param int $sort
 		 * @return bool
 		 */
-		static public function addDeferredJS($jsFilePath) {
+		static public function addDeferredJS($jsFilePath, $sort = 500) {
 			if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
 				if( substr($jsFilePath, -3) == ".js" ) {
+					$sort = intval($sort);
 					if( is_file($_SERVER["DOCUMENT_ROOT"].$jsFilePath) ) {
-						self::$_arDeferredJSFiles[] = $jsFilePath;
+						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = $jsFilePath;
+						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
+						self::$_deferredFileCounter++;
 						return true;
 					}
 					elseif( is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$jsFilePath) ) {
-						self::$_arDeferredJSFiles[] = SITE_TEMPLATE_PATH."/".$jsFilePath;
+						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = SITE_TEMPLATE_PATH."/".$jsFilePath;
+						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
+						self::$_deferredFileCounter++;
 						return true;
 					}
 				}
 			}
 			return false;
 		}
+		static public function __sortDefJSFiles($fileIndexA, $fileIndexB) {
+			$sortA = intval(self::$_arDeferredJSFilesSort[$fileIndexA] * 100 + $fileIndexA);
+			$sortB = intval(self::$_arDeferredJSFilesSort[$fileIndexB] * 100 + $fileIndexB);
+			if($sortA == $sortB) return 0;
+			return ($sortA < $sortB)? -1 : 1;
+		}
 		static public function getDeferredJS() {
 			$returnString = '';
+			uksort(self::$_arDeferredJSFiles, '\OBX\Core\Tools::__sortDefJSFiles');
 			foreach(self::$_arDeferredJSFiles as $jsFilePath) {
 				$returnString .= '<script type="text/javascript" src="'.$jsFilePath.'"></script>'."\n";
 			}
@@ -723,6 +770,7 @@ namespace OBX\Core {
 			return self::$_arDeferredJSFiles;
 		}
 		static public function showDeferredJS() {
+			/** @var \CMain $APPLICATION */
 			global $APPLICATION;
 			$APPLICATION->AddBufferContent('OBX\Core\Tools::getDeferredJS');
 		}
@@ -730,12 +778,11 @@ namespace OBX\Core {
 		 * @static
 		 * @param \CBitrixComponent|string $component
 		 * @param null $jsFilePath
+		 * @param int $sort
 		 * @return bool
 		 */
-		static public function addComponentDeferredJS($component, $jsFilePath = null) {
-			/**
-			 * @var \CMain $APPLICATION
-			 */
+		static public function addComponentDeferredJS($component, $jsFilePath = null, $sort = 500) {
+			/** @var \CMain $APPLICATION */
 			$templateFolder = null;
 			if($component instanceof \CBitrixComponent) {
 				$templateFolder = $component->__template->__folder;
@@ -769,6 +816,7 @@ namespace OBX\Core {
 					$templateFolder = $component;
 				}
 			}
+			$sort = intval($sort);
 			if( $jsFilePath == null ) {
 				if( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/script_deferred.js") ) {
 					$jsFilePath = str_replace(
@@ -776,7 +824,9 @@ namespace OBX\Core {
 						$templateFolder."/script_deferred.js"
 					);
 					if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
-						self::$_arDeferredJSFiles[] = $jsFilePath;
+						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = $jsFilePath;
+						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
+						self::$_deferredFileCounter++;
 						return true;
 					}
 					return true;
@@ -789,7 +839,9 @@ namespace OBX\Core {
 				);
 				if( substr($jsFilePath, -3) == ".js" ) {
 					if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
-						self::$_arDeferredJSFiles[] = $jsFilePath;
+						self::$_arDeferredJSFiles[$iFile] = $jsFilePath;
+						self::$_arDeferredJSFilesSort[$iFile] = $sort;
+						$iFile++;
 						return true;
 					}
 				}
