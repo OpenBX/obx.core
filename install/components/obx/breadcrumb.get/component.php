@@ -20,8 +20,8 @@ $APPLICATION->SetAdditionalCSS($templateFolder."/style.css");
 
 //Params
 $arParams["START_FROM"] = (isset($arParams["START_FROM"]) && intval($arParams["START_FROM"]) > 0 ? intval($arParams["START_FROM"]) : 0);
-$arParams["PATH"] = (isset($arParams["PATH"]) && strlen($arParams["PATH"]) > 0 ? htmlspecialcharsbx($arParams["PATH"]) : false);
-$arParams["SITE_ID"] = (isset($arParams["SITE_ID"]) && strlen($arParams["SITE_ID"]) == 2 ? htmlspecialcharsbx($arParams["SITE_ID"]) : false);
+$arParams["PATH"] = (isset($arParams["PATH"]) && strlen($arParams["PATH"]) > 0 ? htmlspecialchars($arParams["PATH"]) : false);
+$arParams["SITE_ID"] = (isset($arParams["SITE_ID"]) && strlen($arParams["SITE_ID"]) == 2 ? htmlspecialchars($arParams["SITE_ID"]) : false);
 
 if ($arParams["SITE_ID"] === false)
 	$path = $arParams["PATH"];

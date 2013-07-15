@@ -13,5 +13,6 @@ DeleteDirFilesEx("/bitrix/js/obx.core");
 DeleteDirFilesEx("/bitrix/components/obx/layout");
 DeleteDirFilesEx("/bitrix/components/obx/breadcrumb.get");
 DeleteDirFilesEx("/bitrix/components/obx/menu.iblock.list");
+DeleteDirFilesEx("/bitrix/components/obx/social.links");
 if($bConnectEpilog) require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
 ?>
