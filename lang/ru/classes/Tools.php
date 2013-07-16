@@ -1,13 +1,26 @@
 <?php
-/*************************************
- ** @product OBX:Core Bitrix Module **
- ** @authors                        **
- **         Maksim S. Makarov       **
- **         Morozov P. Artem        **
- ** @license Affero GPLv3           **
- ** @mailto rootfavell@gmail.com    **
- ** @mailto tashiro@yandex.ru       **
- *************************************/
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @license Affero GPLv3                     **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
+
+$MESS['OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED'] = 'Модуль информационнх блоков не установлен';
+$MESS['OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND'] = 'Свойство не найдено для этого ИБ';
+
+$MESS['DAY_N'] = 'день';
+$MESS['DAY_G'] = 'дня';
+$MESS['DAY_GM'] = 'дней';
+
+$MESS['HOUR_N'] = 'час';
+$MESS['HOUR_G'] = 'часа';
+$MESS['HOUR_GM'] = 'часов';
+
+$MESS['SOME_G'] = 'а';
+$MESS['SOME_GM'] = 'ов';
 
 $MESS['January'] = 'январь';
 $MESS['JanuaryG'] = 'января';

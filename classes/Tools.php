@@ -24,8 +24,8 @@ namespace OBX\Core {
 
 		static protected $arPropIdToPropCode = array();
 		static function getPropIdByCode($IBLOCK_ID, $PROP_CODE, &$arProp = array(), &$ERR_MSG = array()) {
-			if( !\CModule::IncludeModule("iblock") ) {
-				$ERR_MSG[] = "Модуль информационнх блоков не установлен.";
+			if( !\CModule::IncludeModule('iblock') ) {
+				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED');
 				return false;
 			}
 			$PROP_CODE = strtoupper($PROP_CODE);
@@ -46,7 +46,7 @@ namespace OBX\Core {
 				return self::$arPropIdToPropCode[$IBLOCK_ID][$PROP_CODE]["ID"];
 			}
 			else {
-				$ERR_MSG[] = "Свойство не найдено для этого ИБ.";
+				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND');
 				return false;
 			}
 
@@ -58,7 +58,7 @@ namespace OBX\Core {
 		static protected $arPropCodeToPropId = array();
 		static public function getPropCodeById($IBLOCK_ID, $PROP_ID, &$ERR_MSG = array()) {
 			if( !\CModule::IncludeModule("iblock") ) {
-				$ERR_MSG[] = "Модуль информационнх блоков не установлен.";
+				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED');
 				return false;
 			}
 
@@ -78,7 +78,7 @@ namespace OBX\Core {
 				return self::$arPropCodeToPropId[$IBLOCK_ID][$PROP_ID];
 			}
 			else {
-				$ERR_MSG[] = "Свойство не найдено для этого ИБ.";
+				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND');
 				return false;
 			}
 		}
@@ -107,20 +107,20 @@ namespace OBX\Core {
 				case 12:
 				case 13:
 				case 14:
-					return "дней";
+					return GetMessage('DAY_GM');
 					break;
 				default:
 					switch($amount%10) {
 						case 1:
-							return "день";
+							return GetMessage('DAY_N');
 							break;
 						case 2:
 						case 3:
 						case 4:
-							return "дня";
+							return GetMessage('DAY_G');
 							break;
 						default:
-							return "дней";
+							return GetMessage('DAY_GM');
 					}
 			}
 		}
@@ -131,20 +131,20 @@ namespace OBX\Core {
 				case 12:
 				case 13:
 				case 14:
-					return "часов";
+					return GetMessage('HOUR_GM');
 					break;
 				default:
 					switch($amount%10) {
 						case 1:
-							return "час";
+							return GetMessage('HOUR_N');
 							break;
 						case 2:
 						case 3:
 						case 4:
-							return "часа";
+							return GetMessage('HOUR_G');
 							break;
 						default:
-							return "часов";
+							return GetMessage('HOUR_GM');
 					}
 			}
 		}
@@ -168,7 +168,7 @@ namespace OBX\Core {
 				case 12:
 				case 13:
 				case 14:
-					return ($oneState)?$nominative."ов":$genplural;
+					return ($oneState)?$nominative.GetMessage('SOME_GM'):$genplural;
 					break;
 				default:
 					switch($quantity%10) {
@@ -178,10 +178,10 @@ namespace OBX\Core {
 						case 2:
 						case 3:
 						case 4:
-							return ($oneState)?$nominative."а":$genetive;
+							return ($oneState)?$nominative.GetMessage('SOME_G'):$genetive;
 							break;
 						default:
-							return ($oneState)?$nominative."ов":$genplural;
+							return ($oneState)?$nominative.GetMessage('SOME_GM'):$genplural;
 					}
 			}
 		}
@@ -382,7 +382,7 @@ namespace OBX\Core {
 			if(is_file($full_path) || is_link($full_path))
 			{
 				if(@unlink($full_path))
-				return true;
+					return true;
 				return false;
 			}
 			elseif(is_dir($full_path))
@@ -392,15 +392,15 @@ namespace OBX\Core {
 					while(($file = readdir($handle)) !== false)
 					{
 						if($file == "." || $file == "..")
-						continue;
+							continue;
 
 						if(!self::deleteDirFilesEx($path."/".$file, $bIsPathFull))
-						$f = false;
+							$f = false;
 					}
 					closedir($handle);
 				}
 				if(!@rmdir($full_path))
-				return false;
+					return false;
 				return $f;
 			}
 			return false;
@@ -612,12 +612,12 @@ namespace OBX\Core {
 							is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$compiledLessFilePath)
 							&& self::$_bLessProduction
 						)
-	//					// На случай если мы будем комипировать less в папку css
-	//					|| (
-	//						substr($compiledLessFilePath, 0, 5) == 'less/'
-	//						&& self::$_bLessProduction
-	//						&& is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/css/".substr($compiledLessFilePath, 5))
-	//					)
+						//					// На случай если мы будем комипировать less в папку css
+						//					|| (
+						//						substr($compiledLessFilePath, 0, 5) == 'less/'
+						//						&& self::$_bLessProduction
+						//						&& is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/css/".substr($compiledLessFilePath, 5))
+						//					)
 					) {
 						self::$_arLessFiles[self::$_lessFilesCounter] = SITE_TEMPLATE_PATH."/".$lessFilePath;
 						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
@@ -837,9 +837,9 @@ namespace OBX\Core {
 				);
 				if( substr($jsFilePath, -3) == ".js" ) {
 					if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
-						self::$_arDeferredJSFiles[$iFile] = $jsFilePath;
-						self::$_arDeferredJSFilesSort[$iFile] = $sort;
-						$iFile++;
+						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = $jsFilePath;
+						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
+						self::$_deferredFileCounter++;
 						return true;
 					}
 				}
@@ -849,12 +849,19 @@ namespace OBX\Core {
 
 		/**
 		 * Форматирование даты с особенностями русского языка
+		 * @param string $bxDateString
+		 * @param int $dayStep
+		 * @return arrayl
 		 * @author pr0n1x
 		 * @year 2009
 		 */
 		static public function bxDateToArray($bxDateString, $dayStep = 0) {
+			$bxDateString = trim($bxDateString);
 			if ($bxDateString == 'today') {
 				$bxDateString = \ConvertTimeStamp(time(), "FULL");
+			}
+			if(strlen($bxDateString)==0) {
+				return array();
 			}
 			$itemDate = array();
 			$itemDate["STRING"] = $bxDateString;
@@ -1106,13 +1113,13 @@ namespace OBX\Core {
 				$elemId = str_replace(array("'", '"'), "_", $elemId);
 			}
 			?>
-		<?php if($bCollapse):?>
-			<a	href="javascript:void(0)"
-				  style="display: block;background: white; border:1px dotted #5A82CE;padding:3px; text-shadow: none; color: #5A82CE;"
-				  onclick="document.getElementById('<?php echo $elemId?>').style.display = ( document.getElementById('<?php echo $elemId?>').style.display == 'none')?'block':'none'"
+			<?php if($bCollapse):?>
+				<a	href="javascript:void(0)"
+					  style="display: block;background: white; border:1px dotted #5A82CE;padding:3px; text-shadow: none; color: #5A82CE;"
+					  onclick="document.getElementById('<?php echo $elemId?>').style.display = ( document.getElementById('<?php echo $elemId?>').style.display == 'none')?'block':'none'"
 					>
-				<?php echo $elemTitle?>
-			</a>
+					<?php echo $elemTitle?>
+				</a>
 				<div id="<?php echo $elemId?>" style="text-align: left; display:none; background-color: #b1cdef; position: absolute; z-index: 10000;">
 			<?php endif?>
 
