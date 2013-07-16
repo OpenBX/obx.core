@@ -980,6 +980,7 @@ if(!defined("BX_ROOT")) {
 	 * 		);
 	 */
 	public function _replaceComponentParameters($configPath) {
+		$rawConfigPath = $configPath;
 		$configPath = rtrim($this->replacePathMacros($configPath), '/');
 		$path = dirname($configPath);
 		$configPath = $this->_docRootDir.$configPath;
@@ -988,7 +989,14 @@ if(!defined("BX_ROOT")) {
 		if( file_exists($configPath) ) {
 			$arComponentParamsPlaceholdersList = require($configPath);
 			foreach($arComponentParamsPlaceholdersList as $pubFileRelPath => $arComponentReplaces) {
+				if(!is_array($arComponentReplaces)) {
+					echo 'Wrong replace config for "'.$pubFileRelPath.'". Config path: "'.$rawConfigPath.'"'."\n";
+				}
+				if( array_key_exists('NAME', $arComponentReplaces) ) {
+					$arComponentReplaces = array($arComponentReplaces);
+				}
 				self::__replaceComponentParameters($path.$pubFileRelPath, $arComponentReplaces);
+
 			}
 		}
 	}
