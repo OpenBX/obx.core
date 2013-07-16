@@ -10,7 +10,13 @@
 
 $currentDir = dirname(__FILE__);
 $arModuleClasses = require $currentDir.'/classes/.classes.php';
-foreach ($arModuleClasses as $classPath) {
+$arStaticClassesExclude = array(
+	'OBX\Core\Test\TestCase'
+);
+foreach ($arModuleClasses as $class => $classPath) {
+	if(in_array($class, $arStaticClassesExclude)) {
+		continue;
+	}
 	$classPath = $currentDir.'/'.$classPath;
 	if(is_file($classPath)) {
 		require_once $classPath;
