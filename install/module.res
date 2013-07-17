@@ -23,6 +23,8 @@
 		exclude_path: %MODULE_FOLDER%/classes/Build.php
 	[admin]
 		path: %MODULE_FOLDER%/admin/
+	[options]
+    		path: %MODULE_FOLDER%/options.php
 	[admin.ajax]
 		path: %MODULE_FOLDER%/admin/ajax/
 	[component.layout]
