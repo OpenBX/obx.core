@@ -1540,6 +1540,9 @@ HELP;
 					if( substr($excludePattern, 0, 1) != '/' ) {
 						$excludePattern = $curPath.'/'.$excludePattern;
 					}
+					else {
+						$excludePattern = $this->_docRootDir.$excludePattern;
+					}
 					$arFoundPatterns = glob($excludePattern);
 					foreach($arFoundPatterns as $excludePath) {
 						$arExcludeEntries[] = $excludePath;
