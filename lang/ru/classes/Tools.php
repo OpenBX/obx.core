@@ -10,6 +10,7 @@
 
 $MESS['OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED'] = 'Модуль информационнх блоков не установлен';
 $MESS['OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND'] = 'Свойство не найдено для этого ИБ';
+$MESS['OBX_CORE_TOOLS_WRONG_TEMPLATE_FILE'] = 'Неверно указан файл шаблона';
 
 $MESS['DAY_N'] = 'день';
 $MESS['DAY_G'] = 'дня';

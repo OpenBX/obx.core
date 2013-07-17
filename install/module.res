@@ -18,6 +18,9 @@
 
 [RAW_LANG_CHECK]
 {
+	[classes]
+		path: %MODULE_FOLDER%/classes
+		exclude_path: %MODULE_FOLDER%/classes/Build.php
 	[admin]
 		path: %MODULE_FOLDER%/admin/
 	[admin.ajax]

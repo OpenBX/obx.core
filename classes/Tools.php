@@ -435,7 +435,7 @@ namespace OBX\Core {
 		 */
 		function getTemplateMessage($templateFile, $FIELDS, &$ERR_MSG = array()) {
 			if( !is_file($templateFile) ) {
-				$ERR_MSG[] ="Неверно указан файл шаблона (".$templateFile.")";
+				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_WRONG_TEMPLATE_FILE').' ('.$templateFile.')';
 				return '';
 			}
 			//d($FIELDS, '$FIELDS');
