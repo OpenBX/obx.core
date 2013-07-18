@@ -11,6 +11,8 @@
 class OBX_Build {
 	protected $_moduleName = null;
 	protected $_moduleClass = null;
+	protected $_version = null;
+	protected $_versionDate = null;
 
 	protected $_bInit = false;
 	protected $_bPrologBXIncluded = false;
@@ -29,6 +31,8 @@ class OBX_Build {
 	protected $_arIBlockData = array();
 	protected $_arRawLangCheck = array();
 	protected $_arCompParamsConfig = array();
+
+	protected $_arReleases = array();
 
 	function __construct($moduleName, OBX_Build $ParentModule = null) {
 		error_reporting(E_ALL ^ E_NOTICE);
@@ -75,6 +79,9 @@ class OBX_Build {
 				'DEPENDENCIES' => array()
 			);
 			$this->_moduleName = $moduleName;
+			$arModuleInfo = require $this->_docRootDir.$this->_modulesFolder.'/'.$this->_moduleName.'/install/version.php';
+			$this->_version = $arModuleInfo['VERSION'];
+			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
 		}
 		$this->parseResourcesFile();
 		$this->findResourcesFiles();
@@ -179,18 +186,52 @@ class OBX_Build {
 			$bOpenedBlock = false;
 			$blockSection = null;
 
-			foreach($arTmpResources as $strResource) {
+			$bMultiLineStringOpened = false;
+			$multiLineString = null;
+			$multiLineString_StrResourceBackup = null;
+
+			foreach($arTmpResources as $strResourceLine) {
 				$lineNumber++;
-				$strResource = trim($strResource);
-				if( strlen($strResource)<1 ) {
-					continue;
-				}
-				if( substr($strResource, 0, 1) == "#" ) {
+				if( strlen(trim($strResourceLine))<1 && !$bMultiLineStringOpened ) {
 					continue;
 				}
 
-				if(strpos($strResource, '{') !== false) {
-					if(trim($strResource) != '{') {
+				if($bMultiLineStringOpened ) {
+					if( ($multiLineStringStopPos = strpos($strResourceLine, '>>>')) === false ) {
+						$multiLineString .= $strResourceLine."\n";
+						continue;
+					}
+					else {
+						if(trim($strResourceLine) != '>>>') {
+							echo 'Config parse error in line '.$lineNumber.': symbol ">>>" must be alone at the line '."\n";
+							die();
+						}
+						$strResourceLine = $multiLineString_StrResourceBackup.$multiLineString;
+						$multiLineString_StrResourceBackup = null;
+						$multiLineString = null;
+						$bMultiLineStringOpened = false;
+					}
+				}
+				if( !$bMultiLineStringOpened && ($multiLineStringStartPos = strpos($strResourceLine, '<<<')) !== false ) {
+					$bMultiLineStringOpened = true;
+					$multiLineString_StrResourceBackup = trim(substr($strResourceLine, 0, $multiLineStringStartPos));
+					$multiLineString = substr($strResourceLine, $multiLineStringStartPos);
+					continue;
+				}
+
+				$strResourceLine = trim($strResourceLine);
+
+				if( ($commentStrPos = strpos($strResourceLine, '#')) !== false ) {
+					if($commentStrPos == 0) {
+						continue;
+					}
+					else {
+						$strResourceLine = substr($strResourceLine, 0, $commentStrPos);
+					}
+				}
+
+				if(strpos($strResourceLine, '{') !== false) {
+					if(trim($strResourceLine) != '{') {
 						echo 'Config parse error in line '.$lineNumber.': symbol "{" must be alone at the line '."\n";
 						die();
 					}
@@ -201,8 +242,8 @@ class OBX_Build {
 					$bOpenedBlock = true;
 				}
 
-				if(strpos($strResource, '}') !== false) {
-					if(trim($strResource) != '}') {
+				if(strpos($strResourceLine, '}') !== false) {
+					if(trim($strResourceLine) != '}') {
 						echo 'Config parse error in line '.$lineNumber.': symbol "}" must be alone at the line '."\n";
 						die();
 					}
@@ -215,8 +256,8 @@ class OBX_Build {
 					continue;
 				}
 
-				if( substr($strResource, 0, 1) == "[" ) {
-					if(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResource, $arSectionMatches)) {
+				if( substr($strResourceLine, 0, 1) == "[" ) {
+					if(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResourceLine, $arSectionMatches)) {
 						if($bOpenedBlock) {
 							$blockSection = $arSectionMatches[1];
 						}
@@ -228,7 +269,7 @@ class OBX_Build {
 				}
 
 				if($configSection == 'RESOURCES') {
-					$arTmpResource = explode('::', $strResource);
+					$arTmpResource = explode('::', $strResourceLine);
 					if( count($arTmpResource)<3 ) {
 						//echo "Parse resource \"$buildModuleDir/install/resources.php\" error in line $lineNumber\n";
 						continue;
@@ -257,15 +298,15 @@ class OBX_Build {
 					$this->_arResources[] = $arResource;
 				}
 				elseif($configSection == 'COMPONENT_PARAMETERS') {
-					$this->addCompParamsConfig($strResource);
+					$this->addCompParamsConfig($strResourceLine);
 				}
 				elseif($configSection == 'DEPENDENCIES') {
-					$subModuleName = $strResource;
+					$subModuleName = $strResourceLine;
 					$this->addDependency($subModuleName);
 					$debug = true;
 				}
 				elseif($configSection == 'IBLOCK_DATA') {
-					$arTmpResource = explode('::', $strResource);
+					$arTmpResource = explode('::', $strResourceLine);
 					if( count($arTmpResource)<3 ) {
 						//echo "Parse resource \"$buildModuleDir/install/resources.php\" error in line $lineNumber\n";
 						continue;
@@ -276,7 +317,7 @@ class OBX_Build {
 						'IBLOCK_TYPE' => null,
 						'EXPORT_PATH' => null
 					);
-					$arTmpIBlockResource = explode('::', $strResource);
+					$arTmpIBlockResource = explode('::', $strResourceLine);
 					$arIBlockResource['IBLOCK_CODE'] = trim($arTmpIBlockResource[0]);
 					$arIBlockResource['EXPORT_PATH'] = trim($arTmpIBlockResource[1]);
 					$arIBlockResource['XML_FILE'] = trim($arTmpIBlockResource[2]);
@@ -296,7 +337,7 @@ class OBX_Build {
 								'EXCLUDE_PATH' => array()
 							);
 						}
-						$arTmpCheckPathOpt = explode(':', $strResource);
+						$arTmpCheckPathOpt = explode(':', $strResourceLine);
 						$checkPathOptName = trim($arTmpCheckPathOpt[0]);
 						$checkPathOptValue = trim($arTmpCheckPathOpt[1]);
 						if($checkPathOptName == 'path') {
@@ -308,6 +349,11 @@ class OBX_Build {
 						elseif($checkPathOptName == 'exclude') {
 							$arCheckPath[$blockSection]['EXCLUDE'][] = $checkPathOptValue;
 						}
+					}
+				}
+				elseif($configSection == 'RELEASE') {
+					if($blockSection != null) {
+						$version = $blockSection;
 					}
 				}
 			}
@@ -704,10 +750,6 @@ if(!defined("BX_ROOT")) {
 	}
 }
 ';
-	}
-
-	public function generateMD5FilesList() {
-		//if(  )
 	}
 
 	static public function CheckDirPath($path, $bPermission=true)
@@ -1687,4 +1729,39 @@ HELP;
 			}
 		}
 	}
+
+	protected function addRelease($arRelease) {
+
+	}
+
+	static public function checkVersion($version) {
+
+
+	}
+
+	static public function getRawVersion($version) {
+		$regVersion = '~^([\d]{1,2})\.([\d]{1,2})\.([\d]{1,2})(?:\-r([\d]{1,4}))?$~';
+		$rawVersion = 0;
+		if( preg_match($regVersion, $version, $arMatches) ) {
+			$major = $arMatches[1] * 1000000000;
+			$minor = $arMatches[2] * 10000000;
+			$fixes = $arMatches[3] * 10000;
+			$revision = 0;
+			if($arMatches[4]) {
+				$revision = $arMatches[4];
+			}
+			$rawVersion = $major + $minor + $fixes + $revision;
+
+		}
+		return $rawVersion;
+	}
+
+	static public function compareVersions($versionA, $versionB) {
+
+	}
+
+	public function generateMD5FilesList() {
+		//if(  )
+	}
+
 }
