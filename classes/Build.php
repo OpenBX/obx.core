@@ -1890,7 +1890,7 @@ HELP;
 		self::CopyDirFilesEx(
 			$this->_selfDir
 			,$this->_releaseDir.'/release-'.$this->_version
-			,true, true, FALSE//, 'modules'
+			,true, true, FALSE, '.git'
 		);
 	}
 }
