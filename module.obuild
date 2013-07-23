@@ -3,8 +3,7 @@
 ## @authors                            ##
 ##        Maksim S. Makarov aka pr0n1x ##
 ## @license Affero GPLv3               ##
-## @mailto rootfavell@gmail.com        ##
-## @copyright 2013 DevTop              ##
+## @mail rootfavell@gmail.com          ##
 #########################################
 
 [RESOURCES]
@@ -19,14 +18,14 @@
 [RAW_LANG_CHECK]
 {
 	[classes]
-		path: %MODULE_FOLDER%/classes
-		exclude_path: %MODULE_FOLDER%/classes/Build.php
+		path: %SELF_FOLDER%/classes
+		exclude_path: %SELF_FOLDER%/classes/Build.php
 	[admin]
-		path: %MODULE_FOLDER%/admin/
+		path: %SELF_FOLDER%/admin/
 	[options]
-    		path: %MODULE_FOLDER%/options.php
+    		path: %SELF_FOLDER%/options.php
 	[admin.ajax]
-		path: %MODULE_FOLDER%/admin/ajax/
+		path: %SELF_FOLDER%/admin/ajax/
 	[component.layout]
 		path: %BX_ROOT%/components/obx/layout
 	[component.breadcrumb.get]

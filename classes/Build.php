@@ -9,21 +9,31 @@
  ***********************************************/
 
 class OBX_Build {
+	const BX_ROOT = '/bitrix';
+	const BUILD_FOLDER = '/bitrix/modules.build';
+	const MODULES_FOLDER = '/bitrix/modules';
+
 	protected $_moduleName = null;
 	protected $_moduleClass = null;
 	protected $_version = null;
 	protected $_versionDate = null;
 
+	protected $_arConfigFiles = array(
+		'%SELF_FOLDER%/module.obuild',
+		'%BUILD_FOLDER%/release.obuild'
+	);
 	protected $_bInit = false;
+
 	protected $_bPrologBXIncluded = false;
 	protected $_bResourcesFileParsed = false;
 	protected $_docRootDir = null;
+	protected $_modulesDir = null;
+	protected $_bxRootDir = null;
 	protected $_selfFolder = null;
 	protected $_selfDir = null;
-	protected $_modulesFolder = null;
-	protected $_modulesDir = null;
-	protected $_bxRootFolder = '/bitrix';
-	protected $_bxRootDir = null;
+	protected $_buildFolder = null;
+	protected $_buildDir = null;
+
 	protected $_arDepModules = array();
 	protected $_ParentModule = null;
 
@@ -32,29 +42,23 @@ class OBX_Build {
 	protected $_arRawLangCheck = array();
 	protected $_arCompParamsConfig = array();
 
+	protected $_releaseFolder = null;
+	protected $_releaseDir = null;
 	protected $_arReleases = array();
+	protected $_lastReleaseVersion = null;
 
-	function __construct($moduleName, OBX_Build $ParentModule = null) {
+	function __construct($moduleName, self $ParentModule = null) {
 		error_reporting(E_ALL ^ E_NOTICE);
 
-		$this->_selfDir = dirname(__FILE__);
-		$this->_selfDir = str_replace(array("\\", "//"), "/", $this->_selfDir);
-		$this->_selfFolder = '';
-		$this->_modulesFolder = $this->_bxRootFolder.'/modules';
-		$arrTmp = explode($this->_modulesFolder, $this->_selfDir);
+		$curDir = dirname(__FILE__);
+		$curDir = str_replace(array("\\", "//"), "/", $curDir);
+		$arrTmp = explode(self::MODULES_FOLDER, $curDir);
 		$this->_docRootDir = $arrTmp[0];
 		$_SERVER["DOCUMENT_ROOT"] = $this->_docRootDir;
-		$this->_selfFolder = $this->_modulesFolder.$arrTmp[1];
-		$this->_bxRootDir = $this->_docRootDir.$this->_bxRootFolder;
-		$this->_modulesDir = $this->_docRootDir.$this->_modulesFolder;
+		$this->_bxRootDir = $this->_docRootDir.self::BX_ROOT;
+		$this->_modulesDir = $this->_docRootDir.self::MODULES_FOLDER;
 
-		// пришлось сделать так, поскольку в ядре битрикс данный файл подключается через require_once
-		// потому для дальнейшего подключения в билдере ядра битрикс простой require не подходит
-		$dbConnCode = file_get_contents($this->_bxRootDir.'/php_interface/dbconn.php');
-		$dbConnCode = preg_replace('~^[\s\S]*?\<\?(?:php)?~im', '', $dbConnCode);
-		$dbConnCode = preg_replace('~\?\>[\s\S]*?$~im', '', $dbConnCode);
-		eval($dbConnCode);
-
+		self::connectDBConnFile();
 
 		if($ParentModule instanceof self) {
 			if($ParentModule->isInit() == true) {
@@ -64,27 +68,40 @@ class OBX_Build {
 		$this->reInit($moduleName);
 	}
 
+	public function connectDBConnFile() {
+		// пришлось сделать так, поскольку в ядре битрикс данный файл подключается через require_once
+		// потому для дальнейшего подключения в билдере ядра битрикс простой require не подходит
+		$dbConnCode = file_get_contents($this->_bxRootDir.'/php_interface/dbconn.php');
+		$dbConnCode = preg_replace('~^[\s\S]*?\<\?(?:php)?~im', '', $dbConnCode);
+		$dbConnCode = preg_replace('~\?\>[\s\S]*?$~im', '', $dbConnCode);
+		eval($dbConnCode);
+	}
+
 	public function reInit($moduleName = null) {
 		if($moduleName == null) {
 			if($this->_moduleName == null) {
-				echo "Error: can't reInitialize noname module";
+				echo 'Error: can\'t reInitialize no-name module';
 				return false;
 			}
 			$moduleName = $this->_moduleName;
 		}
-		if( is_dir($this->_modulesDir."/".$moduleName) ) {
+		if( is_dir($this->_modulesDir.'/'.$moduleName) ) {
 			$this->_moduleClass = str_replace('.', '_', $moduleName);
 			$this->_arResources = array(
 				'RESOURCES' => array(),
 				'DEPENDENCIES' => array()
 			);
 			$this->_moduleName = $moduleName;
-			$arModuleInfo = require $this->_docRootDir.$this->_modulesFolder.'/'.$this->_moduleName.'/install/version.php';
+			$this->_selfFolder = self::MODULES_FOLDER.'/'.$this->_moduleName;
+			$this->_selfDir = $this->_modulesDir.'/'.$this->_moduleName;
+			$arModuleInfo = require $this->_docRootDir.$this->_selfFolder.'/install/version.php';
 			$this->_version = $arModuleInfo['VERSION'];
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
+			$this->_buildFolder = self::BUILD_FOLDER.'/'.$this->_moduleName;
+			$this->_buildDir = $this->_docRootDir.self::BUILD_FOLDER.$this->_moduleName;
 		}
-		$this->parseResourcesFile();
-		$this->findResourcesFiles();
+
+		$this->parseConfig();
 	}
 
 	public function isInit() {
@@ -102,7 +119,7 @@ class OBX_Build {
 
 	protected function _includeProlog() {
 		if( !$this->_bPrologBXIncluded ) {
-			require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+			require($this->_modulesDir.'/main/include/prolog_before.php');
 			global $DB, $DBType;
 			$DBType = strtolower($DB->type);
 			$this->_bPrologBXIncluded = true;
@@ -126,14 +143,17 @@ class OBX_Build {
 	protected function addDependency($moduleName) {
 		if( !preg_match('~[a-zA-Z0-9]+\.[a-zA-Z0-9]+~', $moduleName) ) {
 			if( !is_dir($this->_modulesDir."/".$moduleName) ) {
-				return false;
+				return null;
 			}
 		}
 		if($this->_ParentModule instanceof self) {
-			$this->_ParentModule->addDependency($moduleName);
+			$Dependency = $this->_ParentModule->addDependency($moduleName);
 		}
-		$this->_arDepModules[$moduleName] = new self($moduleName, $this);
-		return true;
+		else {
+			$Dependency = new self($moduleName, $this);
+		}
+		$this->_arDepModules[$moduleName] = $Dependency;
+		return $Dependency;
 	}
 
 	/**
@@ -153,213 +173,272 @@ class OBX_Build {
 	protected function replacePathMacros($path) {
 		return str_replace(
 			array(
-				'%MODULE_FOLDER%',
+				'%BX_ROOT%',
+				'%MODULES_FOLDER%',
+				'%SELF_FOLDER%',
 				'%INSTALL_FOLDER%',
-				'%BX_ROOT%'
+				'%BUILD_FOLDER%',
 			),
 			array(
-				$this->_modulesFolder.'/'.$this->_moduleName,
-				$this->_modulesFolder.'/'.$this->_moduleName.'/install',
-				$this->_bxRootFolder
+				self::BX_ROOT,
+				self::MODULES_FOLDER,
+				$this->_selfFolder,
+				$this->_selfFolder.'/install',
+				$this->_buildFolder
 			),
 			$path
 		);
 	}
 
-	public function parseResourcesFile() {
+	public function addConfigFile($configFile) {
+		$configFile = $this->_docRootDir.$this->replacePathMacros($configFile);
+		if(is_file($configFile)) {
+			$this->_arConfigFiles[] = $configFile;
+			return true;
+		}
+		return false;
+	}
+
+	public function parseConfig() {
+		$this->_arResources = array();
+		$this->_arDepModules = array();
+		foreach($this->_arConfigFiles as $configPath) {
+			$configPath = $this->_docRootDir.$this->replacePathMacros($configPath);
+			$this->_parseConfigFile($configPath);
+		}
+		$this->findResourcesFiles();
+	}
+	protected function _parseConfigFile($filePath) {
 		if( !$this->isInit() ) {
-			echo "Error: Build system not initialized!\n";
+			echo $this->_moduleName.": Error: Build system not initialized!\n";
 			return false;
 		}
-		$buildModuleDir = $this->_modulesDir."/".$this->_moduleName;
 
-		if( is_file($buildModuleDir.'/install/module.res') ) {
-			$strResources = file_get_contents($buildModuleDir.'/install/module.res');
-			$arTmpResources = explode("\n", $strResources);
-			//rint_r($arTmpResources);
-			$configSection = null;
-			$lineNumber = 0;
+		if( !is_file($filePath) ) {
+			echo $this->_moduleName.": Error: Module resource-file not found: \"".$filePath."\"\n";
+			return false;
+		}
+		$strResources = file_get_contents($filePath);
+		$arTmpResources = explode("\n", $strResources);
+		//rint_r($arTmpResources);
+		$configSection = null;
+		$lineNumber = 0;
 
-			$this->_arResources = array();
-			$this->_arDepModules = array();
+		$bOpenedBlock = false;
+		$blockSection = null;
 
-			$bOpenedBlock = false;
-			$blockSection = null;
+		$bMultiLineStringOpened = false;
+		$multiLineString = null;
+		$multiLineString_StrResourceBackup = null;
 
-			$bMultiLineStringOpened = false;
-			$multiLineString = null;
-			$multiLineString_StrResourceBackup = null;
+		foreach($arTmpResources as $strResourceLine) {
+			$lineNumber++;
+			if( strlen(trim($strResourceLine))<1 && !$bMultiLineStringOpened ) {
+				continue;
+			}
 
-			foreach($arTmpResources as $strResourceLine) {
-				$lineNumber++;
-				if( strlen(trim($strResourceLine))<1 && !$bMultiLineStringOpened ) {
+			if($bMultiLineStringOpened ) {
+				if( ($multiLineStringStopPos = strpos($strResourceLine, '>>>')) === false ) {
+					$multiLineString .= $strResourceLine."\n";
 					continue;
 				}
+				else {
+					if(trim($strResourceLine) != '>>>') {
+						echo 'Config parse error in line '.$lineNumber.': symbol ">>>" must be alone at the line '."\n";
+						die();
+					}
+					$strResourceLine = $multiLineString_StrResourceBackup.$multiLineString;
+					$multiLineString_StrResourceBackup = null;
+					$multiLineString = null;
+					$bMultiLineStringOpened = false;
+				}
+			}
+			if( !$bMultiLineStringOpened && ($multiLineStringStartPos = strpos($strResourceLine, '<<<')) !== false ) {
+				$bMultiLineStringOpened = true;
+				$multiLineString_StrResourceBackup = trim(substr($strResourceLine, 0, $multiLineStringStartPos));
+				$multiLineString = substr($strResourceLine, $multiLineStringStartPos+3);
+				continue;
+			}
 
-				if($bMultiLineStringOpened ) {
-					if( ($multiLineStringStopPos = strpos($strResourceLine, '>>>')) === false ) {
-						$multiLineString .= $strResourceLine."\n";
-						continue;
+			$strResourceLine = trim($strResourceLine);
+
+			if( ($commentStrPos = strpos($strResourceLine, '#')) !== false ) {
+				if($commentStrPos == 0) {
+					continue;
+				}
+				else {
+					$strResourceLine = substr($strResourceLine, 0, $commentStrPos);
+				}
+			}
+
+			if(strpos($strResourceLine, '{') !== false) {
+				if(trim($strResourceLine) != '{') {
+					echo 'Config parse error in line '.$lineNumber.': symbol "{" must be alone at the line '."\n";
+					die();
+				}
+				if($bOpenedBlock == true) {
+					echo 'Config parse error in line '.$lineNumber.': trying to open block when it\'s already opened'."\n";
+					die();
+				}
+				$bOpenedBlock = true;
+			}
+
+			if(strpos($strResourceLine, '}') !== false) {
+				if(trim($strResourceLine) != '}') {
+					echo 'Config parse error in line '.$lineNumber.': symbol "}" must be alone at the line '."\n";
+					die();
+				}
+				if($bOpenedBlock == false) {
+					echo 'Config parse error in line '.$lineNumber.': trying to close block "}" when it\'s not opened'."\n";
+					die();
+				}
+				$blockSection = null;
+				$bOpenedBlock = false;
+				continue;
+			}
+
+			if( substr($strResourceLine, 0, 1) == "[" ) {
+				if(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResourceLine, $arSectionMatches)) {
+					if($bOpenedBlock) {
+						$blockSection = $arSectionMatches[1];
 					}
 					else {
-						if(trim($strResourceLine) != '>>>') {
-							echo 'Config parse error in line '.$lineNumber.': symbol ">>>" must be alone at the line '."\n";
-							die();
-						}
-						$strResourceLine = $multiLineString_StrResourceBackup.$multiLineString;
-						$multiLineString_StrResourceBackup = null;
-						$multiLineString = null;
-						$bMultiLineStringOpened = false;
+						$configSection = $arSectionMatches[1];
 					}
 				}
-				if( !$bMultiLineStringOpened && ($multiLineStringStartPos = strpos($strResourceLine, '<<<')) !== false ) {
-					$bMultiLineStringOpened = true;
-					$multiLineString_StrResourceBackup = trim(substr($strResourceLine, 0, $multiLineStringStartPos));
-					$multiLineString = substr($strResourceLine, $multiLineStringStartPos);
+				continue;
+			}
+
+			if($configSection == 'RESOURCES') {
+				$arTmpResource = explode('::', $strResourceLine);
+				if( count($arTmpResource)<3 ) {
+					//echo "Parse resource \"".$this->_selfDir."/install/resources.php\" error in line $lineNumber\n";
 					continue;
 				}
-
-				$strResourceLine = trim($strResourceLine);
-
-				if( ($commentStrPos = strpos($strResourceLine, '#')) !== false ) {
-					if($commentStrPos == 0) {
-						continue;
-					}
-					else {
-						$strResourceLine = substr($strResourceLine, 0, $commentStrPos);
+				$arResource['OPTIONS'] = array(
+					'BUILD_ONLY' => false,
+					'NOT_UNINSTALL' => false
+				);
+				if( strpos($arTmpResource[0], "!") !== false ) {
+					$arTmpResourceOpts = explode("!", $arTmpResource[0]);
+					$arTmpResource[0] = array_pop($arTmpResourceOpts);
+					foreach($arTmpResourceOpts as &$strResOpt) {
+						$strResOpt = trim($strResOpt);
+						if( isset($arResource['OPTIONS'][$strResOpt]) ) {
+							$arResource['OPTIONS'][$strResOpt] = true;
+						}
 					}
 				}
+				$arResource["INSTALL_FOLDER"] = trim($arTmpResource[0]);
+				$arResource["PATTERN"] = trim($arTmpResource[1]);
+				$arResource["TARGET_FOLDER"] = trim($arTmpResource[2]);
 
-				if(strpos($strResourceLine, '{') !== false) {
-					if(trim($strResourceLine) != '{') {
-						echo 'Config parse error in line '.$lineNumber.': symbol "{" must be alone at the line '."\n";
-						die();
-					}
-					if($bOpenedBlock == true) {
-						echo 'Config parse error in line '.$lineNumber.': trying to open block when it\'s already opened'."\n";
-						die();
-					}
-					$bOpenedBlock = true;
-				}
+				$arResource["INSTALL_FOLDER"] = rtrim($this->replacePathMacros($arResource["INSTALL_FOLDER"]), '/');
+				$arResource["TARGET_FOLDER"] = rtrim($this->replacePathMacros($arResource["TARGET_FOLDER"]), '/');
 
-				if(strpos($strResourceLine, '}') !== false) {
-					if(trim($strResourceLine) != '}') {
-						echo 'Config parse error in line '.$lineNumber.': symbol "}" must be alone at the line '."\n";
-						die();
-					}
-					if($bOpenedBlock == false) {
-						echo 'Config parse error in line '.$lineNumber.': trying to close block "}" when it\'s not opened'."\n";
-						die();
-					}
-					$blockSection = null;
-					$bOpenedBlock = false;
+				$this->_arResources[] = $arResource;
+			}
+			elseif($configSection == 'COMPONENT_PARAMETERS') {
+				$this->addCompParamsConfig($strResourceLine);
+			}
+			elseif($configSection == 'DEPENDENCIES') {
+				$subModuleName = $strResourceLine;
+				$this->addDependency($subModuleName);
+				$debug = true;
+			}
+			elseif($configSection == 'IBLOCK_DATA') {
+				$arTmpResource = explode('::', $strResourceLine);
+				if( count($arTmpResource)<3 ) {
+					//echo "Parse resource \"".$this->_selfDir."/install/resources.php\" error in line $lineNumber\n";
 					continue;
 				}
-
-				if( substr($strResourceLine, 0, 1) == "[" ) {
-					if(preg_match('~\[\s*([0-9A-Za-z\_\-\.]*)\s*\]~', $strResourceLine, $arSectionMatches)) {
-						if($bOpenedBlock) {
-							$blockSection = $arSectionMatches[1];
-						}
-						else {
-							$configSection = $arSectionMatches[1];
-						}
+				$arIBlockResource = array(
+					'IBLOCK_CODE' => null,
+					'IBLOCK_ID' => null,
+					'IBLOCK_TYPE' => null,
+					'EXPORT_PATH' => null
+				);
+				$arTmpIBlockResource = explode('::', $strResourceLine);
+				$arIBlockResource['IBLOCK_CODE'] = trim($arTmpIBlockResource[0]);
+				$arIBlockResource['EXPORT_PATH'] = trim($arTmpIBlockResource[1]);
+				$arIBlockResource['XML_FILE'] = trim($arTmpIBlockResource[2]);
+				$arIBlockResource['FORM_SETTINGS_FILE'] = trim($arTmpIBlockResource[3]);
+				$arIBlockResource["EXPORT_PATH"] = rtrim($this->replacePathMacros($arIBlockResource["EXPORT_PATH"]), '/');
+				$this->addIBlockData($arIBlockResource);
+			}
+			elseif($configSection == 'RAW_LANG_CHECK') {
+				if( strlen($blockSection)>0 ) {
+					if( !isset($arCheckPath) ) {
+						$arCheckPath = array();
 					}
-					continue;
-				}
-
-				if($configSection == 'RESOURCES') {
-					$arTmpResource = explode('::', $strResourceLine);
-					if( count($arTmpResource)<3 ) {
-						//echo "Parse resource \"$buildModuleDir/install/resources.php\" error in line $lineNumber\n";
-						continue;
+					if( !array_key_exists($blockSection, $arCheckPath) ) {
+						$arCheckPath[$blockSection] = array(
+							'PATH' => null,
+							'EXCLUDE' => array(),
+							'EXCLUDE_PATH' => array()
+						);
 					}
-					$arResource['OPTIONS'] = array(
-						'BUILD_ONLY' => false,
-						'NOT_UNINSTALL' => false
-					);
-					if( strpos($arTmpResource[0], "!") !== false ) {
-						$arTmpResourceOpts = explode("!", $arTmpResource[0]);
-						$arTmpResource[0] = array_pop($arTmpResourceOpts);
-						foreach($arTmpResourceOpts as &$strResOpt) {
-							$strResOpt = trim($strResOpt);
-							if( isset($arResource['OPTIONS'][$strResOpt]) ) {
-								$arResource['OPTIONS'][$strResOpt] = true;
-							}
-						}
+					$arTmpCheckPathOpt = explode(':', $strResourceLine);
+					$checkPathOptName = trim($arTmpCheckPathOpt[0]);
+					$checkPathOptValue = trim($arTmpCheckPathOpt[1]);
+					if($checkPathOptName == 'path') {
+						$arCheckPath[$blockSection]['PATH'] = $this->replacePathMacros($checkPathOptValue);
 					}
-					$arResource["INSTALL_FOLDER"] = trim($arTmpResource[0]);
-					$arResource["PATTERN"] = trim($arTmpResource[1]);
-					$arResource["TARGET_FOLDER"] = trim($arTmpResource[2]);
-
-					$arResource["INSTALL_FOLDER"] = rtrim($this->replacePathMacros($arResource["INSTALL_FOLDER"]), '/');
-					$arResource["TARGET_FOLDER"] = rtrim($this->replacePathMacros($arResource["TARGET_FOLDER"]), '/');
-
-					$this->_arResources[] = $arResource;
-				}
-				elseif($configSection == 'COMPONENT_PARAMETERS') {
-					$this->addCompParamsConfig($strResourceLine);
-				}
-				elseif($configSection == 'DEPENDENCIES') {
-					$subModuleName = $strResourceLine;
-					$this->addDependency($subModuleName);
-					$debug = true;
-				}
-				elseif($configSection == 'IBLOCK_DATA') {
-					$arTmpResource = explode('::', $strResourceLine);
-					if( count($arTmpResource)<3 ) {
-						//echo "Parse resource \"$buildModuleDir/install/resources.php\" error in line $lineNumber\n";
-						continue;
+					elseif($checkPathOptName == 'exclude_path') {
+						$arCheckPath[$blockSection]['EXCLUDE_PATH'][] = $this->replacePathMacros($checkPathOptValue);
 					}
-					$arIBlockResource = array(
-						'IBLOCK_CODE' => null,
-						'IBLOCK_ID' => null,
-						'IBLOCK_TYPE' => null,
-						'EXPORT_PATH' => null
-					);
-					$arTmpIBlockResource = explode('::', $strResourceLine);
-					$arIBlockResource['IBLOCK_CODE'] = trim($arTmpIBlockResource[0]);
-					$arIBlockResource['EXPORT_PATH'] = trim($arTmpIBlockResource[1]);
-					$arIBlockResource['XML_FILE'] = trim($arTmpIBlockResource[2]);
-					$arIBlockResource['FORM_SETTINGS_FILE'] = trim($arTmpIBlockResource[3]);
-					$arIBlockResource["EXPORT_PATH"] = rtrim($this->replacePathMacros($arIBlockResource["EXPORT_PATH"]), '/');
-					$this->addIBlockData($arIBlockResource);
-				}
-				elseif($configSection == 'RAW_LANG_CHECK') {
-					if( strlen($blockSection)>0 ) {
-						if( !isset($arCheckPath) ) {
-							$arCheckPath = array();
-						}
-						if( !array_key_exists($blockSection, $arCheckPath) ) {
-							$arCheckPath[$blockSection] = array(
-								'PATH' => null,
-								'EXCLUDE' => array(),
-								'EXCLUDE_PATH' => array()
-							);
-						}
-						$arTmpCheckPathOpt = explode(':', $strResourceLine);
-						$checkPathOptName = trim($arTmpCheckPathOpt[0]);
-						$checkPathOptValue = trim($arTmpCheckPathOpt[1]);
-						if($checkPathOptName == 'path') {
-							$arCheckPath[$blockSection]['PATH'] = $this->replacePathMacros($checkPathOptValue);
-						}
-						elseif($checkPathOptName == 'exclude_path') {
-							$arCheckPath[$blockSection]['EXCLUDE_PATH'][] = $this->replacePathMacros($checkPathOptValue);
-						}
-						elseif($checkPathOptName == 'exclude') {
-							$arCheckPath[$blockSection]['EXCLUDE'][] = $checkPathOptValue;
-						}
-					}
-				}
-				elseif($configSection == 'RELEASE') {
-					if($blockSection != null) {
-						$version = $blockSection;
+					elseif($checkPathOptName == 'exclude') {
+						$arCheckPath[$blockSection]['EXCLUDE'][] = $checkPathOptValue;
 					}
 				}
 			}
-			if(isset($arCheckPath)) {
-				$this->addPathToRawLangCheck($arCheckPath);
+			elseif($configSection == 'RELEASE') {
+				if( !isset($arReleasesList) ) {
+					$arReleasesList = array(
+						'RELEASE_FOLDER' => null,
+						'RELEASES_LIST' => array()
+					);
+				}
+				if( strlen($blockSection)==0 ) {
+					list($releaseOpt, $releaseOptValue) = explode(':', $strResourceLine);
+					$releaseOpt = trim($releaseOpt);
+					$releaseOptValue = trim($releaseOptValue);
+					if($releaseOpt == 'release_folder') {
+						$arReleasesList['RELEASE_FOLDER'] = $releaseOptValue;
+					}
+				}
+				else {
+
+					$arVersion = self::readVersion($blockSection);
+					if( empty($arVersion) ) {
+						continue;
+					}
+					if( !array_key_exists($arVersion['VERSION'], $arReleasesList['RELEASES_LIST']) ) {
+						$arReleasesList['RELEASES_LIST'][$blockSection] = array(
+							'UPDATE_FROM' => false,
+							'DESCRIPTION' => array(),
+						);
+					}
+					list($releaseOpt, $releaseOptValue) = explode(':', $strResourceLine);
+					$releaseOpt = trim($releaseOpt);
+					$releaseOptValue = trim($releaseOptValue);
+					if($releaseOpt == 'update_from') {
+						$arUpdateFromVersion = self::readVersion($releaseOptValue);
+						if(!empty($arUpdateFromVersion)) {
+							$arReleasesList['RELEASES_LIST'][$blockSection]['UPDATE_FROM'] = $arUpdateFromVersion['VERSION'];
+						}
+					}
+					elseif($releaseOpt == 'description' ) {
+						$arReleasesList['RELEASES_LIST'][$blockSection]['DESCRIPTION'] = $releaseOptValue;
+					}
+				}
 			}
+		}
+		if(isset($arCheckPath)) {
+			$this->addPathToRawLangCheck($arCheckPath);
+		}
+		if(!empty($arReleasesList)) {
+			$this->addReleasesList($arReleasesList);
 		}
 	}
 
@@ -417,7 +496,7 @@ class OBX_Build {
 		if( count($this->_arDepModules) ) {
 			foreach($this->_arDepModules as $DependencyModule) {
 				self::CopyDirFilesEx(
-					 $this->_modulesDir.'/'.$this->_moduleName.'/install/modules/'.$DependencyModule->getModuleName()
+					 $this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName()
 					,$this->_modulesDir.'/'.$DependencyModule->getModuleName()
 					,true, true, FALSE, 'modules'
 				);
@@ -489,13 +568,13 @@ class OBX_Build {
 				$DependencyModule->generateInstallCode();
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
-				self::deleteDirFilesEx($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName(), true);
+				self::deleteDirFilesEx($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName(), true);
 				self::CopyDirFilesEx(
 					 $this->_modulesDir.'/'.$DependencyModule->getModuleName()
-					,$this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName()
+					,$this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName()
 					,true, true, FALSE, 'modules'
 				);
-				@unlink($this->_modulesDir.'/'.$this->getModuleName().'/install/modules/'.$DependencyModule->getModuleName().'/.git');
+				@unlink($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName().'/.git');
 			}
 		}
 		if( count($this->_arResources)>0 ) {
@@ -574,20 +653,20 @@ class OBX_Build {
 							.$this->getCodeOfCopyFunction()
 							.$installCode
 							.$this->getFooterCodeOfInstallFile();
-			file_put_contents($this->_modulesDir.'/'.$this->_moduleName.'/install/'.$installFile, $installCode);
+			file_put_contents($this->_selfDir.'/install/'.$installFile, $installCode);
 		}
 		else {
-			file_put_contents($this->_modulesDir.'/'.$this->_moduleName.'/install/'.$installFile, "<?php\n?>");
+			file_put_contents($this->_selfDir.'/install/'.$installFile, "<?php\n?>");
 		}
 		if( strlen($installDepsCode)>0 ) {
 			$installDepsCode = 	 $this->getHeaderCodeOfInstallFile()
 								.$this->getCodeOfCopyFunction()
 								.$installDepsCode
 								.$this->getFooterCodeOfInstallFile();
-			file_put_contents($this->_modulesDir.'/'.$this->_moduleName.'/install/'.$installDepsFile, $installDepsCode);
+			file_put_contents($this->_selfDir.'/install/'.$installDepsFile, $installDepsCode);
 		}
 		else {
-			file_put_contents($this->_modulesDir.'/'.$this->_moduleName.'/install/'.$installDepsFile, "<?php\n?>");
+			file_put_contents($this->_selfDir.'/install/'.$installDepsFile, "<?php\n?>");
 		}
 	}
 
@@ -611,7 +690,7 @@ class OBX_Build {
 				}
 			}
 			$unInstallCode .= $this->getFooterCodeOfInstallFile();
-			file_put_contents($this->_modulesDir.'/'.$this->_moduleName.'/install/'.$unInstallFile, $unInstallCode);
+			file_put_contents($this->_selfDir.'/install/'.$unInstallFile, $unInstallCode);
 		}
 	}
 
@@ -683,7 +762,7 @@ class OBX_Build {
 								.$this->getCodeOfCopyFunction()
 								.$backInstallCode
 								.$this->getFooterCodeOfInstallFile();
-			file_put_contents($this->_modulesDir.'/'.$this->_moduleName.'/install/'.$backInstallFile, $backInstallCode);
+			file_put_contents($this->_selfDir.'/install/'.$backInstallFile, $backInstallCode);
 		}
 	}
 
@@ -1435,10 +1514,11 @@ if(!defined("BX_ROOT")) {
 			'iblock-form-settings::',
 			'replace-cmp-params::',
 			'raw-lang-check',
+			'make-release',
 		));
 
 		if( empty($arCommandOptions) ) {
-			$arCommandOptions['build'] = false;
+			$arCommandOptions['help'] = false;
 		}
 
 		if(
@@ -1536,6 +1616,10 @@ HELP;
 				echo 'Найдены файлы в которых языковый текст не перемещен в LANG-файлы:'."\n".$rawLangCheckResult."\n";
 			}
 
+		}
+
+		if( array_key_exists('make-release', $arCommandOptions) ) {
+			$this->makeRelease();
 		}
 	}
 
@@ -1713,7 +1797,7 @@ HELP;
 
 	protected function _removeGitSubModuleLinks($path = null) {
 		if($path === null) {
-			$path = $this->_modulesDir.'/'.$this->_moduleName.'/install';
+			$path = $this->_selfDir.'/install';
 		}
 		if(is_dir($path) ) {
 			$dir = opendir($path);
@@ -1730,38 +1814,95 @@ HELP;
 		}
 	}
 
-	protected function addRelease($arRelease) {
-
-	}
-
-	static public function checkVersion($version) {
-
-
-	}
-
-	static public function getRawVersion($version) {
-		$regVersion = '~^([\d]{1,2})\.([\d]{1,2})\.([\d]{1,2})(?:\-r([\d]{1,4}))?$~';
-		$rawVersion = 0;
-		if( preg_match($regVersion, $version, $arMatches) ) {
-			$major = $arMatches[1] * 1000000000;
-			$minor = $arMatches[2] * 10000000;
-			$fixes = $arMatches[3] * 10000;
-			$revision = 0;
-			if($arMatches[4]) {
-				$revision = $arMatches[4];
+	/**
+	 * @param $moduleVersion
+	 * @return array
+	 */
+	static public function readVersion($moduleVersion) {
+		$regVersion = '~^'
+						.'(?:'
+							.'('
+								.'(?:[a-zA-Z0-9]{1,}\.)?'
+								.'(?:[a-zA-Z0-9]{1,})'
+							.')'
+							.'\-'
+						.')?'
+						.'([\d]{1,2})\.([\d]{1,2})\.([\d]{1,2})(?:\-r([\d]{1,4}))?$~';
+		$arVersion = array();
+		if( preg_match($regVersion, $moduleVersion, $arMatches) ) {
+			$arVersion['MODULE_ID'] = $arMatches[1];
+			$arVersion['MAJOR'] = $arMatches[2];
+			$arVersion['MINOR'] = $arMatches[3];
+			$arVersion['FIXES'] = $arMatches[4];
+			$arVersion['REVISION'] = 0;
+			$arVersion['VERSION'] = $arMatches[2].'.'.$arMatches[3].'.'.$arMatches[4];
+			if($arMatches[5]) {
+				$arVersion['REVISION'] = $arMatches[5];
+				$arVersion['VERSION'] .= '-r'.$arVersion['REVISION'];
 			}
-			$rawVersion = $major + $minor + $fixes + $revision;
-
+			$arVersion['RAW_VERSION'] =
+				  ($arVersion['MAJOR'] * 1000000000)
+				+ ($arVersion['MINOR'] * 10000000)
+				+ ($arVersion['FIXES'] * 10000)
+				+ ($arVersion['REVISION'])
+			;
 		}
-		return $rawVersion;
+		return $arVersion;
 	}
 
 	static public function compareVersions($versionA, $versionB) {
-
+		$arVersionA = self::readVersion($versionA);
+		$arVersionB = self::readVersion($versionB);
+		if($arVersionA['RAW_VERSION'] == $arVersionB['RAW_VERSION']) return 0;
+		return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? -1 : 1;
 	}
 
 	public function generateMD5FilesList() {
 		//if(  )
 	}
 
+	protected function addReleasesList($arReleasesList) {
+		$this->_releaseFolder = $this->_buildFolder;
+		if( array_key_exists('RELEASE_FOLDER', $arReleasesList) && $arReleasesList['RELEASE_FOLDER'] != false ) {
+			$this->_releaseFolder = $this->replacePathMacros($arReleasesList['RELEASE_FOLDER']);
+			$this->_releaseDir = $this->_docRootDir.$this->_releaseFolder;
+		}
+		uksort($arReleasesList['RELEASES_LIST'], 'OBX_Build::compareVersions');
+		foreach($arReleasesList['RELEASES_LIST'] as $version => $arRelease) {
+			if(
+				array_key_exists('UPDATE_FROM', $arRelease) && $arRelease['UPDATE_FROM'] != false
+				&& !array_key_exists($arRelease['UPDATE_FROM'], $arReleasesList['RELEASES_LIST'])
+			) {
+				echo 'Выпуск '.$this->getModuleName().'-'.$version.' должен быть обновлен с версии '.$arRelease['UPDATE_FROM']
+					.'. Данная версия не найдена в списке выпусков. Выпуск пропущен.'."\n";
+				continue;
+			}
+			$this->_arReleases[$version] = $arRelease;
+			$this->_lastReleaseVersion = $version;
+		}
+	}
+
+	public function makeRelease() {
+		if( self::compareVersions($this->_version, $this->_lastReleaseVersion) <= 0 ) {
+			echo 'Текущая версия модуля ('.$this->_version.') должна быть больше последней версии выпуска ('.$this->_lastReleaseVersion.')'."\n";
+			return false;
+		}
+		self::CopyDirFilesEx(
+			$this->_selfDir
+			,$this->_releaseDir.'/release-'.$this->_version
+			,true, true, FALSE//, 'modules'
+		);
+	}
 }
+
+/*
+ * 1. СБОРКА ОБНОВЛЕНИЙ ФАЙЛОВ МОДУЛЕЙ
+ * 1.1 Скопировать релиз
+ * 1.2 Снять контрольные суммы
+ * 1.3 Создать папку обновлений
+ * 1.4 Скопировать в папку обновлений файлы по разнице контролных сумм
+ * 1.5 Генерируем файлы с кодом копирования обновленных файлов модуля
+ *
+ * 2. СБОРКА ОБНОВЛЕНИЙ ПОДМОДУЛЯ
+ * 2.1 Собираем подмодуль автономно (см. СБОРКА ОБНОВЛЕНИЙ ФАЙЛОВ МОДУЛЕЙ)
+ */

@@ -9,6 +9,6 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-require dirname(__FILE__)."/../../obx.core/classes/Build.php";
+require dirname(__FILE__) . "classes/Build.php";
 $build = new OBX_Build("obx.core");
 $build->processCommandOptions();
