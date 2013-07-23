@@ -237,6 +237,15 @@ class OBX_Build {
 				continue;
 			}
 
+			if( ($commentStrPos = strpos(trim($strResourceLine), '#')) !== false ) {
+				if($commentStrPos == 0) {
+					continue;
+				}
+				else {
+					$strResourceLine = substr($strResourceLine, 0, $commentStrPos);
+				}
+			}
+
 			if($bMultiLineStringOpened ) {
 				if( ($multiLineStringStopPos = strpos($strResourceLine, '>>>')) === false ) {
 					$multiLineString .= $strResourceLine."\n";
@@ -261,15 +270,6 @@ class OBX_Build {
 			}
 
 			$strResourceLine = trim($strResourceLine);
-
-			if( ($commentStrPos = strpos($strResourceLine, '#')) !== false ) {
-				if($commentStrPos == 0) {
-					continue;
-				}
-				else {
-					$strResourceLine = substr($strResourceLine, 0, $commentStrPos);
-				}
-			}
 
 			if(strpos($strResourceLine, '{') !== false) {
 				if(trim($strResourceLine) != '{') {
@@ -1515,6 +1515,7 @@ if(!defined("BX_ROOT")) {
 			'replace-cmp-params::',
 			'raw-lang-check',
 			'make-release',
+			'make-update::',
 		));
 
 		if( empty($arCommandOptions) ) {
@@ -1620,6 +1621,14 @@ HELP;
 
 		if( array_key_exists('make-release', $arCommandOptions) ) {
 			$this->makeRelease();
+		}
+		if( array_key_exists('make-release', $arCommandOptions) ) {
+			$this->makeRelease();
+		}
+		if( array_key_exists('make-update', $arCommandOptions) ) {
+			list($versionFrom, $versionTo) = $arCommandOptions['make-update'];
+			$versionFrom = trim($versionFrom); $versionTo = trim($versionTo);
+			$this->makeUpdate($versionFrom, $versionTo);
 		}
 	}
 
@@ -1857,8 +1866,8 @@ HELP;
 		return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? -1 : 1;
 	}
 
-	public function generateMD5FilesList() {
-		//if(  )
+	static public function compareFolderContents() {
+
 	}
 
 	protected function addReleasesList($arReleasesList) {
@@ -1869,11 +1878,16 @@ HELP;
 		}
 		uksort($arReleasesList['RELEASES_LIST'], 'OBX_Build::compareVersions');
 		foreach($arReleasesList['RELEASES_LIST'] as $version => $arRelease) {
+			if( !is_dir($this->_releaseDir.'/release-'.$version) ) {
+				echo 'ОШИБКА: Выпуск '.$this->_moduleName.'-'.$version.' не найден в папке сборки релизов'
+					.' ('.$this->_releaseFolder.'). Выпуск пропущен.'."\n";
+				continue;
+			}
 			if(
 				array_key_exists('UPDATE_FROM', $arRelease) && $arRelease['UPDATE_FROM'] != false
 				&& !array_key_exists($arRelease['UPDATE_FROM'], $arReleasesList['RELEASES_LIST'])
 			) {
-				echo 'Выпуск '.$this->getModuleName().'-'.$version.' должен быть обновлен с версии '.$arRelease['UPDATE_FROM']
+				echo 'ОШИБКА: Выпуск '.$this->_moduleName.'-'.$version.' должен быть обновлен с версии '.$arRelease['UPDATE_FROM']
 					.'. Данная версия не найдена в списке выпусков. Выпуск пропущен.'."\n";
 				continue;
 			}
@@ -1884,7 +1898,7 @@ HELP;
 
 	public function makeRelease() {
 		if( self::compareVersions($this->_version, $this->_lastReleaseVersion) <= 0 ) {
-			echo 'Текущая версия модуля ('.$this->_version.') должна быть больше последней версии выпуска ('.$this->_lastReleaseVersion.')'."\n";
+			echo 'ОШИБКА: Текущая версия модуля ('.$this->_version.') должна быть больше последней версии выпуска ('.$this->_lastReleaseVersion.')'."\n";
 			return false;
 		}
 		self::CopyDirFilesEx(
@@ -1892,6 +1906,34 @@ HELP;
 			,$this->_releaseDir.'/release-'.$this->_version
 			,true, true, FALSE, '.git'
 		);
+	}
+
+	public function makeUpdate($versionFrom = null, $versionTo = null) {
+		$arVersionFrom = self::readVersion($versionFrom);
+		$arVersionTo = self::readVersion($versionTo);
+		if(empty($arVersionFrom)) {
+			$versionFrom = $this->_lastReleaseVersion;
+			$arVersionFrom = self::readVersion($versionFrom);
+		}
+		if(empty($arVersionTo)) {
+			$versionTo = $this->_version;
+			$arVersionTo = self::readVersion($versionTo);
+		}
+		$prevReleaseFolder = $this->_releaseFolder.'/'.$versionFrom;
+		$nextReleaseFolder = $this->_releaseFolder.'/'.$versionTo;
+		$arChanges = self::compareFolderContents($prevReleaseFolder, $nextReleaseFolder);
+		$debug=1;
+	}
+
+	/**
+	 * [pronix:2013-07-23]
+	 * Данная функция помечает все PHP, XML и JS файлы внутри папки как PlainText
+	 * Что бы любимый PhpStorm не индексировал лишнего :)
+	 * TODO: Реализовать метод OBX_Build::addIdeaProjectFolderAsPlainText
+	 * За явную пометку файлов как plainText отвечает файл .idea/misc.xml
+	 */
+	static public function addIdeaProjectFolderAsPlainText() {
+
 	}
 }
 
