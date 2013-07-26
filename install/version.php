@@ -9,13 +9,7 @@
  ***********************************************/
 
 $arModuleInfo = array(
-	"VERSION" => "1.0.0",
-	"VERSION_DATE" => "2012-10-31",
+	"VERSION" => "0.9.1",
+	"VERSION_DATE" => "2013-07-25",
 );
 return $arModuleInfo;
-/**
- * CHANGELOG
- *
- * ### 1.0.0 ###
- */
-?>

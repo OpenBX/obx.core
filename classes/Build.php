@@ -46,6 +46,7 @@ class OBX_Build {
 	protected $_releaseDir = null;
 	protected $_arReleases = array();
 	protected $_lastReleaseVersion = null;
+	protected $_dependencyVersion = null;
 
 	function __construct($moduleName, self $ParentModule = null) {
 		error_reporting(E_ALL ^ E_NOTICE);
@@ -98,7 +99,7 @@ class OBX_Build {
 			$this->_version = $arModuleInfo['VERSION'];
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
 			$this->_buildFolder = self::BUILD_FOLDER.'/'.$this->_moduleName;
-			$this->_buildDir = $this->_docRootDir.self::BUILD_FOLDER.$this->_moduleName;
+			$this->_buildDir = $this->_docRootDir.self::BUILD_FOLDER.'/'.$this->_moduleName;
 		}
 
 		$this->parseConfig();
@@ -140,19 +141,34 @@ class OBX_Build {
 		}
 		return false;
 	}
-	protected function addDependency($moduleName) {
-		if( !preg_match('~[a-zA-Z0-9]+\.[a-zA-Z0-9]+~', $moduleName) ) {
-			if( !is_dir($this->_modulesDir."/".$moduleName) ) {
-				return null;
-			}
+	protected function addDependency($moduleVersion) {
+		$arModuleVersion = self::readVersion($moduleVersion);
+		if(empty($arModuleVersion)) {
+			echo 'Ошибка: Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указана версия или идентификатор модуля. Формат: "имя.модуля-1.номер.версии"'."\n";
+			return null;
+		}
+		if( !is_dir($this->_modulesDir.'/'.$arModuleVersion['MODULE_ID']) ) {
+			return null;
 		}
 		if($this->_ParentModule instanceof self) {
-			$Dependency = $this->_ParentModule->addDependency($moduleName);
+			$Dependency = $this->_ParentModule->addDependency($moduleVersion);
+//			if( self::compareVersions($arModuleVersion['VERSION'], $Dependency->_version) !== 0) {
+//				echo 'Версии зависиых модулей.'
+//					."\n\t"
+//						.$this->_ParentModule->_moduleName.'-'.$this->_ParentModule->_version
+//						.' <-требует- '.$Dependency->_moduleName.'-'.$Dependency->_version
+//					."\n\t"
+//						.$this->_moduleName.'-'.$this->_version
+//						.' <-требует- '.$arModuleVersion['MODULE_ID'].'-'.$arModuleVersion['VERSION']
+//					."\n"
+//				;
+//			}
 		}
 		else {
-			$Dependency = new self($moduleName, $this);
+			$Dependency = new self($arModuleVersion['MODULE_ID'], $this);
 		}
-		$this->_arDepModules[$moduleName] = $Dependency;
+		$Dependency->_dependencyVersion = $arModuleVersion['VERSION'];
+		$this->_arDepModules[$arModuleVersion['MODULE_ID']] = $Dependency;
 		return $Dependency;
 	}
 
@@ -230,6 +246,8 @@ class OBX_Build {
 		$bMultiLineStringOpened = false;
 		$multiLineString = null;
 		$multiLineString_StrResourceBackup = null;
+
+		$arDependencies = array();
 
 		foreach($arTmpResources as $strResourceLine) {
 			$lineNumber++;
@@ -342,9 +360,7 @@ class OBX_Build {
 				$this->addCompParamsConfig($strResourceLine);
 			}
 			elseif($configSection == 'DEPENDENCIES') {
-				$subModuleName = $strResourceLine;
-				$this->addDependency($subModuleName);
-				$debug = true;
+				$arDependencies[] = $strResourceLine;
 			}
 			elseif($configSection == 'IBLOCK_DATA') {
 				$arTmpResource = explode('::', $strResourceLine);
@@ -439,6 +455,11 @@ class OBX_Build {
 		}
 		if(!empty($arReleasesList)) {
 			$this->addReleasesList($arReleasesList);
+		}
+		if(!empty($arDependencies)) {
+			foreach($arDependencies as $subModule) {
+				$this->addDependency($subModule);
+			}
 		}
 	}
 
@@ -541,6 +562,7 @@ class OBX_Build {
 				$bEmpty = false;
 			}
 		}
+		closedir($handle);
 		return $bEmpty;
 	}
 
@@ -766,7 +788,16 @@ class OBX_Build {
 		}
 	}
 
-	static function CopyDirFilesEx($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $strExclude = "") {
+	/**
+	 * @param $path_from
+	 * @param $path_to
+	 * @param bool $ReWrite
+	 * @param bool $Recursive
+	 * @param bool $bDeleteAfterCopy
+	 * @param string | array $Exclude
+	 * @return bool
+	 */
+	static function CopyDirFilesEx($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = "") {
 		$path_from = str_replace(array("\\", "//"), "/", $path_from);
 		$path_to = str_replace(array("\\", "//"), "/", $path_to);
 		if(is_file($path_from) && !is_file($path_to)) {
@@ -775,14 +806,14 @@ class OBX_Build {
 				$path_to = rtrim($path_to, '/');
 				$path_to .= '/'.$file_name;
 				//cho __METHOD__.": ".$path_from." => ".$path_to."\n";
-				return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $strExclude);
+				return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude);
 			}
 		}
 		if( is_dir($path_from) && substr($path_to, strlen($path_to)-1) == '/' ) {
 			$folderName = substr($path_from, strrpos($path_from, '/')+1);
 			$path_to .= $folderName;
 		}
-		return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $strExclude);
+		return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude);
 	}
 
 	protected function getHeaderCodeOfInstallFile() {
@@ -850,7 +881,18 @@ if(!defined("BX_ROOT")) {
 			return is_dir($path);
 	}
 
-	static public function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $strExclude = "")
+	/**
+	 * В отличие от битриксовской может принимать в качестве
+	 * исключения (аргумент $Exclude) не только строку, но и массив
+	 * @param $path_from
+	 * @param $path_to
+	 * @param bool $ReWrite
+	 * @param bool $Recursive
+	 * @param bool $bDeleteAfterCopy
+	 * @param string | array $Exclude
+	 * @return bool
+	 */
+	static public function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = "")
 	{
 		if (strpos($path_to."/", $path_from."/")===0 || realpath($path_to) === realpath($path_from))
 			return false;
@@ -886,15 +928,23 @@ if(!defined("BX_ROOT")) {
 		{
 			while (($file = readdir($handle)) !== false)
 			{
-				if ($file == "." || $file == "..")
-					continue;
+				if ($file == "." || $file == "..") continue;
 
-				if (strlen($strExclude)>0 && substr($file, 0, strlen($strExclude))==$strExclude)
-					continue;
+				if( is_string($Exclude) ) {
+					if(strlen($Exclude)>0 && substr($file, 0, strlen($Exclude))==$Exclude) continue;
+				}
+				elseif(is_array($Exclude)) {
+					$bContinue = false;
+					foreach($Exclude as $excludeItem) {
+						if(strlen($excludeItem)>0 && substr($file, 0, strlen($excludeItem))==$excludeItem) $bContinue = true;
+					}
+					if($bContinue) continue;
+				}
+
 
 				if (is_dir($path_from."/".$file) && $Recursive)
 				{
-					self::CopyDirFiles($path_from."/".$file, $path_to."/".$file, $ReWrite, $Recursive, $bDeleteAfterCopy, $strExclude);
+					self::CopyDirFiles($path_from."/".$file, $path_to."/".$file, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude);
 					if ($bDeleteAfterCopy)
 						@rmdir($path_from."/".$file);
 				}
@@ -1622,12 +1672,14 @@ HELP;
 		if( array_key_exists('make-release', $arCommandOptions) ) {
 			$this->makeRelease();
 		}
-		if( array_key_exists('make-release', $arCommandOptions) ) {
-			$this->makeRelease();
-		}
 		if( array_key_exists('make-update', $arCommandOptions) ) {
-			list($versionFrom, $versionTo) = $arCommandOptions['make-update'];
-			$versionFrom = trim($versionFrom); $versionTo = trim($versionTo);
+			$versionFrom = null;
+			$versionTo = null;
+			$arCommandOptions['make-update'] = trim($arCommandOptions['make-update']);
+			if( strlen($arCommandOptions['make-update']) > 0) {
+				list($versionFrom, $versionTo) = explode('+', $arCommandOptions['make-update']);
+				$versionFrom = trim($versionFrom); $versionTo = trim($versionTo);
+			}
 			$this->makeUpdate($versionFrom, $versionTo);
 		}
 	}
@@ -1709,6 +1761,7 @@ HELP;
 					$this->__checkRawLangTextInFile($arFiles, $fsEntryPath, $fsEntryRelPath, $rusLit);
 				}
 			}
+			closedir($dir);
 		}
 		elseif(is_file($curPath)) {
 			if( substr($curPath, strlen($curPath) - 4, strlen($curPath)) == '.php' ) {
@@ -1820,6 +1873,7 @@ HELP;
 					$this->_removeGitSubModuleLinks($path.'/'.$fsEntry);
 				}
 			}
+			closedir($dir);
 		}
 	}
 
@@ -1866,16 +1920,96 @@ HELP;
 		return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? -1 : 1;
 	}
 
-	static public function compareFolderContents() {
 
+	/**
+	 * @param string $folderA
+	 * @param string $folderB
+	 * @param string $subFolder - не трогать, нужен для рекурсии
+	 * @return array
+	 */
+	public function compareFolderContents($folderA, $folderB, $subFolder = '.') {
+		$pathA = $this->_docRootDir.$folderA;
+		$pathB = $this->_docRootDir.$folderB;
+		$arChanges = array(
+			'DELETED' => array(),
+			'NEW' => array(),
+			'MODIFIED' => array()
+		);
+		if( is_dir($pathA) && is_dir($pathB) ) {
+			$dirA = opendir($pathA);
+			while( $fsEntryA = readdir($dirA) ) {
+				if( $fsEntryA == '.' || $fsEntryA == '..' || $fsEntryA == '.git') {
+					continue;
+				}
+				if( is_dir($pathA.'/'.$fsEntryA) && is_dir($pathB.'/'.$fsEntryA) ) {
+					$arChangesRec = $this->compareFolderContents($folderA.'/'.$fsEntryA, $folderB.'/'.$fsEntryA, $subFolder.'/'.$fsEntryA);
+					$arChanges['DELETED'] = array_merge($arChanges['DELETED'], $arChangesRec['DELETED']);
+					$arChanges['NEW'] = array_merge($arChanges['NEW'], $arChangesRec['NEW']);
+					$arChanges['MODIFIED'] = array_merge($arChanges['MODIFIED'], $arChangesRec['MODIFIED']);
+				}
+				elseif( file_exists($pathA.'/'.$fsEntryA) && !file_exists($pathB.'/'.$fsEntryA) ) {
+					$arChanges['DELETED'][] = $subFolder.'/'.$fsEntryA;
+				}
+				elseif(
+					is_dir($pathA.'/'.$fsEntryA) && is_file($pathB.'/'.$fsEntryA)
+					||
+					is_file($pathA.'/'.$fsEntryA) && is_dir($pathB.'/'.$fsEntryA)
+				) {
+					$arChanges['DELETED'][] = $subFolder.'/'.$fsEntryA;
+					$arChanges['NEW'][] = $subFolder.'/'.$fsEntryA;
+				}
+				elseif( is_file($pathA.'/'.$fsEntryA) && is_file($pathB.'/'.$fsEntryA) ) {
+					$md5SumA = md5(file_get_contents($pathA.'/'.$fsEntryA));
+					$md5SumB = md5(file_get_contents($pathB.'/'.$fsEntryA));
+					if($md5SumA != $md5SumB) {
+						$arChanges['MODIFIED'][] = $subFolder.'/'.$fsEntryA;
+					}
+				}
+			}
+			closedir($dirA);
+			$dirB = opendir($pathB);
+			while($fsEntryB = readdir($dirB)) {
+				if( $fsEntryB == '.' || $fsEntryB == '..' || $fsEntryB == '.git') {
+					continue;
+				}
+				elseif( file_exists($pathB.'/'.$fsEntryB) && !file_exists($pathA.'/'.$fsEntryB) ) {
+					$arChanges['NEW'][] = $subFolder.'/'.$fsEntryB;
+				}
+			}
+			closedir($dirB);
+		}
+		elseif( file_exists($pathA) && !file_exists($pathB) ) {
+			$arChanges['DELETED'][] = $subFolder;
+		}
+		elseif( !file_exists($pathA) && file_exists($pathB) ) {
+			$arChanges['NEW'][] = $subFolder;
+		}
+		elseif(
+			is_dir($pathA) && is_file($pathB)
+			||
+			is_file($pathA) && is_dir($pathB)
+		) {
+			$arChanges['DELETED'][] = $subFolder;
+			$arChanges['NEW'][] = $subFolder;
+		}
+		elseif( is_file($pathA) && is_file($pathB) ) {
+			$md5SumA = md5(file_get_contents($pathA));
+			$md5SumB = md5(file_get_contents($pathB));
+			if($md5SumA != $md5SumB) {
+				$arChanges['MODIFIED'][] = $subFolder;
+			}
+		}
+
+		return $arChanges;
 	}
 
 	protected function addReleasesList($arReleasesList) {
 		$this->_releaseFolder = $this->_buildFolder;
 		if( array_key_exists('RELEASE_FOLDER', $arReleasesList) && $arReleasesList['RELEASE_FOLDER'] != false ) {
 			$this->_releaseFolder = $this->replacePathMacros($arReleasesList['RELEASE_FOLDER']);
-			$this->_releaseDir = $this->_docRootDir.$this->_releaseFolder;
 		}
+		$this->_releaseFolder = trim(rtrim($this->_releaseFolder, '/'));
+		$this->_releaseDir = $this->_docRootDir.$this->_releaseFolder;
 		uksort($arReleasesList['RELEASES_LIST'], 'OBX_Build::compareVersions');
 		foreach($arReleasesList['RELEASES_LIST'] as $version => $arRelease) {
 			if( !is_dir($this->_releaseDir.'/release-'.$version) ) {
@@ -1897,15 +2031,60 @@ HELP;
 	}
 
 	public function makeRelease() {
+		echo 'Выпуск '.$this->_moduleName.'-'.$this->_version."\n";
 		if( self::compareVersions($this->_version, $this->_lastReleaseVersion) <= 0 ) {
 			echo 'ОШИБКА: Текущая версия модуля ('.$this->_version.') должна быть больше последней версии выпуска ('.$this->_lastReleaseVersion.')'."\n";
 			return false;
 		}
+		self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version);
 		self::CopyDirFilesEx(
 			$this->_selfDir
 			,$this->_releaseDir.'/release-'.$this->_version
-			,true, true, FALSE, '.git'
+			,true, true, FALSE, array('.git', 'modules')
 		);
+		foreach($this->_arDepModules as $Dependency) {
+			/** @var OBX_Build $Dependency */
+			$arDepVersion = self::readVersion($Dependency->_dependencyVersion);
+			if( empty($arDepVersion) ) {
+				echo 'Ошибка: '.$this->_moduleName.': версия модмодуля '.$Dependency->_moduleName.' не определелна'."\n";
+				continue;
+			}
+			if( !is_dir($Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion) ) {
+				echo 'Папка содержащая выпуск подмодуля '
+					.$Dependency->_moduleName
+					.' ('.$Dependency->_releaseDir.'/release-'.$Dependency->_version.') не найдена'."\n";
+			}
+			// Удаляем старую папку релиза
+			self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName);
+			// Копируем новые файлы релиза
+			self::CopyDirFilesEx(
+				$Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion
+				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'
+				,true, true, FALSE, array('.git', 'modules')
+			);
+			// Даем папке с релзом правильное имя
+			rename(
+				 $this->_releaseDir.'/release-'.$this->_version.'/install/modules/release-'.$Dependency->_dependencyVersion
+				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName
+			);
+			// копируем в релиз все обновления подмодулей
+			$depReleaseDir = opendir($Dependency->_releaseDir);
+			while($depReleaseFSEntry = readdir($depReleaseDir) ) {
+				if($depReleaseFSEntry == '.' || $depReleaseFSEntry == '..' || $depReleaseFSEntry == '.git') continue;
+				if(
+					strpos($depReleaseFSEntry, 'update-') !== false
+					&&
+					strpos($depReleaseFSEntry, '-to-'.$Dependency->_version) !== false
+				) {
+					self::CopyDirFilesEx(
+						$Dependency->_releaseDir.'/'.$depReleaseFSEntry
+						,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName.'/'
+						,true, true, FALSE, array('.git', 'modules')
+					);
+				}
+			}
+			closedir($depReleaseDir);
+		}
 	}
 
 	public function makeUpdate($versionFrom = null, $versionTo = null) {
@@ -1919,10 +2098,93 @@ HELP;
 			$versionTo = $this->_version;
 			$arVersionTo = self::readVersion($versionTo);
 		}
-		$prevReleaseFolder = $this->_releaseFolder.'/'.$versionFrom;
-		$nextReleaseFolder = $this->_releaseFolder.'/'.$versionTo;
+		echo 'Обновление '.$this->_moduleName.'-['.$versionFrom.' => '.$versionTo.']'."\n";
+		if($arVersionFrom['RAW_VERSION'] == $arVersionTo['RAW_VERSION']) {
+			echo 'Ошибка: целевая и исходна версии равны. Задайте явно интервал версий для построения обновления.'
+				.' (такая ситуация возможно когда версия последнего выпуска равна версии для разработки'
+				.' и интервал версий не указан явно)'."\n";
+			return false;
+		}
+		$prevReleaseFolder = $this->_releaseFolder.'/release-'.$versionFrom;
+		$nextReleaseFolder = $this->_releaseFolder.'/release-'.$versionTo;
+		if( !is_dir($this->_docRootDir.$prevReleaseFolder) ) {
+			echo 'Ошибка: не найдена папка с файлами исходного выпуска ('.$this->_releaseFolder.'/release-'.$versionFrom.')'."\n";
+			return false;
+		}
+		if( !is_dir($this->_docRootDir.$nextReleaseFolder) ) {
+			echo 'Ошибка: не найдена папка с файлами целевого выпуска ('.$this->_releaseFolder.'/release-'.$versionTo.')'."\n";
+		}
 		$arChanges = self::compareFolderContents($prevReleaseFolder, $nextReleaseFolder);
-		$debug=1;
+
+		$updateFolder = $this->_releaseFolder.'/update-'.$versionFrom.'-to-'.$versionTo;
+		$updateDir = $this->_docRootDir.$updateFolder;
+
+		// Очищаем папку с обовлениями
+		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED']) || !empty($arChanges['DELETED'])) {
+			if( !self::CheckDirPath($updateDir.'/.') ) {
+				echo 'Ошибка: "'.$updateFolder.'" не является папкой.'."\n";
+				return false;
+			}
+			$updateDirHandler = opendir($updateDir);
+			while($updateFSEntry = readdir($updateDirHandler)) {
+				if($updateFSEntry == '.' || $updateFSEntry == '..' || $updateFSEntry == '.git') {
+					continue;
+				}
+				if(
+					preg_match('~^description\.[a-z]{2}$~', $updateFSEntry)
+					|| strpos($updateFSEntry, 'updater.') !== false
+				) {
+					continue;
+				}
+				self::deleteDirFilesEx($updateFolder.'/'.$updateFSEntry);
+			}
+		}
+		// генерируем описание обновления
+		$updateDescription = '';
+		foreach($this->_arReleases as $releaseVersion => &$arRelease) {
+			if(
+				self::compareVersions($releaseVersion, $versionFrom)>=0
+				&& self::compareVersions($releaseVersion, $versionTo)<=0
+			) {
+				$updateDescription .= "\n".'['.$releaseVersion.']'."\n";
+			}
+			if( array_key_exists('DESCRIPTION', $arRelease) ) {
+				$updateDescription .= $arRelease['DESCRIPTION']."\n";
+			}
+		}
+		file_put_contents($updateDir.'/description.ru', $updateDescription);
+		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
+			foreach($arChanges['NEW'] as $newFSEntry) {
+				self::CopyDirFilesEx(
+					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry),
+					str_replace(array('/./', '//'. '\\'), '/', $updateDir.'/'.$newFSEntry),
+					true, true,
+					false, ''
+				);
+			}
+			foreach($arChanges['MODIFIED'] as $modFSEntry) {
+				self::CopyDirFiles(
+					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$modFSEntry),
+					str_replace(array('/./', '//'. '\\'), '/', $updateDir.'/'.$modFSEntry),
+					true, true,
+					false, ''
+				);
+			}
+		}
+		if(!empty($arChanges['DELETED'])) {
+			$updateDeleteCode = $this->getHeaderCodeOfInstallFile();
+			foreach($arChanges['DELETED'] as $delFSEntry) {
+				$updateDeleteCode .= 'DeleteFilesEx("'
+					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
+				.'");'."\n";
+			}
+			$updateDeleteCode .= "\n".$this->getFooterCodeOfInstallFile();
+			file_put_contents($updateDir.'/updater.delete.php', $updateDeleteCode);
+		}
+		file_put_contents($updateDir.'/updater.php', "<?php\n\n\n?>");
+		foreach($this->_arDepModules as $DependencyModule) {
+			$debug=1;
+		}
 	}
 
 	/**
