@@ -590,13 +590,17 @@ class OBX_Build {
 				$DependencyModule->generateInstallCode();
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
-				self::deleteDirFilesEx($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName(), true);
-				self::CopyDirFilesEx(
-					 $this->_modulesDir.'/'.$DependencyModule->getModuleName()
-					,$this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName()
-					,true, true, FALSE, 'modules'
-				);
-				@unlink($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName().'/.git');
+				// [pronix: 2013-07-26]
+				// Теперь файлы подмодулей добавляются в решение только на стадии сборки релиза
+				// +++
+				//// self::deleteDirFilesEx($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName(), true);
+				//// self::CopyDirFilesEx(
+				//// 	 $this->_modulesDir.'/'.$DependencyModule->getModuleName()
+				//// 	,$this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName()
+				//// 	,true, true, FALSE, 'modules'
+				//// );
+				//// @unlink($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName().'/.git');
+				// ^^^
 			}
 		}
 		if( count($this->_arResources)>0 ) {
@@ -1565,7 +1569,9 @@ if(!defined("BX_ROOT")) {
 			'replace-cmp-params::',
 			'raw-lang-check',
 			'make-release',
+			'build-release::',
 			'make-update::',
+			'build-update::'
 		));
 
 		if( empty($arCommandOptions) ) {
@@ -1681,6 +1687,14 @@ HELP;
 				$versionFrom = trim($versionFrom); $versionTo = trim($versionTo);
 			}
 			$this->makeUpdate($versionFrom, $versionTo);
+		}
+		if( array_key_exists('build-release', $arCommandOptions) ) {
+			$releaseVersion = null;
+			$arCommandOptions['build-release'] = trim($arCommandOptions['build-release']);
+			if( strlen($arCommandOptions['build-release'])>0 ) {
+				$releaseVersion = $arCommandOptions['build-release'];
+			}
+			$this->buildRelease($releaseVersion);
 		}
 	}
 
@@ -2042,6 +2056,7 @@ HELP;
 			,$this->_releaseDir.'/release-'.$this->_version
 			,true, true, FALSE, array('.git', 'modules')
 		);
+		$this->removeSQLFileComments($this->_releaseFolder.'/release-'.$this->_version.'/install/db/');
 		foreach($this->_arDepModules as $Dependency) {
 			/** @var OBX_Build $Dependency */
 			$arDepVersion = self::readVersion($Dependency->_dependencyVersion);
@@ -2085,6 +2100,126 @@ HELP;
 			}
 			closedir($depReleaseDir);
 		}
+	}
+
+	/**
+	 * @param string $version
+	 * @return bool
+	 */
+	public function buildRelease($version = null) {
+		if( $version == 'last' || $version== 'last_version' ) {
+			$version = $version = $this->_lastReleaseVersion;
+		}
+		if( $version === null || $version == 'dev' || $version == 'devel' || $version == 'development' ) {
+			$version = $this->_version;
+		}
+		$arVersion = self::readVersion($version);
+		if(empty($arVersion)) {
+			echo 'Ошибка: неверно задана версия выпуска'."\n";
+			return false;
+		}
+		echo 'Сборка архива с выпуском '.$this->_moduleName.'-'.$version."\n";
+		if( !is_dir($this->_releaseDir.'/release-'.$arVersion['VERSION']) ) {
+			echo 'Ошибка: не найдена папка с выпуском ('.$this->_releaseDir.'/release-'.$arVersion['VERSION'].')'."\n";
+			return false;
+		}
+		if( file_exists($this->_releaseDir.'/.last_version') ) {
+			self::deleteDirFilesEx($this->_releaseFolder.'/.last_version');
+			@mkdir($this->_releaseDir.'/.last_version');
+		}
+		$releaseDirHandler = opendir($this->_releaseDir.'/release-'.$arVersion['VERSION']);
+		while($releaseFSEntry = readdir($releaseDirHandler)) {
+			if($releaseFSEntry == '.' || $releaseFSEntry == '..' || $releaseFSEntry == '.git') {
+				continue;
+			}
+			self::CopyDirFilesEx(
+				$this->_releaseDir.'/release-'.$arVersion['VERSION'].'/'.$releaseFSEntry
+				,$this->_releaseDir.'/.last_version/'
+				,true, true, FALSE, '.git'
+			);
+		}
+		$bIConvSuccess = $this->iconvFiles($this->_releaseFolder.'/.last_version/');
+		closedir($releaseDirHandler);
+		if($bIConvSuccess) {
+			$shellCommand = ''
+				.'cd '.$this->_releaseDir.';'."\n"
+				.'tar czvf .last_version.tar.gz .last_version > /dev/null;'."\n"
+				.'cp .last_version.tar.gz release-'.$version.'.tar.gz;'."\n"
+			;
+			shell_exec($shellCommand);
+		}
+	}
+
+	const ICONV_ALL_FILES = 1;
+	const ICONV_PHP_FILES = 2;
+	const ICONV_LANG_FILES = 3;
+	public function iconvFiles($relPath, $target = self::ICONV_ALL_FILES, $from = 'UTF-8', $to = 'CP1251') {
+		$relPath = str_replace(array('//', '\\', '/./'), '/', rtrim($relPath, '/'));
+		$path = $this->_docRootDir.$relPath;
+		if( is_file($path) ) {
+			$fsEntry = substr($path, strrpos($path, '/')+1);
+			if(
+				$target == self::ICONV_ALL_FILES
+				|| (
+					$target == self::ICONV_PHP_FILES
+					&& substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry)) == '.php'
+				)
+				|| (
+					$target == self::ICONV_LANG_FILES
+					&& substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry)) == '.php'
+					&& strpos($relPath, '/ru/') !== false
+				)
+			) {
+				$content = file_get_contents($path);
+				$content = iconv($from, $to, $content);
+				if($content === false) {
+					echo 'Ошибка: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
+					return false;
+				}
+				file_put_contents($path, $content);
+				return true;
+			}
+		}
+		elseif(is_dir($path)) {
+			$dir = opendir($path);
+			$bSuccess = true;
+			while($fsEntry = readdir($dir)) {
+				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git') continue;
+				$bSuccess = self::iconvFiles($relPath.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
+			}
+			closedir($dir);
+			return $bSuccess;
+		}
+		else {
+			echo 'Ошибка: невозможно сконвертировать кодировку файлов. Путь не найден ('.$relPath.')'."\n";
+			return false;
+		}
+	}
+
+	public function removeSQLFileComments($relPath) {
+		$relPath = str_replace(array('//', '\\', '/./'), '/', rtrim($relPath, '/'));
+		$path = $this->_docRootDir.$relPath;
+		if( is_file($path) ) {
+			$fsEntry = substr($path, strrpos($path, '/')+1);
+			$fsEntryExt = substr($fsEntry, strrpos($fsEntry, '.')+1);
+			if($fsEntryExt == 'sql') {
+				$this->_removeSQLFileComments($path);
+			}
+		}
+		if( is_dir($path) ) {
+			$dir = opendir($path);
+			while($fsEntry = readdir($dir)) {
+				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git') continue;
+				self::removeSQLFileComments($relPath.'/'.$fsEntry);
+			}
+		}
+	}
+	protected function _removeSQLFileComments($filePath) {
+		$sqlContent = file_get_contents($filePath);
+		$sqlContent = preg_replace('~(?:\-\-(?:.*?)\n)~im', '', $sqlContent);
+		$sqlContent = preg_replace('~\/\*.*?\*\/~is', '', $sqlContent);
+		$sqlContent = str_replace("\n\n", "\n", $sqlContent);
+		file_put_contents($filePath, $sqlContent);
 	}
 
 	public function makeUpdate($versionFrom = null, $versionTo = null) {
@@ -2185,6 +2320,10 @@ HELP;
 		foreach($this->_arDepModules as $DependencyModule) {
 			$debug=1;
 		}
+	}
+
+	public function buildUpdate() {
+
 	}
 
 	/**
