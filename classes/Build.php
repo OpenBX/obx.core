@@ -45,7 +45,7 @@ class OBX_Build {
 	protected $_releaseFolder = null;
 	protected $_releaseDir = null;
 	protected $_arReleases = array();
-	protected $_lastReleaseVersion = null;
+	protected $_lastPubReleaseVersion = null;
 	protected $_dependencyVersion = null;
 
 	function __construct($moduleName, self $ParentModule = null) {
@@ -431,6 +431,7 @@ class OBX_Build {
 					}
 					if( !array_key_exists($arVersion['VERSION'], $arReleasesList['RELEASES_LIST']) ) {
 						$arReleasesList['RELEASES_LIST'][$blockSection] = array(
+							'STATE' => 'dev',
 							'UPDATE_FROM' => false,
 							'DESCRIPTION' => array(),
 						);
@@ -446,6 +447,26 @@ class OBX_Build {
 					}
 					elseif($releaseOpt == 'description' ) {
 						$arReleasesList['RELEASES_LIST'][$blockSection]['DESCRIPTION'] = $releaseOptValue;
+					}
+					elseif($releaseOpt == 'state') {
+						if(
+							$releaseOptValue == 'dev'
+							|| $releaseOptValue == 'devel'
+							|| $releaseOptValue == 'develop'
+							|| $releaseOptValue == 'development'
+						) {
+							$arReleasesList['RELEASES_LIST'][$blockSection]['STATE'] = 'dev';
+						}
+						if(
+							$releaseOptValue == 'done'
+							|| $releaseOptValue == 'ready'
+							|| $releaseOptValue == 'pub'
+							|| $releaseOptValue == 'published'
+							|| $releaseOptValue == 'public'
+							|| $releaseOptValue == 'stable'
+						) {
+							$arReleasesList['RELEASES_LIST'][$blockSection]['STATE'] = 'done';
+						}
 					}
 				}
 			}
@@ -1598,12 +1619,14 @@ if(!defined("BX_ROOT")) {
 $scriptName [bfh] [--help] [--build] [--full]
 $whiteSpace [--iblock-cml=ibcode1,ibcode2...] [--iblock-form-settings=ibcode1,ibcode2...]
 $whiteSpace [--raw-lang-check] [--replace-cmp-params]
+$whiteSpace [--build-release] [--build-release]
+$whiteSpace [--make-update[=versionFrom+versionTo]] [--build-update]
 SHORT OPTIONS
     -h: alias --help
     -b: alias --build
     -f: alias --full
 OPTIONS
-    --build:
+    --build
          Собирает файлы из установленного битрикса внутрь модуля
     --full:
          alias: --build --iblock-cml --iblock-form-settings
@@ -1613,6 +1636,23 @@ OPTIONS
          Так же выполняется внутри --build
     --raw-lang-check
          Выявляет наличие языкового текста там, где должны быть GetMessage('LANG_CODE')
+    --make-release
+         Собирка файлов выпуска
+    --build-release
+         Сборка архива с выпуском для загрузки в МаркетПлейс Битрикс
+    --make-update[=versionFrom+versionTo]
+         Сборка файлов обновления,
+            где versionFrom - версия выпуска, от которого происходит обновление
+            и versionTo - версия, до которой происходит обновление.
+         Примеры:
+             --make-update=+1.0.3
+                В данном случае указана только versionTo. За versionFrom будет взята версия последнего релиза
+             --make-update=1.0.0+
+                В данном случае указана только versionFrom. За версию versionTo будет взята последняя версия,
+                находящаяся в разработке, если таковая имеется.
+             Если аргумент метода оставить пустым, то и versionTo и versionFrom будут определены автоматически.
+    --build-update=[versionTo]
+         Сборка архива с обновлением
 
 HELP;
 ;
@@ -2040,14 +2080,16 @@ HELP;
 				continue;
 			}
 			$this->_arReleases[$version] = $arRelease;
-			$this->_lastReleaseVersion = $version;
+			if( $arRelease['STATE'] == 'done' ) {
+				$this->_lastPubReleaseVersion = $version;
+			}
 		}
 	}
 
 	public function makeRelease() {
 		echo 'Выпуск '.$this->_moduleName.'-'.$this->_version."\n";
-		if( self::compareVersions($this->_version, $this->_lastReleaseVersion) <= 0 ) {
-			echo 'ОШИБКА: Текущая версия модуля ('.$this->_version.') должна быть больше последней версии выпуска ('.$this->_lastReleaseVersion.')'."\n";
+		if( self::compareVersions($this->_version, $this->_lastPubReleaseVersion) <= 0 ) {
+			echo 'ОШИБКА: Текущая версия модуля ('.$this->_version.') должна быть больше последней версии опубликованного выпуска ('.$this->_lastPubReleaseVersion.')'."\n";
 			return false;
 		}
 		self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version);
@@ -2086,11 +2128,7 @@ HELP;
 			$depReleaseDir = opendir($Dependency->_releaseDir);
 			while($depReleaseFSEntry = readdir($depReleaseDir) ) {
 				if($depReleaseFSEntry == '.' || $depReleaseFSEntry == '..' || $depReleaseFSEntry == '.git') continue;
-				if(
-					strpos($depReleaseFSEntry, 'update-') !== false
-					&&
-					strpos($depReleaseFSEntry, '-to-'.$Dependency->_version) !== false
-				) {
+				if( strpos($depReleaseFSEntry, 'update-') !== false ) {
 					self::CopyDirFilesEx(
 						$Dependency->_releaseDir.'/'.$depReleaseFSEntry
 						,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName.'/'
@@ -2108,7 +2146,7 @@ HELP;
 	 */
 	public function buildRelease($version = null) {
 		if( $version == 'last' || $version== 'last_version' ) {
-			$version = $version = $this->_lastReleaseVersion;
+			$version = $version = $this->_lastPubReleaseVersion;
 		}
 		if( $version === null || $version == 'dev' || $version == 'devel' || $version == 'development' ) {
 			$version = $this->_version;
@@ -2215,7 +2253,7 @@ HELP;
 		}
 	}
 	protected function _removeSQLFileComments($filePath) {
-		$sqlContent = file_get_contents($filePath);
+		$sqlContent = file_get_contents($filePath)."\n";
 		$sqlContent = preg_replace('~(?:\-\-(?:.*?)\n)~im', '', $sqlContent);
 		$sqlContent = preg_replace('~\/\*.*?\*\/~is', '', $sqlContent);
 		$sqlContent = str_replace("\n\n", "\n", $sqlContent);
@@ -2225,13 +2263,25 @@ HELP;
 	public function makeUpdate($versionFrom = null, $versionTo = null) {
 		$arVersionFrom = self::readVersion($versionFrom);
 		$arVersionTo = self::readVersion($versionTo);
-		if(empty($arVersionFrom)) {
-			$versionFrom = $this->_lastReleaseVersion;
-			$arVersionFrom = self::readVersion($versionFrom);
-		}
 		if(empty($arVersionTo)) {
 			$versionTo = $this->_version;
 			$arVersionTo = self::readVersion($versionTo);
+		}
+		if(empty($arVersionFrom)) {
+			if(
+				array_key_exists($versionTo, $this->_arReleases)
+				&& $this->_arReleases[$versionTo]['UPDATE_FROM'] !== false
+			) {
+				$versionFrom = $this->_arReleases[$versionTo]['UPDATE_FROM'];
+			}
+			else {
+				echo 'Предупреждение: исходная версия не указана'
+					.' и не была найдена в конфигурации целевой версии.'
+					."\n".'В качестве исходной версии'
+					.' принята версия последнего опубликованного выпуска ['.$this->_lastPubReleaseVersion.'].'."\n";
+				$versionFrom = $this->_lastPubReleaseVersion;
+			}
+			$arVersionFrom = self::readVersion($versionFrom);
 		}
 		echo 'Обновление '.$this->_moduleName.'-['.$versionFrom.' => '.$versionTo.']'."\n";
 		if($arVersionFrom['RAW_VERSION'] == $arVersionTo['RAW_VERSION']) {
@@ -2248,10 +2298,11 @@ HELP;
 		}
 		if( !is_dir($this->_docRootDir.$nextReleaseFolder) ) {
 			echo 'Ошибка: не найдена папка с файлами целевого выпуска ('.$this->_releaseFolder.'/release-'.$versionTo.')'."\n";
+			return false;
 		}
 		$arChanges = self::compareFolderContents($prevReleaseFolder, $nextReleaseFolder);
 
-		$updateFolder = $this->_releaseFolder.'/update-'.$versionFrom.'-to-'.$versionTo;
+		$updateFolder = $this->_releaseFolder.'/update-'.$versionTo;
 		$updateDir = $this->_docRootDir.$updateFolder;
 
 		// Очищаем папку с обовлениями
