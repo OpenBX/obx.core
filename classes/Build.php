@@ -141,13 +141,19 @@ class OBX_Build {
 		}
 		return false;
 	}
-	protected function addDependency($moduleVersion) {
+
+	/**
+	 * @param $moduleVersion
+	 * @return null|OBX_Build
+	 */
+	protected function & addDependency($moduleVersion) {
 		$arModuleVersion = self::readVersion($moduleVersion);
 		if(empty($arModuleVersion)) {
 			echo 'Ошибка: Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указана версия или идентификатор модуля. Формат: "имя.модуля-1.номер.версии"'."\n";
 			return null;
 		}
 		if( !is_dir($this->_modulesDir.'/'.$arModuleVersion['MODULE_ID']) ) {
+			echo 'Ошибка: Модуль "'.$arModuleVersion['MODULE_ID'].'" не найден';
 			return null;
 		}
 		if($this->_ParentModule instanceof self) {
@@ -165,10 +171,25 @@ class OBX_Build {
 //			}
 		}
 		else {
-			$Dependency = new self($arModuleVersion['MODULE_ID'], $this);
+			$bNewDependency = true;
+			if( array_key_exists($arModuleVersion['MODULE_ID'], $this->_arDepModules) ) {
+				/** @var OBX_Build $DependencyExists */
+				$DependencyExists = &$this->_arDepModules[$arModuleVersion['MODULE_ID']];
+				if(
+					$DependencyExists->_dependencyVersion != null
+					&& self::compareVersions($DependencyExists->_dependencyVersion, $arModuleVersion['VERSION'])>=0
+				) {
+					$Dependency = &$DependencyExists;
+					$bNewDependency = false;
+				}
+			}
+			if($bNewDependency) {
+				$Dependency = new self($arModuleVersion['MODULE_ID'], $this);
+				$Dependency->_dependencyVersion = $arModuleVersion['VERSION'];
+			}
 		}
-		$Dependency->_dependencyVersion = $arModuleVersion['VERSION'];
-		$this->_arDepModules[$arModuleVersion['MODULE_ID']] = $Dependency;
+
+		$this->_arDepModules[$arModuleVersion['MODULE_ID']] = &$Dependency;
 		return $Dependency;
 	}
 
@@ -1736,6 +1757,14 @@ HELP;
 			}
 			$this->buildRelease($releaseVersion);
 		}
+		if( array_key_exists('build-update', $arCommandOptions) ) {
+			$versionTo = null;
+			$arCommandOptions['build-update'] = trim($arCommandOptions['build-update']);
+			if( strlen($arCommandOptions['build-update']) > 0 ) {
+				$versionTo = $arCommandOptions['build-update'];
+			}
+			$this->buildUpdate($versionTo);
+		}
 	}
 
 
@@ -1795,6 +1824,7 @@ HELP;
 				$fsEntryRelPath = $relPath.'/'.$fsEntry;
 				if(
 					$fsEntry == '.' || $fsEntry == '..'
+					|| $fsEntry == '.directory'
 					|| $fsEntry == '.git' || $fsEntry == '.gitignore' || $fsEntry == '.gitmodules' || $fsEntry == '.gitkeep'
 					|| in_array($fsEntry, $arExclude)
 					|| in_array($fsEntryPath, $arExcludeEntries)
@@ -1992,7 +2022,7 @@ HELP;
 		if( is_dir($pathA) && is_dir($pathB) ) {
 			$dirA = opendir($pathA);
 			while( $fsEntryA = readdir($dirA) ) {
-				if( $fsEntryA == '.' || $fsEntryA == '..' || $fsEntryA == '.git') {
+				if( $fsEntryA == '.' || $fsEntryA == '..' || $fsEntryA == '.git' || $fsEntryA == '.directory') {
 					continue;
 				}
 				if( is_dir($pathA.'/'.$fsEntryA) && is_dir($pathB.'/'.$fsEntryA) ) {
@@ -2023,7 +2053,7 @@ HELP;
 			closedir($dirA);
 			$dirB = opendir($pathB);
 			while($fsEntryB = readdir($dirB)) {
-				if( $fsEntryB == '.' || $fsEntryB == '..' || $fsEntryB == '.git') {
+				if( $fsEntryB == '.' || $fsEntryB == '..' || $fsEntryB == '.git'  || $fsEntryB == '.directory') {
 					continue;
 				}
 				elseif( file_exists($pathB.'/'.$fsEntryB) && !file_exists($pathA.'/'.$fsEntryB) ) {
@@ -2103,7 +2133,7 @@ HELP;
 			/** @var OBX_Build $Dependency */
 			$arDepVersion = self::readVersion($Dependency->_dependencyVersion);
 			if( empty($arDepVersion) ) {
-				echo 'Ошибка: '.$this->_moduleName.': версия модмодуля '.$Dependency->_moduleName.' не определелна'."\n";
+				echo 'Ошибка: '.$this->_moduleName.': версия подмодуля "'.$Dependency->_moduleName.'" не определелна'."\n";
 				continue;
 			}
 			if( !is_dir($Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion) ) {
@@ -2127,7 +2157,9 @@ HELP;
 			// копируем в релиз все обновления подмодулей
 			$depReleaseDir = opendir($Dependency->_releaseDir);
 			while($depReleaseFSEntry = readdir($depReleaseDir) ) {
-				if($depReleaseFSEntry == '.' || $depReleaseFSEntry == '..' || $depReleaseFSEntry == '.git') continue;
+				if($depReleaseFSEntry == '.' || $depReleaseFSEntry == '..'
+					|| $depReleaseFSEntry == '.git' || $depReleaseFSEntry == '.directory'
+				) continue;
 				if( strpos($depReleaseFSEntry, 'update-') !== false ) {
 					self::CopyDirFilesEx(
 						$Dependency->_releaseDir.'/'.$depReleaseFSEntry
@@ -2138,6 +2170,18 @@ HELP;
 			}
 			closedir($depReleaseDir);
 		}
+	}
+
+	protected function _checkBuildFolder() {
+		$gitIgnoreFile = $this->_releaseDir.'/build/.gitignore';
+		if( !self::CheckDirPath($gitIgnoreFile) ) {
+			echo 'Ошибка: путь для сборки архивов не является папкой'."\n";
+			return false;
+		}
+		if( !is_file($gitIgnoreFile) ) {
+			file_put_contents($gitIgnoreFile, "*\n*.*\n");
+		}
+		return true;
 	}
 
 	/**
@@ -2161,28 +2205,35 @@ HELP;
 			echo 'Ошибка: не найдена папка с выпуском ('.$this->_releaseDir.'/release-'.$arVersion['VERSION'].')'."\n";
 			return false;
 		}
-		if( file_exists($this->_releaseDir.'/.last_version') ) {
-			self::deleteDirFilesEx($this->_releaseFolder.'/.last_version');
-			@mkdir($this->_releaseDir.'/.last_version');
+		if( !$this->_checkBuildFolder() ) return false;
+		if( file_exists($this->_releaseDir.'/build/.last_version') ) {
+			self::deleteDirFilesEx($this->_releaseFolder.'/build/.last_version');
+			@mkdir($this->_releaseDir.'/build/.last_version');
 		}
 		$releaseDirHandler = opendir($this->_releaseDir.'/release-'.$arVersion['VERSION']);
 		while($releaseFSEntry = readdir($releaseDirHandler)) {
-			if($releaseFSEntry == '.' || $releaseFSEntry == '..' || $releaseFSEntry == '.git') {
+			if($releaseFSEntry == '.' || $releaseFSEntry == '..'
+				|| $releaseFSEntry == '.git' || $releaseFSEntry == '.directory'
+			) {
 				continue;
 			}
 			self::CopyDirFilesEx(
 				$this->_releaseDir.'/release-'.$arVersion['VERSION'].'/'.$releaseFSEntry
-				,$this->_releaseDir.'/.last_version/'
+				,$this->_releaseDir.'/build/.last_version/'
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->iconvFiles($this->_releaseFolder.'/.last_version/');
+		$bIConvSuccess = $this->iconvFiles($this->_releaseFolder.'/build/.last_version/');
 		closedir($releaseDirHandler);
 		if($bIConvSuccess) {
 			$shellCommand = ''
-				.'cd '.$this->_releaseDir.';'."\n"
-				.'tar czvf .last_version.tar.gz .last_version > /dev/null;'."\n"
-				.'cp .last_version.tar.gz release-'.$version.'.tar.gz;'."\n"
+				.'cd '.$this->_releaseDir.'/build;'."\n"
+				.(file_exists($this->_releaseDir.'/build/release-'.$version)
+					?'rm release-'.$version.'.tar.gz;'."\n"
+					:''
+				)
+				.'tar czvf release-'.$version.'.tar.gz .last_version > /dev/null;'."\n"
+				.'ln -sf release-'.$version.'.tar.gz .last_version.tar.gz;'."\n"
 			;
 			shell_exec($shellCommand);
 		}
@@ -2222,7 +2273,7 @@ HELP;
 			$dir = opendir($path);
 			$bSuccess = true;
 			while($fsEntry = readdir($dir)) {
-				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git') continue;
+				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git' || $fsEntry == '.directory') continue;
 				$bSuccess = self::iconvFiles($relPath.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
 			}
 			closedir($dir);
@@ -2247,7 +2298,7 @@ HELP;
 		if( is_dir($path) ) {
 			$dir = opendir($path);
 			while($fsEntry = readdir($dir)) {
-				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git') continue;
+				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git' || $fsEntry == '.directory') continue;
 				self::removeSQLFileComments($relPath.'/'.$fsEntry);
 			}
 		}
@@ -2313,7 +2364,7 @@ HELP;
 			}
 			$updateDirHandler = opendir($updateDir);
 			while($updateFSEntry = readdir($updateDirHandler)) {
-				if($updateFSEntry == '.' || $updateFSEntry == '..' || $updateFSEntry == '.git') {
+				if($updateFSEntry == '.' || $updateFSEntry == '..') {
 					continue;
 				}
 				if(
@@ -2340,13 +2391,19 @@ HELP;
 		}
 		file_put_contents($updateDir.'/description.ru', $updateDescription);
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
+			$updateFilesCode = $this->getHeaderCodeOfInstallFile();
+			$updateFilesCode .= $this->getCodeOfCopyFunction();
 			foreach($arChanges['NEW'] as $newFSEntry) {
-				self::CopyDirFilesEx(
+				self::CopyDirFiles(
 					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry),
 					str_replace(array('/./', '//'. '\\'), '/', $updateDir.'/'.$newFSEntry),
 					true, true,
 					false, ''
 				);
+				$updateFilesCode .= 'CopyDirFiles('
+					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
+					.'"'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'"'
+				.');'."\n";
 			}
 			foreach($arChanges['MODIFIED'] as $modFSEntry) {
 				self::CopyDirFiles(
@@ -2355,7 +2412,12 @@ HELP;
 					true, true,
 					false, ''
 				);
+				$updateFilesCode .= 'CopyDirFiles('
+					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
+					.'"'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'"'
+				.');'."\n";
 			}
+			$updateFilesCode .= $this->getFooterCodeOfInstallFile();
 		}
 		if(!empty($arChanges['DELETED'])) {
 			$updateDeleteCode = $this->getHeaderCodeOfInstallFile();
@@ -2373,8 +2435,49 @@ HELP;
 		}
 	}
 
-	public function buildUpdate() {
+	public function buildUpdate($versionTo = null) {
+		$arVersionTo = self::readVersion($versionTo);
+		if(empty($arVersionTo)) {
+			$versionTo = $this->_version;
+			$arVersionTo = self::readVersion($versionTo);
+		}
+		echo 'Создание архива обновления '.$this->_moduleName.'-'.$versionTo."\n";
+		if( !is_dir($this->_releaseDir.'/update-'.$versionTo) ) {
+			echo 'Ошибка: не найдена папка с обновлением не найдена ('.$this->_releaseFolder.'/update-'.$versionTo.').'."\n";
+		}
+		if( !$this->_checkBuildFolder() ) return false;
 
+
+		if( file_exists($this->_releaseDir.'/build/'.$versionTo) ) {
+			self::deleteDirFilesEx($this->_releaseFolder.'/build/'.$versionTo);
+			@mkdir($this->_releaseDir.'/build/'.$versionTo);
+		}
+		$updateDirHandler = opendir($this->_releaseDir.'/update-'.$versionTo);
+		while($updateFSEntry = readdir($updateDirHandler)) {
+			if($updateFSEntry == '.' || $updateFSEntry == '..'
+				|| $updateFSEntry == '.git' || $updateFSEntry == '.directory'
+			) {
+				continue;
+			}
+			self::CopyDirFilesEx(
+				$this->_releaseDir.'/update-'.$versionTo.'/'.$updateFSEntry
+				,$this->_releaseDir.'/build/'.$versionTo
+				,true, true, FALSE, '.git'
+			);
+		}
+		$bIConvSuccess = $this->iconvFiles($this->_releaseFolder.'/build/'.$versionTo);
+		closedir($updateDirHandler);
+		if($bIConvSuccess) {
+			$shellCommand = ''
+				.'cd '.$this->_releaseDir.'/build;'."\n"
+				.(file_exists($this->_releaseDir.'/build/'.$versionTo.'.tar.gz')
+					?'rm '.$versionTo.'.tar.gz;'."\n"
+					:''
+				)
+				.'tar czvf '.$versionTo.'.tar.gz '.$versionTo.' > /dev/null;'."\n"
+			;
+			shell_exec($shellCommand);
+		}
 	}
 
 	/**
