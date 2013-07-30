@@ -135,6 +135,13 @@ class obx_core extends CModule
 				RegisterModule($this->MODULE_ID);
 			}
 		}
+		else {
+			/** @var CMain $APPLICATION */
+			global $APPLICATION;
+			foreach($this->arErrors as $error) {
+				$APPLICATION->ThrowException($error);
+			}
+		}
 		return $bSuccess;
 	}
 	public function DoUninstall() {
