@@ -218,77 +218,8 @@ class obx_core extends CModule
 	public function UnInstallTasks() { $this->bSuccessUnInstallTasks = true; return $this->bSuccessUnInstallTasks; }
 	public function InstallData() { $this->bSuccessInstallData = true; return $this->bSuccessInstallData; }
 	public function UnInstallData() { $this->bSuccessUnInstallData = true; return $this->bSuccessUnInstallData; }
-
-	public function InstallDeps() {
-		if( is_file($this->installDir."/install_deps.php") ) {
-			require $this->installDir."/install_deps.php";
-			$arDepsList = $this->getDepsList();
-			foreach($arDepsList as $depModID => $depModClass) {
-				$depModInstallerFile = $this->bxModulesDir."/".$depModID."/install/index.php";
-				if( is_file($depModInstallerFile) ) {
-					require_once $depModInstallerFile;
-					/** @var CModule $DepModInstaller */
-					$bSuccess = true;
-					$DepModInstaller = new $depModClass;
-					$bSuccess = $DepModInstaller->InstallDB() && $bSuccess;
-					$bSuccess = $DepModInstaller->InstallEvents() && $bSuccess;
-					$bSuccess = $DepModInstaller->InstallTasks() && $bSuccess;
-					if( method_exists($DepModInstaller, 'InstallData') ) {
-						$bSuccess = $DepModInstaller->InstallData() && $bSuccess;
-					}
-					if( $bSuccess ) {
-						if( !IsModuleInstalled($depModID) ) {
-							RegisterModule($depModID);
-						}
-						$this->bSuccessInstallDeps = true;
-					}
-					else {
-						if( method_exists($DepModInstaller, 'getErrors') ) {
-							$arInstallErrors = $DepModInstaller->getErrors();
-							foreach($arInstallErrors as $error) {
-								$this->arErrors[] = $error;
-							}
-						}
-						$this->bSuccessInstallDeps = false;
-					}
-				}
-			}
-		}
-		return $this->bSuccessInstallDeps;
-	}
-	public function UnInstallDeps() {
-		$arDepsList = $this->getDepsList();
-		foreach($arDepsList as $depModID => $depModClass) {
-			$depModInstallerFile = $this->bxModulesDir."/".$depModID."/install/index.php";
-			if( is_file($depModInstallerFile) ) {
-				require_once $depModInstallerFile;
-				/** @var CModule $DepModInstaller */
-				$bSuccess = true;
-				$DepModInstaller = new $depModClass;
-				$bSuccess = true;
-				$bSuccess = $DepModInstaller->UnInstallTasks() && $bSuccess;
-				$bSuccess = $DepModInstaller->UnInstallEvents() && $bSuccess;
-				$bSuccess = $DepModInstaller->UnInstallFiles() && $bSuccess;
-				$bSuccess = $DepModInstaller->UnInstallDB() && $bSuccess;
-				if( $bSuccess ) {
-					if( IsModuleInstalled($depModID) ) {
-						UnRegisterModule($depModID);
-					}
-					$this->bSuccessUnInstallDeps = true;
-				}
-				else {
-					if( method_exists($DepModInstaller, 'getErrors') ) {
-						$arInstallErrors = $DepModInstaller->getErrors();
-						foreach($arInstallErrors as $error) {
-							$this->arErrors[] = $error;
-						}
-					}
-					$this->bSuccessUnInstallDeps = false;
-				}
-			}
-		}
-		return $this->bSuccessUnInstallDeps;
-	}
+	public function InstallDeps() { $this->bSuccessInstallDeps = true; return $this->bSuccessInstallDeps; }
+	public function UnInstallDeps() { $this->bSuccessUnInstallDeps = true; return $this->bSuccessUnInstallDeps; }
 
 	protected function getDepsList() {
 		$arDepsList = array();

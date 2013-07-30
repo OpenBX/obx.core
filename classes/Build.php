@@ -679,27 +679,38 @@ class OBX_Build {
 		$installFile = 'install_files.php';
 		$installDepsFile = 'install_deps.php';
 		$installCode = '';
-		$installDepsCode = '';
-		if( count($this->_arDepModules) ) {
-			foreach($this->_arDepModules as $DependencyModule) {
-				$installDepsCode .=			'OBX_CopyDirFilesEx('
-												.'$_SERVER["DOCUMENT_ROOT"]'
-													.'.BX_ROOT'
-													.'."/modules/'.$this->_moduleName
-													.'/install/modules/'.$DependencyModule->getModuleName().'"'
-												.', $_SERVER["DOCUMENT_ROOT"]'
-													.'.BX_ROOT'
-													.'."/modules/'.$DependencyModule->getModuleName().'"'
-											.', true, true);'."\n";
-				$depInstallFilePathCode =	'$_SERVER["DOCUMENT_ROOT"]'
-												.'.BX_ROOT."/modules/'
-												.$DependencyModule->getModuleName()
-												.'/install/'.$installFile.'"';
-				$installDepsCode .=			'if( is_file('.$depInstallFilePathCode.') ) {'."\n"
-												."\t".'require_once '.$depInstallFilePathCode.";\n"
-											."}\n";
-			}
-		}
+		$getlDepsCode = '';
+		// [pronix:2013-07-29] Этот код более не актуален
+		// +++
+		////if( count($this->_arDepModules) ) {
+		////	foreach($this->_arDepModules as $DependencyModule) {
+		////		$installDepsCode .=			'OBX_CopyDirFilesEx('
+		////										.'$_SERVER["DOCUMENT_ROOT"]'
+		////											.'.BX_ROOT'
+		////											.'."/modules/'.$this->_moduleName
+		////											.'/install/modules/'.$DependencyModule->getModuleName().'"'
+		////										.', $_SERVER["DOCUMENT_ROOT"]'
+		////											.'.BX_ROOT'
+		////											.'."/modules/'.$DependencyModule->getModuleName().'"'
+		////									.', true, true);'."\n";
+		////		$depInstallFilePathCode =	'$_SERVER["DOCUMENT_ROOT"]'
+		////										.'.BX_ROOT."/modules/'
+		////										.$DependencyModule->getModuleName()
+		////										.'/install/'.$installFile.'"';
+		////		$installDepsCode .=			'if( is_file('.$depInstallFilePathCode.') ) {'."\n"
+		////										."\t".'require_once '.$depInstallFilePathCode.";\n"
+		////									."}\n";
+		////	}
+		////}
+		// +++
+//		if( count($this->_arDepModules) ) {
+//			$getlDepsCode .= 'return array('."\n";
+//			foreach($this->_arDepModules as $DependencyModule) {
+//				$getlDepsCode .= "\t".'"'.$DependencyModule->mod.'" => "'.'",'."\n"
+//			}
+//		}
+		// ^^^
+
 		if( count($this->_arResources)>0 ) {
 			foreach($this->_arResources as &$arResource) {
 				if($arResource['OPTIONS']['BUILD_ONLY']) {
@@ -726,16 +737,19 @@ class OBX_Build {
 		else {
 			file_put_contents($this->_selfDir.'/install/'.$installFile, "<?php\n?>");
 		}
-		if( strlen($installDepsCode)>0 ) {
-			$installDepsCode = 	 $this->getHeaderCodeOfInstallFile()
-								.$this->getCodeOfCopyFunction()
-								.$installDepsCode
-								.$this->getFooterCodeOfInstallFile();
-			file_put_contents($this->_selfDir.'/install/'.$installDepsFile, $installDepsCode);
-		}
-		else {
-			file_put_contents($this->_selfDir.'/install/'.$installDepsFile, "<?php\n?>");
-		}
+		// [pronix:2013-07-29] Этот код более не актуален
+		// +++
+		////if( strlen($installDepsCode)>0 ) {
+		////	$installDepsCode = 	 $this->getHeaderCodeOfInstallFile()
+		////						.$this->getCodeOfCopyFunction()
+		////						.$installDepsCode
+		////						.$this->getFooterCodeOfInstallFile();
+		////	file_put_contents($this->_selfDir.'/install/'.$installDepsFile, $installDepsCode);
+		////}
+		////else {
+		////	file_put_contents($this->_selfDir.'/install/'.$installDepsFile, "<?php\n?".">");
+		////}
+		// ^^^
 	}
 
 	public function generateUnInstallCode() {
@@ -2392,7 +2406,7 @@ HELP;
 		file_put_contents($updateDir.'/description.ru', $updateDescription);
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
 			$updateFilesCode = $this->getHeaderCodeOfInstallFile();
-			$updateFilesCode .= $this->getCodeOfCopyFunction();
+			//$updateFilesCode .= $this->getCodeOfCopyFunction();
 			foreach($arChanges['NEW'] as $newFSEntry) {
 				self::CopyDirFiles(
 					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry),
@@ -2402,7 +2416,7 @@ HELP;
 				);
 				$updateFilesCode .= 'CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
-					.'"'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'"'
+					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'"'
 				.');'."\n";
 			}
 			foreach($arChanges['MODIFIED'] as $modFSEntry) {
@@ -2414,10 +2428,11 @@ HELP;
 				);
 				$updateFilesCode .= 'CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
-					.'"'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'"'
+					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'"'
 				.');'."\n";
 			}
 			$updateFilesCode .= $this->getFooterCodeOfInstallFile();
+			file_put_contents($updateDir.'/updater.files.php', $updateFilesCode);
 		}
 		if(!empty($arChanges['DELETED'])) {
 			$updateDeleteCode = $this->getHeaderCodeOfInstallFile();
@@ -2429,7 +2444,10 @@ HELP;
 			$updateDeleteCode .= "\n".$this->getFooterCodeOfInstallFile();
 			file_put_contents($updateDir.'/updater.delete.php', $updateDeleteCode);
 		}
-		file_put_contents($updateDir.'/updater.php', "<?php\n\n\n?>");
+		if(!file_exists($updateDir.'/updater.php')) {
+			file_put_contents($updateDir.'/updater.php', "<?php\n\n\n?>");
+		}
+
 		foreach($this->_arDepModules as $DependencyModule) {
 			$debug=1;
 		}
