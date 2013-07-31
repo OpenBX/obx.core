@@ -2411,8 +2411,12 @@ HELP;
 			}
 		}
 		file_put_contents($updateDir.'/description.ru', $updateDescription);
+
+		$genPhpFileHead = '<'."?php\n"
+			."// Файл сгенерирован. Не редактируйте! \n"
+			."// Используйте updater.custom.(after|before).php \n";
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
-			$updateFilesCode = "<?php\n";
+			$updateFilesCode = $genPhpFileHead;
 			$updateFilesCode .= '$errorMessage = "";'."\n";
 			$updateFilesAsDepCode = $updateFilesCode;
 			foreach($arChanges['NEW'] as $newFSEntry) {
@@ -2463,40 +2467,80 @@ HELP;
 			file_put_contents($updateDir.'/updater.dep.files.php', $updateFilesAsDepCode);
 		}
 		if(!empty($arChanges['DELETED'])) {
-			$updateDelFilesCode = "<?php\n";
-			$updateDelFilesAsDepCode = "<?php\n";
-			//$updateDeleteCode .= $this->getHeaderCodeOfInstallFile();
+			$updateDelFilesCode = $genPhpFileHead;
+			$updateDelFilesAsDepCode = $genPhpFileHead;
+			$updateDelListCode = $genPhpFileHead."return array(\n";
+			$updateDelListAsDepCode = $genPhpFileHead."return array(\n";
 			foreach($arChanges['DELETED'] as $delFSEntry) {
 				$updateDelFilesCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
+				$updateDelListCode .= "\t\"".trim(str_replace(array('/./', '//'. '\\'), '/', '/'.$delFSEntry), '/')."\",\n";
 				if( strpos($modFSEntry, './install/modules/') === 0 ) {
 					continue;
 				}
 				$updateDelFilesAsDepCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
+				$updateDelListAsDepCode .= "\t\"".trim(str_replace(array('/./', '//'. '\\'), '/', '/'.$delFSEntry), '/')."\",\n";
 			}
 			$updateDelFilesCode .= "\n?".'>';
 			$updateDelFilesAsDepCode .= "\n?".'>';
-			file_put_contents($updateDir.'/updater.delete.php', $updateDelFilesCode);
-			file_put_contents($updateDir.'/updater.dep.delete.php', $updateDelFilesAsDepCode);
+			$updateDelListCode .= ");?".">";
+			$updateDelListAsDepCode .= ");?".">";
+			file_put_contents($updateDir.'/updater.delete.files.php', $updateDelFilesCode);
+			file_put_contents($updateDir.'/updater.dep.delete.files.php', $updateDelFilesAsDepCode);
+			file_put_contents($updateDir.'/updater.delete.list.php', $updateDelListCode);
+			file_put_contents($updateDir.'/updater.dep.delete.list.php', $updateDelListAsDepCode);
 		}
-		if(!file_exists($updateDir.'/updater.custom.php')) {
-			file_put_contents($updateDir.'/updater.custom.php', "<?php\n\t\n?>");
+
+		$updaterFilesDoc = <<<DOC
+//
+// updater.*		- скрипты выполняемые штатным обновлятором битрикс
+// updater.dep.*	- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
+//						например obx.market обновляется и запускает обновление для мододуля obx.core
+//						выполнятся файлы
+//						/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/updater.dep.*.php
+//						/папка/обновления может быть
+//							/bitrix/updates/obx.market-версия
+//							или /bitrix/modules/obx.market/update-версия - в случае установки супермодуля (obx.market)
+//							когда супер-модуль устанавливается, он проверяет установлены ли подмодули
+//							и если нужно обновляет их
+//
+//
+// Служебные файлы / Эти файлы запускаются автоматически
+// updater[.dep].delete.files.php	- Удаляет устаревшие файлы в модуле
+// updater[.dep].delete.list.php	- Возвращает список файлов для удаления (пути относительно папки с обновлением)
+// updater[.dep].files.php			- Копирует новые/изм. файлы из папки обновления в модуль
+//
+// updater[.dep].php				- файл запускаемый системой обновления (битриксом или подмодулем). Подключает Служебные файлы
+//
+// Эти скрипты общие как для обновлятора битрикс, так и для обновлятора супер-модуля
+// updater.custom.before.php		- Запускается до Служебных файлов
+// updater.custom.after.php			- Запускается после Служебных файлов
+
+DOC;
+
+		if(!file_exists($updateDir.'/updater.custom.before.php')) {
+			file_put_contents($updateDir.'/updater.custom.before.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
+		}
+		if(!file_exists($updateDir.'/updater.custom.after.php')) {
+			file_put_contents($updateDir.'/updater.custom.after.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
 		}
 		file_put_contents($updateDir.'/updater.php',
-			'<'."?php\n"
-			.'require dirname(__FILE__)."/updater.delete.php";'."\n"
+			'<'."?php // Файл сгенерирован. Не редактировать! \n // Используйте updater.custom.(after|before).php \n"
+			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
+			.'require dirname(__FILE__)."/updater.delete.files.php";'."\n"
 			.'require dirname(__FILE__)."/updater.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.custom.php";'."\n"
+			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
 			.'?'.'>'
 		);
 		file_put_contents($updateDir.'/updater.dep.php',
-			'<'."?php\n"
-			.'require dirname(__FILE__)."/updater.dep.delete.php";'."\n"
+			'<'."?php // Файл сгенерирован. Не редактировать! \n // Используйте updater.custom.(after|before).php \n"
+			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
+			.'require dirname(__FILE__)."/updater.dep.delete.files.php";'."\n"
 			.'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.custom.php";'."\n"
+			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
 			.'?'.'>'
 		);
 	}
@@ -2510,6 +2554,7 @@ HELP;
 		echo 'Создание архива обновления '.$this->_moduleName.'-'.$versionTo."\n";
 		if( !is_dir($this->_releaseDir.'/update-'.$versionTo) ) {
 			echo 'Ошибка: не найдена папка с обновлением не найдена ('.$this->_releaseFolder.'/update-'.$versionTo.').'."\n";
+			return false;
 		}
 		if( !$this->_checkBuildFolder() ) return false;
 
