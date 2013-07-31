@@ -225,23 +225,16 @@ class obx_core extends CModule
 	public function UnInstallTasks() { $this->bSuccessUnInstallTasks = true; return $this->bSuccessUnInstallTasks; }
 	public function InstallData() { $this->bSuccessInstallData = true; return $this->bSuccessInstallData; }
 	public function UnInstallData() { $this->bSuccessUnInstallData = true; return $this->bSuccessUnInstallData; }
-	public function InstallDeps() { $this->bSuccessInstallDeps = true; return $this->bSuccessInstallDeps; }
-	public function UnInstallDeps() { $this->bSuccessUnInstallDeps = true; return $this->bSuccessUnInstallDeps; }
 
 	protected function getDepsList() {
 		$arDepsList = array();
-		if( is_dir($this->installDir."/modules") ) {
-			if( ($dirSubModules = @opendir($this->installDir."/modules")) ) {
-				while( ($depModID = readdir($dirSubModules)) !== false ) {
-					if( $depModID == "." || $depModID == ".." ) {
-						continue;
-					}
-					$arDepsList[$depModID] = str_replace('.', '_', $depModID);
-				}
-			}
+		if( is_dir($this->installDir."/modules") && is_file($this->installDir.'/dependencies.php') ) {
+			$arDepsList = require $this->installDir.'/dependencies.php';
 		}
 		return $arDepsList;
 	}
+	public function InstallDeps() { $this->bSuccessInstallDeps = true; return $this->bSuccessInstallDeps; }
+	public function UnInstallDeps() { $this->bSuccessUnInstallDeps = true; return $this->bSuccessUnInstallDeps; }
 
 	protected function prepareDBConnection() {
 		global $APPLICATION, $DB, $DBType;

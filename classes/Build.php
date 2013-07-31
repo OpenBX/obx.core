@@ -467,6 +467,7 @@ class OBX_Build {
 						}
 					}
 					elseif($releaseOpt == 'description' ) {
+						$releaseOptValue = preg_replace('~\n\t*~is', "\n", $releaseOptValue);
 						$arReleasesList['RELEASES_LIST'][$blockSection]['DESCRIPTION'] = $releaseOptValue;
 					}
 					elseif($releaseOpt == 'state') {
@@ -677,11 +678,11 @@ class OBX_Build {
 
 	public function generateInstallCode() {
 		$installFile = 'install_files.php';
-		$installDepsFile = 'install_deps.php';
+		$getDepsFile = 'dependencies.php';
 		$installCode = '';
-		$getlDepsCode = '';
-		// [pronix:2013-07-29] Этот код более не актуален
-		// +++
+		$getDepsCode = '';
+		// [pronix:2013-07-29]
+		// +++  Этот код более не актуален
 		////if( count($this->_arDepModules) ) {
 		////	foreach($this->_arDepModules as $DependencyModule) {
 		////		$installDepsCode .=			'OBX_CopyDirFilesEx('
@@ -702,13 +703,15 @@ class OBX_Build {
 		////									."}\n";
 		////	}
 		////}
-		// +++
-//		if( count($this->_arDepModules) ) {
-//			$getlDepsCode .= 'return array('."\n";
-//			foreach($this->_arDepModules as $DependencyModule) {
-//				$getlDepsCode .= "\t".'"'.$DependencyModule->mod.'" => "'.'",'."\n"
-//			}
-//		}
+		// &&&
+		if( count($this->_arDepModules) ) {
+			$getDepsCode .= "<?php\n".'return array('."\n";
+			foreach($this->_arDepModules as $DependencyModule) {
+				/** @var OBX_Build $DependencyModule */
+				$getDepsCode .= "\t".'"'.$DependencyModule->_moduleName.'" => "'.$DependencyModule->_moduleClass.'",'."\n";
+			}
+			$getDepsCode .= ');?>';
+		}
 		// ^^^
 
 		if( count($this->_arResources)>0 ) {
@@ -737,8 +740,8 @@ class OBX_Build {
 		else {
 			file_put_contents($this->_selfDir.'/install/'.$installFile, "<?php\n?>");
 		}
-		// [pronix:2013-07-29] Этот код более не актуален
-		// +++
+		// [pronix:2013-07-29]
+		// +++ Этот код более не актуален
 		////if( strlen($installDepsCode)>0 ) {
 		////	$installDepsCode = 	 $this->getHeaderCodeOfInstallFile()
 		////						.$this->getCodeOfCopyFunction()
@@ -749,6 +752,10 @@ class OBX_Build {
 		////else {
 		////	file_put_contents($this->_selfDir.'/install/'.$installDepsFile, "<?php\n?".">");
 		////}
+		// &&&
+		if( strlen($getDepsCode)>0 ) {
+			file_put_contents($this->_selfDir.'/install/'.$getDepsFile, $getDepsCode);
+		}
 		// ^^^
 	}
 
@@ -2405,8 +2412,9 @@ HELP;
 		}
 		file_put_contents($updateDir.'/description.ru', $updateDescription);
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
-			$updateFilesCode = $this->getHeaderCodeOfInstallFile();
-			//$updateFilesCode .= $this->getCodeOfCopyFunction();
+			$updateFilesCode = "<?php\n";
+			$updateFilesCode .= '$errorMessage = "";'."\n";
+			$updateFilesAsDepCode = $updateFilesCode;
 			foreach($arChanges['NEW'] as $newFSEntry) {
 				self::CopyDirFiles(
 					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry),
@@ -2414,9 +2422,18 @@ HELP;
 					true, true,
 					false, ''
 				);
-				$updateFilesCode .= 'CopyDirFiles('
+				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
-					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'"'
+					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
+					.'$errorMessage'
+				.');'."\n";
+				if( strpos($newFSEntry, './install/modules/') === 0 ) {
+					continue;
+				}
+				$updateFilesAsDepCode .= 'CUpdateSystem::CopyDirFiles('
+					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
+					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
+					.'$errorMessage'
 				.');'."\n";
 			}
 			foreach($arChanges['MODIFIED'] as $modFSEntry) {
@@ -2426,31 +2443,62 @@ HELP;
 					true, true,
 					false, ''
 				);
-				$updateFilesCode .= 'CopyDirFiles('
+				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
-					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'"'
+					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
+					.'$errorMessage'
+				.');'."\n";
+				if( strpos($modFSEntry, './install/modules/') === 0 ) {
+					continue;
+				}
+				$updateFilesAsDepCode .= 'CUpdateSystem::CopyDirFiles('
+					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
+					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
+					.'$errorMessage'
 				.');'."\n";
 			}
-			$updateFilesCode .= $this->getFooterCodeOfInstallFile();
+			$updateFilesCode .= "\n".'return $errorMessage;?'.'>';
+			$updateFilesAsDepCode .= "\n".'return $errorMessage;?'.'>';
 			file_put_contents($updateDir.'/updater.files.php', $updateFilesCode);
+			file_put_contents($updateDir.'/updater.dep.files.php', $updateFilesAsDepCode);
 		}
 		if(!empty($arChanges['DELETED'])) {
-			$updateDeleteCode = $this->getHeaderCodeOfInstallFile();
+			$updateDelFilesCode = "<?php\n";
+			$updateDelFilesAsDepCode = "<?php\n";
+			//$updateDeleteCode .= $this->getHeaderCodeOfInstallFile();
 			foreach($arChanges['DELETED'] as $delFSEntry) {
-				$updateDeleteCode .= 'DeleteFilesEx("'
+				$updateDelFilesCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
+					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
+				.'");'."\n";
+				if( strpos($modFSEntry, './install/modules/') === 0 ) {
+					continue;
+				}
+				$updateDelFilesAsDepCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
 			}
-			$updateDeleteCode .= "\n".$this->getFooterCodeOfInstallFile();
-			file_put_contents($updateDir.'/updater.delete.php', $updateDeleteCode);
+			$updateDelFilesCode .= "\n?".'>';
+			$updateDelFilesAsDepCode .= "\n?".'>';
+			file_put_contents($updateDir.'/updater.delete.php', $updateDelFilesCode);
+			file_put_contents($updateDir.'/updater.dep.delete.php', $updateDelFilesAsDepCode);
 		}
-		if(!file_exists($updateDir.'/updater.php')) {
-			file_put_contents($updateDir.'/updater.php', "<?php\n\n\n?>");
+		if(!file_exists($updateDir.'/updater.custom.php')) {
+			file_put_contents($updateDir.'/updater.custom.php', "<?php\n\t\n?>");
 		}
-
-		foreach($this->_arDepModules as $DependencyModule) {
-			$debug=1;
-		}
+		file_put_contents($updateDir.'/updater.php',
+			'<'."?php\n"
+			.'require dirname(__FILE__)."/updater.delete.php";'."\n"
+			.'require dirname(__FILE__)."/updater.files.php";'."\n"
+			.'require dirname(__FILE__)."/updater.custom.php";'."\n"
+			.'?'.'>'
+		);
+		file_put_contents($updateDir.'/updater.dep.php',
+			'<'."?php\n"
+			.'require dirname(__FILE__)."/updater.dep.delete.php";'."\n"
+			.'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
+			.'require dirname(__FILE__)."/updater.custom.php";'."\n"
+			.'?'.'>'
+		);
 	}
 
 	public function buildUpdate($versionTo = null) {
