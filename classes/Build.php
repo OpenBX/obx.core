@@ -46,7 +46,11 @@ class OBX_Build {
 	protected $_releaseDir = null;
 	protected $_arReleases = array();
 	protected $_lastPubReleaseVersion = null;
+
+	// Версия модуля, если он собирается как подмодуль
 	protected $_dependencyVersion = null;
+	// Минимальная версия включаемых обновлений подмодуля
+	protected $_dependencyMinVersion = null;
 
 	function __construct($moduleName, self $ParentModule = null) {
 		error_reporting(E_ALL ^ E_NOTICE);
@@ -147,13 +151,25 @@ class OBX_Build {
 	 * @return null|OBX_Build
 	 */
 	protected function & addDependency($moduleVersion) {
-		$arModuleVersion = self::readVersion($moduleVersion);
-		if(empty($arModuleVersion)) {
-			echo 'Ошибка: Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указана версия или идентификатор модуля. Формат: "имя.модуля-1.номер.версии"'."\n";
+		if(strpos($moduleVersion, '+')) {
+			list($moduleMinVersion, $moduleMaxVersion) = explode('+', $moduleVersion);
+			$arModuleMinVersion = self::readVersion($moduleMinVersion);
+			$arModuleMaxVersion = self::readVersion($arModuleMinVersion['MODULE_ID'].'-'.$moduleMaxVersion);
+		}
+		else {
+			$arModuleMaxVersion = self::readVersion($moduleVersion);
+			$arModuleMinVersion = $arModuleMaxVersion;
+		}
+		if(empty($arModuleMaxVersion)) {
+			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указана версия или идентификатор модуля."'."\n";
 			return null;
 		}
-		if( !is_dir($this->_modulesDir.'/'.$arModuleVersion['MODULE_ID']) ) {
-			echo 'Ошибка: Модуль "'.$arModuleVersion['MODULE_ID'].'" не найден';
+		if( $arModuleMaxVersion['RAW_VERSION'] < $arModuleMinVersion['RAW_VERSION'] ) {
+			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указан интервал версий зависимости'."\n";
+			return null;
+		}
+		if( !is_dir($this->_modulesDir.'/'.$arModuleMaxVersion['MODULE_ID']) ) {
+			echo 'Ошибка: Модуль "'.$arModuleMaxVersion['MODULE_ID'].'" не найден';
 			return null;
 		}
 		if($this->_ParentModule instanceof self) {
@@ -172,24 +188,27 @@ class OBX_Build {
 		}
 		else {
 			$bNewDependency = true;
-			if( array_key_exists($arModuleVersion['MODULE_ID'], $this->_arDepModules) ) {
+			if( array_key_exists($arModuleMaxVersion['MODULE_ID'], $this->_arDepModules) ) {
 				/** @var OBX_Build $DependencyExists */
-				$DependencyExists = &$this->_arDepModules[$arModuleVersion['MODULE_ID']];
+				$DependencyExists = &$this->_arDepModules[$arModuleMaxVersion['MODULE_ID']];
 				if(
 					$DependencyExists->_dependencyVersion != null
-					&& self::compareVersions($DependencyExists->_dependencyVersion, $arModuleVersion['VERSION'])>=0
+					&& self::compareVersions($DependencyExists->_dependencyVersion, $arModuleMaxVersion['VERSION'])>=0
 				) {
 					$Dependency = &$DependencyExists;
 					$bNewDependency = false;
 				}
 			}
 			if($bNewDependency) {
-				$Dependency = new self($arModuleVersion['MODULE_ID'], $this);
-				$Dependency->_dependencyVersion = $arModuleVersion['VERSION'];
+				$Dependency = new self($arModuleMaxVersion['MODULE_ID'], $this);
+				$Dependency->_dependencyVersion = $arModuleMaxVersion['VERSION'];
+				$Dependency->_dependencyMinVersion = $arModuleMinVersion['VERSION'];
 			}
 		}
 
-		$this->_arDepModules[$arModuleVersion['MODULE_ID']] = &$Dependency;
+		if($Dependency!==null) {
+			$this->_arDepModules[$arModuleMaxVersion['MODULE_ID']] = &$Dependency;
+		}
 		return $Dependency;
 	}
 
@@ -501,7 +520,9 @@ class OBX_Build {
 		}
 		if(!empty($arDependencies)) {
 			foreach($arDependencies as $subModule) {
-				$this->addDependency($subModule);
+				if($this->addDependency($subModule) === null) {
+					die();
+				}
 			}
 		}
 	}
@@ -2182,11 +2203,18 @@ HELP;
 					|| $depReleaseFSEntry == '.git' || $depReleaseFSEntry == '.directory'
 				) continue;
 				if( strpos($depReleaseFSEntry, 'update-') !== false ) {
-					self::CopyDirFilesEx(
-						$Dependency->_releaseDir.'/'.$depReleaseFSEntry
-						,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName.'/'
-						,true, true, FALSE, array('.git', 'modules')
-					);
+					$arUpdateVersion = self::readVersion($depReleaseFSEntry);
+					if(
+						!empty($arUpdateVersion)
+						&& self::compareVersions($arUpdateVersion['VERSION'], $Dependency->_dependencyVersion)<=0
+						&& self::compareVersions($arUpdateVersion['VERSION'], $Dependency->_dependencyMinVersion)>=0
+					) {
+						self::CopyDirFilesEx(
+							$Dependency->_releaseDir.'/'.$depReleaseFSEntry
+							,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName.'/'
+							,true, true, FALSE, array('.git', 'modules')
+						);
+					}
 				}
 			}
 			closedir($depReleaseDir);
