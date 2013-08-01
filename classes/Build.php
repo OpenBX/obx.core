@@ -452,6 +452,8 @@ class OBX_Build {
 				if( !isset($arReleasesList) ) {
 					$arReleasesList = array(
 						'RELEASE_FOLDER' => null,
+						'EXCLUDE' => array(),
+						'EXCLUDE_PATH' => array(),
 						'RELEASES_LIST' => array()
 					);
 				}
@@ -461,6 +463,12 @@ class OBX_Build {
 					$releaseOptValue = trim($releaseOptValue);
 					if($releaseOpt == 'release_folder') {
 						$arReleasesList['RELEASE_FOLDER'] = $releaseOptValue;
+					}
+					elseif($releaseOpt == 'exclude') {
+						$arReleasesList['EXCLUDE'][] = $releaseOptValue;
+					}
+					elseif($releaseOpt == 'exclude_path') {
+						$arReleasesList['EXCLUDE_PATH'][] = $this->replacePathMacros($releaseOptValue);
 					}
 				}
 				else {
@@ -473,6 +481,8 @@ class OBX_Build {
 						$arReleasesList['RELEASES_LIST'][$blockSection] = array(
 							'STATE' => 'dev',
 							'UPDATE_FROM' => false,
+							'EXCLUDE' => array(),
+							'EXCLUDE_PATH' => array(),
 							'DESCRIPTION' => array(),
 						);
 					}
@@ -508,6 +518,12 @@ class OBX_Build {
 						) {
 							$arReleasesList['RELEASES_LIST'][$blockSection]['STATE'] = 'done';
 						}
+					}
+					elseif($releaseOpt == 'exclude') {
+						$arReleasesList['RELEASES_LIST'][$blockSection]['EXCLUDE'][] = $releaseOptValue;
+					}
+					elseif($releaseOpt == 'exclude_path') {
+						$arReleasesList['RELEASES_LIST'][$blockSection]['EXCLUDE_PATH'][] = $this->replacePathMacros($releaseOptValue);
 					}
 				}
 			}
@@ -883,9 +899,10 @@ class OBX_Build {
 	 * @param bool $Recursive
 	 * @param bool $bDeleteAfterCopy
 	 * @param string | array $Exclude
+	 * @param string | array $ExcludePath
 	 * @return bool
 	 */
-	static function CopyDirFilesEx($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = "") {
+	static function CopyDirFilesEx($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = '', $ExcludePath = '') {
 		$path_from = str_replace(array("\\", "//"), "/", $path_from);
 		$path_to = str_replace(array("\\", "//"), "/", $path_to);
 		if(is_file($path_from) && !is_file($path_to)) {
@@ -894,18 +911,18 @@ class OBX_Build {
 				$path_to = rtrim($path_to, '/');
 				$path_to .= '/'.$file_name;
 				//cho __METHOD__.": ".$path_from." => ".$path_to."\n";
-				return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude);
+				return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude, $ExcludePath);
 			}
 		}
 		if( is_dir($path_from) && substr($path_to, strlen($path_to)-1) == '/' ) {
 			$folderName = substr($path_from, strrpos($path_from, '/')+1);
 			$path_to .= $folderName;
 		}
-		return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude);
+		return self::CopyDirFiles($path_from, $path_to, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude, $ExcludePath);
 	}
 
 	protected function getHeaderCodeOfInstallFile() {
-		return '<?php
+		return '<'.'?php
 $bConnectEpilog = false;
 if(!defined("BX_ROOT")) {
 	$bConnectEpilog = true;
@@ -972,18 +989,54 @@ if(!defined("BX_ROOT")) {
 	/**
 	 * В отличие от битриксовской может принимать в качестве
 	 * исключения (аргумент $Exclude) не только строку, но и массив
+	 * + добавлен аргумент исключения по маске пути
 	 * @param $path_from
 	 * @param $path_to
 	 * @param bool $ReWrite
 	 * @param bool $Recursive
 	 * @param bool $bDeleteAfterCopy
-	 * @param string | array $Exclude
+	 * @param string | array $Exclude - исключение по имени файла/папки
+	 * @param string | array $ExcludePath - исключение по маске пути
+	 * 						 Если вначаое стоит символ "/", то путь считается абсолютным
+	 * 						 иначе исключение расчитывается по пути $path_from
+	 * @param null | array $arExcludePath - не трогать, нужен для рекурсии
 	 * @return bool
 	 */
-	static public function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = "")
+	static public function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = '', $ExcludePath = '', &$arExcludePath = null)
 	{
 		if (strpos($path_to."/", $path_from."/")===0 || realpath($path_to) === realpath($path_from))
 			return false;
+
+		if($arExcludePath === null) {
+			$arExcludePath = array();
+			if( is_string($ExcludePath) && strlen(trim($ExcludePath))>0 ) {
+				$ExcludePath = array($ExcludePath);
+			}
+			if(is_array($ExcludePath) && !empty($ExcludePath)) {
+				if( is_dir($path_from) ) {
+					$path_from_dir = rtrim($path_from, '/').'/';
+				}
+				elseif(is_file($path_from)) {
+					$p = self::bxstrrpos($path_to, "/");
+					$path_from_dir = substr($path_to, 0, $p);
+				}
+				else {
+					$path_from_dir = null;
+				}
+				if($path_from_dir !== null) {
+					foreach($ExcludePath as $excludePathItem) {
+						if( substr($excludePathItem, 0, 1) != '/' ) {
+							$excludePathItem = $path_from_dir.'/'.$excludePathItem;
+						}
+						$arExcludePath = array_merge($arExcludePath, glob($excludePathItem));
+					}
+				}
+			}
+		}
+
+		if( in_array($path_from, $arExcludePath) ) {
+			return true;
+		}
 
 		if (is_dir($path_from))
 		{
@@ -1032,7 +1085,7 @@ if(!defined("BX_ROOT")) {
 
 				if (is_dir($path_from."/".$file) && $Recursive)
 				{
-					self::CopyDirFiles($path_from."/".$file, $path_to."/".$file, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude);
+					self::CopyDirFiles($path_from."/".$file, $path_to."/".$file, $ReWrite, $Recursive, $bDeleteAfterCopy, $Exclude, $ExcludePath, $arExcludePath);
 					if ($bDeleteAfterCopy)
 						@rmdir($path_from."/".$file);
 				}
@@ -2138,8 +2191,9 @@ HELP;
 		$this->_releaseDir = $this->_docRootDir.$this->_releaseFolder;
 		uksort($arReleasesList['RELEASES_LIST'], 'OBX_Build::compareVersions');
 		foreach($arReleasesList['RELEASES_LIST'] as $version => $arRelease) {
-			if( !is_dir($this->_releaseDir.'/release-'.$version) ) {
-				echo 'ОШИБКА: Выпуск '.$this->_moduleName.'-'.$version.' не найден в папке сборки релизов'
+			if( $arRelease['STATE'] == 'done' && !is_dir($this->_releaseDir.'/release-'.$version) ) {
+				echo 'ОШИБКА: Выпуск '.$this->_moduleName.'-'.$version.' помечен как готовый(state: done),'
+					.' но не найден в папке сборки релизов'
 					.' ('.$this->_releaseFolder.'). Выпуск пропущен.'."\n";
 				continue;
 			}
@@ -2151,6 +2205,22 @@ HELP;
 					.'. Данная версия не найдена в списке выпусков. Выпуск пропущен.'."\n";
 				continue;
 			}
+
+			if( !empty($arReleasesList['EXCLUDE']) ) {
+				foreach($arReleasesList['EXCLUDE'] as $exclude4All) {
+					if(!in_array($exclude4All, $arRelease['EXCLUDE'])) {
+						$arRelease['EXCLUDE'][] = $exclude4All;
+					}
+				}
+			}
+			if( !empty($arReleasesList['EXCLUDE_PATH']) ) {
+				foreach($arReleasesList['EXCLUDE_PATH'] as $excludePath4All) {
+					if(!in_array($excludePath4All, $arRelease['EXCLUDE_PATH'])) {
+						$arRelease['EXCLUDE_PATH'][] = $excludePath4All;
+					}
+				}
+			}
+
 			$this->_arReleases[$version] = $arRelease;
 			if( $arRelease['STATE'] == 'done' ) {
 				$this->_lastPubReleaseVersion = $version;
@@ -2160,15 +2230,26 @@ HELP;
 
 	public function makeRelease() {
 		echo 'Выпуск '.$this->_moduleName.'-'.$this->_version."\n";
+		if( !array_key_exists($this->_version, $this->_arReleases) ) {
+			echo 'Ошибка: версия выпуска '.$this->_version.' не найдена в конфигурации сборки выпусков (возможно необходимо перевести в state: develop)'."\n";
+			return false;
+		}
 		if( self::compareVersions($this->_version, $this->_lastPubReleaseVersion) <= 0 ) {
 			echo 'ОШИБКА: Текущая версия модуля ('.$this->_version.') должна быть больше последней версии опубликованного выпуска ('.$this->_lastPubReleaseVersion.')'."\n";
 			return false;
 		}
 		self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version);
+		$arExclude = array_merge(array('.git', 'modules'), $this->_arReleases[$this->_version]['EXCLUDE']);
+		$arExcludePath = array_merge($this->_arReleases[$this->_version]['EXCLUDE_PATH']);
+		foreach($arExcludePath as &$excludePathEntry) {
+			if( substr($excludePathEntry, 0, 1) == '/' ) {
+				$excludePathEntry = $this->_docRootDir.$excludePathEntry;
+			}
+		}
 		self::CopyDirFilesEx(
 			$this->_selfDir
 			,$this->_releaseDir.'/release-'.$this->_version
-			,true, true, FALSE, array('.git', 'modules')
+			,true, true, FALSE, $arExclude, $arExcludePath
 		);
 		$this->removeSQLFileComments($this->_releaseFolder.'/release-'.$this->_version.'/install/db/');
 		foreach($this->_arDepModules as $Dependency) {
