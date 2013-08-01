@@ -486,7 +486,10 @@ class OBX_Build {
 							'DESCRIPTION' => array(),
 						);
 					}
-					list($releaseOpt, $releaseOptValue) = explode(':', $strResourceLine);
+					list($releaseOpt, $releaseOptValue, $ifIsSetThisMayBeMultiline) = explode(':', $strResourceLine);
+					if(!empty($ifIsSetThisMayBeMultiline)) {
+						$releaseOptValue = substr($strResourceLine, strlen($releaseOpt.':'));
+					}
 					$releaseOpt = trim($releaseOpt);
 					$releaseOptValue = trim($releaseOptValue);
 					if($releaseOpt == 'update_from') {
@@ -2231,7 +2234,7 @@ HELP;
 	public function makeRelease() {
 		echo 'Выпуск '.$this->_moduleName.'-'.$this->_version."\n";
 		if( !array_key_exists($this->_version, $this->_arReleases) ) {
-			echo 'Ошибка: версия выпуска '.$this->_version.' не найдена в конфигурации сборки выпусков (возможно необходимо перевести в state: develop)'."\n";
+			echo 'Ошибка: версия выпуска '.$this->_version.' не найдена в конфигурации сборки выпусков'."\n";
 			return false;
 		}
 		if( self::compareVersions($this->_version, $this->_lastPubReleaseVersion) <= 0 ) {
