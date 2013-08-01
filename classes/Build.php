@@ -2588,7 +2588,7 @@ HELP;
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
 				$updateDelListCode .= "\t\"".trim(str_replace(array('/./', '//'. '\\'), '/', '/'.$delFSEntry), '/')."\",\n";
-				if( strpos($modFSEntry, './install/modules/') === 0 ) {
+				if( strpos($delFSEntry, './install/modules/') === 0 ) {
 					continue;
 				}
 				$updateDelFilesAsDepCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
