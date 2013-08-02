@@ -209,6 +209,8 @@ class JSMessages
 		$jsString = '';
 		foreach( $refNode as $nodeName => &$message ) {
 			if( is_string($message) ) {
+				$message = str_replace('\\', '\\\\', $message);
+				$message = str_replace(array('"', '\'',), array('\\"', '\\\''), $message);
 				$jsString .= $parentDomainChain.'.'.$nodeName.' = "'.$message.'";'."\n";
 			}
 			elseif( is_array($message) ) {
