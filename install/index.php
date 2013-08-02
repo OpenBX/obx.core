@@ -52,10 +52,10 @@ class obx_core extends CModule
 		$this->moduleDir = substr($this->installDir , 0, strlen($this->installDir ) - 8);
 		$this->bxModulesDir = $_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules";
 
-		$arModuleInfo = array();
-		$arModuleInfo = include($this->installDir."/version.php");
-		$this->MODULE_VERSION = $arModuleInfo["VERSION"];
-		$this->MODULE_VERSION_DATE = $arModuleInfo["VERSION_DATE"];
+		$arModuleVersion = array();
+		$arModuleVersion = include($this->installDir."/version.php");
+		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
+		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 
 		$this->MODULE_NAME = GetMessage("OBX_MODULE_INSTALL_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("OBX_MODULE_INSTALL_DESCRIPTION");

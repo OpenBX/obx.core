@@ -8,8 +8,8 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-$arModuleInfo = array(
+$arModuleVersion = array(
 	"VERSION" => "0.9.3",
 	"VERSION_DATE" => "2013-08-01",
 );
-return $arModuleInfo;
+return $arModuleVersion;
