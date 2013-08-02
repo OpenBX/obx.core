@@ -2682,9 +2682,9 @@ DOC;
 			) {
 				continue;
 			}
-			self::CopyDirFilesEx(
+			self::CopyDirFiles(
 				$this->_releaseDir.'/update-'.$versionTo.'/'.$updateFSEntry
-				,$this->_releaseDir.'/build/'.$versionTo
+				,$this->_releaseDir.'/build/'.$versionTo.'/'.$updateFSEntry
 				,true, true, FALSE, '.git'
 			);
 		}
