@@ -2380,19 +2380,37 @@ HELP;
 		$path = $this->_docRootDir.$relPath;
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
+			$fsEntryExt = substr($fsEntry, strrpos($fsEntry, '.'));
 			if(
 				$target == self::ICONV_ALL_FILES
 				|| (
 					$target == self::ICONV_PHP_FILES
-					&& substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry)) == '.php'
+					&& $fsEntryExt == '.php'
 				)
 				|| (
 					$target == self::ICONV_LANG_FILES
-					&& substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry)) == '.php'
+					&& $fsEntryExt == '.php'
 					&& strpos($relPath, '/ru/') !== false
 				)
 			) {
 				$content = file_get_contents($path);
+				// [pronix:2013-08-03] +++
+				// Вот тут тонкий момент
+				// Если xml-файлы находятся в подпапке /ru/ , то они будут перекодированы в системой МаркетПлейса
+				// 		При этом надо обязательно поменять заголовки файлов с UTF-8 на windows-1251
+				//		потому что битрикс ковертирует во время иморта строки из UTF-8 в 1251,
+				//		если сам битрикс в 1251, а заголовок UTF-8
+				//		!! Однако если битрикс и xml-файл в кодировке UTF-8, то, заголовок windows-1251 допускается :)
+				if(
+					$fsEntryExt == '.xml' && strpos($relPath, '/ru/') !== false
+					&& $from == 'UTF-8' && strpos($content,  '<'.'?xml version="1.0" encoding="UTF-8"?>') !== false
+				) {
+					$content = str_replace(
+						 '<'.'?xml version="1.0" encoding="UTF-8"?>'
+						,'<'.'?xml version="1.0" encoding="windows-1251"?>'
+						,$content
+					);
+				}
 				$content = iconv($from, $to, $content);
 				if($content === false) {
 					echo 'Ошибка: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
@@ -2503,10 +2521,6 @@ HELP;
 				if(
 					preg_match('~^description\.[a-z]{2}$~', $updateFSEntry)
 					|| strpos($updateFSEntry, 'updater.') !== false
-					|| strpos($updateFSEntry, '_upmod.') !== false
-					|| strpos($updateFSEntry, '_updep.') !== false
-					|| strpos($updateFSEntry, 'updep.') !== false
-					|| strpos($updateFSEntry, 'upd.custom.') !== false
 				) {
 					continue;
 				}
@@ -2530,9 +2544,13 @@ HELP;
 
 		$genPhpFileHead = '<'."?php\n"
 			."// Файл сгенерирован. Не редактируйте! \n"
-			."// Используйте upd.custom.(after|before).php \n";
+			."// Используйте updater.custom.(after|before).php \n"
+		;
+		$genUtilGenPhpFileHead = 'global $__runAutoGenUpdater; '."\n"
+			.'if( !isset($__runAutoGenUpdater) || $__runAutoGenUpdater !== true ) return true;'."\n";
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
 			$updateFilesCode = $genPhpFileHead;
+			$updateFilesCode .= $genUtilGenPhpFileHead;
 			$updateFilesCode .= '$errorMessage = "";'."\n";
 			$updateFilesAsDepCode = $updateFilesCode;
 			foreach($arChanges['NEW'] as $newFSEntry) {
@@ -2579,14 +2597,14 @@ HELP;
 			}
 			$updateFilesCode .= "\n".'return $errorMessage;?'.'>';
 			$updateFilesAsDepCode .= "\n".'return $errorMessage;?'.'>';
-			file_put_contents($updateDir.'/_upmod.files.php', $updateFilesCode);
-			file_put_contents($updateDir.'/_updep.files.php', $updateFilesAsDepCode);
+			file_put_contents($updateDir.'/updater.mod.files.php', $updateFilesCode);
+			file_put_contents($updateDir.'/updater.dep.files.php', $updateFilesAsDepCode);
 		}
 		if(!empty($arChanges['DELETED'])) {
-			$updateDelFilesCode = $genPhpFileHead;
-			$updateDelFilesAsDepCode = $genPhpFileHead;
-			$updateDelListCode = $genPhpFileHead."return array(\n";
-			$updateDelListAsDepCode = $genPhpFileHead."return array(\n";
+			$updateDelFilesCode = $genPhpFileHead.$genUtilGenPhpFileHead;
+			$updateDelFilesAsDepCode = $genPhpFileHead.$genUtilGenPhpFileHead;
+			$updateDelListCode = $genPhpFileHead.$genUtilGenPhpFileHead."return array(\n";
+			$updateDelListAsDepCode = $genPhpFileHead.$genUtilGenPhpFileHead."return array(\n";
 			foreach($arChanges['DELETED'] as $delFSEntry) {
 				$updateDelFilesCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
@@ -2604,60 +2622,69 @@ HELP;
 			$updateDelFilesAsDepCode .= "\n?".'>';
 			$updateDelListCode .= ");?".">";
 			$updateDelListAsDepCode .= ");?".">";
-			file_put_contents($updateDir.'/_upmod.delete.files.php', $updateDelFilesCode);
-			file_put_contents($updateDir.'/_updep.delete.files.php', $updateDelFilesAsDepCode);
-			file_put_contents($updateDir.'/_upmod.delete.list.php', $updateDelListCode);
-			file_put_contents($updateDir.'/_updep.delete.list.php', $updateDelListAsDepCode);
+			file_put_contents($updateDir.'/updater.mod.delete.files.php', $updateDelFilesCode);
+			file_put_contents($updateDir.'/updater.dep.delete.files.php', $updateDelFilesAsDepCode);
+			file_put_contents($updateDir.'/updater.mod.delete.list.php', $updateDelListCode);
+			file_put_contents($updateDir.'/updater.dep.delete.list.php', $updateDelListAsDepCode);
 		}
 
 		$updaterFilesDoc = <<<DOC
 //
-// _upmod.*		- скрипты выполняемые штатным обновлятором битрикс
-// _updep.*		- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
-//						например obx.market обновляется и запускает обновление для мододуля obx.core
-//						выполнятся файлы
-//						/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/_updep.*.php
-//						/папка/обновления может быть
-//							/bitrix/updates/obx.market-версия
-//							или /bitrix/modules/obx.market/update-версия - в случае установки супермодуля (obx.market)
-//							когда супер-модуль устанавливается, он проверяет установлены ли подмодули
-//							и если нужно обновляет их
+// updater.mod.*		- скрипты выполняемые штатным обновлятором битрикс
+// updater.dep.*		- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
+//							например obx.market обновляется и запускает обновление для мододуля obx.core
+//							выполнятся файлы
+//							/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/updater.dep.*.php
+//							/папка/обновления может быть
+//								/bitrix/updates/obx.market-версия
+//								или /bitrix/modules/obx.market/update-версия - в случае установки супермодуля (obx.market)
+//								когда супер-модуль устанавливается, он проверяет установлены ли подмодули
+//								и если нужно обновляет их
 //
 //
 // Служебные файлы / Эти файлы запускаются автоматически
-// _up[dep|mod].delete.files.php	- Удаляет устаревшие файлы в модуле
-// _up[dep|mod].delete.list.php		- Возвращает список файлов для удаления (пути относительно папки с обновлением)
-// _up[dep|mod].files.php			- Копирует новые/изм. файлы из папки обновления в модуль
+// updater.[dep|mod].delete.files.php	- Удаляет устаревшие файлы в модуле
+// updater.[dep|mod].delete.list.php	- Возвращает список файлов для удаления (пути относительно папки с обновлением)
+// updater.[dep|mod].files.php			- Копирует новые/изм. файлы из папки обновления в модуль
 //
-// updater.php				- файл запускаемый системой обновления битрикса. Подключает Служебные файлы
-// updep.php				- файл запускаемый системой обновления супер-модуля. Подключает Служебные файлы
+// updater.php						- файл запускаемый системой обновления битрикса. Подключает Служебные файлы
+// updater.dep.php					- файл запускаемый системой обновления супер-модуля. Подключает Служебные файлы
 //
 // Эти скрипты общие как для обновлятора битрикс, так и для обновлятора супер-модуля
-// upd.custom.before.php		- Запускается до Служебных файлов
-// upd.custom.after.php			- Запускается после Служебных файлов
+// updater.custom.before.php		- Запускается до Служебных файлов
+// updater.custom.after.php			- Запускается после Служебных файлов
 
+// ==========================================
+// ==== Место для вашего кода обновления ====
+// ==========================================
 DOC;
 
-		if(!file_exists($updateDir.'/upd.custom.before.php')) {
-			file_put_contents($updateDir.'/upd.custom.before.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
+		if(!file_exists($updateDir.'/updater.custom.before.php')) {
+			file_put_contents($updateDir.'/updater.custom.before.php', "<"."?php\n".$genUtilGenPhpFileHead.$updaterFilesDoc."\n?".">");
 		}
-		if(!file_exists($updateDir.'/upd.custom.after.php')) {
-			file_put_contents($updateDir.'/upd.custom.after.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
+		if(!file_exists($updateDir.'/updater.custom.after.php')) {
+			file_put_contents($updateDir.'/updater.custom.after.php', "<"."?php\n".$genUtilGenPhpFileHead.$updaterFilesDoc."\n?".">");
 		}
 		file_put_contents($updateDir.'/updater.php',
 			$genPhpFileHead
-			.'require dirname(__FILE__)."/upd.custom.before.php";'."\n"
-			.'require dirname(__FILE__)."/_upmod.delete.files.php";'."\n"
-			.'require dirname(__FILE__)."/_upmod.files.php";'."\n"
-			.'require dirname(__FILE__)."/upd.custom.after.php";'."\n"
+			.'global $__runAutoGenUpdater; $__runAutoGenUpdater = true;'."\n"
+			.'global $__runUpdaterFrom; $__runUpdaterFrom = "BitrixUpdater";'."\n"
+			.'require dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php";'."\n"
+			.'require dirname(__FILE__)."/updater'.$versionTo.'.mod.delete.files.php";'."\n"
+			.'require dirname(__FILE__)."/updater'.$versionTo.'.mod.files.php";'."\n"
+			.'require dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php";'."\n"
+			.'unset($__runAutoGenUpdater, $__runUpdaterFrom);'
 			.'?'.'>'
 		);
-		file_put_contents($updateDir.'/updep.php',
+		file_put_contents($updateDir.'/updater.dep.php',
 			$genPhpFileHead
-			.'require dirname(__FILE__)."/upd.custom.before.php";'."\n"
-			.'require dirname(__FILE__)."/_updep.delete.files.php";'."\n"
-			.'require dirname(__FILE__)."/_updep.files.php";'."\n"
-			.'require dirname(__FILE__)."/upd.custom.after.php";'."\n"
+			.$genUtilGenPhpFileHead
+			.'global $__runUpdaterFrom; $__runUpdaterFrom = "SuperModuleUpdater";'."\n"
+			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
+			.'require dirname(__FILE__)."/updater.dep.delete.files.php";'."\n"
+			.'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
+			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
+			.'unset($__runUpdaterFrom);'
 			.'?'.'>'
 		);
 	}
