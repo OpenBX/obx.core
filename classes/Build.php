@@ -2616,7 +2616,7 @@ HELP;
 // _updep.*		- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
 //						например obx.market обновляется и запускает обновление для мододуля obx.core
 //						выполнятся файлы
-//						/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/updater.dep.*.php
+//						/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/_updep.*.php
 //						/папка/обновления может быть
 //							/bitrix/updates/obx.market-версия
 //							или /bitrix/modules/obx.market/update-версия - в случае установки супермодуля (obx.market)
