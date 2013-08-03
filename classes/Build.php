@@ -1757,7 +1757,7 @@ OPTIONS
          Выявляет наличие языкового текста там, где должны быть GetMessage('LANG_CODE')
     --make-release
          Собирка файлов выпуска
-    --build-release
+    --build-release[=version]
          Сборка архива с выпуском для загрузки в МаркетПлейс Битрикс
     --make-update[=versionFrom+versionTo]
          Сборка файлов обновления,
@@ -2366,7 +2366,11 @@ HELP;
 					:''
 				)
 				.'tar czvf release-'.$version.'.tar.gz .last_version > /dev/null;'."\n"
-				.'ln -sf release-'.$version.'.tar.gz .last_version.tar.gz;'."\n"
+				.(file_exists($this->_releaseDir.'/build/.last_version.tar.gz')
+					?'rm .last_version.tar.gz;'."\n"
+					:''
+				)
+				.'ln -s release-'.$version.'.tar.gz .last_version.tar.gz;'."\n"
 			;
 			shell_exec($shellCommand);
 		}
@@ -2378,11 +2382,19 @@ HELP;
 	public function iconvFiles($relPath, $target = self::ICONV_ALL_FILES, $from = 'UTF-8', $to = 'CP1251') {
 		$relPath = str_replace(array('//', '\\', '/./'), '/', rtrim($relPath, '/'));
 		$path = $this->_docRootDir.$relPath;
+		static $arAllFilesExt = null;
+		if($arAllFilesExt === null) {
+			$arAllFilesExt = array(
+				'.php', '.js', '.html', '.css', '.less', '.tmpl', '.sql',
+			);
+		}
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
-			$fsEntryExt = substr($fsEntry, strrpos($fsEntry, '.'));
+			$fsEntryExt = strtolower(substr($fsEntry, strrpos($fsEntry, '.')));
 			if(
-				$target == self::ICONV_ALL_FILES
+				($target == self::ICONV_ALL_FILES
+					&& in_array($fsEntryExt, $arAllFilesExt)
+				)
 				|| (
 					$target == self::ICONV_PHP_FILES
 					&& $fsEntryExt == '.php'
@@ -2417,8 +2429,8 @@ HELP;
 					return false;
 				}
 				file_put_contents($path, $content);
-				return true;
 			}
+			return true;
 		}
 		elseif(is_dir($path)) {
 			$dir = opendir($path);
