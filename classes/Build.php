@@ -2503,6 +2503,10 @@ HELP;
 				if(
 					preg_match('~^description\.[a-z]{2}$~', $updateFSEntry)
 					|| strpos($updateFSEntry, 'updater.') !== false
+					|| strpos($updateFSEntry, '_upmod.') !== false
+					|| strpos($updateFSEntry, '_updep.') !== false
+					|| strpos($updateFSEntry, 'updep.') !== false
+					|| strpos($updateFSEntry, 'upd.custom.') !== false
 				) {
 					continue;
 				}
@@ -2526,7 +2530,7 @@ HELP;
 
 		$genPhpFileHead = '<'."?php\n"
 			."// Файл сгенерирован. Не редактируйте! \n"
-			."// Используйте updater.custom.(after|before).php \n";
+			."// Используйте upd.custom.(after|before).php \n";
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
 			$updateFilesCode = $genPhpFileHead;
 			$updateFilesCode .= '$errorMessage = "";'."\n";
@@ -2575,8 +2579,8 @@ HELP;
 			}
 			$updateFilesCode .= "\n".'return $errorMessage;?'.'>';
 			$updateFilesAsDepCode .= "\n".'return $errorMessage;?'.'>';
-			file_put_contents($updateDir.'/updater.files.php', $updateFilesCode);
-			file_put_contents($updateDir.'/updater.dep.files.php', $updateFilesAsDepCode);
+			file_put_contents($updateDir.'/_upmod.files.php', $updateFilesCode);
+			file_put_contents($updateDir.'/_updep.files.php', $updateFilesAsDepCode);
 		}
 		if(!empty($arChanges['DELETED'])) {
 			$updateDelFilesCode = $genPhpFileHead;
@@ -2600,16 +2604,16 @@ HELP;
 			$updateDelFilesAsDepCode .= "\n?".'>';
 			$updateDelListCode .= ");?".">";
 			$updateDelListAsDepCode .= ");?".">";
-			file_put_contents($updateDir.'/updater.delete.files.php', $updateDelFilesCode);
-			file_put_contents($updateDir.'/updater.dep.delete.files.php', $updateDelFilesAsDepCode);
-			file_put_contents($updateDir.'/updater.delete.list.php', $updateDelListCode);
-			file_put_contents($updateDir.'/updater.dep.delete.list.php', $updateDelListAsDepCode);
+			file_put_contents($updateDir.'/_upmod.delete.files.php', $updateDelFilesCode);
+			file_put_contents($updateDir.'/_updep.delete.files.php', $updateDelFilesAsDepCode);
+			file_put_contents($updateDir.'/_upmod.delete.list.php', $updateDelListCode);
+			file_put_contents($updateDir.'/_updep.delete.list.php', $updateDelListAsDepCode);
 		}
 
 		$updaterFilesDoc = <<<DOC
 //
-// updater.*		- скрипты выполняемые штатным обновлятором битрикс
-// updater.dep.*	- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
+// _upmod.*		- скрипты выполняемые штатным обновлятором битрикс
+// _updep.*		- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
 //						например obx.market обновляется и запускает обновление для мододуля obx.core
 //						выполнятся файлы
 //						/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/updater.dep.*.php
@@ -2621,38 +2625,39 @@ HELP;
 //
 //
 // Служебные файлы / Эти файлы запускаются автоматически
-// updater[.dep].delete.files.php	- Удаляет устаревшие файлы в модуле
-// updater[.dep].delete.list.php	- Возвращает список файлов для удаления (пути относительно папки с обновлением)
-// updater[.dep].files.php			- Копирует новые/изм. файлы из папки обновления в модуль
+// _up[dep|mod].delete.files.php	- Удаляет устаревшие файлы в модуле
+// _up[dep|mod].delete.list.php		- Возвращает список файлов для удаления (пути относительно папки с обновлением)
+// _up[dep|mod].files.php			- Копирует новые/изм. файлы из папки обновления в модуль
 //
-// updater[.dep].php				- файл запускаемый системой обновления (битриксом или подмодулем). Подключает Служебные файлы
+// updater.php				- файл запускаемый системой обновления битрикса. Подключает Служебные файлы
+// updep.php				- файл запускаемый системой обновления супер-модуля. Подключает Служебные файлы
 //
 // Эти скрипты общие как для обновлятора битрикс, так и для обновлятора супер-модуля
-// updater.custom.before.php		- Запускается до Служебных файлов
-// updater.custom.after.php			- Запускается после Служебных файлов
+// upd.custom.before.php		- Запускается до Служебных файлов
+// upd.custom.after.php			- Запускается после Служебных файлов
 
 DOC;
 
-		if(!file_exists($updateDir.'/updater.custom.before.php')) {
-			file_put_contents($updateDir.'/updater.custom.before.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
+		if(!file_exists($updateDir.'/upd.custom.before.php')) {
+			file_put_contents($updateDir.'/upd.custom.before.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
 		}
-		if(!file_exists($updateDir.'/updater.custom.after.php')) {
-			file_put_contents($updateDir.'/updater.custom.after.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
+		if(!file_exists($updateDir.'/upd.custom.after.php')) {
+			file_put_contents($updateDir.'/upd.custom.after.php', "<"."?php\n".$updaterFilesDoc."\n?".">");
 		}
 		file_put_contents($updateDir.'/updater.php',
-			'<'."?php // Файл сгенерирован. Не редактировать! \n // Используйте updater.custom.(after|before).php \n"
-			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
-			.'require dirname(__FILE__)."/updater.delete.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
+			$genPhpFileHead
+			.'require dirname(__FILE__)."/upd.custom.before.php";'."\n"
+			.'require dirname(__FILE__)."/_upmod.delete.files.php";'."\n"
+			.'require dirname(__FILE__)."/_upmod.files.php";'."\n"
+			.'require dirname(__FILE__)."/upd.custom.after.php";'."\n"
 			.'?'.'>'
 		);
-		file_put_contents($updateDir.'/updater.dep.php',
-			'<'."?php // Файл сгенерирован. Не редактировать! \n // Используйте updater.custom.(after|before).php \n"
-			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
-			.'require dirname(__FILE__)."/updater.dep.delete.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
+		file_put_contents($updateDir.'/updep.php',
+			$genPhpFileHead
+			.'require dirname(__FILE__)."/upd.custom.before.php";'."\n"
+			.'require dirname(__FILE__)."/_updep.delete.files.php";'."\n"
+			.'require dirname(__FILE__)."/_updep.files.php";'."\n"
+			.'require dirname(__FILE__)."/upd.custom.after.php";'."\n"
 			.'?'.'>'
 		);
 	}
