@@ -2393,7 +2393,10 @@ HELP;
 			$fsEntryExt = strtolower(substr($fsEntry, strrpos($fsEntry, '.')));
 			if(
 				($target == self::ICONV_ALL_FILES
-					&& in_array($fsEntryExt, $arAllFilesExt)
+					&& (
+						in_array($fsEntryExt, $arAllFilesExt)
+						|| $fsEntry == 'description.ru'
+					)
 				)
 				|| (
 					$target == self::ICONV_PHP_FILES
