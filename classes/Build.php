@@ -486,12 +486,13 @@ class OBX_Build {
 							'DESCRIPTION' => array(),
 						);
 					}
-					list($releaseOpt, $releaseOptValue, $ifIsSetThisMayBeMultiline) = explode(':', $strResourceLine);
-					if(!empty($ifIsSetThisMayBeMultiline)) {
-						$releaseOptValue = substr($strResourceLine, strlen($releaseOpt.':'));
+					$arResourceLineByColon = explode(':', $strResourceLine);
+					if( !is_array($arResourceLineByColon) ) {
+						continue;
 					}
-					$releaseOpt = trim($releaseOpt);
-					$releaseOptValue = trim($releaseOptValue);
+
+					$releaseOpt = trim(array_shift($arResourceLineByColon));
+					$releaseOptValue = trim(implode(':', $arResourceLineByColon));
 					if($releaseOpt == 'update_from') {
 						$arUpdateFromVersion = self::readVersion($releaseOptValue);
 						if(!empty($arUpdateFromVersion)) {
