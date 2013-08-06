@@ -9,7 +9,12 @@
  ***********************************************/
 
 $arModuleVersion = array(
-	"VERSION" => "0.9.3",
-	"VERSION_DATE" => "2013-08-01",
+	"VERSION" => "1.0.0",
+	"VERSION_DATE" => "2013-08-06",
 );
 return $arModuleVersion;
+
+/**
+ * [1.0.0]
+ * | * Стабилизирован релиз
+ */
