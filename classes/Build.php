@@ -2562,8 +2562,8 @@ HELP;
 			."// Файл сгенерирован. Не редактируйте! \n"
 			."// Используйте updater.custom.(after|before).php \n"
 		;
-		$genUtilGenPhpFileHead = 'global $__runAutoGenUpdater; '."\n"
-			.'if( !isset($__runAutoGenUpdater) || $__runAutoGenUpdater !== true ) return true;'."\n";
+		$genUtilGenPhpFileHead = ''
+			.'if( !array_key_exists("__runAutoGenUpdater", $GLOBALS) || $GLOBALS["__runAutoGenUpdater"] !== true ) return true;'."\n";
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED'])) {
 			$updateFilesCode = $genPhpFileHead;
 			$updateFilesCode .= $genUtilGenPhpFileHead;
@@ -2683,24 +2683,24 @@ DOC;
 		}
 		file_put_contents($updateDir.'/updater.php',
 			$genPhpFileHead
-			.'global $__runAutoGenUpdater; $__runAutoGenUpdater = true;'."\n"
-			.'global $__runUpdaterFrom; $__runUpdaterFrom = "BitrixUpdater";'."\n"
+			.'$GLOBALS["__runAutoGenUpdater"] = true;'."\n"
+			.'$GLOBALS["__runUpdaterFrom"] = "BitrixUpdater";'."\n"
 			.'require dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php";'."\n"
 			.'require dirname(__FILE__)."/updater'.$versionTo.'.mod.delete.files.php";'."\n"
 			.'require dirname(__FILE__)."/updater'.$versionTo.'.mod.files.php";'."\n"
 			.'require dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php";'."\n"
-			.'unset($__runAutoGenUpdater, $__runUpdaterFrom);'
+			.'unset($GLOBALS["__runAutoGenUpdater"], $GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
 		file_put_contents($updateDir.'/updater.dep.php',
 			$genPhpFileHead
 			.$genUtilGenPhpFileHead
-			.'global $__runUpdaterFrom; $__runUpdaterFrom = "SuperModuleUpdater";'."\n"
+			.'$GLOBALS["__runUpdaterFrom"] = "SuperModuleUpdater";'."\n"
 			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
 			.'require dirname(__FILE__)."/updater.dep.delete.files.php";'."\n"
 			.'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
 			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
-			.'unset($__runUpdaterFrom);'
+			.'unset($GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
 	}
