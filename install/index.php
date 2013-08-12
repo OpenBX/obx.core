@@ -1,4 +1,5 @@
-<?php
+<?
+
 /***********************************************
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
