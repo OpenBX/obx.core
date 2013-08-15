@@ -374,7 +374,11 @@ class OBX_Build {
 					continue;
 				}
 				$arResource['OPTIONS'] = array(
+					// Только производит сборку внутрь модуля, но не генерирует правила для установки и удаления
 					'BUILD_ONLY' => false,
+					// Только генерирует правила установки и удаления, но не производит сборку внутрь модуля
+					'INSTALL_ONLY' => false,
+					// Не негерировать правила удаления, только установки
 					'NOT_UNINSTALL' => false
 				);
 				if( strpos($arTmpResource[0], "!") !== false ) {
@@ -689,6 +693,9 @@ class OBX_Build {
 		}
 		if( count($this->_arResources)>0 ) {
 			foreach($this->_arResources as &$arResource) {
+				if($arResource['OPTIONS']['INSTALL_ONLY']) {
+					continue;
+				}
 				if(
 					$arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install'
 					&& $arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install/'
@@ -702,6 +709,9 @@ class OBX_Build {
 				}
 			}
 			foreach($this->_arResources as &$arResource) {
+				if($arResource['INSTALL_ONLY']) {
+					continue;
+				}
 				foreach($arResource['FILES'] as $fsEntryName) {
 					if( ! is_dir($this->_docRootDir.$arResource['INSTALL_FOLDER']) ) {
 						@mkdir($this->_docRootDir.$arResource['INSTALL_FOLDER'], BX_DIR_PERMISSIONS, true);
@@ -827,35 +837,43 @@ class OBX_Build {
 	public function generateBackInstallCode() {
 		$backInstallFile = 'get_back_installed_files.php';
 		$backInstallCode = '';
-		if( count($this->_arDepModules) ) {
-			foreach($this->_arDepModules as $DependencyModule) {
-				$depBackInstallFilePathCode =
-					'$_SERVER["DOCUMENT_ROOT"]'
-						.'.BX_ROOT."/modules/'
-						.$DependencyModule->getModuleName()
-						.'/install/'.$backInstallFile.'"';
-				$backInstallCode .=
-					'if( is_file('.$depBackInstallFilePathCode.') ) {'."\n"
-					."\t".'require_once '.$depBackInstallFilePathCode.";\n"
-					."}\n";
-				$backInstallCode .= 'DeleteDirFilesEx("'
-					.'/bitrix/modules/'.$this->getModuleName()
-					.'/install/modules/'.$DependencyModule->getModuleName()
-				.'");'."\n";
-				$backInstallCode .=
-					'OBX_CopyDirFilesEx('
-						.'$_SERVER["DOCUMENT_ROOT"]'
-							.'.BX_ROOT'
-							.'."/modules/'.$DependencyModule->getModuleName().'"'
-						.', $_SERVER["DOCUMENT_ROOT"]'
-							.'.BX_ROOT'
-							.'."/modules/'.$this->_moduleName
-							.'/install/modules/"'
-						.', true, true, FALSE, "modules");'."\n";
-			}
-		}
+		// [pronix:2013-08-15]
+		// Этот код больше не актуален, это надо было закомментировать ешё 2013-07-26
+		// +++
+		////if( count($this->_arDepModules) ) {
+		////	foreach($this->_arDepModules as $DependencyModule) {
+		////		$depBackInstallFilePathCode =
+		////			'$_SERVER["DOCUMENT_ROOT"]'
+		////				.'.BX_ROOT."/modules/'
+		////				.$DependencyModule->getModuleName()
+		////				.'/install/'.$backInstallFile.'"';
+		////		$backInstallCode .=
+		////			'if( is_file('.$depBackInstallFilePathCode.') ) {'."\n"
+		////			."\t".'require_once '.$depBackInstallFilePathCode.";\n"
+		////			."}\n";
+		////		$backInstallCode .= 'DeleteDirFilesEx("'
+		////			.'/bitrix/modules/'.$this->getModuleName()
+		////			.'/install/modules/'.$DependencyModule->getModuleName()
+		////		.'");'."\n";
+		////		$backInstallCode .=
+		////			'OBX_CopyDirFilesEx('
+		////				.'$_SERVER["DOCUMENT_ROOT"]'
+		////					.'.BX_ROOT'
+		////					.'."/modules/'.$DependencyModule->getModuleName().'"'
+		////				.', $_SERVER["DOCUMENT_ROOT"]'
+		////					.'.BX_ROOT'
+		////					.'."/modules/'.$this->_moduleName
+		////					.'/install/modules/"'
+		////				.', true, true, FALSE, "modules");'."\n";
+		////	}
+		////}
+		// ^^^
+
 		if( count($this->_arResources)>0 ) {
 			foreach($this->_arResources as &$arResource) {
+				if($arResource['OPTIONS']['INSTALL_ONLY']) {
+					continue;
+				}
 				if(
 					$arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install'
 					&& $arResource['INSTALL_FOLDER'] != '/bitrix/modules/'.$this->getModuleName().'/install/'
@@ -870,6 +888,9 @@ class OBX_Build {
 			}
 			$arFolderCreated = array();
 			foreach($this->_arResources as &$arResource) {
+				if($arResource['OPTIONS']['INSTALL_ONLY']) {
+					continue;
+				}
 				foreach($arResource['FILES'] as $fsEntryName) {
 					if( !in_array($arResource['INSTALL_FOLDER'], $arFolderCreated) ) {
 						$backInstallCode .= 'if( ! is_dir($_SERVER["DOCUMENT_ROOT"]."'.$arResource['INSTALL_FOLDER'].'") ) {'
