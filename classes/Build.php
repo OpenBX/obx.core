@@ -1721,8 +1721,91 @@ if(!defined("BX_ROOT")) {
 	}
 
 
-	public function processCommandOptions() {
-		$arCommandOptions = getopt('bfh', array(
+	static protected function cliGetPrintHelp($bFull = false){
+		$scriptName = basename($_SERVER['argv'][0]);
+		$whiteSpace = str_repeat(' ', strlen($scriptName));
+		$helpText = <<<HELP
+$scriptName [--module=MODULE_ID,...]
+$scriptName [bfh] [--help] [--build] [--full]
+$whiteSpace [--iblock-cml[=ibcode1,ibcode2...]] [--iblock-form-settings[=ibcode1,ibcode2...]]
+$whiteSpace [--raw-lang-check] [--replace-cmp-params]
+$whiteSpace [--build-release] [--build-release]
+$whiteSpace [--make-update[=versionFrom+versionTo]] [--build-update]
+$whiteSpace --help full help text
+HELP;
+		if($bFull === true) {
+			$helpText .= <<<HELP
+
+SHORT OPTIONS
+    -h: alias --help but gets full help text
+    -b: alias --build
+    -f: alias --full
+OPTIONS
+    --module=MODULE_ID
+         Устанавливает модуль(и) для которыз будут применены действия
+    --build
+         Собирает файлы из установленного битрикса внутрь модуля
+    --full
+         alias: --build --iblock-cml --iblock-form-settings
+    --replace-cmp-params=[config_path]
+         Заменяет параметры компонентов собранной публички на плейсхолдеры
+         Возможно явно указать путь до конфига с параметрами
+         Так же выполняется внутри --build
+    --iblock-cml[=ibcode1,ibcode2...]
+         Экспортировать xml-данные инфоблоков модуля
+    --iblock-form-settings[=ibcode1,ibcode2...]
+         Экспортировать настройки форм редактирования инфоблоков модуля
+    --raw-lang-check
+         Выявляет проверку на наличие языкового текста там, где должны быть GetMessage('LANG_CODE')
+    --make-release
+         Сборка файлов выпуска
+    --build-release[=version]
+         Сборка архива с выпуском для загрузки в МаркетПлейс Битрикс
+    --make-update[=versionFrom+versionTo]
+         Сборка файлов обновления,
+            где versionFrom - версия выпуска, от которого происходит обновление
+            и versionTo - версия, до которой происходит обновление.
+         Примеры:
+             --make-update=+1.0.3
+                В данном случае указана только versionTo. За versionFrom будет взято значение конфигурации update_from,
+                если оно не указано, то будет взята последняя версия в статусе "done",
+                последний релиз должен быть при этом в статусе "development"
+                иначе versionTo и versionFrom совпадут и будет выведена соответствующая ошибка
+             --make-update=1.0.0+
+                В данном случае указана только versionFrom. За версию versionTo будет взята последняя версия,
+                находящаяся в разработке (в статусе "development"), если таковая имеется.
+             Если аргумент метода оставить пустым, то и versionTo и versionFrom будут определены автоматически.
+    --build-update=[versionTo]
+         Сборка архива с обновлением
+    --install=[files|module|events|database|register]
+         Установить ресурсы модуля
+             files         - установить файлы в соответствие с кофигурацией сборки
+             module-files  - установить файлы используя CModule::InstallFiles()
+             module        - установить модуль используя объекст CModule::DoInstall()
+             events        - установить события модуля - CModule::InstallEvents()
+             database      - уствновить базу данных - CModule::InstallDB()
+             tasks         - установить задачи модуля
+             register      - только зарегистрировать модуль в системе - RegisterModule()
+    --uninstall=[files|module|events|database|register]
+             files         - удалить файлы в соответствие с кофигурацией сборки
+             module-files  - удалить файлы используя CModule::InstallFiles()
+             module        - удалить модуль используя объекст CModule::DoUnInstall()
+             events        - удалить события модуля - CModule::InstallEvents()
+             database      - удалить базу данных - CModule::InstallDB()
+             tasks         - Удалить задачи модуля
+             register      - пометить модуль как удаленный - UnRegisterModule()
+HELP;
+		}
+		$helpText .= "\n";
+		return $helpText;
+	}
+
+	/**
+	 * @param string $defaultModuleID
+	 */
+	static public function processCommandOptions($defaultModuleID = null) {
+		$arCommandOptions = getopt('bfhm:', array(
+			'module:',
 			'help',
 			'build',
 			'full',
@@ -1733,11 +1816,39 @@ if(!defined("BX_ROOT")) {
 			'make-release',
 			'build-release::',
 			'make-update::',
-			'build-update::'
+			'build-update::',
+			'install',
+			'uninstall',
 		));
 
 		if( empty($arCommandOptions) ) {
-			$arCommandOptions['help'] = false;
+			$arCommandOptions['h'] = false;
+		}
+		if( array_key_exists('h', $arCommandOptions)) {
+			echo self::cliGetPrintHelp(false);
+			return;
+		}
+		if( array_key_exists('help', $arCommandOptions) ) {
+			echo self::cliGetPrintHelp(true);
+			return;
+		}
+
+		/** @var self $ModuleBuilder */
+		$ModuleBuilder = null;
+		if(array_key_exists('m', $arCommandOptions)) {
+			$arCommandOptions['module'] = $arCommandOptions['m'];
+		}
+		if( array_key_exists('module', $arCommandOptions) ) {
+			$arCommandOptions['module'] = trim($arCommandOptions['module']);
+			$ModuleBuilder = new self($arCommandOptions['module']);
+		}
+		elseif( $defaultModuleID !== null  ) {
+			$defaultModuleID = trim($defaultModuleID);
+			$ModuleBuilder = new self($defaultModuleID);
+		}
+		else {
+			echo 'Ошибка: Не указан целевой модуль'."\n";
+			die();
 		}
 
 		if(
@@ -1750,66 +1861,15 @@ if(!defined("BX_ROOT")) {
 		}
 
 		if(
-			array_key_exists('help', $arCommandOptions)
-			|| array_key_exists('h', $arCommandOptions)
-		) {
-
-			$scriptName = basename($_SERVER['argv'][0]);
-			$whiteSpace = str_repeat(' ', strlen($scriptName));
-			echo <<<HELP
-$scriptName [bfh] [--help] [--build] [--full]
-$whiteSpace [--iblock-cml=ibcode1,ibcode2...] [--iblock-form-settings=ibcode1,ibcode2...]
-$whiteSpace [--raw-lang-check] [--replace-cmp-params]
-$whiteSpace [--build-release] [--build-release]
-$whiteSpace [--make-update[=versionFrom+versionTo]] [--build-update]
-SHORT OPTIONS
-    -h: alias --help
-    -b: alias --build
-    -f: alias --full
-OPTIONS
-    --build
-         Собирает файлы из установленного битрикса внутрь модуля
-    --full:
-         alias: --build --iblock-cml --iblock-form-settings
-    --replace-cmp-params=[config_path]:
-         Заменяет параметры компонентов собранной публички на плейсхолдеры
-         Возможно явно указать путь до конфига с параметрами
-         Так же выполняется внутри --build
-    --raw-lang-check
-         Выявляет наличие языкового текста там, где должны быть GetMessage('LANG_CODE')
-    --make-release
-         Собирка файлов выпуска
-    --build-release[=version]
-         Сборка архива с выпуском для загрузки в МаркетПлейс Битрикс
-    --make-update[=versionFrom+versionTo]
-         Сборка файлов обновления,
-            где versionFrom - версия выпуска, от которого происходит обновление
-            и versionTo - версия, до которой происходит обновление.
-         Примеры:
-             --make-update=+1.0.3
-                В данном случае указана только versionTo. За versionFrom будет взята версия последнего релиза
-             --make-update=1.0.0+
-                В данном случае указана только versionFrom. За версию versionTo будет взята последняя версия,
-                находящаяся в разработке, если таковая имеется.
-             Если аргумент метода оставить пустым, то и versionTo и versionFrom будут определены автоматически.
-    --build-update=[versionTo]
-         Сборка архива с обновлением
-
-HELP;
-;
-			return;
-		}
-
-		if(
 			array_key_exists('build', $arCommandOptions)
 			|| array_key_exists('b', $arCommandOptions)
 		) {
-			$this->backInstallResources();
-			$this->reInit();
-			$this->generateInstallCode();
-			$this->generateUnInstallCode();
-			$this->generateBackInstallCode();
-			$this->replaceComponentParameters();
+			$ModuleBuilder->backInstallResources();
+			$ModuleBuilder->reInit();
+			$ModuleBuilder->generateInstallCode();
+			$ModuleBuilder->generateUnInstallCode();
+			$ModuleBuilder->generateBackInstallCode();
+			$ModuleBuilder->replaceComponentParameters();
 		}
 
 		if( array_key_exists('iblock-cml', $arCommandOptions) ) {
@@ -1817,11 +1877,11 @@ HELP;
 			if( strlen($arCommandOptions['iblock-cml']) > 0 ) {
 				$arBuildXML4IBlocks = explode(',', $arCommandOptions['iblock-cml']);
 				foreach($arBuildXML4IBlocks as $iblockCode) {
-					$this->exportIBlockCML($iblockCode);
+					$ModuleBuilder->exportIBlockCML($iblockCode);
 				}
 			}
 			else {
-				$this->exportIBlockCML();
+				$ModuleBuilder->exportIBlockCML();
 			}
 		}
 
@@ -1830,26 +1890,26 @@ HELP;
 			if( strlen($arCommandOptions['iblock-form-settings']) > 0 ) {
 				$arBuildIBFormSettings = explode(',', $arCommandOptions['iblock-form-settings']);
 				foreach($arBuildIBFormSettings as $iblockCode) {
-					$this->exportIBlockFormSettings($iblockCode);
+					$ModuleBuilder->exportIBlockFormSettings($iblockCode);
 				}
 			}
 			else {
-				$this->exportIBlockFormSettings();
+				$ModuleBuilder->exportIBlockFormSettings();
 			}
 		}
 
 		if( array_key_exists('replace-cmp-params', $arCommandOptions) ) {
 			$arCommandOptions['replace-cmp-params'] = trim($arCommandOptions['replace-cmp-params']);
 			if( strlen($arCommandOptions['replace-cmp-params']) > 0 ) {
-				$this->replaceComponentParameters($arCommandOptions['replace-cmp-params']);
+				$ModuleBuilder->replaceComponentParameters($arCommandOptions['replace-cmp-params']);
 			}
 			else {
-				$this->replaceComponentParameters();
+				$ModuleBuilder->replaceComponentParameters();
 			}
 		}
 
 		if( array_key_exists('raw-lang-check', $arCommandOptions) ) {
-			$rawLangCheckResult = $this->getModuleRawLangText();
+			$rawLangCheckResult = $ModuleBuilder->getModuleRawLangText();
 			if(strlen($rawLangCheckResult)>0) {
 				echo 'Найдены файлы в которых языковый текст не перемещен в LANG-файлы:'."\n".$rawLangCheckResult."\n";
 			}
@@ -1857,7 +1917,7 @@ HELP;
 		}
 
 		if( array_key_exists('make-release', $arCommandOptions) ) {
-			$this->makeRelease();
+			$ModuleBuilder->makeRelease();
 		}
 		if( array_key_exists('make-update', $arCommandOptions) ) {
 			$versionFrom = null;
@@ -1867,7 +1927,7 @@ HELP;
 				list($versionFrom, $versionTo) = explode('+', $arCommandOptions['make-update']);
 				$versionFrom = trim($versionFrom); $versionTo = trim($versionTo);
 			}
-			$this->makeUpdate($versionFrom, $versionTo);
+			$ModuleBuilder->makeUpdate($versionFrom, $versionTo);
 		}
 		if( array_key_exists('build-release', $arCommandOptions) ) {
 			$releaseVersion = null;
@@ -1875,7 +1935,7 @@ HELP;
 			if( strlen($arCommandOptions['build-release'])>0 ) {
 				$releaseVersion = $arCommandOptions['build-release'];
 			}
-			$this->buildRelease($releaseVersion);
+			$ModuleBuilder->buildRelease($releaseVersion);
 		}
 		if( array_key_exists('build-update', $arCommandOptions) ) {
 			$versionTo = null;
@@ -1883,8 +1943,88 @@ HELP;
 			if( strlen($arCommandOptions['build-update']) > 0 ) {
 				$versionTo = $arCommandOptions['build-update'];
 			}
-			$this->buildUpdate($versionTo);
+			$ModuleBuilder->buildUpdate($versionTo);
 		}
+		if( array_key_exists('install', $arCommandOptions) ) {
+			$arCommandOptions['install'] = trim($arCommandOptions['install']);
+			if($arCommandOptions['install'] == 'files') {
+				$ModuleBuilder->installResources();
+			}
+			elseif($arCommandOptions['install'] == 'module-files') {
+				$ModuleBuilder->getCModuleObject()->InstallFiles();
+			}
+			elseif($arCommandOptions['install'] == 'module') {
+				$ModuleBuilder->getCModuleObject()->InstallDB();
+				$ModuleBuilder->installResources();
+				$ModuleBuilder->getCModuleObject()->InstallEvents();
+				$ModuleBuilder->getCModuleObject()->InstallTasks();
+				$ModuleBuilder->registerModule();
+			}
+			elseif($arCommandOptions['install'] == 'events') {
+				$ModuleBuilder->getCModuleObject()->InstallEvents();
+			}
+			elseif($arCommandOptions['install'] == 'tasks') {
+				$ModuleBuilder->getCModuleObject()->InstallTasks();
+			}
+			elseif($arCommandOptions['install'] == 'database') {
+				$ModuleBuilder->getCModuleObject()->InstallDB();
+			}
+			elseif($arCommandOptions['install'] == 'register') {
+				$ModuleBuilder->registerModule();
+			}
+		}
+		if( array_key_exists('uninstall', $arCommandOptions) ) {
+			$arCommandOptions['uninstall'] = trim($arCommandOptions['uninstall']);
+			if($arCommandOptions['uninstall'] == 'files') {
+				$ModuleBuilder->installResources();
+			}
+			elseif($arCommandOptions['uninstall'] == 'module-files') {
+				$ModuleBuilder->getCModuleObject()->InstallFiles();
+			}
+			elseif($arCommandOptions['uninstall'] == 'module') {
+				$ModuleBuilder->getCModuleObject()->UnInstallDB();
+				$ModuleBuilder->installResources();
+				$ModuleBuilder->getCModuleObject()->UnInstallEvents();
+				$ModuleBuilder->getCModuleObject()->UnInstallTasks();
+				$ModuleBuilder->registerModule();
+			}
+			elseif($arCommandOptions['uninstall'] == 'events') {
+				$ModuleBuilder->getCModuleObject()->UnInstallEvents();
+			}
+			elseif($arCommandOptions['uninstall'] == 'tasks') {
+				$ModuleBuilder->getCModuleObject()->UnInstallTasks();
+			}
+			elseif($arCommandOptions['uninstall'] == 'database') {
+				$ModuleBuilder->getCModuleObject()->UnInstallDB();
+			}
+			elseif($arCommandOptions['uninstall'] == 'register') {
+				$ModuleBuilder->unRegisterModule();
+			}
+		}
+	}
+
+	public function registerModule() {
+		$this->_includeProlog();
+		if( !IsModuleInstalled($this->_moduleName) ) {
+			RegisterModule($this->_moduleName);
+		}
+	}
+	public function unRegisterModule() {
+		$this->_includeProlog();
+		if( IsModuleInstalled($this->_moduleName) ) {
+			UnRegisterModule($this->_moduleName);
+		}
+	}
+
+	/**
+	 * @return \CModule
+	 */
+	protected function getCModuleObject() {
+		static $oModule = null;
+		if( $oModule === null ) {
+			$oCModule = new $this->_moduleClass;
+		}
+		return $oCModule;
 	}
 
 

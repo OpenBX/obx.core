@@ -9,5 +9,5 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-require dirname(__FILE__) . '/classes/Build.php';
-OBX_Build::processCommandOptions('obx.core');
+require dirname(__FILE__) . '/../classes/Build.php';
+OBX_Build::processCommandOptions();
