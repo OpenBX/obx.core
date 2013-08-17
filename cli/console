@@ -1,0 +1,4 @@
+#!/bin/sh
+curDir=`pwd`;
+export XDEBUG_CONFIG="idekey=PHPSTORM";
+php -a -d auto_prepend_file=$curDir/console.php
