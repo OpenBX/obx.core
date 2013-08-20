@@ -2852,10 +2852,23 @@ DOC;
 			$genPhpFileHead
 			.'$GLOBALS["__runAutoGenUpdater"] = true;'."\n"
 			.'$GLOBALS["__runUpdaterFrom"] = "BitrixUpdater";'."\n"
-			.'require dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php";'."\n"
-			.'require dirname(__FILE__)."/updater'.$versionTo.'.mod.delete.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater'.$versionTo.'.mod.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php";'."\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php";'."\n"
+			."}\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.mod.delete.files.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.mod.delete.files.php";'."\n"
+			."}\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.mod.files.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.mod.files.php";'."\n"
+			."}\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php";'."\n"
+			."}\n"
+
 			.'unset($GLOBALS["__runAutoGenUpdater"], $GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
@@ -2863,10 +2876,23 @@ DOC;
 			$genPhpFileHead
 			.$genUtilGenPhpFileHead
 			.'$GLOBALS["__runUpdaterFrom"] = "SuperModuleUpdater";'."\n"
-			.'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
-			.'require dirname(__FILE__)."/updater.dep.delete.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
-			.'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php";'."\n"
+			."}\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater.dep.delete.files.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater.dep.mod.delete.files.php";'."\n"
+			."}\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater.dep.files.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
+			."}\n"
+
+			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php";'."\n"
+			."}\n"
+
 			.'unset($GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
