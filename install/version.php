@@ -20,4 +20,5 @@ return $arModuleVersion;
  *
  * [1.0.1]
  * | * Builder: исправлена ошибка подключения несущесвующих файлов update-оров
+ * | * Builder: изменена логика копирования файлов updater.custom.(before|after).php находящихся в теле модуля
  */

@@ -2731,15 +2731,15 @@ HELP;
 			$updateFilesCode .= '$errorMessage = "";'."\n";
 			$updateFilesAsDepCode = $updateFilesCode;
 			foreach($arChanges['NEW'] as $newFSEntry) {
+				if( substr($newFSEntry, 0, 10) == './updater.' ) {
+					continue;
+				}
 				self::CopyDirFiles(
 					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry),
 					str_replace(array('/./', '//'. '\\'), '/', $updateDir.'/'.$newFSEntry),
 					true, true,
 					false, ''
 				);
-				if( substr($newFSEntry, 0, 10) == './updater.' ) {
-					continue;
-				}
 				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
@@ -2755,15 +2755,15 @@ HELP;
 				.');'."\n";
 			}
 			foreach($arChanges['MODIFIED'] as $modFSEntry) {
+				if( substr($modFSEntry, 0, 10) == './updater.' ) {
+					continue;
+				}
 				self::CopyDirFiles(
 					str_replace(array('/./', '//'. '\\'), '/', $this->_docRootDir.$nextReleaseFolder.'/'.$modFSEntry),
 					str_replace(array('/./', '//'. '\\'), '/', $updateDir.'/'.$modFSEntry),
 					true, true,
 					false, ''
 				);
-				if( substr($modFSEntry, 0, 10) == './updater.' ) {
-					continue;
-				}
 				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
@@ -2843,10 +2843,26 @@ HELP;
 DOC;
 
 		if(!file_exists($updateDir.'/updater.custom.before.php')) {
-			file_put_contents($updateDir.'/updater.custom.before.php', "<"."?php\n".$genUtilGenPhpFileHead.$updaterFilesDoc."\n?".">");
+			if( file_exists($this->_docRootDir.$nextReleaseFolder.'/updater.custom.before.php') ) {
+				@copy(
+					$this->_docRootDir.$nextReleaseFolder.'/updater.custom.before.php',
+					$updateDir.'/updater.custom.before.php'
+				);
+			}
+			else {
+				file_put_contents($updateDir.'/updater.custom.before.php', "<"."?php\n".$genUtilGenPhpFileHead.$updaterFilesDoc."\n?".">");
+			}
 		}
 		if(!file_exists($updateDir.'/updater.custom.after.php')) {
-			file_put_contents($updateDir.'/updater.custom.after.php', "<"."?php\n".$genUtilGenPhpFileHead.$updaterFilesDoc."\n?".">");
+			if( file_exists($this->_docRootDir.$nextReleaseFolder.'/updater.custom.after.php') ) {
+				@copy(
+					$this->_docRootDir.$nextReleaseFolder.'/updater.custom.after.php',
+					$updateDir.'/updater.custom.after.php'
+				);
+			}
+			else {
+				file_put_contents($updateDir.'/updater.custom.after.php', "<"."?php\n".$genUtilGenPhpFileHead.$updaterFilesDoc."\n?".">");
+			}
 		}
 		file_put_contents($updateDir.'/updater.php',
 			$genPhpFileHead
