@@ -50,6 +50,12 @@ $arComponentParameters = array(
 			'TYPE'=>'STRING',
 			'DEFAULT'=>'http://odnoklassniki.com/',
 		),
+//		'GP' => Array(
+//			'PARENT' => 'BASE',
+//			'NAME'=>'Google Plus',
+//			'TYPE'=>'STRING',
+//			'DEFAULT'=>'http://plus.google.com/',
+//		),
 	)
 );
 

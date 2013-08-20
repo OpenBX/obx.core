@@ -2737,6 +2737,9 @@ HELP;
 					true, true,
 					false, ''
 				);
+				if( strrpos(substr($newFSEntry, strrpos($newFSEntry, '/')), 'updater.') !== false ) {
+					continue;
+				}
 				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
@@ -2758,6 +2761,9 @@ HELP;
 					true, true,
 					false, ''
 				);
+				if( strrpos(substr($modFSEntry, strrpos($modFSEntry, '/')), 'updater.') !== false ) {
+					continue;
+				}
 				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
