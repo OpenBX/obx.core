@@ -2737,7 +2737,7 @@ HELP;
 					true, true,
 					false, ''
 				);
-				if( strrpos(substr($newFSEntry, strrpos($newFSEntry, '/')), 'updater.') !== false ) {
+				if( substr($newFSEntry, 0, 10) == './updater.' ) {
 					continue;
 				}
 				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
@@ -2761,7 +2761,7 @@ HELP;
 					true, true,
 					false, ''
 				);
-				if( strrpos(substr($modFSEntry, strrpos($modFSEntry, '/')), 'updater.') !== false ) {
+				if( substr($modFSEntry, 0, 10) == './updater.' ) {
 					continue;
 				}
 				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
