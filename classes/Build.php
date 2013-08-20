@@ -2877,8 +2877,8 @@ DOC;
 			.$genUtilGenPhpFileHead
 			.'$GLOBALS["__runUpdaterFrom"] = "SuperModuleUpdater";'."\n"
 
-			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php")) {'."\n"
-			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.custom.before.php";'."\n"
+			.'if(file_exists(dirname(__FILE__)."/updater.custom.before.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater.custom.before.php";'."\n"
 			."}\n"
 
 			.'if(file_exists(dirname(__FILE__)."/updater.dep.delete.files.php")) {'."\n"
@@ -2889,8 +2889,8 @@ DOC;
 			."\t".'require dirname(__FILE__)."/updater.dep.files.php";'."\n"
 			."}\n"
 
-			.'if(file_exists(dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php")) {'."\n"
-			."\t".'require dirname(__FILE__)."/updater'.$versionTo.'.custom.after.php";'."\n"
+			.'if(file_exists(dirname(__FILE__)."/updater.custom.after.php")) {'."\n"
+			."\t".'require dirname(__FILE__)."/updater.custom.after.php";'."\n"
 			."}\n"
 
 			.'unset($GLOBALS["__runUpdaterFrom"]);'
