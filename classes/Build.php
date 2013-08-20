@@ -2684,6 +2684,19 @@ HELP;
 		$updateFolder = $this->_releaseFolder.'/update-'.$versionTo;
 		$updateDir = $this->_docRootDir.$updateFolder;
 
+		$arUpdaterFiles = array(
+			'updater.php',
+			'updater.dep.php',
+			'updater.mod.files.php',
+			'updater.dep.files.php',
+			'updater.mod.delete.files.php',
+			'updater.dep.delete.files.php',
+			'updater.mod.delete.list.php',
+			'updater.dep.delete.list.php',
+			'updater.custom.before.php',
+			'updater.custom.after.php',
+		);
+
 		// Очищаем папку с обовлениями
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED']) || !empty($arChanges['DELETED'])) {
 			if( !self::CheckDirPath($updateDir.'/.') ) {
@@ -2745,7 +2758,24 @@ HELP;
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
 					.'$errorMessage'
 				.');'."\n";
+
 				if( strpos($newFSEntry, './install/modules/') === 0 ) {
+					// [pronix:2013-08-20] +++
+					// Этот кусок кода нужен потому то метод CUpdateSystem::CopyDirFiles
+					// пропустит все файлы updater-ы в папках обновлений подмодулей
+					// если не указать имя файла явно
+					if(strpos($newFSEntry, 'update-') !==false) {
+						foreach( $arUpdaterFiles as $updaterFileName ) {
+							if( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileName) ) {
+								$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
+									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileName).'", '
+									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
+									.'$errorMessage'
+								.');'."\n";
+							}
+						}
+					}
+					// ^^^
 					continue;
 				}
 				$updateFilesAsDepCode .= 'CUpdateSystem::CopyDirFiles('
