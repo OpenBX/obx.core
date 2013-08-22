@@ -659,6 +659,7 @@ namespace OBX\Core {
 				$templateFolder = $template->__folder;
 			}
 			elseif( is_string($component) ) {
+				$component = str_replace(array('\\', '//'), '/', $component);
 				if(
 					($bxrootpos = strpos($component, BX_ROOT."/templates")) !== false
 					||
@@ -794,6 +795,7 @@ namespace OBX\Core {
 				$templateFolder = $template->__folder;
 			}
 			elseif( is_string($component) ) {
+				$component = str_replace(array('\\', '//'), '/', $component);
 				if(
 					($bxrootpos = strpos($component, BX_ROOT."/templates")) !== false
 					||

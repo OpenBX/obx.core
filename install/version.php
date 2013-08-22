@@ -9,8 +9,8 @@
  ***********************************************/
 
 $arModuleVersion = array(
-	"VERSION" => "1.0.1",
-	"VERSION_DATE" => "2013-08-20",
+	"VERSION" => "1.0.2",
+	"VERSION_DATE" => "2013-08-22",
 );
 return $arModuleVersion;
 
@@ -21,4 +21,10 @@ return $arModuleVersion;
  * [1.0.1]
  * | * Builder: исправлена ошибка подключения несущесвующих файлов update-оров
  * | * Builder: изменена логика копирования файлов updater.custom.(before|after).php находящихся в теле модуля
+ *
+ * [1.0.2]
+ * | * Исправлена проблема работы под windows методов
+ * |   OBX\Core\Tools::addComponentLess()
+ * |   и
+ * |   OBX\Core\Tools::addComponentDeferredJS()
  */
