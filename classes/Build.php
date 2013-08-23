@@ -1817,8 +1817,8 @@ HELP;
 			'build-release::',
 			'make-update::',
 			'build-update::',
-			'install',
-			'uninstall',
+			'install::',
+			'uninstall::',
 		));
 
 		if( empty($arCommandOptions) ) {
@@ -2022,6 +2022,8 @@ HELP;
 	protected function getCModuleObject() {
 		static $oModule = null;
 		if( $oModule === null ) {
+			$this->_includeProlog();
+			require_once $this->_selfDir.'/install/index.php';
 			$oCModule = new $this->_moduleClass;
 		}
 		return $oCModule;
