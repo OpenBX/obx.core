@@ -2098,8 +2098,8 @@ HELP;
 					$arFiles = array_merge($arFiles, $this->findRawLangText($fsEntryRelPath, $arExclude, $arPathExclude, $arExcludeEntries));
 				}
 				else {
-					$fsEntryExt = substr($fsEntry, strlen($fsEntry) - 4, strlen($fsEntry));
-					if($fsEntryExt != '.php') {
+					$fsEntryExt = substr($fsEntry, strrpos($fsEntry, '.'));
+					if($fsEntryExt != '.php' && $fsEntryExt != '.js' && $fsEntryExt != '.html') {
 						continue;
 					}
 					$this->__checkRawLangTextInFile($arFiles, $fsEntryPath, $fsEntryRelPath, $rusLit);
