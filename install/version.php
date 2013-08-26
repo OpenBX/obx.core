@@ -9,8 +9,8 @@
  ***********************************************/
 
 $arModuleVersion = array(
-	"VERSION" => "1.0.2",
-	"VERSION_DATE" => "2013-08-22",
+	"VERSION" => "1.0.3",
+	"VERSION_DATE" => "2013-08-26",
 );
 return $arModuleVersion;
 
@@ -27,4 +27,8 @@ return $arModuleVersion;
  * |   OBX\Core\Tools::addComponentLess()
  * |   и
  * |   OBX\Core\Tools::addComponentDeferredJS()
+ *
+ * [1.0.3]
+ * | * Добавлена возможность установить/удалить исходные данные
+ * |   и настройки модуля из консоли CModule::[Un]InstallData()
  */

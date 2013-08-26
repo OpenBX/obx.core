@@ -1784,6 +1784,7 @@ OPTIONS
              module        - установить модуль используя объекст CModule::DoInstall()
              events        - установить события модуля - CModule::InstallEvents()
              database      - уствновить базу данных - CModule::InstallDB()
+             data          - уствновить базу данных - CModule::InstallData() / Если метод существует
              tasks         - установить задачи модуля
              register      - только зарегистрировать модуль в системе - RegisterModule()
     --uninstall=[files|module|events|database|register]
@@ -1792,6 +1793,7 @@ OPTIONS
              module        - удалить модуль используя объекст CModule::DoUnInstall()
              events        - удалить события модуля - CModule::InstallEvents()
              database      - удалить базу данных - CModule::InstallDB()
+             data          - удалить данные - CModule::UnInstallData() / Если метод существует
              tasks         - Удалить задачи модуля
              register      - пометить модуль как удаленный - UnRegisterModule()
 HELP;
@@ -1946,6 +1948,7 @@ HELP;
 			$ModuleBuilder->buildUpdate($versionTo);
 		}
 		if( array_key_exists('install', $arCommandOptions) ) {
+			$ModuleInstaller = $ModuleBuilder->getCModuleObject();
 			$arCommandOptions['install'] = trim($arCommandOptions['install']);
 			if($arCommandOptions['install'] == 'files') {
 				$ModuleBuilder->installResources();
@@ -1954,26 +1957,63 @@ HELP;
 				$ModuleBuilder->getCModuleObject()->InstallFiles();
 			}
 			elseif($arCommandOptions['install'] == 'module') {
-				$ModuleBuilder->getCModuleObject()->InstallDB();
+				echo 'Установка модуля: "'.$ModuleBuilder->_moduleName.'"...'."\n";
+				echo "\t".'Установка базы данных...';
+				$ModuleInstaller->InstallDB();
+				echo "OK\n";
+				echo "\t".'Установка файлов...';
 				$ModuleBuilder->installResources();
-				$ModuleBuilder->getCModuleObject()->InstallEvents();
-				$ModuleBuilder->getCModuleObject()->InstallTasks();
+				echo "OK\n";
+				echo "\t".'Установка событий...';
+				$ModuleInstaller->InstallEvents();
+				echo "OK\n";
+				echo "\t".'Установка задач...';
+				$ModuleInstaller->InstallTasks();
+				echo "OK\n";
+				if( method_exists($ModuleInstaller, 'InstallData') ) {
+					echo "\n".'Установка исходных данных и настроек модуля...';
+					$ModuleInstaller->InstallData();
+					echo "OK\n";
+				}
+				echo "\t".'Регистрация модуля в системе...';
 				$ModuleBuilder->registerModule();
+				echo "OK\n";
+				echo "Готово.\n";
 			}
 			elseif($arCommandOptions['install'] == 'events') {
-				$ModuleBuilder->getCModuleObject()->InstallEvents();
+				echo 'Установка событий модуля "'.$ModuleBuilder->getModuleName().'"...';
+				$ModuleInstaller->InstallEvents();
+				echo "OK\n";
 			}
 			elseif($arCommandOptions['install'] == 'tasks') {
-				$ModuleBuilder->getCModuleObject()->InstallTasks();
+				echo 'Установка задач модуля "'.$ModuleBuilder->getModuleName().'"...';
+				$ModuleInstaller->InstallTasks();
+				echo "OK\n";
 			}
 			elseif($arCommandOptions['install'] == 'database') {
-				$ModuleBuilder->getCModuleObject()->InstallDB();
+				echo 'Установка базы данных модуля "'.$ModuleBuilder->getModuleName().'"...';
+				$ModuleInstaller->InstallDB();
+				echo "OK\n";
+			}
+			elseif($arCommandOptions['install'] == 'data') {
+				if( method_exists($ModuleInstaller, 'InstallData') ) {
+					echo 'Установка исходных данных и настроек модуля "'.$ModuleBuilder->getModuleName().'"...';
+					$ModuleInstaller->InstallData();
+					echo "OK\n";
+				}
+				else {
+					echo 'Предупреждение: Невозможно установить данные модуля. "'.$ModuleBuilder->getModuleName().'".'
+						.' Соответствующий метод отсутствует в установщике модуля'."\n";
+				}
 			}
 			elseif($arCommandOptions['install'] == 'register') {
+				echo 'Регистрация в системе модуля '.$ModuleBuilder->getModuleName().'"...';
 				$ModuleBuilder->registerModule();
+				echo "OK\n";
 			}
 		}
 		if( array_key_exists('uninstall', $arCommandOptions) ) {
+			$ModuleInstaller = $ModuleBuilder->getCModuleObject();
 			$arCommandOptions['uninstall'] = trim($arCommandOptions['uninstall']);
 			if($arCommandOptions['uninstall'] == 'files') {
 				$ModuleBuilder->installResources();
@@ -1982,23 +2022,57 @@ HELP;
 				$ModuleBuilder->getCModuleObject()->InstallFiles();
 			}
 			elseif($arCommandOptions['uninstall'] == 'module') {
-				$ModuleBuilder->getCModuleObject()->UnInstallDB();
+				if( method_exists($ModuleInstaller, 'UnInstallData') ) {
+					echo "\n".'Удаление исходных данных и настроек модуля...';
+					$ModuleInstaller->UnInstallData();
+					echo "OK\n";
+				}
+				echo "\t".'Удаление задач...';
+				$ModuleInstaller->UnInstallTasks();
+				echo "OK\n";
+				echo "\t".'Удаление событий';
+				$ModuleInstaller->UnInstallEvents();
+				echo "OK\n";
+				echo "\t".'Удаление файлов';
 				$ModuleBuilder->installResources();
-				$ModuleBuilder->getCModuleObject()->UnInstallEvents();
-				$ModuleBuilder->getCModuleObject()->UnInstallTasks();
-				$ModuleBuilder->registerModule();
+				echo "OK\n";
+				echo "\t".'Удаление базы данных';
+				$ModuleInstaller->UnInstallDB();
+				echo "OK\n";
+				echo "\t".'Удаление записи о регистрации модуля';
+				$ModuleBuilder->unRegisterModule();
+				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'events') {
-				$ModuleBuilder->getCModuleObject()->UnInstallEvents();
+				echo 'Удаление событий модуля "'.$ModuleBuilder->getModuleName().'"...';
+				$ModuleInstaller->UnInstallEvents();
+				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'tasks') {
-				$ModuleBuilder->getCModuleObject()->UnInstallTasks();
+				echo 'Удаление задач модуля "'.$ModuleBuilder->getModuleName().'"...';
+				$ModuleInstaller->UnInstallTasks();
+				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'database') {
-				$ModuleBuilder->getCModuleObject()->UnInstallDB();
+				echo 'Удаление базы данных модуля "'.$ModuleBuilder->getModuleName().'"...';
+				$ModuleInstaller->UnInstallDB();
+				echo "OK\n";
+			}
+			elseif($arCommandOptions['uninstall'] == 'data') {
+				if( method_exists($ModuleInstaller, 'UnInstallData') ) {
+					echo 'Удаление исходных данных и настроек модуля "'.$ModuleBuilder->getModuleName().'"...';
+					$ModuleInstaller->UnInstallData();
+					echo "OK\n";
+				}
+				else {
+					echo 'Предупреждение: Невозможно удалить данные модуля "'.$ModuleBuilder->getModuleName().'".'
+						.' Соответствующий метод отсутствует в установщике модуля'."\n";
+				}
 			}
 			elseif($arCommandOptions['uninstall'] == 'register') {
+				echo 'Удаление записи регистрации в системе модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleBuilder->unRegisterModule();
+				echo "OK\n";
 			}
 		}
 	}
