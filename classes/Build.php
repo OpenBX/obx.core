@@ -97,6 +97,10 @@ class OBX_Build {
 			$this->_version = $arModuleInfo['VERSION'];
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
 		}
+		else {
+			echo 'Ошибка: модуль "'.$moduleName.'" не существует.'."\n";
+			die();
+		}
 		$this->_arResources = array();
 		$this->_arDepModules = array();
 		$this->includeConfigFile('%SELF_FOLDER%/module.obuild', true);
