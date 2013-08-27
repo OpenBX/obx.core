@@ -10,7 +10,7 @@
 
 class OBX_Build {
 	const BX_ROOT = '/bitrix';
-	const BUILD_FOLDER = '/bitrix/modules.build';
+	const MODULES_BUILD = '/bitrix/modules.build';
 	const MODULES_FOLDER = '/bitrix/modules';
 
 	protected $_moduleName = null;
@@ -18,10 +18,6 @@ class OBX_Build {
 	protected $_version = null;
 	protected $_versionDate = null;
 
-	protected $_arConfigFiles = array(
-		'%SELF_FOLDER%/module.obuild',
-		'%BUILD_FOLDER%/release.obuild'
-	);
 	protected $_bInit = false;
 
 	protected $_bPrologBXIncluded = false;
@@ -31,8 +27,6 @@ class OBX_Build {
 	protected $_bxRootDir = null;
 	protected $_selfFolder = null;
 	protected $_selfDir = null;
-	protected $_buildFolder = null;
-	protected $_buildDir = null;
 
 	protected $_arDepModules = array();
 	protected $_ParentModule = null;
@@ -102,11 +96,12 @@ class OBX_Build {
 			$arModuleInfo = require $this->_docRootDir.$this->_selfFolder.'/install/version.php';
 			$this->_version = $arModuleInfo['VERSION'];
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
-			$this->_buildFolder = self::BUILD_FOLDER.'/'.$this->_moduleName;
-			$this->_buildDir = $this->_docRootDir.self::BUILD_FOLDER.'/'.$this->_moduleName;
 		}
+		$this->_arResources = array();
+		$this->_arDepModules = array();
+		$this->includeConfigFile('%SELF_FOLDER%/module.obuild', true);
+		$this->findResourcesFiles();
 
-		$this->parseConfig();
 	}
 
 	public function isInit() {
@@ -229,41 +224,39 @@ class OBX_Build {
 	protected function replacePathMacros($path) {
 		return str_replace(
 			array(
+				'%MODULE_ID%',
 				'%BX_ROOT%',
 				'%MODULES_FOLDER%',
+				'%MODULES_BUILD%',
 				'%SELF_FOLDER%',
 				'%INSTALL_FOLDER%',
-				'%BUILD_FOLDER%',
 			),
 			array(
+				$this->getModuleName(),
 				self::BX_ROOT,
 				self::MODULES_FOLDER,
+				self::MODULES_BUILD,
 				$this->_selfFolder,
 				$this->_selfFolder.'/install',
-				$this->_buildFolder
 			),
 			$path
 		);
 	}
 
-	public function addConfigFile($configFile) {
+	public function includeConfigFile($configFile, $bRequire = false) {
 		$configFile = $this->_docRootDir.$this->replacePathMacros($configFile);
 		if(is_file($configFile)) {
-			$this->_arConfigFiles[] = $configFile;
+			$this->_parseConfigFile($configFile);
 			return true;
 		}
+		$errorMessage = 'Не удалось найти конфигурационный файл сборки "'.$configFile.'"'."\n";
+		if(false !== $bRequire) {
+			die('Ошибка: '.$errorMessage);
+		}
+		echo 'Предупреждение: '.$errorMessage;
 		return false;
 	}
 
-	public function parseConfig() {
-		$this->_arResources = array();
-		$this->_arDepModules = array();
-		foreach($this->_arConfigFiles as $configPath) {
-			$configPath = $this->_docRootDir.$this->replacePathMacros($configPath);
-			$this->_parseConfigFile($configPath);
-		}
-		$this->findResourcesFiles();
-	}
 	protected function _parseConfigFile($filePath) {
 		if( !$this->isInit() ) {
 			echo $this->_moduleName.": Error: Build system not initialized!\n";
@@ -335,7 +328,8 @@ class OBX_Build {
 					die();
 				}
 				if($bOpenedBlock == true) {
-					echo 'Config parse error in line '.$lineNumber.': trying to open block when it\'s already opened'."\n";
+					echo 'Config parse error in line '.$lineNumber.': trying to open block when it\'s already opened.'
+						.' line: '.$lineNumber.'.'."\n";
 					die();
 				}
 				$bOpenedBlock = true;
@@ -343,11 +337,13 @@ class OBX_Build {
 
 			if(strpos($strResourceLine, '}') !== false) {
 				if(trim($strResourceLine) != '}') {
-					echo 'Config parse error in line '.$lineNumber.': symbol "}" must be alone at the line '."\n";
+					echo 'Config parse error in line '.$lineNumber.': symbol "}" must be alone at the line.'
+						.' line: '.$lineNumber.'.'."\n";
 					die();
 				}
 				if($bOpenedBlock == false) {
-					echo 'Config parse error in line '.$lineNumber.': trying to close block "}" when it\'s not opened'."\n";
+					echo 'Config parse error in line '.$lineNumber.': trying to close block "}" when it\'s not opened.'
+						.' line: '.$lineNumber.'.'."\n";
 					die();
 				}
 				$blockSection = null;
@@ -365,6 +361,33 @@ class OBX_Build {
 					}
 				}
 				continue;
+			}
+
+			if($blockSection == 'END' || $blockSection == 'END_SUBSECTION') {
+				$blockSection = null;
+			}
+			if($configSection == 'END' || $configSection == 'END_SECTION') {
+				$configSection = null;
+			}
+
+			$configCommand = null;
+			$configCommandParameter = null;
+			if( substr(trim($strResourceLine), 0, 1) == '@' ) {
+				$strResourceLine = trim($strResourceLine);
+				if( preg_match('~\@([a-zA-Z\_]{1}[0-9a-zA-Z\_]*?)[\s\t]*\:[\s\t]*(.*?)\;~', $strResourceLine, $arConfigCommandMatches) ) {
+					$configCommand = $arConfigCommandMatches[1];
+					$configCommandParameter = $arConfigCommandMatches[2];
+				}
+			}
+
+			if($configCommand == 'require' || $configCommand == 'include') {
+				if( null !== $configSection || false !== $bOpenedBlock ) {
+					echo 'Config parse error: You can\'t use @include and @require command inside sections [...] or blocks {...}.'
+						.' line: '.$lineNumber.'.'."\n";
+					die();
+				}
+				$bIncludeConfigRequired = ($configCommand=='require')?true:false;
+				$this->includeConfigFile($configCommandParameter, $bIncludeConfigRequired);
 			}
 
 			if($configSection == 'RESOURCES') {
@@ -609,7 +632,7 @@ class OBX_Build {
 					,$this->_modulesDir.'/'.$DependencyModule->getModuleName()
 					,true, true, FALSE, 'modules'
 				);
-				$DependencyModule->reInit();
+				$DependencyModule->findResourcesFiles();
 				$DependencyModule->installResources();
 			}
 		}
@@ -674,7 +697,7 @@ class OBX_Build {
 			foreach($this->_arDepModules as $DependencyModule) {
 				/** @var OBX_Build $DependencyModule */
 				$DependencyModule->backInstallResources();
-				$DependencyModule->reInit();
+				$DependencyModule->findResourcesFiles();
 				$DependencyModule->generateInstallCode();
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
@@ -1867,7 +1890,7 @@ HELP;
 			|| array_key_exists('b', $arCommandOptions)
 		) {
 			$ModuleBuilder->backInstallResources();
-			$ModuleBuilder->reInit();
+			$ModuleBuilder->findResourcesFiles();
 			$ModuleBuilder->generateInstallCode();
 			$ModuleBuilder->generateUnInstallCode();
 			$ModuleBuilder->generateBackInstallCode();
@@ -2424,11 +2447,13 @@ HELP;
 	}
 
 	protected function addReleasesList($arReleasesList) {
-		$this->_releaseFolder = $this->_buildFolder;
 		if( array_key_exists('RELEASE_FOLDER', $arReleasesList) && $arReleasesList['RELEASE_FOLDER'] != false ) {
 			$this->_releaseFolder = $this->replacePathMacros($arReleasesList['RELEASE_FOLDER']);
 		}
-		$this->_releaseFolder = trim(rtrim($this->_releaseFolder, '/'));
+		else {
+			$this->_releaseFolder = self::MODULES_BUILD.'/'.$this->getModuleName();
+		}
+		$this->_releaseFolder = rtrim(trim($this->_releaseFolder), '/');
 		$this->_releaseDir = $this->_docRootDir.$this->_releaseFolder;
 		uksort($arReleasesList['RELEASES_LIST'], 'OBX_Build::compareVersions');
 		foreach($arReleasesList['RELEASES_LIST'] as $version => $arRelease) {

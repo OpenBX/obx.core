@@ -23,7 +23,7 @@
 	[admin]
 		path: %SELF_FOLDER%/admin/
 	[options]
-    		path: %SELF_FOLDER%/options.php
+		path: %SELF_FOLDER%/options.php
 	[admin.ajax]
 		path: %SELF_FOLDER%/admin/ajax/
 	[component.layout]
@@ -39,3 +39,5 @@
 		exclude: modules
 		exclude_path: %INSTALL_FOLDER%/test/*
 }
+[END]
+@include: %BUILDS_FOLDER%/%MODULE_ID%/release.obuild
