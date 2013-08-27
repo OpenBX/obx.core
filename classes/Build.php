@@ -374,9 +374,16 @@ class OBX_Build {
 			$configCommandParameter = null;
 			if( substr(trim($strResourceLine), 0, 1) == '@' ) {
 				$strResourceLine = trim($strResourceLine);
-				if( preg_match('~\@([a-zA-Z\_]{1}[0-9a-zA-Z\_]*?)[\s\t]*\:[\s\t]*(.*?)\;~', $strResourceLine, $arConfigCommandMatches) ) {
+				if( preg_match('~\@([a-zA-Z\_]{1}[0-9a-zA-Z\_]*?)[\s\t]*\:[\s\t]*(.*?)\;~m', $strResourceLine, $arConfigCommandMatches) ) {
 					$configCommand = $arConfigCommandMatches[1];
 					$configCommandParameter = $arConfigCommandMatches[2];
+				}
+				else {
+					echo 'Ошибка: Неверный формат выполнения команды.'
+						.' Формат: @command: /some/command/argument.obuild; # Не забудте знак ";"'
+						."\n".' file: "'.$filePath.'"'
+						."\n".' line: '.$lineNumber."\n";
+					die();
 				}
 			}
 
@@ -2526,9 +2533,10 @@ HELP;
 				continue;
 			}
 			if( !is_dir($Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion) ) {
-				echo 'Папка содержащая выпуск подмодуля '
+				echo 'Ошибка: Папка содержащая выпуск подмодуля '
 					.$Dependency->_moduleName
 					.' ('.$Dependency->_releaseDir.'/release-'.$Dependency->_version.') не найдена'."\n";
+				continue;
 			}
 			// Удаляем старую папку релиза
 			self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName);

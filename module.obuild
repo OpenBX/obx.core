@@ -40,4 +40,4 @@
 		exclude_path: %INSTALL_FOLDER%/test/*
 }
 [END]
-@include: %BUILDS_FOLDER%/%MODULE_ID%/release.obuild
+@include: %MODULES_BUILD%/%MODULE_ID%/release.obuild;
