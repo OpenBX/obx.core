@@ -19,7 +19,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	//
 	// Этот метод тож имеет какое-то значение, но и без него работало нормально
 	//$this->setPreserveGlobalState(false);
-	//protected $preserveGlobalState = false;
+	protected $preserveGlobalState = false;
 
 	/**
 	 * Метод должен вернуть путь до текущей папки с тестами
