@@ -38,7 +38,7 @@ class Parser extends ParserDB {
 
 	protected $_arElementStack = array();
 
-	protected $_bReadyToReadYML = false;
+	protected $_bReadyToReadXML = false;
 
 	/**
 	 * @param string $filePath
@@ -49,11 +49,11 @@ class Parser extends ParserDB {
 			$this->_filePath = $filePath;
 			$this->_file = fopen($filePath, 'r');
 			if( !$this->_file ) {
-				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::YML_FILE_CANT_OPEN'), ParserError::YML_FILE_CANT_OPEN);
+				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_CANT_OPEN'), ParserError::XML_FILE_CANT_OPEN);
 			}
 		}
 		else {
-			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::YML_FILE_NOT_FOUND'), ParserError::YML_FILE_NOT_FOUND);
+			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_NOT_FOUND'), ParserError::XML_FILE_NOT_FOUND);
 		}
 		if( defined('BX_UTF') ) {
 			$this->_bUTF = true;
@@ -67,7 +67,7 @@ class Parser extends ParserDB {
 				$this->_bMBStringOrig = false;
 			}
 		}
-		$this->_bReadyToReadYML = true;
+		$this->_bReadyToReadXML = true;
 	}
 
 	public function getFilePosition() {
@@ -93,27 +93,27 @@ class Parser extends ParserDB {
 
 
 	/**
-	 * @param array $ITERATION - массив с данными для пошагового чтения xml
+	 * @param array $NEXT_STEP - массив с данными для пошагового чтения xml
 	 * @return bool feof($this->_file)
 	 */
-	public function readYML(&$ITERATION) {
+	public function readXML(&$NEXT_STEP) {
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(!array_key_exists("charset", $ITERATION)) {
-			$ITERATION["charset"] = null;
+		if(!array_key_exists("charset", $NEXT_STEP)) {
+			$NEXT_STEP["charset"] = null;
 		}
-		$this->_fileCharset = &$ITERATION["charset"];
+		$this->_fileCharset = &$NEXT_STEP["charset"];
 
-		if(!array_key_exists("element_stack", $ITERATION)) {
-			$ITERATION["element_stack"] = array();
+		if(!array_key_exists("element_stack", $NEXT_STEP)) {
+			$NEXT_STEP["element_stack"] = array();
 		}
-		$this->_arElementStack = &$ITERATION["element_stack"];
+		$this->_arElementStack = &$NEXT_STEP["element_stack"];
 
-		if(!array_key_exists("file_position", $ITERATION)) {
+		if(!array_key_exists("file_position", $NEXT_STEP)) {
 			$NS["file_position"] = 0;
 		}
-		$this->_filePosition = &$ITERATION["file_position"];
+		$this->_filePosition = &$NEXT_STEP["file_position"];
 
 		$this->_buffer = '';
 		$this->_bufferPosition = 0;

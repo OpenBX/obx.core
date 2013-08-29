@@ -89,11 +89,11 @@ class XmlParserTest extends TestCase {
 		$Parser->dropTempTables();
 		$Parser->createTempTables();
 		$prevFilePosition = 0;
-		while( !$Parser->readYML($ITERATION) ) {
+		while( !$Parser->readXML($ITERATION) ) {
 			$this->assertGreaterThanOrEqual($prevFilePosition, $ITERATION['file_position']);
 			$prevFilePosition = $ITERATION['file_position'];
 		}
-		//$Parser->dropTempTables();
+		$Parser->indexTempTables();
 	}
 
 	public function _testBitrixXMLParser() {
