@@ -10,11 +10,16 @@
 
 use OBX\Core\Visitor;
 use OBX\Core\VisitorDBS;
+use OBX\Core\Test\TestCase;
 
-final class OBX_Test_VisitorDBS extends OBX_Core_TestCase {
+final class OBX_Test_VisitorDBS extends TestCase {
 
 	static private $_VisitorsDBS = null;
 	static private $_arVisitorsData = array();
+
+	public function getCurDir() {
+		return dirname(__FILE__);
+	}
 
 	public static function setUpBeforeClass() {
 		self::$_VisitorsDBS = VisitorDBS::getInstance();

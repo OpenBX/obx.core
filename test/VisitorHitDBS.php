@@ -9,11 +9,16 @@
  ***********************************************/
 
 use OBX\Core\VisitorHitDBS;
+use OBX\Core\Test\TestCase;
 
-final class OBX_Test_VisitorHitDBS extends OBX_Core_TestCase {
+final class OBX_Test_VisitorHitDBS extends TestCase {
 
 	static private $_VisitorsHitDBS = null;
 	static private $_arVisitorsHitsData = array();
+
+	public function getCurDir() {
+		return dirname(__FILE__);
+	}
 
 	public static function setUpBeforeClass() {
 		self::$_VisitorsHitDBS = VisitorHitDBS::getInstance();

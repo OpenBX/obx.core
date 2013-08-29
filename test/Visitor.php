@@ -8,11 +8,17 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-final class OBX_Test_Visitor extends OBX_Core_TestCase {
+use OBX\Core\Test\TestCase;
+
+final class OBX_Test_Visitor extends TestCase {
 
 	static private $_Visitors;
 	static private $_arVisitorsData = array();
 	static private $_arVisitorsIDs = array();
+
+	public function getCurDir() {
+		return dirname(__FILE__);
+	}
 
 	public static function setUpBeforeClass() {
 		self::$_Visitors = new OBX_Visitor;
