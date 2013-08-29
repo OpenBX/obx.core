@@ -10,7 +10,7 @@
 
 $arModuleVersion = array(
 	"VERSION" => "1.0.3",
-	"VERSION_DATE" => "2013-08-27",
+	"VERSION_DATE" => "2013-08-29",
 );
 return $arModuleVersion;
 
@@ -38,4 +38,10 @@ return $arModuleVersion;
  * |   возможность выполнения команд: @include и @require
  * | * Теперь нет жесткой записимости от конфига в папке /bitrix/modules.build/%MODULE_ID%/release.obuild
  * | * Изменена логика подключения конфигов, ликвидирован макрос %BUILD_FOLDER%(/bitrix/modules.build/%MODULE_ID%/)
+ * |
+ * |=== Xml Parser ===
+ * | * Добавлены классы для разбора xml-файлов в базу данных для дальнейшего импорта
+ * |   - OBX\Core\Xml\Parser <- OBX\Core\Xml\ParserDB
+ * |   - OBX\Core\Xml\Exceptions\ParserError
+ * |
  */
