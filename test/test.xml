@@ -11,7 +11,7 @@
 			<!-- <directory></directory> -->
 			<file>JSMessages.php</file>
 			<file>Settings.php</file>
-			<file>XmlXmlParserTest.php</file>
+			<file>XmlParserTest.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>
