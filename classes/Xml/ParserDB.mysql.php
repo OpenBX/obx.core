@@ -14,7 +14,7 @@ use OBX\Core\Xml\Exceptions\ParserError;
 IncludeModuleLangFile(__FILE__);
 
 class ParserDB {
-	const DEFAULT_TEMP_TBL_NAME = 'dvt_yml_import_temp';
+	const DEFAULT_TEMP_TBL_NAME = 'obx_tmp_xml_parser_tree';
 	protected $_tempTableName = self::DEFAULT_TEMP_TBL_NAME;
 	protected $_bTempDatabaseCreated = false;
 	protected $_sessionID = '';
@@ -65,9 +65,16 @@ class ParserDB {
 		return true;
 	}
 
+	public function checkTableName($tableName) {
+		if( preg_match('~[a-zA-Z0-9]{1}[a-zA-Z0-9\_]{0,30}~', $tableName)) {
+			return true;
+		}
+		return false;
+	}
+
 	public function createTempTables($tableName = null, $bWithSessID = false) {
 		if(null !== $tableName ) {
-			if( preg_match('~[a-zA-Z0-9]{1}[a-zA-Z0-9\_]{,30}~', $tableName)) {
+			if( $this->checkTableName($tableName) ) {
 				$this->_tempTableName = $tableName;
 			}
 			else {
