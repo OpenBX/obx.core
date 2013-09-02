@@ -24,17 +24,18 @@ class ParserDB {
 		global $DB;
 		if(!$DB->TableExists($this->_tempTableName)) {
 			$res = $this->createTempTables(true);
-			if($res)
+			if($res) {
 				$res = $this->indexTempTables(true);
+			}
 		}
 		else {
 			$res = true;
 		}
 		if($res) {
 			$this->_sessionID = substr($sess_id, 0, 32);
-			$rs = $this->GetList(array(), array("PARENT_ID" => -1), array("ID", "NAME"));
+			$rs = $this->getList(array(), array("PARENT_ID" => -1), array("ID", "NAME"));
 			if(!$rs->Fetch()) {
-				$this->Add(array(
+				$this->add(array(
 					"PARENT_ID" => -1,
 					"LEFT_MARGIN" => 0,
 					"NAME" => "SESS_ID",
