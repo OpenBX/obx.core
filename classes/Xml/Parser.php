@@ -100,20 +100,20 @@ class Parser extends ParserDB {
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(!array_key_exists("charset", $NEXT_STEP)) {
-			$NEXT_STEP["charset"] = null;
+		if(!array_key_exists("obx_xml_prs_charset", $NEXT_STEP)) {
+			$NEXT_STEP["obx_xml_prs_charset"] = null;
 		}
-		$this->_fileCharset = &$NEXT_STEP["charset"];
+		$this->_fileCharset = &$NEXT_STEP["obx_xml_prs_charset"];
 
-		if(!array_key_exists("element_stack", $NEXT_STEP)) {
-			$NEXT_STEP["element_stack"] = array();
+		if(!array_key_exists("obx_xml_prs_element_stack", $NEXT_STEP)) {
+			$NEXT_STEP["obx_xml_prs_element_stack"] = array();
 		}
-		$this->_arElementStack = &$NEXT_STEP["element_stack"];
+		$this->_arElementStack = &$NEXT_STEP["obx_xml_prs_element_stack"];
 
-		if(!array_key_exists("file_position", $NEXT_STEP)) {
-			$NS["file_position"] = 0;
+		if(!array_key_exists("obx_xml_prs_file_position", $NEXT_STEP)) {
+			$NS["obx_xml_prs_file_position"] = 0;
 		}
-		$this->_filePosition = &$NEXT_STEP["file_position"];
+		$this->_filePosition = &$NEXT_STEP["obx_xml_prs_file_position"];
 
 		$this->_buffer = '';
 		$this->_bufferPosition = 0;

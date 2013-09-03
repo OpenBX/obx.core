@@ -29,7 +29,7 @@ class XmlParserTest extends TestCase {
 	/**
 	 * @param string $filePath
 	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::YML_FILE_NOT_FOUND
+	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::XML_FILE_NOT_FOUND
 	 * @dataProvider getXmlFilePath
 	 */
 	public function testWrongFile($filePath) {
@@ -40,7 +40,7 @@ class XmlParserTest extends TestCase {
 	 * @param string $filePath
 	 * @throws \OBX\Core\Xml\Exceptions\ParserError
 	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::YML_FILE_CANT_OPEN
+	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::XML_FILE_CANT_OPEN
 	 * @dataProvider getXmlFilePath
 	 */
 	public function testWrongFilePrivileges($filePath) {
