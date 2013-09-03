@@ -436,5 +436,84 @@ class Parser extends ParserDB {
 			$DB->Query("UPDATE ".$this->_tempTableName." SET RIGHT_MARGIN = ".intval($child["R"])." WHERE ID = ".intval($child["ID"]));
 	}
 
+	public function getAllChildrenArray($arParent, $bWithAttributes = false)
+	{
+		//We will return
+		$arResult = array();
+
+		//So we get not parent itself but xml node id
+		if( !is_array($arParent) ) {
+			$rs = $this->getList(
+				array(),
+				array('ID' => $arParent),
+				array('ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')
+			);
+			$arParent = $rs->Fetch();
+			if(!$arParent) {
+				return $arResult;
+			}
+		}
+
+		//Array of the references to the arResult array members with xml node id as index.
+		$arSalt = array();
+		$arIndex = array();
+		$rs = $this->getList(
+			array('ID' => 'asc'),
+			array('><LEFT_MARGIN' => array($arParent['LEFT_MARGIN']+1, $arParent['RIGHT_MARGIN']-1))
+		);
+		while($ar = $rs->Fetch()) {
+			if( isset($arSalt[$ar['PARENT_ID']][$ar['NAME']]) ) {
+				$salt = ++$arSalt[$ar['PARENT_ID']][$ar['NAME']];
+				$ar['NAME'] .= '#'.$salt;
+			}
+			else {
+				$arSalt[$ar['PARENT_ID']][$ar['NAME']] = 0;
+			}
+
+			if( $ar['PARENT_ID'] == $arParent['ID'] ) {
+				$arResult[$ar['NAME']] = $ar['VALUE'];
+				if(false === $bWithAttributes) {
+					$arResult[$ar['NAME']] = $ar['VALUE'];
+				}
+				else {
+					$arAttr = unserialize($ar['ATTRIBUTES']);
+					if(false === is_array($arAttr)) {
+						$arAttr = array();
+					}
+					$arResult[$ar['NAME']] = array(
+						'NAME' => $ar['NAME'],
+						'VALUE' => $ar['VALUE'],
+						'ATTRIBUTES' => $arAttr
+					);
+				}
+				$arIndex[$ar['ID']] = &$arResult[$ar['NAME']];
+			}
+			else {
+				$parent_id = $ar['PARENT_ID'];
+				if(!is_array($arIndex[$parent_id])) {
+					$arIndex[$parent_id] = array();
+				}
+				if(false === $bWithAttributes) {
+					$arIndex[$parent_id][$ar['NAME']] = $ar['VALUE'];
+					$arIndex[$ar['ID']] = &$arIndex[$parent_id][$ar['NAME']];
+				}
+				else {
+					$arAttr = unserialize($ar['ATTRIBUTES']);
+					if(false === is_array($arAttr)) {
+						$arAttr = array();
+					}
+					$arIndex[$parent_id]['VALUE'][$ar['NAME']] = array(
+						'NAME' => $ar['NAME'],
+						'VALUE' => $ar['VALUE'],
+						'ATTRIBUTES' => $arAttr
+					);
+					$arIndex[$ar['ID']] = &$arIndex[$parent_id]['VALUE'][$ar['NAME']];
+				}
+			}
+		}
+
+		return $arResult;
+	}
+
 }
 
