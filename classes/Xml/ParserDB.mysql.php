@@ -66,7 +66,7 @@ class ParserDB {
 		return true;
 	}
 
-	public function checkTableName($tableName) {
+	static public function checkTableName($tableName) {
 		if( preg_match('~[a-zA-Z0-9]{1}[a-zA-Z0-9\_]{0,30}~', $tableName)) {
 			return true;
 		}
@@ -75,7 +75,7 @@ class ParserDB {
 
 	public function createTempTables($tableName = null, $bWithSessID = false) {
 		if(null !== $tableName ) {
-			if( $this->checkTableName($tableName) ) {
+			if( self::checkTableName($tableName) ) {
 				$this->_tempTableName = $tableName;
 			}
 			else {
