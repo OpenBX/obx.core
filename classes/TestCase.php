@@ -71,6 +71,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		if( strlen($className)<1 || !class_exists($className) ) {
 			$this->fail('ERROR: Can\'t invoke test. TestCase Class not found');
 		}
+		/** @var \PHPUnit_Framework_TestCase $TestCase */
 		$TestCase = new $className;
 		if( strlen($testName)<1 || !method_exists($TestCase, $testName) ) {
 			$this->fail('ERROR: Can\'t invoke test. TestCase Method not found');
@@ -102,7 +103,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 			$arFields['LOGIN'] = '__test_basket_user_1';
 			$ID = $user->Add($arFields);
 			$this->assertGreaterThan(0, $ID, 'Error: can\'t create test user 1. text: '.$user->LAST_ERROR);
-			$rsUser1 = CUser::GetByLogin('__test_basket_user_1');
+			$rsUser1 = \CUser::GetByLogin('__test_basket_user_1');
 			if( $arUser1 = $rsUser1->Fetch() ) {
 				$this->assertEquals('__test_basket_user_1', $arUser1['LOGIN']);
 				self::$_arTestUser = $arUser1;
@@ -119,7 +120,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 			$arFields['LOGIN'] = '__test_basket_user_2';
 			$ID = $user->Add($arFields);
 			$this->assertGreaterThan(0, $ID, 'Error: can\'t create test user 2. text: '.$user->LAST_ERROR);
-			$rsUser1 = CUser::GetByLogin('__test_basket_user_2');
+			$rsUser1 = \CUser::GetByLogin('__test_basket_user_2');
 			if( $arUser2 = $rsUser1->Fetch() ) {
 				$this->assertEquals('__test_basket_user_2', $arUser2['LOGIN']);
 				self::$_arSomeOtherTestUser = $arUser2;

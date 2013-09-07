@@ -73,7 +73,7 @@ class ParserDB {
 		return false;
 	}
 
-	public function createTempTables($tableName = null, $bWithSessID = false) {
+	public function setTempTableName($tableName){
 		if(null !== $tableName ) {
 			if( self::checkTableName($tableName) ) {
 				$this->_tempTableName = $tableName;
@@ -82,7 +82,9 @@ class ParserDB {
 				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_WRONG_NAME'), ParserError::TMP_TBL_WRONG_NAME);
 			}
 		}
+	}
 
+	public function createTempTables($bWithSessID = false) {
 		/** @global \CDatabase $DB */
 		global $DB;
 
@@ -226,6 +228,27 @@ class ParserDB {
 		return $arResult;
 	}
 
+	protected function _prepareFilter(&$arFilter, &$arSQLWhere) {
+		/** @global \CDatabase $DB */
+		global $DB;
+		$arSQLWhere = array();
+		foreach($arFilter as $field => $value)
+		{
+			if($field == "ID" || $field == "LEFT_MARGIN")
+				$arSQLWhere[$field] = $field." = ".intval($value);
+			elseif($field == "PARENT_ID" || $field == "PARENT_ID+0")
+				$arSQLWhere[$field] = $field." = ".intval($value);
+			elseif($field == ">ID")
+				$arSQLWhere[$field] = "ID > ".intval($value);
+			elseif($field == "><LEFT_MARGIN")
+				$arSQLWhere[$field] = "LEFT_MARGIN between ".intval($value[0])." AND ".intval($value[1]);
+			elseif($field == "NAME")
+				$arSQLWhere[$field] = $field." = "."'".$DB->ForSQL($value)."'";
+		}
+		if($this->_sessionID)
+			$arSQLWhere[] = "SESS_ID = '".$DB->ForSQL($this->_sessionID)."'";
+	}
+
 	/**
 	 * @param array $arOrder
 	 * @param array $arFilter
@@ -253,22 +276,7 @@ class ParserDB {
 			$arSelect[] = "*";
 		}
 
-		$arSQLWhere = array();
-		foreach($arFilter as $field => $value)
-		{
-			if($field == "ID" || $field == "LEFT_MARGIN")
-				$arSQLWhere[$field] = $field." = ".intval($value);
-			elseif($field == "PARENT_ID" || $field == "PARENT_ID+0")
-				$arSQLWhere[$field] = $field." = ".intval($value);
-			elseif($field == ">ID")
-				$arSQLWhere[$field] = "ID > ".intval($value);
-			elseif($field == "><LEFT_MARGIN")
-				$arSQLWhere[$field] = "LEFT_MARGIN between ".intval($value[0])." AND ".intval($value[1]);
-			elseif($field == "NAME")
-				$arSQLWhere[$field] = $field." = "."'".$DB->ForSQL($value)."'";
-		}
-		if($this->_sessionID)
-			$arSQLWhere[] = "SESS_ID = '".$DB->ForSQL($this->_sessionID)."'";
+		$this->_prepareFilter($arFilter, $arSQLWhere);
 
 		foreach($arOrder as $field => $by)
 		{
@@ -290,5 +298,19 @@ class ParserDB {
 		";
 
 		return $DB->Query($strSql);
+	}
+
+	public function getCount($arFilter) {
+		/** @global \CDatabase $DB */
+		global $DB;
+		$this->_prepareFilter($arFilter, $arSQLWhere);
+		$strSql = '
+			SELECT COUNT(ID) as CNT
+			FROM '.$this->_tempTableName.'
+			'.(count($arSQLWhere)? 'WHERE ('.implode(') AND (', $arSQLWhere).')': '').'
+		';
+		$rs = $DB->Query($strSql);
+		$row = $rs->Fetch();
+		return intval($row['CNT']);
 	}
 }
