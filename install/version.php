@@ -30,7 +30,7 @@ return $arModuleVersion;
  * |   и
  * |   OBX\Core\Tools::addComponentDeferredJS()
  *
- * [1.0.3]
+ * [1.1.0]
  * |=== Сборщик ===
  * | * Добавлена возможность установить/удалить исходные данные
  * |   и настройки модуля из консоли CModule::[Un]InstallData()
