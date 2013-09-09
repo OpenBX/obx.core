@@ -275,7 +275,7 @@ class ParserDB {
 		if(count($arSelect) <= 0) {
 			$arSelect[] = "*";
 		}
-
+		$arSQLWhere = array();
 		$this->_prepareFilter($arFilter, $arSQLWhere);
 
 		foreach($arOrder as $field => $by)
@@ -303,6 +303,7 @@ class ParserDB {
 	public function getCount($arFilter) {
 		/** @global \CDatabase $DB */
 		global $DB;
+		$arSQLWhere = array();
 		$this->_prepareFilter($arFilter, $arSQLWhere);
 		$strSql = '
 			SELECT COUNT(ID) as CNT
