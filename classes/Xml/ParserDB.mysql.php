@@ -9,6 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Xml;
+use DVT\YMLExchange\Exceptions\ImportError;
 use OBX\Core\Xml\Exceptions\ParserError;
 
 IncludeModuleLangFile(__FILE__);
@@ -16,9 +17,25 @@ IncludeModuleLangFile(__FILE__);
 class ParserDB {
 	const DEFAULT_TEMP_TBL_NAME = 'obx_tmp_xml_parser_tree';
 	protected $_tempTableName = self::DEFAULT_TEMP_TBL_NAME;
-	protected $_bTempDatabaseCreated = false;
 	protected $_sessionID = '';
 	protected $_bUseSessionIDIntTempTable = false;
+
+	protected $_bTempTableCreated = null;
+	protected $_fileParsed = null;
+
+	const B_START_SESSION = -1;
+	const B_FILE_PARSED = -2;
+	const B_ATTRIBUTE = -3;
+
+	protected $_arAttributes = null;
+	//	array(
+	//		array(
+	//			'NAME' => 'available',
+	//			'NODE' => 'offer',
+	//			'DEPTH_LEVEL' => 2
+	//		)
+	//	);
+
 
 	function startSession($sess_id) {
 		global $DB;
@@ -33,13 +50,13 @@ class ParserDB {
 		}
 		if($res) {
 			$this->_sessionID = substr($sess_id, 0, 32);
-			$rs = $this->getList(array(), array("PARENT_ID" => -1), array("ID", "NAME"));
+			$rs = $this->getList(array(), array('PARENT_ID' => self::B_START_SESSION), array('ID', 'NAME'));
 			if(!$rs->Fetch()) {
 				$this->add(array(
-					"PARENT_ID" => -1,
-					"LEFT_MARGIN" => 0,
-					"NAME" => "SESS_ID",
-					"VALUE" => ConvertDateTime(ConvertTimeStamp(false, "FULL"), "YYYY-MM-DD HH:MI:SS"),
+					'PARENT_ID' => self::B_START_SESSION,
+					'LEFT_MARGIN' => 0,
+					'NAME' => 'SESS_ID',
+					'VALUE' => ConvertDateTime(ConvertTimeStamp(false, 'FULL'), 'YYYY-MM-DD HH:MI:SS'),
 				));
 			}
 		}
@@ -48,19 +65,19 @@ class ParserDB {
 
 	function GetSessionRoot() {
 		global $DB;
-		$rs = $DB->Query("SELECT ID MID from ".$this->_tempTableName." WHERE SESS_ID = '".$DB->ForSQL($this->_sessionID)."' AND PARENT_ID = 0");
+		$rs = $DB->Query('SELECT ID MID from '.$this->_tempTableName.' WHERE SESS_ID = "'.$DB->ForSQL($this->_sessionID).'" AND PARENT_ID = 0');
 		$ar = $rs->Fetch();
-		return $ar["MID"];
+		return $ar['MID'];
 	}
 
 	function endSession() {
 		global $DB;
 		//Delete "expired" sessions
-		$expired = ConvertDateTime(ConvertTimeStamp(time()-3600, "FULL"), "YYYY-MM-DD HH:MI:SS");
-		$rs = $DB->Query("select ID, SESS_ID, VALUE from ".$this->_tempTableName." where PARENT_ID = -1 AND NAME = 'SESS_ID' ORDER BY ID");
+		$expired = ConvertDateTime(ConvertTimeStamp(time()-3600, 'FULL'), 'YYYY-MM-DD HH:MI:SS');
+		$rs = $DB->Query('select ID, SESS_ID, VALUE from '.$this->_tempTableName.' where PARENT_ID = -1 AND NAME = "SESS_ID" ORDER BY ID');
 		while( $ar = $rs->Fetch() ) {
-			if($ar["SESS_ID"] == $this->_sessionID || $ar["VALUE"] < $expired) {
-				$DB->Query("DELETE from ".$this->_tempTableName." WHERE SESS_ID = '".$DB->ForSQL($ar["SESS_ID"])."'");
+			if($ar['SESS_ID'] == $this->_sessionID || $ar['VALUE'] < $expired) {
+				$DB->Query('DELETE from '.$this->_tempTableName.' WHERE SESS_ID = "'.$DB->ForSQL($ar['SESS_ID']).'"');
 			}
 		}
 		return true;
@@ -79,27 +96,96 @@ class ParserDB {
 				$this->_tempTableName = $tableName;
 			}
 			else {
-				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_WRONG_NAME'), ParserError::TMP_TBL_WRONG_NAME);
+				throw new ParserError(
+					GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_WRONG_NAME')
+					, ParserError::TMP_TBL_WRONG_NAME
+				);
 			}
 		}
+	}
+
+	public function isTempTableCreated() {
+		/** @global \CDatabase $DB */
+		global $DB;
+		if( null === $this->_bTempTableCreated ) {
+			if( $DB->TableExists($this->_tempTableName) ) {
+				$this->_bTempTableCreated = true;
+			}
+			else {
+				$this->_bTempTableCreated = false;
+			}
+		}
+		return $this->_bTempTableCreated;
+	}
+
+	public function createAttribute($attrName, $nodeName = false, $depthLevel = false) {
+		if( true === $this->isTempTableCreated() ) {
+			throw new ImportError(
+				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL')
+				, ParserError::E_ADD_ATTR_ON_EXISTS_TBL
+			);
+		}
+		$nodeName = ($nodeName === false)?null:$nodeName;
+		$depthLevel = ($depthLevel === false)?null:$depthLevel;
+		if( null === $this->_arAttributes ) {
+			$this->_arAttributes = array();
+		}
+		$this->_arAttributes[] = array(
+			'NAME' => $attrName,
+			'NODE' => $nodeName,
+			'DEPTH_LEVEL' => $depthLevel
+		);
+	}
+
+	public function getAttributes() {
+		if( null === $this->_arAttributes ) {
+			$rs = $this->getList(array(),
+				array('PARENT_ID' => self::B_ATTRIBUTE),
+				array('NAME', 'VALUE', 'ATTRIBUTE')
+			);
+			$arAttributes = array();
+			while( $arAttrResult = $rs->Fetch() ) {
+				$arAttributes[] = array(
+					'NAME' => $arAttrResult['NAME'],
+					'NODE' => $arAttrResult['VALUE'],
+					'DEPTH_LEVEL' => $arAttrResult['ATTRIBUTES']
+				);
+			}
+			if( empty($arAttributes) ) {
+				$this->_arAttributes = false;
+			}
+			else {
+				$this->_arAttributes = $arAttributes;
+			}
+		}
+		return $this->_arAttributes;
 	}
 
 	public function createTempTables($bWithSessID = false) {
 		/** @global \CDatabase $DB */
 		global $DB;
 
-		if(defined("MYSQL_TABLE_TYPE") && strlen(MYSQL_TABLE_TYPE) > 0) {
-			$DB->Query("SET storage_engine = '".MYSQL_TABLE_TYPE."'", true);
+		if(defined('MYSQL_TABLE_TYPE') && strlen(MYSQL_TABLE_TYPE) > 0) {
+			$DB->Query('SET storage_engine = "'.MYSQL_TABLE_TYPE.'"', true);
 		}
 
 		if($DB->TableExists($this->_tempTableName)) {
 			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_EXISTS'), ParserError::TMP_TBL_EXISTS);
 		}
 
-		$res = $DB->Query("create table ".$this->_tempTableName."
+		$sqlAttrFieldsCreate = '';
+		$bAttrsExist = false;
+		if(is_array($this->_arAttributes)) {
+			$bAttrsExist = true;
+			foreach($this->_arAttributes as &$arAttr) {
+				$sqlAttrFieldsCreate .= 'ATTR_'.$arAttr['NAME'].' varchar(64),';
+			}
+		}
+
+		$res = $DB->Query('create table '.$this->_tempTableName.'
 				(
 					ID int(11) not null auto_increment,
-					".($bWithSessID? "SESS_ID varchar(32),": "")."
+					'.($bWithSessID? 'SESS_ID varchar(32),': '').'
 					PARENT_ID int(11),
 					LEFT_MARGIN int(11),
 					RIGHT_MARGIN int(11),
@@ -107,10 +193,25 @@ class ParserDB {
 					NAME varchar(255),
 					VALUE text,
 					ATTRIBUTES text,
+					'.$sqlAttrFieldsCreate.'
 					PRIMARY KEY (ID)
 				)
-			");
+			');
+		if( $bAttrsExist ) {
+			$bFirst = true;
+			// PARENT_ID = self::B_ATTRIBUTE - признак того что запись не нода, а аттрибут
+			// NAME - имя аттрибута
+			// VALUE - нода аттрибута
+			// ATTRIBUTE - DEPTH_LEVEL ноды
+			$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, ATTRIBUTE, LEFT_MARGIN';
+			$sqlAttrInsertValue = self::B_ATTRIBUTE.', '
+				.$arAttr['NAME'].', '
+				.$arAttr['NODE'].', '
+				.$arAttr['DEPTH_LEVEL'].', 0';
+			$DB->Query('INSERT INTO '.$this->_tempTableName.' ('.$sqlAttrInsertName.') VALUES ('.$sqlAttrInsertValue.')');
+		}
 		$this->_bUseSessionIDIntTempTable = ($bWithSessID)?true:false;
+		$this->_bTempTableCreated = true;
 		return $res;
 	}
 
@@ -121,7 +222,7 @@ class ParserDB {
 	public function dropTempTables() {
 		global $DB;
 		if($DB->TableExists($this->_tempTableName)) {
-			return $DB->Query("drop table ".$this->_tempTableName);
+			return $DB->Query('drop table '.$this->_tempTableName);
 		}
 		else return true;
 	}
@@ -130,37 +231,42 @@ class ParserDB {
 		global $DB;
 		$res = true;
 		if($this->_bUseSessionIDIntTempTable) {
-			if(!$DB->IndexExists($this->_tempTableName, array("SESS_ID", "PARENT_ID")))
-				$res = $DB->Query("CREATE INDEX ix_".$this->_tempTableName."_parent on ".$this->_tempTableName."(SESS_ID, PARENT_ID)");
-			if($res && !$DB->IndexExists($this->_tempTableName, array("SESS_ID", "LEFT_MARGIN")))
-				$res = $DB->Query("CREATE INDEX ix_".$this->_tempTableName."_left on ".$this->_tempTableName."(SESS_ID, LEFT_MARGIN)");
+			if(!$DB->IndexExists($this->_tempTableName, array('SESS_ID', 'PARENT_ID'))) {
+				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_parent on '.$this->_tempTableName.'(SESS_ID, PARENT_ID)');
+			}
+			if($res && !$DB->IndexExists($this->_tempTableName, array('SESS_ID', 'LEFT_MARGIN'))) {
+				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_left on '.$this->_tempTableName.'(SESS_ID, LEFT_MARGIN)');
+			}
 		}
 		else {
-			if(!$DB->IndexExists($this->_tempTableName, array("PARENT_ID")))
-				$res = $DB->Query("CREATE INDEX ix_".$this->_tempTableName."_parent on ".$this->_tempTableName."(PARENT_ID)");
-			if($res && !$DB->IndexExists($this->_tempTableName, array("LEFT_MARGIN")))
-				$res = $DB->Query("CREATE INDEX ix_".$this->_tempTableName."_left on ".$this->_tempTableName."(LEFT_MARGIN)");
+			if(!$DB->IndexExists($this->_tempTableName, array('PARENT_ID'))) {
+				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_parent on '.$this->_tempTableName.'(PARENT_ID)');
+			}
+			if($res && !$DB->IndexExists($this->_tempTableName, array('LEFT_MARGIN'))) {
+				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_left on '.$this->_tempTableName.'(LEFT_MARGIN)');
+			}
 		}
 		return $res;
 	}
 
 	public function add($arFields) {
 		global $DB;
-		$strSql1 = "PARENT_ID, LEFT_MARGIN, RIGHT_MARGIN, DEPTH_LEVEL, NAME";
-		$strSql2 = intval($arFields["PARENT_ID"]).", ".intval($arFields["LEFT_MARGIN"]).", ".intval($arFields["RIGHT_MARGIN"]).", ".intval($arFields["DEPTH_LEVEL"]).", '".$DB->ForSQL($arFields["NAME"], 255)."'";
-		if(array_key_exists("ATTRIBUTES", $arFields)) {
-			$strSql1 .= ", ATTRIBUTES";
-			$strSql2 .= ", '".$DB->ForSQL($arFields["ATTRIBUTES"])."'";
-		}
-		if(array_key_exists("VALUE", $arFields)) {
-			$strSql1 .= ", VALUE";
-			$strSql2 .= ", '".$DB->ForSQL($arFields["VALUE"])."'";
+		$strSql1 = 'PARENT_ID, LEFT_MARGIN, RIGHT_MARGIN, DEPTH_LEVEL, NAME';
+		$strSql2 = intval($arFields['PARENT_ID']).', '.intval($arFields['LEFT_MARGIN']).', '.intval($arFields['RIGHT_MARGIN']).', '.intval($arFields['DEPTH_LEVEL']).', "'.$DB->ForSQL($arFields['NAME'], 255).'"';
+		if(array_key_exists('VALUE', $arFields)) {
+			$strSql1 .= ', VALUE';
+			$strSql2 .= ', "'.$DB->ForSQL($arFields['VALUE']).'"';
 		}
 		if($this->_sessionID) {
-			$strSql1 .= ", SESS_ID";
-			$strSql2 .= ", '".$DB->ForSQL($this->_sessionID)."'";
+			$strSql1 .= ', SESS_ID';
+			$strSql2 .= ', "'.$DB->ForSQL($this->_sessionID).'"';
 		}
-		$strSql = "INSERT INTO ".$this->_tempTableName." (".$strSql1.") VALUES (".$strSql2.")";
+		if(array_key_exists('ATTRIBUTES', $arFields)) {
+			//if( $this->_ )
+			$strSql1 .= ', ATTRIBUTES';
+			$strSql2 .= ', "'.$DB->ForSQL($arFields['ATTRIBUTES']).'"';
+		}
+		$strSql = 'INSERT INTO '.$this->_tempTableName.' ('.$strSql1.') VALUES ('.$strSql2.')';
 		$DB->Query($strSql);
 		return $DB->LastID();
 	}
@@ -168,7 +274,7 @@ class ParserDB {
 	public function delete($ID) {
 		/** @global \CDatabase $DB */
 		global $DB;
-		return $DB->Query("delete from ".$this->_tempTableName." where ID = ".intval($ID));
+		return $DB->Query('delete from '.$this->_tempTableName.' where ID = '.intval($ID));
 	}
 
 	public function getAllChildrenArray($arParent)
@@ -180,8 +286,8 @@ class ParserDB {
 		if( !is_array($arParent) ) {
 			$rs = $this->getList(
 				array(),
-				array("ID" => $arParent),
-				array("ID", "LEFT_MARGIN", "RIGHT_MARGIN")
+				array('ID' => $arParent),
+				array('ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')
 			);
 			$arParent = $rs->Fetch();
 			if(!$arParent) {
@@ -193,35 +299,35 @@ class ParserDB {
 		$arSalt = array();
 		$arIndex = array();
 		$rs = $this->getList(
-			array("ID" => "asc"),
-			array("><LEFT_MARGIN" => array($arParent["LEFT_MARGIN"]+1, $arParent["RIGHT_MARGIN"]-1))
+			array('ID' => 'asc'),
+			array('><LEFT_MARGIN' => array($arParent['LEFT_MARGIN']+1, $arParent['RIGHT_MARGIN']-1))
 		);
 		while($ar = $rs->Fetch()) {
-			if(isset($ar["VALUE_CLOB"]))
-				$ar["VALUE"] = $ar["VALUE_CLOB"];
+			if(isset($ar['VALUE_CLOB']))
+				$ar['VALUE'] = $ar['VALUE_CLOB'];
 
-			if(isset($arSalt[$ar["PARENT_ID"]][$ar["NAME"]]))
+			if(isset($arSalt[$ar['PARENT_ID']][$ar['NAME']]))
 			{
-				$salt = ++$arSalt[$ar["PARENT_ID"]][$ar["NAME"]];
-				$ar["NAME"] .= $salt;
+				$salt = ++$arSalt[$ar['PARENT_ID']][$ar['NAME']];
+				$ar['NAME'] .= $salt;
 			}
 			else
 			{
-				$arSalt[$ar["PARENT_ID"]][$ar["NAME"]] = 0;
+				$arSalt[$ar['PARENT_ID']][$ar['NAME']] = 0;
 			}
 
-			if($ar["PARENT_ID"] == $arParent["ID"])
+			if($ar['PARENT_ID'] == $arParent['ID'])
 			{
-				$arResult[$ar["NAME"]] = $ar["VALUE"];
-				$arIndex[$ar["ID"]] = &$arResult[$ar["NAME"]];
+				$arResult[$ar['NAME']] = $ar['VALUE'];
+				$arIndex[$ar['ID']] = &$arResult[$ar['NAME']];
 			}
 			else
 			{
-				$parent_id = $ar["PARENT_ID"];
+				$parent_id = $ar['PARENT_ID'];
 				if(!is_array($arIndex[$parent_id]))
 					$arIndex[$parent_id] = array();
-				$arIndex[$parent_id][$ar["NAME"]] = $ar["VALUE"];
-				$arIndex[$ar["ID"]] = &$arIndex[$parent_id][$ar["NAME"]];
+				$arIndex[$parent_id][$ar['NAME']] = $ar['VALUE'];
+				$arIndex[$ar['ID']] = &$arIndex[$parent_id][$ar['NAME']];
 			}
 		}
 
@@ -234,19 +340,19 @@ class ParserDB {
 		$arSQLWhere = array();
 		foreach($arFilter as $field => $value)
 		{
-			if($field == "ID" || $field == "LEFT_MARGIN")
-				$arSQLWhere[$field] = $field." = ".intval($value);
-			elseif($field == "PARENT_ID" || $field == "PARENT_ID+0")
-				$arSQLWhere[$field] = $field." = ".intval($value);
-			elseif($field == ">ID")
-				$arSQLWhere[$field] = "ID > ".intval($value);
-			elseif($field == "><LEFT_MARGIN")
-				$arSQLWhere[$field] = "LEFT_MARGIN between ".intval($value[0])." AND ".intval($value[1]);
-			elseif($field == "NAME")
-				$arSQLWhere[$field] = $field." = "."'".$DB->ForSQL($value)."'";
+			if($field == 'ID' || $field == 'LEFT_MARGIN')
+				$arSQLWhere[$field] = $field.' = '.intval($value);
+			elseif($field == 'PARENT_ID' || $field == 'PARENT_ID+0')
+				$arSQLWhere[$field] = $field.' = '.intval($value);
+			elseif($field == '>ID')
+				$arSQLWhere[$field] = 'ID > '.intval($value);
+			elseif($field == '><LEFT_MARGIN')
+				$arSQLWhere[$field] = 'LEFT_MARGIN between '.intval($value[0]).' AND '.intval($value[1]);
+			elseif($field == 'NAME')
+				$arSQLWhere[$field] = $field.' = '.'"'.$DB->ForSQL($value).'"';
 		}
 		if($this->_sessionID)
-			$arSQLWhere[] = "SESS_ID = '".$DB->ForSQL($this->_sessionID)."'";
+			$arSQLWhere[] = 'SESS_ID = "'.$DB->ForSQL($this->_sessionID).'"';
 	}
 
 	/**
@@ -259,12 +365,12 @@ class ParserDB {
 		/** @global \CDatabase $DB */
 		global $DB;
 		static $arFields = array(
-			"ID" => "ID",
-			"ATTRIBUTES" => "ATTRIBUTES",
-			"LEFT_MARGIN" => "LEFT_MARGIN",
-			"RIGHT_MARGIN" => "RIGHT_MARGIN",
-			"NAME" => "NAME",
-			"VALUE" => "VALUE",
+			'ID' => 'ID',
+			'ATTRIBUTES' => 'ATTRIBUTES',
+			'LEFT_MARGIN' => 'LEFT_MARGIN',
+			'RIGHT_MARGIN' => 'RIGHT_MARGIN',
+			'NAME' => 'NAME',
+			'VALUE' => 'VALUE',
 		);
 		foreach($arSelect as $i => $field) {
 			if(!array_key_exists($field, $arFields)) {
@@ -273,7 +379,7 @@ class ParserDB {
 		}
 
 		if(count($arSelect) <= 0) {
-			$arSelect[] = "*";
+			$arSelect[] = '*';
 		}
 		$arSQLWhere = array();
 		$this->_prepareFilter($arFilter, $arSQLWhere);
@@ -284,18 +390,18 @@ class ParserDB {
 				unset($arSelect[$field]);
 			}
 			else {
-				$arOrder[$field] = $field." ".($by=="desc"? "desc": "asc");
+				$arOrder[$field] = $field.' '.($by=='desc'? 'desc': 'asc');
 			}
 		}
 
-		$strSql = "
+		$strSql = '
 			select
-				".implode(", ", $arSelect)."
+				'.implode(', ', $arSelect).'
 			from
-				".$this->_tempTableName."
-			".(count($arSQLWhere)? "where (".implode(") and (", $arSQLWhere).")": "")."
-			".(count($arOrder)? "order by  ".implode(", ", $arOrder): "")."
-		";
+				'.$this->_tempTableName.'
+			'.(count($arSQLWhere)? 'where ('.implode(') and (', $arSQLWhere).')': '').'
+			'.(count($arOrder)? 'order by  '.implode(', ', $arOrder): '').'
+		';
 
 		return $DB->Query($strSql);
 	}

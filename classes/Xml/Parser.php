@@ -385,7 +385,8 @@ class Parser extends ParserDB {
 						$attrs[$attrs_tmp_1] = preg_replace($arRegSearch, $arReplace, $attrs_tmp[2][$i]);
 					}
 				}
-				$DBelementAttrs = serialize($attrs);
+				//$DBelementAttrs = serialize($attrs);
+				$DBelementAttrs = $attrs;
 			}
 			else {
 				$DBelementAttrs = false;

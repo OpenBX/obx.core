@@ -15,4 +15,5 @@ class ParserError extends \ErrorException {
 	const XML_FILE_CANT_OPEN = 2;
 	const TMP_TBL_WRONG_NAME = 3;
 	const TMP_TBL_EXISTS = 4;
+	const E_ADD_ATTR_ON_EXISTS_TBL = 5;
 }
