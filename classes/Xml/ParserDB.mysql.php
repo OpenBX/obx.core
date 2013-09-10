@@ -9,7 +9,6 @@
  ***********************************************/
 
 namespace OBX\Core\Xml;
-use DVT\YMLExchange\Exceptions\ImportError;
 use OBX\Core\Xml\Exceptions\ParserError;
 
 IncludeModuleLangFile(__FILE__);
@@ -118,9 +117,9 @@ class ParserDB {
 		return $this->_bTempTableCreated;
 	}
 
-	public function createAttribute($attrName, $nodeName = false, $depthLevel = false) {
+	public function addAttribute($attrName, $nodeName = false, $depthLevel = false) {
 		if( true === $this->isTempTableCreated() ) {
-			throw new ImportError(
+			throw new ParserError(
 				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL')
 				, ParserError::E_ADD_ATTR_ON_EXISTS_TBL
 			);
@@ -202,12 +201,12 @@ class ParserDB {
 			// PARENT_ID = self::B_ATTRIBUTE - признак того что запись не нода, а аттрибут
 			// NAME - имя аттрибута
 			// VALUE - нода аттрибута
-			// ATTRIBUTE - DEPTH_LEVEL ноды
-			$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, ATTRIBUTE, LEFT_MARGIN';
+			// ATTRIBUTES - DEPTH_LEVEL ноды
+			$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, ATTRIBUTES, LEFT_MARGIN';
 			$sqlAttrInsertValue = self::B_ATTRIBUTE.', '
-				.$arAttr['NAME'].', '
-				.$arAttr['NODE'].', '
-				.$arAttr['DEPTH_LEVEL'].', 0';
+				.'"'.$arAttr['NAME'].'", '
+				.'"'.$arAttr['NODE'].'", '
+				.'"'.$arAttr['DEPTH_LEVEL'].'", 0';
 			$DB->Query('INSERT INTO '.$this->_tempTableName.' ('.$sqlAttrInsertName.') VALUES ('.$sqlAttrInsertValue.')');
 		}
 		$this->_bUseSessionIDIntTempTable = ($bWithSessID)?true:false;
