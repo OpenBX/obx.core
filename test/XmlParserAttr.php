@@ -42,22 +42,81 @@ class XmlParserAttr extends TestCase {
 	/**
 	 * @param $filePath
 	 * @dataProvider getXmlFilePath
+	 * @depends testAddAttrAfterTableCreation
 	 */
 	public function testAddAttr($filePath) {
 		$Parser = new XmlParser($filePath);
 		$Parser->dropTempTables();
-		$Parser->addAttribute('available', 'offer', 4);
+		$Parser->addAttribute('available', 'offer', 4, true, true);
+		$Parser->addAttribute('id', false, false, true, true);
 		$Parser->createTempTables();
 	}
 
 	/**
 	 * @param $filePath
 	 * @dataProvider getXmlFilePath
+	 * @depends testAddAttr
 	 */
-	public function testgGetAttributes($filePath) {
+	public function testGetAttributes($filePath) {
 		$Parser = new XmlParser($filePath);
 		$this->assertTrue($Parser->isTempTableCreated());
 		$arAttributes = $Parser->getAttributes();
 		$this->assertNotEmpty($arAttributes);
+		foreach($arAttributes as &$arAttr) {
+			$this->assertArrayHasKey('NAME', $arAttr);
+			$this->assertArrayHasKey('NODE', $arAttr);
+			$this->assertArrayHasKey('COL_NAME', $arAttr);
+			$this->assertArrayHasKey('AUTO', $arAttr);
+			$this->assertArrayHasKey('INDEX', $arAttr);
+			$this->assertArrayHasKey('DEPTH_LEVEL', $arAttr);
+			if( $arAttr['NAME'] == 'available' ) {
+				$this->assertEquals(4, $arAttr['DEPTH_LEVEL']);
+				$this->assertEquals('available', $arAttr['COL_NAME']);
+				$this->assertTrue($arAttr['INDEX']);
+				$this->assertTrue($arAttr['AUTO']);
+			}
+			if( $arAttr['NAME'] == 'id' ) {
+				$this->assertFalse((bool) $arAttr['DEPTH_LEVEL']);
+				$this->assertEquals('id', $arAttr['COL_NAME']);
+				$this->assertTrue($arAttr['INDEX']);
+				$this->assertTrue($arAttr['AUTO']);
+			}
+		}
+	}
+
+	/**
+	 * @param $filePath
+	 * @dataProvider getXmlFilePath
+	 * @depends testGetAttributes
+	 */
+	public function testIndexWithAttr($filePath) {
+		/** @var XmlParser $Parser */
+		/** @global \CDatabase $DB */
+		global $DB;
+		$Parser = new XmlParser($filePath);
+		$Parser->indexTempTables();
+		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_id')));
+		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_available')));
+	}
+
+
+	/**
+	 * @param $filePath
+	 * @dataProvider getXmlFilePath
+	 * @depends testAddAttr
+	 * @depends testGetAttributes
+	 * @depends testIndexWithAttr
+	 */
+	public function testParser($filePath){
+		$ITERATION = array();
+		$Parser = new XmlParser($filePath);
+		//$Parser->setReadSize(100);
+		$Parser->setReadTimeLimit(1);
+		$prevFilePosition = 0;
+		while( !$Parser->readXML($ITERATION) ) {
+			$this->assertGreaterThanOrEqual($prevFilePosition, $ITERATION['file_position']);
+			$prevFilePosition = $ITERATION['file_position'];
+		}
+		$Parser->indexTempTables();
 	}
 }

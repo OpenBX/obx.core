@@ -117,12 +117,22 @@ class ParserDB {
 		return $this->_bTempTableCreated;
 	}
 
-	public function addAttribute($attrName, $nodeName = false, $depthLevel = false) {
+	public function addAttribute($attrName, $nodeName = false, $depthLevel = false, $bFillFromNodeAttr = false, $bAddIndex = false) {
 		if( true === $this->isTempTableCreated() ) {
 			throw new ParserError(
 				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL')
 				, ParserError::E_ADD_ATTR_ON_EXISTS_TBL
 			);
+		}
+		if(!preg_match('~[a-zA-Z]{1}[a-zA-Z0-9\-\_]{0,29}~', $attrName)) {
+			throw new ParserError(
+				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME')
+				, ParserError::E_WRONG_ATTR_NAME
+			);
+		}
+		$colName = $attrName;
+		if( strpos($colName, '-') !== false ) {
+			$colName = str_replace('-', '_', $colName);
 		}
 		$nodeName = ($nodeName === false)?null:$nodeName;
 		$depthLevel = ($depthLevel === false)?null:$depthLevel;
@@ -132,22 +142,30 @@ class ParserDB {
 		$this->_arAttributes[] = array(
 			'NAME' => $attrName,
 			'NODE' => $nodeName,
-			'DEPTH_LEVEL' => $depthLevel
+			'COL_NAME' => $colName,
+			'DEPTH_LEVEL' => $depthLevel,
+			'INDEX' => ($bAddIndex===true)?true:false,
+			'AUTO' => ($bFillFromNodeAttr===true)?true:false,
 		);
 	}
 
 	public function getAttributes() {
 		if( null === $this->_arAttributes ) {
-			$rs = $this->getList(array(),
+			$rs = $this->getList(
+				array(),
 				array('PARENT_ID' => self::B_ATTRIBUTE),
-				array('NAME', 'VALUE', 'ATTRIBUTE')
+				array('NAME', 'VALUE', 'DEPTH_LEVEL', 'ATTRIBUTES')
 			);
 			$arAttributes = array();
 			while( $arAttrResult = $rs->Fetch() ) {
+				$arAttrAttr = unserialize($arAttrResult['ATTRIBUTES']);
 				$arAttributes[] = array(
 					'NAME' => $arAttrResult['NAME'],
 					'NODE' => $arAttrResult['VALUE'],
-					'DEPTH_LEVEL' => $arAttrResult['ATTRIBUTES']
+					'DEPTH_LEVEL' => -intval($arAttrResult['DEPTH_LEVEL']),
+					'COL_NAME' => $arAttrAttr['COL_NAME'],
+					'INDEX' => ($arAttrAttr['INDEX']==true)?true:false,
+					'AUTO' => ($arAttrAttr['AUTO']==true)?true:false
 				);
 			}
 			if( empty($arAttributes) ) {
@@ -198,16 +216,20 @@ class ParserDB {
 			');
 		if( $bAttrsExist ) {
 			$bFirst = true;
-			// PARENT_ID = self::B_ATTRIBUTE - признак того что запись не нода, а аттрибут
-			// NAME - имя аттрибута
-			// VALUE - нода аттрибута
-			// ATTRIBUTES - DEPTH_LEVEL ноды
-			$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, ATTRIBUTES, LEFT_MARGIN';
-			$sqlAttrInsertValue = self::B_ATTRIBUTE.', '
-				.'"'.$arAttr['NAME'].'", '
-				.'"'.$arAttr['NODE'].'", '
-				.'"'.$arAttr['DEPTH_LEVEL'].'", 0';
-			$DB->Query('INSERT INTO '.$this->_tempTableName.' ('.$sqlAttrInsertName.') VALUES ('.$sqlAttrInsertValue.')');
+			foreach($this->_arAttributes as &$arAttr) {
+				// PARENT_ID = self::B_ATTRIBUTE - признак того что запись не нода, а аттрибут
+				// NAME - имя аттрибута
+				// VALUE - нода аттрибута
+				// DEPTH_LEVEL - DEPTH_LEVEL ноды
+				$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, DEPTH_LEVEL, ATTRIBUTES, LEFT_MARGIN';
+				$sqlAttrInsertValue = self::B_ATTRIBUTE.', '
+					.'"'.$arAttr['NAME'].'", '
+					.'"'.$arAttr['NODE'].'", '
+					.'"'.-intval($arAttr['DEPTH_LEVEL']).'", '
+					.'"'.$DB->ForSql(serialize($arAttr)).'", '
+					.'0';
+				$DB->Query('INSERT INTO '.$this->_tempTableName.' ('.$sqlAttrInsertName.') VALUES ('.$sqlAttrInsertValue.')');
+			}
 		}
 		$this->_bUseSessionIDIntTempTable = ($bWithSessID)?true:false;
 		$this->_bTempTableCreated = true;
@@ -227,8 +249,15 @@ class ParserDB {
 	}
 
 	public function indexTempTables() {
+		/** @global \CDatabase $DB */
 		global $DB;
 		$res = true;
+		if( !$this->isTempTableCreated() ) {
+			throw new ParserError(
+				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_IDX_ON_EXISTS_TBL'),
+				ParserError::E_ADD_IDX_ON_EXISTS_TBL
+			);
+		}
 		if($this->_bUseSessionIDIntTempTable) {
 			if(!$DB->IndexExists($this->_tempTableName, array('SESS_ID', 'PARENT_ID'))) {
 				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_parent on '.$this->_tempTableName.'(SESS_ID, PARENT_ID)');
@@ -236,6 +265,7 @@ class ParserDB {
 			if($res && !$DB->IndexExists($this->_tempTableName, array('SESS_ID', 'LEFT_MARGIN'))) {
 				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_left on '.$this->_tempTableName.'(SESS_ID, LEFT_MARGIN)');
 			}
+
 		}
 		else {
 			if(!$DB->IndexExists($this->_tempTableName, array('PARENT_ID'))) {
@@ -245,7 +275,44 @@ class ParserDB {
 				$res = $DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_left on '.$this->_tempTableName.'(LEFT_MARGIN)');
 			}
 		}
-		return $res;
+		$this->_indexAttributes();
+		return true;
+	}
+
+	protected function _indexAttributes() {
+		/** @global \CDatabase $DB */
+		global $DB;
+		$arAttributes = $this->getAttributes();
+		if($this->_bUseSessionIDIntTempTable) {
+			if( !empty($arAttributes) ) {
+				$iAttr = 0;
+				foreach($arAttributes as $arAttr) {
+					$iAttr++;
+					if(
+						$arAttr['INDEX']
+						&& !$DB->IndexExists($this->_tempTableName, array('SESS_ID', 'ATTR_'.$arAttr['COL_NAME']))
+					) {
+						$DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_attr_'.$iAttr
+						.' on '.$this->_tempTableName.'(SESS_ID, ATTR_'.$arAttr['COL_NAME'].')');
+					}
+				}
+			}
+		}
+		else {
+			if( !empty($arAttributes) ) {
+				$iAttr = 0;
+				foreach($arAttributes as $arAttr) {
+					$iAttr++;
+					if(
+						$arAttr['INDEX']
+						&& !$DB->IndexExists($this->_tempTableName, array('ATTR_'.$arAttr['COL_NAME']))
+					) {
+						$DB->Query('CREATE INDEX ix_'.$this->_tempTableName.'_attr_'.$iAttr
+						.' on '.$this->_tempTableName.'(ATTR_'.$arAttr['COL_NAME'].')');
+					}
+				}
+			}
+		}
 	}
 
 	public function add($arFields) {
@@ -261,7 +328,18 @@ class ParserDB {
 			$strSql2 .= ', "'.$DB->ForSQL($this->_sessionID).'"';
 		}
 		if(array_key_exists('ATTRIBUTES', $arFields)) {
-			//if( $this->_ )
+			$arAttributes = $this->getAttributes();
+			if( is_array($arFields['ATTRIBUTES']) ) {
+				if( !empty($arAttributes) ) {
+					foreach($arAttributes as &$arAttr) {
+						if($arAttr['AUTO'] && array_key_exists($arAttr['NAME'], $arFields['ATTRIBUTES'])) {
+							$strSql1 .= ', ATTR_'.$arAttr['COL_NAME'];
+							$strSql2 .= ', "'.$DB->ForSql($arFields['ATTRIBUTES'][$arAttr['NAME']]).'"';
+						}
+					}
+				}
+				$arFields['ATTRIBUTES'] = serialize($arFields['ATTRIBUTES']);
+			}
 			$strSql1 .= ', ATTRIBUTES';
 			$strSql2 .= ', "'.$DB->ForSQL($arFields['ATTRIBUTES']).'"';
 		}
@@ -366,6 +444,7 @@ class ParserDB {
 		static $arFields = array(
 			'ID' => 'ID',
 			'ATTRIBUTES' => 'ATTRIBUTES',
+			'DEPTH_LEVEL' => 'DEPTH_LEVEL',
 			'LEFT_MARGIN' => 'LEFT_MARGIN',
 			'RIGHT_MARGIN' => 'RIGHT_MARGIN',
 			'NAME' => 'NAME',
