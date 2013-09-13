@@ -12,6 +12,7 @@
 			<file>JSMessages.php</file>
 			<file>Settings.php</file>
 			<file>XmlParserTest.php</file>
+			<file>XmlParserAttr.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>

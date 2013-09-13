@@ -33,6 +33,13 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	abstract public function getCurDir();
 
 
+	public function testSetMaxExecutionTime() {
+		if(intval(ini_get('max_execution_time')) > 0) {
+			set_time_limit(0);
+		}
+		$this->assertEquals(0, ini_get('max_execution_time'));
+	}
+
 	/**
 	 * Идентификатор тестового пользователя
 	 * @var int
