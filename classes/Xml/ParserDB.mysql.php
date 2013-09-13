@@ -124,7 +124,7 @@ class ParserDB {
 				, ParserError::E_ADD_ATTR_ON_EXISTS_TBL
 			);
 		}
-		if(!preg_match('~[a-zA-Z]{1}[a-zA-Z0-9\-\_]{0,29}~', $attrName)) {
+		if(!preg_match('~([a-zA-Z]{1}[a-zA-Z0-9\-\_]{0,29})(\:((a-zA-Z){1}[a-zA-Z0-9\_]{0,29}))?~', $attrName, $arAttrNameMatches)) {
 			throw new ParserError(
 				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME')
 				, ParserError::E_WRONG_ATTR_NAME

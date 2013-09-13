@@ -48,7 +48,7 @@ class XmlParserAttr extends TestCase {
 		$Parser = new XmlParser($filePath);
 		$Parser->dropTempTables();
 		$Parser->addAttribute('available', 'offer', 4, true, true);
-		$Parser->addAttribute('id', false, false, true, true);
+		$Parser->addAttribute('id:common_id', false, false, true, true);
 		$Parser->createTempTables();
 	}
 
