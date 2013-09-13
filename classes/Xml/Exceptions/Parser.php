@@ -18,4 +18,5 @@ class ParserError extends \ErrorException {
 	const E_ADD_ATTR_ON_EXISTS_TBL = 5;
 	const E_ADD_IDX_ON_EXISTS_TBL = 6;
 	const E_WRONG_ATTR_NAME = 7;
+	const E_ATTR_EXISTS = 8;
 }

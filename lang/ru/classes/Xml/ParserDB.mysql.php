@@ -4,3 +4,4 @@ $MESS['OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_EXISTS'] = 'Временна
 $MESS['OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL'] = 'Невозможно добавить аттрибут, когда временная таблица уже создана';
 $MESS['OBX\Core\Xml\Exceptions\ParserError::E_ADD_IDX_ON_EXISTS_TBL'] = 'Невозможно проиндексировать, временная таблица ещё не создана';
 $MESS['OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME'] = 'Неверно задано имя аттрибута';
+$MESS['OBX\Core\Xml\Exceptions\ParserError::E_ATTR_EXISTS'] = 'Аттрибут с именем поля "#FIELD#" уже существует';

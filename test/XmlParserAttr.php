@@ -30,6 +30,31 @@ class XmlParserAttr extends TestCase {
 	 * @param $filePath
 	 * @dataProvider getXmlFilePath
 	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
+	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME
+	 */
+	public function testAddAttrWrongName($filePath) {
+		$Parser = new XmlParser($filePath);
+		$Parser->dropTempTables();
+		$Parser->addAttribute('123', 'offer', 3, true, true);
+	}
+
+	/**
+	 * @param $filePath
+	 * @dataProvider getXmlFilePath
+	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
+	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::E_ATTR_EXISTS
+	 */
+	public function testAddExistsAttr($filePath) {
+		$Parser = new XmlParser($filePath);
+		$Parser->dropTempTables();
+		$Parser->addAttribute('some', 'offer', 3, true, true);
+		$Parser->addAttribute('some', 'offer', 3, true, true);
+	}
+
+	/**
+	 * @param $filePath
+	 * @dataProvider getXmlFilePath
+	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
 	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL
 	 */
 	public function testAddAttrAfterTableCreation($filePath) {
@@ -47,10 +72,13 @@ class XmlParserAttr extends TestCase {
 	public function testAddAttr($filePath) {
 		$Parser = new XmlParser($filePath);
 		$Parser->dropTempTables();
-		$Parser->addAttribute('available', 'offer', 4, true, true);
+		$Parser->addAttribute('available:offer_avail', 'offer', 3, true, true);
 		$Parser->addAttribute('id:common_id', false, false, true, true);
+		$Parser->addAttribute('id:offer_id', 'offer', 3, true, true);
 		$Parser->createTempTables();
 	}
+
+
 
 	/**
 	 * @param $filePath
@@ -69,15 +97,21 @@ class XmlParserAttr extends TestCase {
 			$this->assertArrayHasKey('AUTO', $arAttr);
 			$this->assertArrayHasKey('INDEX', $arAttr);
 			$this->assertArrayHasKey('DEPTH_LEVEL', $arAttr);
-			if( $arAttr['NAME'] == 'available' ) {
-				$this->assertEquals(4, $arAttr['DEPTH_LEVEL']);
-				$this->assertEquals('available', $arAttr['COL_NAME']);
+			if( $arAttr['COL_NAME'] == 'offer_avail' ) {
+				$this->assertEquals(3, $arAttr['DEPTH_LEVEL']);
+				$this->assertEquals('available', $arAttr['NAME']);
 				$this->assertTrue($arAttr['INDEX']);
 				$this->assertTrue($arAttr['AUTO']);
 			}
-			if( $arAttr['NAME'] == 'id' ) {
+			if( $arAttr['COL_NAME'] == 'common_id' ) {
 				$this->assertFalse((bool) $arAttr['DEPTH_LEVEL']);
-				$this->assertEquals('id', $arAttr['COL_NAME']);
+				$this->assertEquals('id', $arAttr['NAME']);
+				$this->assertTrue($arAttr['INDEX']);
+				$this->assertTrue($arAttr['AUTO']);
+			}
+			if( $arAttr['COL_NAME'] == 'offer_id' ) {
+				$this->assertEquals(3, $arAttr['DEPTH_LEVEL']);
+				$this->assertEquals('id', $arAttr['NAME']);
 				$this->assertTrue($arAttr['INDEX']);
 				$this->assertTrue($arAttr['AUTO']);
 			}
@@ -95,8 +129,9 @@ class XmlParserAttr extends TestCase {
 		global $DB;
 		$Parser = new XmlParser($filePath);
 		$Parser->indexTempTables();
-		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_id')));
-		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_available')));
+		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_common_id')));
+		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_offer_avail')));
+		$this->assertTrue($DB->IndexExists($Parser->getTempTableName(), array('ATTR_offer_id')));
 	}
 
 
@@ -118,5 +153,32 @@ class XmlParserAttr extends TestCase {
 			$prevFilePosition = $ITERATION['file_position'];
 		}
 		$Parser->indexTempTables();
+	}
+
+	/**
+	 * @param $filePath
+	 * @dataProvider getXmlFilePath
+	 * @depends testParser
+	 */
+	public function testGetOffersByAttrOfferID($filePath) {
+		$Parser = new XmlParser($filePath);
+		$rsNodes = $Parser->getList(array(), array('ATTR'=>array('!offer_id' => null)));
+		while($arNode = $rsNodes->Fetch()) {
+			$this->assertEquals('offer', $arNode['NAME']);
+		}
+	}
+	/**
+	 * @param $filePath
+	 * @dataProvider getXmlFilePath
+	 * @depends testParser
+	 */
+	public function testGetNodesbyCommonID($filePath) {
+		$Parser = new XmlParser($filePath);
+		$rsNodes = $Parser->getList(array(), array('ATTR' => array('!offer_id' => null)));
+		while($arNode = $rsNodes->Fetch()) {
+			$this->assertTrue(
+				($arNode['NAME'] == 'offer' || $arNode['NAME'] == 'category' || $arNode['NAME'] == 'currency')
+			);
+		}
 	}
 }

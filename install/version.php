@@ -9,8 +9,8 @@
  ***********************************************/
 
 $arModuleVersion = array(
-	"VERSION" => "1.1.0",
-	"VERSION_DATE" => "2013-09-06",
+	"VERSION" => "1.1.1",
+	"VERSION_DATE" => "2013-09-13",
 );
 return $arModuleVersion;
 
@@ -47,4 +47,8 @@ return $arModuleVersion;
  * |   - OBX\Core\Xml\Parser <- OBX\Core\Xml\ParserDB
  * |   - OBX\Core\Xml\Exceptions\ParserError
  * |
+ *
+ * [1.1.1]
+ * |=== Xml Parser ===
+ * | * Добавлена поддержка индексирования таблицы дерева парсера по значению аттрибутов xml-нод
  */

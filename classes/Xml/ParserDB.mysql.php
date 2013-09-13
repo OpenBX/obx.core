@@ -124,13 +124,19 @@ class ParserDB {
 				, ParserError::E_ADD_ATTR_ON_EXISTS_TBL
 			);
 		}
-		if(!preg_match('~([a-zA-Z]{1}[a-zA-Z0-9\-\_]{0,29})(\:((a-zA-Z){1}[a-zA-Z0-9\_]{0,29}))?~', $attrName, $arAttrNameMatches)) {
+		if(!preg_match('~([a-zA-Z]{1}[a-zA-Z0-9\-\_]{0,29})(?:\:([a-zA-Z]{1}[a-zA-Z0-9\_]{0,29}))?~', $attrName, $arAttrNameMatches)) {
 			throw new ParserError(
 				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME')
 				, ParserError::E_WRONG_ATTR_NAME
 			);
 		}
-		$colName = $attrName;
+		if( array_key_exists(2, $arAttrNameMatches) ) {
+			$colName = $arAttrNameMatches[2];
+			$attrName = $arAttrNameMatches[1];
+		}
+		else {
+			$colName = $attrName;
+		}
 		if( strpos($colName, '-') !== false ) {
 			$colName = str_replace('-', '_', $colName);
 		}
@@ -139,7 +145,13 @@ class ParserDB {
 		if( null === $this->_arAttributes ) {
 			$this->_arAttributes = array();
 		}
-		$this->_arAttributes[] = array(
+		if( array_key_exists($colName, $this->_arAttributes) ) {
+			throw new ParserError(
+				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ATTR_EXISTS'),
+				ParserError::E_ATTR_EXISTS
+			);
+		}
+		$this->_arAttributes[$colName] = array(
 			'NAME' => $attrName,
 			'NODE' => $nodeName,
 			'COL_NAME' => $colName,
@@ -159,10 +171,11 @@ class ParserDB {
 			$arAttributes = array();
 			while( $arAttrResult = $rs->Fetch() ) {
 				$arAttrAttr = unserialize($arAttrResult['ATTRIBUTES']);
+				$arAttrResult['VALUE'] = trim($arAttrResult['VALUE']);
 				$arAttributes[] = array(
 					'NAME' => $arAttrResult['NAME'],
-					'NODE' => $arAttrResult['VALUE'],
-					'DEPTH_LEVEL' => -intval($arAttrResult['DEPTH_LEVEL']),
+					'NODE' => (strlen($arAttrResult['VALUE'])>0)?$arAttrResult['VALUE']:null,
+					'DEPTH_LEVEL' => (($arAttrResult['DEPTH_LEVEL']===null)?null:-intval($arAttrResult['DEPTH_LEVEL'])),
 					'COL_NAME' => $arAttrAttr['COL_NAME'],
 					'INDEX' => ($arAttrAttr['INDEX']==true)?true:false,
 					'AUTO' => ($arAttrAttr['AUTO']==true)?true:false
@@ -195,7 +208,7 @@ class ParserDB {
 		if(is_array($this->_arAttributes)) {
 			$bAttrsExist = true;
 			foreach($this->_arAttributes as &$arAttr) {
-				$sqlAttrFieldsCreate .= 'ATTR_'.$arAttr['NAME'].' varchar(64),';
+				$sqlAttrFieldsCreate .= 'ATTR_'.$arAttr['COL_NAME'].' varchar(64),';
 			}
 		}
 
@@ -224,8 +237,8 @@ class ParserDB {
 				$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, DEPTH_LEVEL, ATTRIBUTES, LEFT_MARGIN';
 				$sqlAttrInsertValue = self::B_ATTRIBUTE.', '
 					.'"'.$arAttr['NAME'].'", '
-					.'"'.$arAttr['NODE'].'", '
-					.'"'.-intval($arAttr['DEPTH_LEVEL']).'", '
+					.(($arAttr['NODE']!==null)?'"'.$arAttr['NODE'].'"':'NULL').', '
+					.(($arAttr['DEPTH_LEVEL']!==null)?'"'.-intval($arAttr['DEPTH_LEVEL']).'"':'NULL').', '
 					.'"'.$DB->ForSql(serialize($arAttr)).'", '
 					.'0';
 				$DB->Query('INSERT INTO '.$this->_tempTableName.' ('.$sqlAttrInsertName.') VALUES ('.$sqlAttrInsertValue.')');
@@ -332,7 +345,12 @@ class ParserDB {
 			if( is_array($arFields['ATTRIBUTES']) ) {
 				if( !empty($arAttributes) ) {
 					foreach($arAttributes as &$arAttr) {
-						if($arAttr['AUTO'] && array_key_exists($arAttr['NAME'], $arFields['ATTRIBUTES'])) {
+						if(
+							$arAttr['AUTO']
+							&& array_key_exists($arAttr['NAME'], $arFields['ATTRIBUTES'])
+							&& ($arAttr['NODE'] === null || $arAttr['NODE'] == $arFields['NAME'])
+							&& ($arAttr['DEPTH_LEVEL'] === null || $arAttr['DEPTH_LEVEL'] == $arFields['DEPTH_LEVEL'])
+						) {
 							$strSql1 .= ', ATTR_'.$arAttr['COL_NAME'];
 							$strSql2 .= ', "'.$DB->ForSql($arFields['ATTRIBUTES'][$arAttr['NAME']]).'"';
 						}
@@ -415,21 +433,64 @@ class ParserDB {
 		/** @global \CDatabase $DB */
 		global $DB;
 		$arSQLWhere = array();
+		$bParentIdIsSet = false;
 		foreach($arFilter as $field => $value)
 		{
-			if($field == 'ID' || $field == 'LEFT_MARGIN')
+			if($field == 'ID' || $field == 'LEFT_MARGIN') {
 				$arSQLWhere[$field] = $field.' = '.intval($value);
-			elseif($field == 'PARENT_ID' || $field == 'PARENT_ID+0')
+			}
+			elseif($field == 'PARENT_ID' || $field == 'PARENT_ID+0') {
 				$arSQLWhere[$field] = $field.' = '.intval($value);
-			elseif($field == '>ID')
+				$bParentIdIsSet = true;
+			}
+			elseif($field == '>ID') {
 				$arSQLWhere[$field] = 'ID > '.intval($value);
-			elseif($field == '><LEFT_MARGIN')
+			}
+			elseif($field == '<ID') {
+				$arSQLWhere[$field] = 'ID < '.intval($value);
+			}
+			elseif($field == '><LEFT_MARGIN') {
 				$arSQLWhere[$field] = 'LEFT_MARGIN between '.intval($value[0]).' AND '.intval($value[1]);
-			elseif($field == 'NAME')
+			}
+			elseif($field == '><LEFT_MARGIN') {
+				$arSQLWhere[$field] = 'LEFT_MARGIN between '.intval($value[0]).' AND '.intval($value[1]);
+			}
+			elseif($field == '<LEFT_MARGIN') {
+				$arSQLWhere[$field] = 'LEFT_MARGIN < '.intval($value);
+			}
+			elseif($field == '>LEFT_MARGIN') {
+				$arSQLWhere[$field] = 'LEFT_MARGIN > '.intval($value);
+			}
+			elseif($field == 'NAME') {
 				$arSQLWhere[$field] = $field.' = '.'"'.$DB->ForSQL($value).'"';
+			}
 		}
-		if($this->_sessionID)
+		if(!$bParentIdIsSet) {
+			$arSQLWhere[] = 'PARENT_ID+0 > 0';
+		}
+		if($this->_sessionID) {
 			$arSQLWhere[] = 'SESS_ID = "'.$DB->ForSQL($this->_sessionID).'"';
+		}
+		if( array_key_exists('ATTR', $arFilter) && $arAttributes = $this->getAttributes() ) {
+			foreach($arAttributes as &$arAttr) {
+				if( array_key_exists($arAttr['COL_NAME'], $arFilter['ATTR']) ) {
+					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
+						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' IS NULL';
+					}
+					else {
+						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' = '.$arFilter['ATTR'][$arAttr['COL_NAME']];
+					}
+				}
+				elseif(array_key_exists('!'.$arAttr['COL_NAME'], $arFilter['ATTR'])) {
+					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
+						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' IS NOT NULL';
+					}
+					else {
+						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' <> '.$arFilter['ATTR'][$arAttr['COL_NAME']];
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -449,6 +510,7 @@ class ParserDB {
 			'RIGHT_MARGIN' => 'RIGHT_MARGIN',
 			'NAME' => 'NAME',
 			'VALUE' => 'VALUE',
+			'ATTR' => 'ATTR'
 		);
 		foreach($arSelect as $i => $field) {
 			if(!array_key_exists($field, $arFields)) {
