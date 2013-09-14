@@ -26,6 +26,16 @@ class ParserDB {
 	const B_FILE_PARSED = -2;
 	const B_ATTRIBUTE = -3;
 
+	protected $_arFields = array(
+		'ID' => 'ID',
+		'ATTRIBUTES' => 'ATTRIBUTES',
+		'DEPTH_LEVEL' => 'DEPTH_LEVEL',
+		'LEFT_MARGIN' => 'LEFT_MARGIN',
+		'RIGHT_MARGIN' => 'RIGHT_MARGIN',
+		'NAME' => 'NAME',
+		'VALUE' => 'VALUE',
+	);
+
 	protected $_arAttributes = null;
 	//	array(
 	//		array(
@@ -159,14 +169,17 @@ class ParserDB {
 			'INDEX' => ($bAddIndex===true)?true:false,
 			'AUTO' => ($bFillFromNodeAttr===true)?true:false,
 		);
+		$this->_arFields['ATTR_'.$colName] = 'ATTR_'.$colName;
 	}
 
 	public function getAttributes() {
+		/** @global \CDatabase $DB */
+		global $DB;
 		if( null === $this->_arAttributes ) {
-			$rs = $this->getList(
-				array(),
-				array('PARENT_ID' => self::B_ATTRIBUTE),
-				array('NAME', 'VALUE', 'DEPTH_LEVEL', 'ATTRIBUTES')
+			$rs = $DB->Query(
+				  'SELECT NAME, VALUE, DEPTH_LEVEL, ATTRIBUTES'
+				.' FROM '.$this->_tempTableName
+				.' WHERE PARENT_ID = '.self::B_ATTRIBUTE
 			);
 			$arAttributes = array();
 			while( $arAttrResult = $rs->Fetch() ) {
@@ -180,6 +193,7 @@ class ParserDB {
 					'INDEX' => ($arAttrAttr['INDEX']==true)?true:false,
 					'AUTO' => ($arAttrAttr['AUTO']==true)?true:false
 				);
+				$this->_arFields['ATTR_'.$arAttrAttr['COL_NAME']] = 'ATTR_'.$arAttrAttr['COL_NAME'];
 			}
 			if( empty($arAttributes) ) {
 				$this->_arAttributes = false;
@@ -471,7 +485,10 @@ class ParserDB {
 		if($this->_sessionID) {
 			$arSQLWhere[] = 'SESS_ID = "'.$DB->ForSQL($this->_sessionID).'"';
 		}
-		if( array_key_exists('ATTR', $arFilter) && $arAttributes = $this->getAttributes() ) {
+		if( array_key_exists('ATTR', $arFilter)
+			&& is_array($arFilter['ATTR'])
+			&& $arAttributes = $this->getAttributes()
+		) {
 			foreach($arAttributes as &$arAttr) {
 				if( array_key_exists($arAttr['COL_NAME'], $arFilter['ATTR']) ) {
 					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
@@ -502,18 +519,10 @@ class ParserDB {
 	public function getList($arOrder = array(), $arFilter = array(), $arSelect = array()) {
 		/** @global \CDatabase $DB */
 		global $DB;
-		static $arFields = array(
-			'ID' => 'ID',
-			'ATTRIBUTES' => 'ATTRIBUTES',
-			'DEPTH_LEVEL' => 'DEPTH_LEVEL',
-			'LEFT_MARGIN' => 'LEFT_MARGIN',
-			'RIGHT_MARGIN' => 'RIGHT_MARGIN',
-			'NAME' => 'NAME',
-			'VALUE' => 'VALUE',
-			'ATTR' => 'ATTR'
-		);
-		foreach($arSelect as $i => $field) {
-			if(!array_key_exists($field, $arFields)) {
+
+		$this->getAttributes();
+		foreach($arSelect as $i => &$field) {
+			if(!array_key_exists($field, $this->_arFields)) {
 				unset($arSelect[$i]);
 			}
 		}
@@ -526,7 +535,7 @@ class ParserDB {
 
 		foreach($arOrder as $field => $by)
 		{
-			if(!array_key_exists($field, $arFields)) {
+			if(!array_key_exists($field, $this->_arFields)) {
 				unset($arSelect[$field]);
 			}
 			else {
