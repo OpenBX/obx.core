@@ -489,24 +489,42 @@ class ParserDB {
 			&& is_array($arFilter['ATTR'])
 			&& $arAttributes = $this->getAttributes()
 		) {
-			foreach($arAttributes as &$arAttr) {
-				if( array_key_exists($arAttr['COL_NAME'], $arFilter['ATTR']) ) {
-					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
-						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' IS NULL';
-					}
-					else {
-						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' = '.$arFilter['ATTR'][$arAttr['COL_NAME']];
-					}
+			foreach($arFilter['ATTR'] as $filterAttrName => &$filterAttrValue) {
+				$bAttrEqualsValue = true;
+				if(substr($filterAttrName, 0, 1) == '!') {
+					$filterAttrName = substr($filterAttrName, 1);
+					$bAttrEqualsValue = false;
 				}
-				elseif(array_key_exists('!'.$arAttr['COL_NAME'], $arFilter['ATTR'])) {
-					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
-						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' IS NOT NULL';
+				if( array_key_exists($filterAttrName, $arAttributes) ) {
+					if( $filterAttrValue === null ) {
+						$arSQLWhere[] = 'ATTR_'.$filterAttrName
+							.' IS '.($bAttrEqualsValue?'':'NOT ').'NULL';
 					}
 					else {
-						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' <> '.$arFilter['ATTR'][$arAttr['COL_NAME']];
+						$arSQLWhere[] = 'ATTR_'.$filterAttrName.' '
+							.($bAttrEqualsValue?'=':'<>')
+							.' "'.$DB->ForSql($filterAttrValue).'"';
 					}
 				}
 			}
+//			foreach($arAttributes as &$arAttr) {
+//				if( array_key_exists($arAttr['COL_NAME'], $arFilter['ATTR']) ) {
+//					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
+//						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' IS NULL';
+//					}
+//					else {
+//						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' = '.$arFilter['ATTR'][$arAttr['COL_NAME']];
+//					}
+//				}
+//				elseif(array_key_exists('!'.$arAttr['COL_NAME'], $arFilter['ATTR'])) {
+//					if($arFilter['ATTR'][$arAttr['COL_NAME']] === null) {
+//						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' IS NOT NULL';
+//					}
+//					else {
+//						$arSQLWhere[] = 'ATTR_'.$arAttr['COL_NAME'].' <> '.$arFilter['ATTR'][$arAttr['COL_NAME']];
+//					}
+//				}
+//			}
 		}
 	}
 
@@ -521,8 +539,8 @@ class ParserDB {
 		global $DB;
 
 		$this->getAttributes();
-		foreach($arSelect as $i => &$field) {
-			if(!array_key_exists($field, $this->_arFields)) {
+		foreach($arSelect as $i => &$selectField) {
+			if(!array_key_exists($selectField, $this->_arFields)) {
 				unset($arSelect[$i]);
 			}
 		}
@@ -533,13 +551,13 @@ class ParserDB {
 		$arSQLWhere = array();
 		$this->_prepareFilter($arFilter, $arSQLWhere);
 
-		foreach($arOrder as $field => $by)
+		foreach($arOrder as $orderField => $orderBy)
 		{
-			if(!array_key_exists($field, $this->_arFields)) {
-				unset($arSelect[$field]);
+			if(!array_key_exists($orderField, $this->_arFields)) {
+				unset($arSelect[$orderField]);
 			}
 			else {
-				$arOrder[$field] = $field.' '.($by=='desc'? 'desc': 'asc');
+				$arOrder[$orderField] = $orderField.' '.($orderBy=='desc'? 'desc': 'asc');
 			}
 		}
 
