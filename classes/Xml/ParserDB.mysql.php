@@ -185,7 +185,7 @@ class ParserDB {
 			while( $arAttrResult = $rs->Fetch() ) {
 				$arAttrAttr = unserialize($arAttrResult['ATTRIBUTES']);
 				$arAttrResult['VALUE'] = trim($arAttrResult['VALUE']);
-				$arAttributes[] = array(
+				$arAttributes[$arAttrAttr['COL_NAME']] = array(
 					'NAME' => $arAttrResult['NAME'],
 					'NODE' => (strlen($arAttrResult['VALUE'])>0)?$arAttrResult['VALUE']:null,
 					'DEPTH_LEVEL' => (($arAttrResult['DEPTH_LEVEL']===null)?null:-intval($arAttrResult['DEPTH_LEVEL'])),
