@@ -10,11 +10,8 @@
 
 $currentDir = dirname(__FILE__);
 $arModuleClasses = require $currentDir.'/classes/.classes.php';
-$arNotIncludeStatically = array(
-	'OBX\Core\Test\TestCase'
-);
 foreach ($arModuleClasses as $class => $classPath) {
-	if(in_array($class, $arNotIncludeStatically)) {
+	if(in_array($class, $arStaticIncludeSkip)) {
 		continue;
 	}
 	$classPath = $currentDir.'/'.$classPath;

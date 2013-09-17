@@ -37,14 +37,11 @@ if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\IDBSimpleStatic']			= 'classes/DBSimple.php';
 	$arModuleClasses['OBX\Core\DBSimple']					= 'classes/DBSimple.php';
 	$arModuleClasses['OBX\Core\DBSimpleStatic']				= 'classes/DBSimple.php';
-
 	//,'OBX\Core\ModuleDependencies'			=> 'classes/ModuleDependencies.php'
-
-	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';
 	$arModuleClasses['OBX\Core\Xml\ParserDB']				= 'classes/Xml/ParserDB.'.$DBType.'.php';
+	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';
 	$arModuleClasses['OBX\Core\Xml\Exceptions\ParserError']	= 'classes/Xml/Exceptions/Parser.php';
 }
-
 $arModuleClasses['OBX\Core\Wizard\ImportIBlock']		= 'classes/WizardImportIBlock.php';
 $arModuleClasses['OBX\Core\Settings\ISettings']			= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Settings\Settings']			= 'classes/Settings.php';
@@ -54,5 +51,10 @@ $arModuleClasses['OBX\Core\Settings\Tab']				= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Settings\IModulePage']		= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Settings\ModulePage']		= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Test\TestCase']				= 'classes/TestCase.php';
+
+
+$arStaticIncludeSkip = array(
+	'OBX\Core\Test\TestCase'
+);
 
 return $arModuleClasses;
