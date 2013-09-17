@@ -1273,9 +1273,11 @@ abstract class DBSimple extends CMessagePoolDecorator
 		}
 
 		if( empty($arSort) || !is_array($arSort) ) {
-			$arSortDefault = $this->_arSortDefault;
-			if( count($arSortDefault)>0 ) {
-				$arSort = $arSortDefault;
+			if( count($this->_arSortDefault)>0 ) {
+				$arSort = $this->_arSortDefault;
+			}
+			else {
+				$arSort = array();
 			}
 		}
 		$sSort = '';
