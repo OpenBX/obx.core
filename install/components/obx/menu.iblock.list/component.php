@@ -29,6 +29,15 @@ if( $this->StartResultCache() ) {
 					$listPageUrl = $arParams['IBLOCK_LIST_PAGE_URL_'.$arIBlock['ID']];
 				}
 			}
+			elseif(
+				array_key_exists('CODE', $arIBlock) && !empty($arIBlock['CODE'])
+				&& array_key_exists($arIBlock['CODE'], $arParams)
+			) {
+				$arParams['IBLOCK_LIST_PAGE_URL_'.$arIBlock['CODE']] = trim($arParams['IBLOCK_LIST_PAGE_URL_'.$arIBlock['CODE']]);
+				if( strlen($arParams['IBLOCK_LIST_PAGE_URL_'.$arIBlock['CODE']])>0 ) {
+					$listPageUrl = $arParams['IBLOCK_LIST_PAGE_URL_'.$arIBlock['CODE']];
+				}
+			}
 
 			$listPageUrl = str_replace(
 				array(
