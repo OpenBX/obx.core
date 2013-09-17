@@ -2838,9 +2838,9 @@ HELP;
 				&& self::compareVersions($releaseVersion, $versionTo)<=0
 			) {
 				$updateDescription .= "\n".'['.$releaseVersion.']'."\n";
-			}
-			if( array_key_exists('DESCRIPTION', $arRelease) ) {
-				$updateDescription .= $arRelease['DESCRIPTION']."\n";
+				if( array_key_exists('DESCRIPTION', $arRelease) ) {
+					$updateDescription .= $arRelease['DESCRIPTION']."\n";
+				}
 			}
 		}
 		file_put_contents($updateDir.'/description.ru', $updateDescription);
