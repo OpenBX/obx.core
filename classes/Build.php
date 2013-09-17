@@ -3041,7 +3041,7 @@ DOC;
 			."}\n"
 
 			.'if(file_exists(dirname(__FILE__)."/updater.dep.delete.files.php")) {'."\n"
-			."\t".'require dirname(__FILE__)."/updater.dep.mod.delete.files.php";'."\n"
+			."\t".'require dirname(__FILE__)."/updater.dep.delete.files.php";'."\n"
 			."}\n"
 
 			.'if(file_exists(dirname(__FILE__)."/updater.dep.files.php")) {'."\n"
