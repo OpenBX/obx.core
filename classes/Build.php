@@ -48,6 +48,7 @@ class OBX_Build {
 
 	function __construct($moduleName, self $ParentModule = null) {
 		error_reporting(E_ALL ^ E_NOTICE);
+		@set_time_limit(0);
 
 		$curDir = dirname(__FILE__);
 		$curDir = str_replace(array("\\", "//"), "/", $curDir);
@@ -2212,6 +2213,16 @@ HELP;
 					if($fsEntryExt != '.php' && $fsEntryExt != '.js' && $fsEntryExt != '.html') {
 						continue;
 					}
+					if(
+						$fsEntryExt == '.js'
+						&& (
+							substr($fsEntry, strlen($fsEntry)-7) == '.min.js'
+							||
+							substr($fsEntry, strlen($fsEntry)-8) == '.pack.js'
+						)
+					) {
+						continue;
+					}
 					$this->__checkRawLangTextInFile($arFiles, $fsEntryPath, $fsEntryRelPath, $rusLit);
 				}
 			}
@@ -2226,23 +2237,45 @@ HELP;
 	}
 
 	protected function __checkRawLangTextInFile(&$arFiles, &$fsEntryPath, &$fsEntryRelPath, &$rusLit) {
+		// full file check
+		if( false === $this->_strpos(file_get_contents($fsEntryPath), $rusLit) ) {
+			return;
+		}
 		$bMultiLineComment = false;
 		$file = fopen($fsEntryPath, 'r');
 		$iLine = 0;
 		while( $lineContent = fgets($file) ) {
 			$iLine++;
+			$checkString = '';
+			$bMultiLineCommentInOneLine = false;
 			$posMLCClose = strpos($lineContent, '*/');
 			if($posMLCClose!==false) $bMultiLineComment = false;
 			if($bMultiLineComment) continue;
 
+			$checkString = $lineContent;
 			$posMLCOpen = strpos($lineContent, '/*');
 			if( $posMLCOpen !== false ) {
-				$bMultiLineComment = true;
+				if( ($posMLCloseInLine = strpos($lineContent, '*/')) !== false ) {
+					// тут обработаем случай с многострочным комментарием водной строке
+					if( ($oneMCommentLength=($posMLCloseInLine - $posMLCOpen))>2 ) {
+						$oneMCommentLength -= 2;
+						$checkString = substr($lineContent, 0, $posMLCOpen+2)
+										.str_repeat('#', $oneMCommentLength)
+										.substr($lineContent, $posMLCloseInLine);
+						$bMultiLineCommentInOneLine = true;
+					}
+					else {
+						$bMultiLineComment = true;
+					}
+				}
+				else {
+					$bMultiLineComment = true;
+				}
 			}
-			$posRusSymbol = $this->_strpos($lineContent, $rusLit);
-			$posComment = strpos($lineContent, '//');
+			$posRusSymbol = $this->_strpos($checkString, $rusLit);
+			$posComment = strpos($checkString, '//');
 			if( $posRusSymbol !== false ) {
-				if($posMLCClose !== false && $posRusSymbol < $posMLCClose) {
+				if(!$bMultiLineCommentInOneLine && $posMLCClose !== false && $posRusSymbol < $posMLCClose) {
 					continue;
 				}
 				if(
