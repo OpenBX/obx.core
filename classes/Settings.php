@@ -410,7 +410,7 @@ class Tab extends ATab implements ISettings {
 
 	// +++ ISettings implementation
 	public function __construct($moduleID, $settingsID, $arSettings) {
-		$this->_Settings = new Settings($moduleID, $settingsID, &$arSettings);
+		$this->_Settings = new Settings($moduleID, $settingsID, 	$arSettings);
 	}
 	public function getSettingModuleID() {
 		return $this->_Settings->getSettingModuleID();
