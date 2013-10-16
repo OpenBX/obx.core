@@ -2575,21 +2575,22 @@ HELP;
 					.' ('.$Dependency->_releaseDir.'/release-'.$Dependency->_version.') не найдена'."\n";
 				continue;
 			}
-			// Удаляем старую папку релиза
+			// Удаляем старую папку релиза подмодуля
 			self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName);
-			// Копируем новые файлы релиза
+			// Копируем новые файлы релиза подмодуля
 			self::CopyDirFilesEx(
 				$Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'
 				,true, true, FALSE, array('.git', 'modules')
 			);
-			// Даем папке с релзом правильное имя
+			// Даем папке с релизом подмодуля правильное имя
 			rename(
 				 $this->_releaseDir.'/release-'.$this->_version.'/install/modules/release-'.$Dependency->_dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName
 			);
 			// копируем в релиз все обновления подмодулей
 			$depReleaseDir = opendir($Dependency->_releaseDir);
+			$releaseSubModInsPath = $this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName;
 			while($depReleaseFSEntry = readdir($depReleaseDir) ) {
 				if($depReleaseFSEntry == '.' || $depReleaseFSEntry == '..'
 					|| $depReleaseFSEntry == '.git' || $depReleaseFSEntry == '.directory'
@@ -2601,11 +2602,26 @@ HELP;
 						&& self::compareVersions($arUpdateVersion['VERSION'], $Dependency->_dependencyVersion)<=0
 						&& self::compareVersions($arUpdateVersion['VERSION'], $Dependency->_dependencyMinVersion)>=0
 					) {
+
+						$releaseSubModUpdPath = $releaseSubModInsPath.'/'.$depReleaseFSEntry;
 						self::CopyDirFilesEx(
 							$Dependency->_releaseDir.'/'.$depReleaseFSEntry
-							,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName.'/'
+							,$releaseSubModUpdPath.'/'
 							,true, true, FALSE, array('.git', 'modules')
 						);
+						// переименовываем файлы обновлений подмодулей updater*.php -> __upd__*.php
+						// иначе битрикс выкинет их из папки выпуска продукта при инсталляции из МП
+						$releaseSubModUpdDir = opendir($releaseSubModUpdPath);
+						while($releaseSubModUpdFSEntry = readdir($releaseSubModUpdDir)) {
+							if(
+								is_file($releaseSubModUpdPath.'/'.$releaseSubModUpdFSEntry)
+								&& substr($releaseSubModUpdFSEntry, 0, 8) == 'updater.dep.'
+							) {
+								$releaseSubModUpderOld = $releaseSubModUpdPath.'/'.$releaseSubModUpdFSEntry;
+								$releaseSubModUpderNew = $releaseSubModUpdPath.'/'.str_replace('updater.dep.', '__upd__.dep', $releaseSubModUpdFSEntry);
+								rename($releaseSubModUpderOld, $releaseSubModUpderNew);
+							}
+						}
 					}
 				}
 			}
