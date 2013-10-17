@@ -2606,7 +2606,7 @@ HELP;
 						$releaseSubModUpdPath = $releaseSubModInsPath.'/'.$depReleaseFSEntry;
 						self::CopyDirFilesEx(
 							$Dependency->_releaseDir.'/'.$depReleaseFSEntry
-							,$releaseSubModUpdPath.'/'
+							,$releaseSubModInsPath.'/'
 							,true, true, FALSE, array('.git', 'modules')
 						);
 						// переименовываем файлы обновлений подмодулей updater*.php -> __upd__*.php
@@ -2615,10 +2615,10 @@ HELP;
 						while($releaseSubModUpdFSEntry = readdir($releaseSubModUpdDir)) {
 							if(
 								is_file($releaseSubModUpdPath.'/'.$releaseSubModUpdFSEntry)
-								&& substr($releaseSubModUpdFSEntry, 0, 8) == 'updater.dep.'
+								&& substr($releaseSubModUpdFSEntry, 0, 8) == 'updater.'
 							) {
 								$releaseSubModUpderOld = $releaseSubModUpdPath.'/'.$releaseSubModUpdFSEntry;
-								$releaseSubModUpderNew = $releaseSubModUpdPath.'/'.str_replace('updater.dep.', '__upd__.dep', $releaseSubModUpdFSEntry);
+								$releaseSubModUpderNew = $releaseSubModUpdPath.'/'.str_replace('updater.', '__upd__.', $releaseSubModUpdFSEntry);
 								rename($releaseSubModUpderOld, $releaseSubModUpderNew);
 							}
 						}
@@ -2928,12 +2928,20 @@ HELP;
 					// если не указать имя файла явно
 					if(strpos($newFSEntry, 'update-') !==false) {
 						foreach( $arUpdaterFiles as $updaterFileName ) {
+							$updaterFileNameBak = str_replace('updater.', '__upd__.', $updaterFileName);
 							if( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileName) ) {
 								$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
 									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileName).'", '
 									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
 									.'$errorMessage'
 								.');'."\n";
+							}
+							elseif( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak) ) {
+								$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
+									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileNameBak).'", '
+									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
+									.'$errorMessage'
+									.');'."\n";
 							}
 						}
 					}
