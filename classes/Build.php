@@ -2941,7 +2941,7 @@ HELP;
 									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileNameBak).'", '
 									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
 									.'$errorMessage'
-									.');'."\n";
+								.');'."\n";
 							}
 						}
 					}
