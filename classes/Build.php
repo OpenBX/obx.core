@@ -2915,32 +2915,28 @@ HELP;
 					true, true,
 					false, ''
 				);
-				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
+				$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
-					.'$errorMessage'
+					.'$errorMessage, false'
 				.');'."\n";
 
 				if( strpos($newFSEntry, './install/modules/') === 0 ) {
-					// [pronix:2013-08-20] +++
-					// Этот кусок кода нужен потому то метод CUpdateSystem::CopyDirFiles
-					// пропустит все файлы updater-ы в папках обновлений подмодулей
-					// если не указать имя файла явно
+					// [pronix:2013-10-17] +++
+					// Этот кусок кода нужен для возврата имени файлов updater. подмодулей в исходное состояние
+					// в архиве с обновлением решения updater-ы подмодулей имеют имя __upd__.*
+					// иначе они выбрасываются системой обновления битрикс при копировании
 					if(strpos($newFSEntry, 'update-') !==false) {
 						foreach( $arUpdaterFiles as $updaterFileName ) {
 							$updaterFileNameBak = str_replace('updater.', '__upd__.', $updaterFileName);
-							if( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileName) ) {
-								$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
-									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileName).'", '
-									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
-									.'$errorMessage'
-								.');'."\n";
-							}
-							elseif( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak) ) {
-								$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
+							if( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak) ) {
+								$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
 									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileNameBak).'", '
 									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
 									.'$errorMessage'
+								.');'."\n";
+								$updateFilesCode .= 'CUpdateClientPartner::__DeleteDirFilesEx('
+									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak).'"'
 								.');'."\n";
 							}
 						}
@@ -2948,7 +2944,7 @@ HELP;
 					// ^^^
 					continue;
 				}
-				$updateFilesAsDepCode .= 'CUpdateSystem::CopyDirFiles('
+				$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
 					.'$errorMessage'
@@ -2964,7 +2960,7 @@ HELP;
 					true, true,
 					false, ''
 				);
-				$updateFilesCode .= 'CUpdateSystem::CopyDirFiles('
+				$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
 					.'$errorMessage'
@@ -2972,7 +2968,7 @@ HELP;
 				if( strpos($modFSEntry, './install/modules/') === 0 ) {
 					continue;
 				}
-				$updateFilesAsDepCode .= 'CUpdateSystem::CopyDirFiles('
+				$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
 					.'$errorMessage'
@@ -2989,14 +2985,20 @@ HELP;
 			$updateDelListCode = $genPhpFileHead.$genUtilGenPhpFileHead."return array(\n";
 			$updateDelListAsDepCode = $genPhpFileHead.$genUtilGenPhpFileHead."return array(\n";
 			foreach($arChanges['DELETED'] as $delFSEntry) {
-				$updateDelFilesCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
+				$updateDelFilesCode .= 'CUpdateClientPartner::__DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
 				$updateDelListCode .= "\t\"".trim(str_replace(array('/./', '//'. '\\'), '/', '/'.$delFSEntry), '/')."\",\n";
 				if( strpos($delFSEntry, './install/modules/') === 0 ) {
+					if( strpos($delFSEntry, '/__upd__.') !== false ) {
+						$delFSEntryUpdr = str_replace('/__upd__.', '/updater.', $delFSEntry);
+						$updateDelFilesCode .= 'CUpdateClientPartner::__DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
+							.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntryUpdr)
+						.'");'."\n";
+					}
 					continue;
 				}
-				$updateDelFilesAsDepCode .= 'CUpdateSystem::DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
+				$updateDelFilesAsDepCode .= 'CUpdateClientPartner::__DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
 				$updateDelListAsDepCode .= "\t\"".trim(str_replace(array('/./', '//'. '\\'), '/', '/'.$delFSEntry), '/')."\",\n";
