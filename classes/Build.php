@@ -2927,18 +2927,22 @@ HELP;
 					// в архиве с обновлением решения updater-ы подмодулей имеют имя __upd__.*
 					// иначе они выбрасываются системой обновления битрикс при копировании
 					if(strpos($newFSEntry, 'update-') !==false) {
-						foreach( $arUpdaterFiles as $updaterFileName ) {
-							$updaterFileNameBak = str_replace('updater.', '__upd__.', $updaterFileName);
-							if( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak) ) {
-								$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
-									.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry.'/'.$updaterFileNameBak).'", '
-									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'", '
-									.'$errorMessage'
-								.');'."\n";
-								$updateFilesCode .= 'CUpdateClientPartner::__DeleteDirFilesEx('
-									.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak).'"'
-								.');'."\n";
+						if( is_dir($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry) ) {
+							foreach( $arUpdaterFiles as $updaterFileName ) {
+								$updaterFileNameBak = str_replace('updater.', '__upd__.', $updaterFileName);
+								if( file_exists($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak) ) {
+									$updateFilesCode .= '@rename('
+										.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileNameBak).'", '
+										.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry.'/'.$updaterFileName).'"'
+									.');'."\n";
+								}
 							}
+						}
+						elseif( strpos($newFSEntry, '/__upd__.') !== false ) {
+							$updateFilesCode .= '@rename('
+								.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
+								.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.str_replace('/__upd__.', '/updater.', $newFSEntry)).'"'
+							.');'."\n";
 						}
 					}
 					// ^^^
@@ -2960,11 +2964,24 @@ HELP;
 					true, true,
 					false, ''
 				);
-				$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
-					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
-					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
-					.'$errorMessage'
-				.');'."\n";
+				if( strpos($modFSEntry, './install/modules/') === 0
+					&& strpos($modFSEntry, '/update-') !== false
+					&& strpos($modFSEntry, '/__upd__.-') !== false
+				) {
+					$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
+						.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
+						.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.str_replace('/__upd__.', '/updater.', $modFSEntry)).'", '
+						.'$errorMessage'
+					.');'."\n";
+				}
+				else {
+					$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
+						.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
+						.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
+						.'$errorMessage'
+					.');'."\n";
+				}
+
 				if( strpos($modFSEntry, './install/modules/') === 0 ) {
 					continue;
 				}
