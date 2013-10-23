@@ -502,7 +502,7 @@ namespace OBX\Core {
 		static private $_arLessFiles = array();
 		static private $_arLessFilesSort = array();
 		static private $_lessFilesCounter = 0;
-		static private $_bLessProduction = false;
+		static private $_bLessProduction = null;
 		static private $_lessCompiledExt = '.css';
 		static private $_lessJSPath = null;
 		static private $_bLessFilesConnected = false;
@@ -515,12 +515,26 @@ namespace OBX\Core {
 			if($sortA == $sortB) return 0;
 			return ($sortA < $sortB)? -1 : 1;
 		}
+
+		static public function isLessProductionReady() {
+			if(self::$_bLessProduction === null) {
+				$optLessProduction = \COption::GetOptionString('obx.core', 'LESSCSS_PRODUCTION_READY', 'N');
+				if($optLessProduction == 'Y') {
+					self::$_bLessProduction = true;
+				}
+				else {
+					self::$_bLessProduction = false;
+				}
+			}
+			return self::$_bLessProduction;
+		}
+
 		static public function getLessHead() {
 			$returnString = '';
 			uksort(self::$_arLessFiles, '\OBX\Core\Tools::__sortLessFiles');
 			foreach(self::$_arLessFiles as $lessFilePath) {
 				$compiledLessFilePath = substr($lessFilePath, 0, -5).self::$_lessCompiledExt;
-				if(!self::$_bLessProduction) {
+				if(!self::isLessProductionReady()) {
 					$returnString .= '<link rel="stylesheet/less" type="text/css" href="'.$lessFilePath.'">'."\n";
 				}
 				else {
@@ -603,7 +617,7 @@ namespace OBX\Core {
 					if( is_file($_SERVER["DOCUMENT_ROOT"].$lessFilePath)
 						|| (
 							is_file($_SERVER["DOCUMENT_ROOT"].$compiledLessFilePath)
-							&& self::$_bLessProduction)
+							&& self::isLessProductionReady())
 					) {
 						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
 						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
@@ -614,12 +628,12 @@ namespace OBX\Core {
 						is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$lessFilePath)
 						|| (
 							is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$compiledLessFilePath)
-							&& self::$_bLessProduction
+							&& self::isLessProductionReady()
 						)
 						//					// На случай если мы будем комипировать less в папку css
 						//					|| (
 						//						substr($compiledLessFilePath, 0, 5) == 'less/'
-						//						&& self::$_bLessProduction
+						//						&& self::isLessProductionReady()
 						//						&& is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/css/".substr($compiledLessFilePath, 5))
 						//					)
 					) {
@@ -686,7 +700,7 @@ namespace OBX\Core {
 			if( $lessFilePath == null ) {
 				if( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/style.less")
 					|| (is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/style.less.css")
-						&& self::$_bLessProduction)
+						&& self::isLessProductionReady())
 				) {
 					$lessFilePath = str_replace(
 						array('//', '///'), array('/', '/'),
@@ -703,7 +717,7 @@ namespace OBX\Core {
 			}
 			elseif( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/".$lessFilePath)
 				|| (is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/".$lessFilePath.".css")
-					&& self::$_bLessProduction )
+					&& self::isLessProductionReady() )
 			) {
 				$lessFilePath = str_replace(
 					array('//', '///'), array('/', '/'),

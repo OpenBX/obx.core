@@ -11,8 +11,9 @@
 namespace OBX\Core\Settings;
 use OBX\Core\CMessagePoolDecorator;
 
+IncludeModuleLangFile(__FILE__);
+
 interface ISettings {
-	function __construct($moduleID, $settingsID, $arSettings);
 	function getSettingModuleID();
 	function getSettingsID();
 	function syncSettings();
@@ -60,32 +61,33 @@ class Settings implements ISettings {
 			if (!preg_match('~^[a-zA-Z0-9\_]*$~', $optionCode)) {
 				continue;
 			}
-			if(
-				array_key_exists('NAME', $arOption) && !empty($arOption['NAME'])
-				&& array_key_exists('TYPE', $arOption)
-				&& (
+			if( !array_key_exists('NAME', $arOption) && empty($arOption['NAME']) ) {
+				throw new \ErrorException('Option name does not set');
+			}
+			if( !array_key_exists('TYPE', $arOption) || !(
 					$arOption['TYPE'] == 'STRING'
 					|| $arOption['TYPE'] == 'PASSWORD'
 					|| $arOption['TYPE'] == 'TEXT'
 					|| $arOption['TYPE'] == 'CHECKBOX'
 				)
 			) {
-				if($arOption['TYPE'] == 'CHECKBOX') {
-					$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
-					$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
-				}
-				$this->_arSettings[$optionCode] = array(
-					'NAME' => $arOption['NAME'],
-					'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
-					'TYPE' => $arOption['TYPE'],
-					'VALUE' => (array_key_exists('VALUE', $arOption)?$arOption['VALUE']:'')
-				);
-				$this->_arSettings[$optionCode]['INPUT_ATTR'] = null;
-				if( array_key_exists('INPUT_ATTR', $arOption) && !empty($arOption['INPUT_ATTR']) ) {
-					$this->_arSettings[$optionCode]['INPUT_ATTR'] = array();
-					foreach($arOption['INPUT_ATTR'] as $attr => $attrValue) {
-						$this->_arSettings[$optionCode]['INPUT_ATTR'][$attr] = $attrValue;
-					}
+				throw new \ErrorException('Option type incorrect');
+			}
+			if($arOption['TYPE'] == 'CHECKBOX') {
+				$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
+				$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
+			}
+			$this->_arSettings[$optionCode] = array(
+				'NAME' => $arOption['NAME'],
+				'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
+				'TYPE' => $arOption['TYPE'],
+				'VALUE' => (array_key_exists('VALUE', $arOption)?$arOption['VALUE']:'')
+			);
+			$this->_arSettings[$optionCode]['INPUT_ATTR'] = null;
+			if( array_key_exists('INPUT_ATTR', $arOption) && !empty($arOption['INPUT_ATTR']) ) {
+				$this->_arSettings[$optionCode]['INPUT_ATTR'] = array();
+				foreach($arOption['INPUT_ATTR'] as $attr => $attrValue) {
+					$this->_arSettings[$optionCode]['INPUT_ATTR'][$attr] = $attrValue;
 				}
 			}
 		}
@@ -116,7 +118,11 @@ class Settings implements ISettings {
 		foreach($this->_arSettings as $optionCode => &$arOption) {
 			if( strlen($arOption['NAME']) > 0 ) {
 				if( !array_key_exists('VALUE', $arOption) ) $arOption['VALUE'] = '';
-				$arOption['VALUE'] = \COption::GetOptionString($this->getSettingModuleID(), $this->getSettingsID().'_'.$optionCode, $arOption['VALUE']);
+				$arOption['VALUE'] = \COption::GetOptionString(
+					$this->getSettingModuleID(),
+					$this->getSettingsID().'_'.$optionCode,
+					$arOption['VALUE']
+				);
 			}
 			else {
 				unset($this->_arSettings[$optionCode]);
@@ -200,7 +206,8 @@ class Settings implements ISettings {
 					.$this->_implodeInputAttributes($arAttributes).' />';
 				break;
 			case 'CHECKBOX':
-				echo '<input type="checkbox"'
+				echo '<input type="hidden" name"'.$this->_getOptionInputName($optionCode).'" value="N" />'
+					.'<input type="checkbox"'
 						.$this->_getOptionInputName($optionCode)
 						.' value="Y"'
 						.(($arOption['VALUE']=='Y')?' checked="checked"':'')
@@ -259,10 +266,10 @@ class Settings implements ISettings {
 }
 
 interface ITab {
-	function getTitle();
-	function getDescription();
-	function getIcon();
-	function getHtmlContainer();
+	function getTabTitle();
+	function getTabDescription();
+	function getTabIcon();
+	function getTabHtmlContainer();
 	function showTabContent();
 	function showTabScripts();
 	function saveTabData();
@@ -273,10 +280,17 @@ interface ITab {
 
 abstract class ATab extends CMessagePoolDecorator implements ITab {
 	static protected $_arTabInstances = array();
-	protected $_title = '';
-	protected $_description = '';
-	protected $_htmlContainer = '';
-	protected $_iconPath = '';
+	protected $_tabName = '';
+	protected $_tabTitle = '';
+	protected $_tabDescription = '';
+	protected $_tabHtmlContainer = '';
+	protected $_tabIconPath = '';
+
+	public function __construct($arTabConfig = null) {
+		if($arTabConfig !== null) {
+			$this->setTabConfig($arTabConfig);
+		}
+	}
 
 	/**
 	 * @param $tabClassName
@@ -313,35 +327,51 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 		return self::$_arTabInstances[$tabClassName];
 	}
 
-	public function setConfig($arTabControl) {
-		$this->_title = $arTabControl['TITLE'];
-		$this->_description = $arTabControl['DESCRIPTION'];
-		$this->_iconPath = $arTabControl['ICON'];
-		$this->_htmlContainer = $arTabControl['DIV'];
+	public function setTabConfig(array $arTabConfig) {
+		if( !is_array($arTabConfig) ) {
+			return $this;
+		}
+		if( array_key_exists('TAB', $arTabConfig) ) {
+			$this->_tabName = $arTabConfig['TAB'];
+		}
+		if( array_key_exists('TITLE', $arTabConfig) ) {
+			$this->_tabTitle = $arTabConfig['TITLE'];
+		}
+		if( array_key_exists('DESCRIPTION', $arTabConfig) ) {
+			$this->_tabDescription = $arTabConfig['DESCRIPTION'];
+		}
+		if( array_key_exists('ICON', $arTabConfig) ) {
+			$this->_tabIconPath = $arTabConfig['ICON'];
+		}
+		if( array_key_exists('ICON', $arTabConfig) ) {
+			$this->_tabHtmlContainer = $arTabConfig['DIV'];
+		}
+		return $this;
 	}
 
-	public function getConfig() {
+	public function getTabConfig() {
 		return array(
-			'TITLE' => $this->_title,
-			'DESCRIPTION' => $this->_description,
-			'ICON' => $this->_iconPath,
-			'DIV' => $this->_htmlContainer
+			'TAB' => $this->_tabName,
+			'TITLE' => $this->_tabTitle,
+			'DESCRIPTION' => $this->_tabDescription,
+			'ICON' => $this->_tabIconPath,
+			'DIV' => $this->_tabHtmlContainer
 		);
 	}
 
-	public function getTitle() {
-		return $this->_title;
+	public function getTabTitle() {
+		return $this->_tabTitle;
 	}
 
-	public function getDescription() {
-		return $this->_description;
+	public function getTabDescription() {
+		return $this->_tabDescription;
 	}
 
-	public function getIcon() {
-		return $this->_iconPath;
+	public function getTabIcon() {
+		return $this->_tabIconPath;
 	}
-	public function getHtmlContainer() {
-		return $this->_htmlContainer;
+	public function getTabHtmlContainer() {
+		return $this->_tabHtmlContainer;
 	}
 
 	abstract public function showTabContent();
@@ -409,8 +439,12 @@ class Tab extends ATab implements ISettings {
 	protected $_Settings = null;
 
 	// +++ ISettings implementation
-	public function __construct($moduleID, $settingsID, $arSettings) {
-		$this->_Settings = new Settings($moduleID, $settingsID, 	$arSettings);
+	public function __construct($moduleID, $settingsID, $arTabConfig, $arSettings) {
+		$this->_Settings = new Settings($moduleID, $settingsID, $arSettings);
+		if( is_array($arTabConfig) && !array_key_exists('DIV', $arTabConfig) ) {
+			$arTabConfig['DIV'] = strtoupper('sett_'.str_replace('.', '_', $moduleID).'_'.$settingsID);
+		}
+		$this->setTabConfig($arTabConfig);
 	}
 	public function getSettingModuleID() {
 		return $this->_Settings->getSettingModuleID();
@@ -449,7 +483,9 @@ class Tab extends ATab implements ISettings {
 					<br /><small><?=$arOption['DESCRIPTION']?></small>
 				<?endif?>
 			</td>
-			<td></td>
+			<td>
+				<?=$this->_Settings->getOptionInput($optionCode)?>
+			</td>
 		</tr>
 		<?endforeach;
 	}
@@ -462,14 +498,19 @@ class Tab extends ATab implements ISettings {
 	// ^^^ ATab implementation
 }
 
-interface IModulePage {
+interface IAdminPage {
 	function readConfig();
 	function addTab();
 	function saveModuleSettings();
 }
 
-class ModulePage {
+class AdminPage {
+	protected $_tabControlName = null;
 	protected $_arTabs = array();
+
+	public function __construct($tabControlName) {
+		$this->_tabControlName = $tabControlName;
+	}
 
 	public function readConfig($configRelativePath) {
 
@@ -483,14 +524,120 @@ class ModulePage {
 
 	public function addTabList($arTabs) {
 		foreach($arTabs as $Tab) {
-			/**
-			 * @var Tab $Tab
-			 */
+			/** @var Tab $Tab */
 			$this->addTab($Tab);
 		}
 	}
 
-	public function saveModuleSettings() {
+	public function getTabList($bReturnArray = false){
+		if($bReturnArray === true) {
+			$arTabs = array();
+			/** @var Tab $Tab */
+			foreach($this->_arTabs as $Tab) {
+				$arTab = $Tab->getTabConfig();
+				$arTab['CONTROLLER'] = $Tab;
+				$arTabs[] = $arTab;
+			}
+			return $arTabs;
+		}
+		return $this->_arTabs;
+	}
+
+	public function _showTabsFormHeader() {
+		/** @var \CMain $APPLICATION */
+		global $APPLICATION;
+		?>
+		<form method="post" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=urlencode($_REQUEST['mid'])?>&amp;lang=<?=LANGUAGE_ID?>">
+		<?
+	}
+
+	public function _showTabsFormFooter() {
+		?>
+		</form>
+		<?
+	}
+
+	public function getBXTabControl() {
+		static $BXTabControl = null;
+		if($BXTabControl === null) {
+			$BXTabControl = new \CAdminTabControl($this->_tabControlName, $this->getTabList(true));
+		}
+		return $BXTabControl;
+	}
+
+	public function show($bShowHtmlForm = true) {
+		$BXTabControl = $this->getBXTabControl();
+		if( true === $bShowHtmlForm) {
+			$this->_showTabsFormHeader();
+		}
+		$BXTabControl->Begin();
+		/** @var Tab $Tab */
+		foreach($this->_arTabs as $Tab) {
+			$BXTabControl->BeginNextTab();
+			$Tab->showMessages();
+			$Tab->showErrors();
+			$Tab->showTabContent();
+			$BXTabControl->EndTab();
+		}
+		$BXTabControl->Buttons();
+		?>
+		<input type="submit" name="Update" value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_VAL")?>"
+			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_TITLE")?>">
+		<!-- <input type="submit" name="Apply" value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_VAL")?>"
+			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_TITLE")?>"> -->
+		<?if (true || strlen($_REQUEST["back_url_settings"]) > 0): ?>
+			<input type="button" name="Cancel" value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_VAL")?>"
+				   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_TITLE")?>"
+				   onclick="window.location='<?echo htmlspecialchars(\CUtil::addslashes($_REQUEST["back_url_settings"]))?>'">
+			<!-- <input type="hidden" name="back_url_settings" value="<?=htmlspecialchars($_REQUEST["back_url_settings"])?>"> -->
+		<? endif?>
+		<?=bitrix_sessid_post();?>
+		<?
+		$BXTabControl->End();
+		if( true === $bShowHtmlForm) {
+			$this->_showTabsFormFooter();
+		}
+
+	}
+
+	public function checkRequest() {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST'
+			&& strlen($_POST['Update'] . $_POST['Apply']) > 0
+			&& check_bitrix_sessid()
+		) {
+			return true;
+		}
+		return false;
+	}
+
+	public function save($bResirectAfterSave = true) {
+		foreach($this->_arTabs as $Tab) {
+			/** @var Tab $Tab */
+			$Tab->saveTabData();
+		}
+		if( true === $bResirectAfterSave) {
+			$this->redirectAfterSave();
+		}
+	}
+
+	public function redirectAfterSave() {
+		/** @var \CMain $APPLICATION */
+		global $APPLICATION;
+		$BXTabControl = $this->getBXTabControl();
+		if (strlen($_REQUEST['Update']) > 0 && strlen($_REQUEST['back_url_settings']) > 0) {
+			LocalRedirect($_REQUEST['back_url_settings']);
+		}
+		else {
+			LocalRedirect(
+				$APPLICATION->GetCurPage()
+				.'?mid=' . urlencode($_REQUEST['mid'])
+				.'&lang=' . urlencode(LANGUAGE_ID)
+				.'&back_url_settings='.urlencode($_REQUEST['back_url_settings'])
+				.'&'.$BXTabControl->ActiveTabParam()
+			);
+		}
 
 	}
 }
+
+

@@ -1,4 +1,4 @@
-<?
+<?php
 /***********************************************
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
@@ -7,5 +7,7 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
-
-?>
+$MESS['OBX_CORE_SETTINGS_TAB_LESSCSS'] = 'LessCSS';
+$MESS['OBX_MARKET_SETTINGS_TITLE_LESSCSS'] = 'Настройки LessCSS';
+$MESS['OBX_CORE_SETTINGS_LESSCSS_PROD_READY'] = 'Стили в less-файлах скомпилированы в CSS';
+ 

@@ -48,8 +48,8 @@ $arModuleClasses['OBX\Core\Settings\Settings']			= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Settings\ITab']				= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Settings\ATab']				= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Settings\Tab']				= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\IModulePage']		= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\ModulePage']		= 'classes/Settings.php';
+$arModuleClasses['OBX\Core\Settings\IAdminPage']		= 'classes/Settings.php';
+$arModuleClasses['OBX\Core\Settings\AdminPage']			= 'classes/Settings.php';
 $arModuleClasses['OBX\Core\Test\TestCase']				= 'classes/TestCase.php';
 
 

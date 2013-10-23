@@ -1,13 +1,12 @@
 <?php
-/*************************************
- ** @product OBX:Core Bitrix Module **
- ** @authors                        **
- **         Maksim S. Makarov       **
- **         Morozov P. Artem        **
- ** @license Affero GPLv3           **
- ** @mailto rootfavell@gmail.com    **
- ** @mailto tashiro@yandex.ru       **
- *************************************/
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @license Affero GPLv3                     **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
 $MESS["OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE"] = "Ошибка удаления. Запись не найдена.";
 $MESS["OBX_DB_SIMPLE_ERR_ADD_DUP_PK"] = "Ошибка создания записи. Запись со значением поля #PK_NAME# = «#PK_VALUE#» уже существует";
