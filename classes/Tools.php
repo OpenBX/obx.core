@@ -159,7 +159,7 @@ namespace OBX\Core {
 		 */
 		static public function rusQuantity($quantity, $nominative, $genetive = NULL, $genplural = NULL){
 			$oneState = false;
-			if($genetive == NULL || $genplural = NULL) {
+			if($genetive == NULL || $genplural == NULL) {
 				$oneState = true;
 			}
 			$quantity = abs(intval($quantity));

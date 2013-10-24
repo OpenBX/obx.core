@@ -48,7 +48,7 @@ class Settings implements ISettings {
 	protected $_arSettings = array();
 
 
-	public function __construct($moduleID, $settingsID, $arSettings) {
+	public function __construct($moduleID, $settingsID, $arSettings = array()) {
 		if( !IsModuleInstalled($moduleID) ) {
 			return;
 		}
@@ -58,38 +58,7 @@ class Settings implements ISettings {
 		}
 		$this->_settingsID = $settingsID;
 		foreach($arSettings as $optionCode => &$arOption) {
-			if (!preg_match('~^[a-zA-Z0-9\_]*$~', $optionCode)) {
-				continue;
-			}
-			if( !array_key_exists('NAME', $arOption) && empty($arOption['NAME']) ) {
-				throw new \ErrorException('Option name does not set');
-			}
-			if( !array_key_exists('TYPE', $arOption) || !(
-					$arOption['TYPE'] == 'STRING'
-					|| $arOption['TYPE'] == 'PASSWORD'
-					|| $arOption['TYPE'] == 'TEXT'
-					|| $arOption['TYPE'] == 'CHECKBOX'
-				)
-			) {
-				throw new \ErrorException('Option type incorrect');
-			}
-			if($arOption['TYPE'] == 'CHECKBOX') {
-				$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
-				$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
-			}
-			$this->_arSettings[$optionCode] = array(
-				'NAME' => $arOption['NAME'],
-				'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
-				'TYPE' => $arOption['TYPE'],
-				'VALUE' => (array_key_exists('VALUE', $arOption)?$arOption['VALUE']:'')
-			);
-			$this->_arSettings[$optionCode]['INPUT_ATTR'] = null;
-			if( array_key_exists('INPUT_ATTR', $arOption) && !empty($arOption['INPUT_ATTR']) ) {
-				$this->_arSettings[$optionCode]['INPUT_ATTR'] = array();
-				foreach($arOption['INPUT_ATTR'] as $attr => $attrValue) {
-					$this->_arSettings[$optionCode]['INPUT_ATTR'][$attr] = $attrValue;
-				}
-			}
+			$this->_addOption($optionCode, $arOption);
 		}
 		$this->syncSettings();
 	}
@@ -136,6 +105,51 @@ class Settings implements ISettings {
 	public function getSettings() {
 		$this->syncSettings();
 		return $this->_arSettings;
+	}
+
+	/**
+	 * @param $optionCode
+	 * @param $arOption
+	 * @return $this
+	 */
+	public function addOption($optionCode, $arOption) {
+		return $this->_addOption($optionCode, $arOption);
+	}
+
+	protected function _addOption(&$optionCode, &$arOption) {
+		if (!preg_match('~^[a-zA-Z0-9\_]*$~', $optionCode)) {
+			throw new \ErrorException('Wrong option code');
+		}
+		if( !array_key_exists('NAME', $arOption) && empty($arOption['NAME']) ) {
+			throw new \ErrorException('Option name does not set');
+		}
+		if( !array_key_exists('TYPE', $arOption) || !(
+				$arOption['TYPE'] == 'STRING'
+				|| $arOption['TYPE'] == 'PASSWORD'
+				|| $arOption['TYPE'] == 'TEXT'
+				|| $arOption['TYPE'] == 'CHECKBOX'
+			)
+		) {
+			throw new \ErrorException('Option type incorrect');
+		}
+		if($arOption['TYPE'] == 'CHECKBOX') {
+			$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
+			$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
+		}
+		$this->_arSettings[$optionCode] = array(
+			'NAME' => $arOption['NAME'],
+			'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
+			'TYPE' => $arOption['TYPE'],
+			'VALUE' => (array_key_exists('VALUE', $arOption)?$arOption['VALUE']:'')
+		);
+		$this->_arSettings[$optionCode]['INPUT_ATTR'] = null;
+		if( array_key_exists('INPUT_ATTR', $arOption) && !empty($arOption['INPUT_ATTR']) ) {
+			$this->_arSettings[$optionCode]['INPUT_ATTR'] = array();
+			foreach($arOption['INPUT_ATTR'] as $attr => $attrValue) {
+				$this->_arSettings[$optionCode]['INPUT_ATTR'][$attr] = $attrValue;
+			}
+		}
+		return $this;
 	}
 
 	/**
@@ -439,7 +453,7 @@ class Tab extends ATab implements ISettings {
 	protected $_Settings = null;
 
 	// +++ ISettings implementation
-	public function __construct($moduleID, $settingsID, $arTabConfig, $arSettings) {
+	public function __construct($moduleID, $settingsID, $arTabConfig, $arSettings = array()) {
 		$this->_Settings = new Settings($moduleID, $settingsID, $arSettings);
 		if( is_array($arTabConfig) && !array_key_exists('DIV', $arTabConfig) ) {
 			$arTabConfig['DIV'] = strtoupper('sett_'.str_replace('.', '_', $moduleID).'_'.$settingsID);
@@ -458,6 +472,16 @@ class Tab extends ATab implements ISettings {
 	public function getSettings() {
 		return $this->_Settings->getSettings();
 	}
+
+	/**
+	 * @param $optionCode
+	 * @param $arOption
+	 * @return $this
+	 */
+	public function addOption($optionCode, $arOption) {
+		$this->_Settings->addOption($optionCode, $arOption);
+		return $this;
+	}
 	public function getOption($optionCode, $bReturnOptionArray = false) {
 		return $this->_Settings->getOption($optionCode, $bReturnOptionArray);
 	}
@@ -475,16 +499,19 @@ class Tab extends ATab implements ISettings {
 	// +++ ATab implementation
 	public function showTabContent() {
 		$arSettings = $this->_Settings->getSettings();
+		$idPrefix = 'sett_'.str_replace('.', '_', $this->getSettingModuleID()).'_';
 		foreach($arSettings as $optionCode => &$arOption):?>
 		<tr>
 			<td>
+				<label for="<?=$idPrefix.$optionCode?>">
 				<?=$arOption['NAME']?>
 				<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
 					<br /><small><?=$arOption['DESCRIPTION']?></small>
 				<?endif?>
+				</label>
 			</td>
 			<td>
-				<?=$this->_Settings->getOptionInput($optionCode)?>
+				<?=$this->_Settings->getOptionInput($optionCode, array('id' => $idPrefix.$optionCode))?>
 			</td>
 		</tr>
 		<?endforeach;
@@ -520,6 +547,7 @@ class AdminPage {
 		if($Tab instanceof ITab) {
 			$this->_arTabs[] = $Tab;
 		}
+		return $this;
 	}
 
 	public function addTabList($arTabs) {
