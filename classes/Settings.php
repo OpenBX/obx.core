@@ -198,29 +198,35 @@ class Settings implements ISettings {
 		}
 	}
 
+	/**
+	 * @param $optionCode
+	 * @param array $arAttributes
+	 * @return string
+	 */
 	public function getOptionInput($optionCode, $arAttributes = array()) {
 		$arOption = $this->getOption($optionCode, true);
+		$input = '';
 		if( empty($arOption) ) {
-			return '';
+			return $input;
 		}
 		if($arOption['INPUT_ATTR'] != null) {
 			$arAttributes = array_merge($arAttributes, $arOption['INPUT_ATTR']);
 		}
 		switch ($arOption['TYPE']) {
 			case 'STRING':
-				echo '<input type="text"'
+				$input = '<input type="text"'
 						.$this->_getOptionInputName($optionCode)
 						.' value="'.$arOption['VALUE'].'"'
 						.$this->_implodeInputAttributes($arAttributes).' />';
 				break;
 			case 'PASSWORD':
-				echo '<input type="password"'
+				$input = '<input type="password"'
 					.$this->_getOptionInputName($optionCode)
 					.' value="'.$arOption['VALUE'].'"'
 					.$this->_implodeInputAttributes($arAttributes).' />';
 				break;
 			case 'CHECKBOX':
-				echo '<input type="hidden" name"'.$this->_getOptionInputName($optionCode).'" value="N" />'
+				$input = '<input type="hidden" name"'.$this->_getOptionInputName($optionCode).'" value="N" />'
 					.'<input type="checkbox"'
 						.$this->_getOptionInputName($optionCode)
 						.' value="Y"'
@@ -229,13 +235,16 @@ class Settings implements ISettings {
 				;
 				break;
 			case 'TEXT':
-				echo '<textarea'
+				$input = '<textarea'
 						.$this->_getOptionInputName($optionCode)
 						.$this->_implodeInputAttributes($arAttributes)
 						.'>'.$arOption['VALUE'].'</textarea>';
+				break;
 			default:
+				$input = '';
 				break;
 		}
+		return $input;
 	}
 	protected function _implodeInputAttributes(&$arAttributes) {
 		$attrString = '';
@@ -395,7 +404,7 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 	public function showMessages($colspan = -1) {
 		$colspan = intval($colspan);
 		if ($colspan < 0) {
-			$colspan = $this->listTableColumns;
+			$colspan = 1;
 		}
 		$arMessagesList = $this->getMessages();
 		if (count($arMessagesList) > 0) {
@@ -413,7 +422,7 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 	public function showWarnings($colspan = -1) {
 		$colspan = intval($colspan);
 		if ($colspan < 0) {
-			$colspan = $this->listTableColumns;
+			$colspan = 1;
 		}
 		$arWarningsList = $this->getWarnings();
 		if (count($arWarningsList) > 0) {
@@ -431,7 +440,7 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 	public function showErrors($colspan = -1) {
 		$colspan = intval($colspan);
 		if ($colspan < 0) {
-			$colspan = $this->listTableColumns;
+			$colspan = 1;
 		}
 		$arErrorsList = $this->getErrors();
 		if (count($arErrorsList) > 0) {
