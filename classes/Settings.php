@@ -20,6 +20,7 @@ interface ISettings {
 	function getSettings();
 	function getOption($optionCode, $bReturnOptionArray = false);
 	function saveSettings($arSettings);
+	function restoreDefaults();
 	function getOptionInput($optionCode, $arAttributes = array());
 	function saveSettingsRequestData();
 }
@@ -50,11 +51,11 @@ class Settings implements ISettings {
 
 	public function __construct($moduleID, $settingsID, $arSettings = array()) {
 		if( !IsModuleInstalled($moduleID) ) {
-			return;
+			throw new \ErrorException('Can\'t create Settings object. Wrong moduleID');
 		}
 		$this->_settingsModuleID = $moduleID;
 		if (!preg_match('~^[a-zA-Z\_][a-zA-Z0-9\_]*$~', $settingsID)) {
-			return;
+			throw new \ErrorException('Can\'t create Settings object. Wrong settingsID');
 		}
 		$this->_settingsID = $settingsID;
 		foreach($arSettings as $optionCode => &$arOption) {
@@ -128,6 +129,7 @@ class Settings implements ISettings {
 				|| $arOption['TYPE'] == 'PASSWORD'
 				|| $arOption['TYPE'] == 'TEXT'
 				|| $arOption['TYPE'] == 'CHECKBOX'
+				|| $arOption['TYPE'] == 'LIST'
 			)
 		) {
 			throw new \ErrorException('Option type incorrect');
@@ -136,12 +138,31 @@ class Settings implements ISettings {
 			$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
 			$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
 		}
+
+		if(!array_key_exists('VALUE', $arOption)) {
+			$arOption['VALUE'] = '';
+		}
+		// Перед первой синхронизацией VALUE задает значение по умолчанию DEFAULT
+		$arOption['DEFAULT'] = $arOption['VALUE'];
+
 		$this->_arSettings[$optionCode] = array(
 			'NAME' => $arOption['NAME'],
 			'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
 			'TYPE' => $arOption['TYPE'],
-			'VALUE' => (array_key_exists('VALUE', $arOption)?$arOption['VALUE']:'')
+			'VALUE' => $arOption['VALUE'],
+			'DEFAULT' => $arOption['DEFAULT']
 		);
+		if($arOption['TYPE'] == 'LIST') {
+			if( !array_key_exists('VALUES', $arOption)
+				|| !is_array($arOption['VALUES'])
+				|| empty($arOption['VALUES'])
+			) {
+				throw new \ErrorException('Option list values have not set');
+			}
+			else {
+				$this->_arSettings[$optionCode]['VALUES'] = $arOption['VALUES'];
+			}
+		}
 		$this->_arSettings[$optionCode]['INPUT_ATTR'] = null;
 		if( array_key_exists('INPUT_ATTR', $arOption) && !empty($arOption['INPUT_ATTR']) ) {
 			$this->_arSettings[$optionCode]['INPUT_ATTR'] = array();
@@ -164,6 +185,7 @@ class Settings implements ISettings {
 				if( !array_key_exists('VALUE', $this->_arSettings[$optionCode]) ) {
 					return null;
 				}
+
 				return $this->_arSettings[$optionCode]['VALUE'];
 			}
 			else {
@@ -199,6 +221,17 @@ class Settings implements ISettings {
 	}
 
 	/**
+	 *
+	 */
+	public function restoreDefaults() {
+		$arDefaults = array();
+		foreach($this->_arSettings as $optionCode => &$arOption) {
+			$arDefaults[$optionCode] = $arOption['DEFAULT'];
+		}
+		$this->saveSettings($arDefaults);
+	}
+
+	/**
 	 * @param $optionCode
 	 * @param array $arAttributes
 	 * @return string
@@ -226,7 +259,7 @@ class Settings implements ISettings {
 					.$this->_implodeInputAttributes($arAttributes).' />';
 				break;
 			case 'CHECKBOX':
-				$input = '<input type="hidden" name"'.$this->_getOptionInputName($optionCode).'" value="N" />'
+				$input = '<input type="hidden" '.$this->_getOptionInputName($optionCode).' value="N" />'
 					.'<input type="checkbox"'
 						.$this->_getOptionInputName($optionCode)
 						.' value="Y"'
@@ -239,6 +272,22 @@ class Settings implements ISettings {
 						.$this->_getOptionInputName($optionCode)
 						.$this->_implodeInputAttributes($arAttributes)
 						.'>'.$arOption['VALUE'].'</textarea>';
+				break;
+			case 'LIST':
+				if( array_key_exists('VALUES', $arOption) && is_array($arOption['VALUES']) ) {
+					$input = '<select'
+								.$this->_getOptionInputName($optionCode)
+								.$this->_implodeInputAttributes($arAttributes)
+							.'>';
+					foreach($arOption['VALUES'] as $value => $printValue) {
+						$valueSelected = '';
+						if($arOption['VALUE'] !== null && $value == $arOption['VALUE'] ) {
+							$valueSelected = ' selected="selected"';
+						}
+						$input .= '<option value="'.$value.'"'.$valueSelected.'>'.$printValue.'</option>';
+					}
+					$input .= '</select>';
+				}
 				break;
 			default:
 				$input = '';
@@ -366,7 +415,7 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 		if( array_key_exists('ICON', $arTabConfig) ) {
 			$this->_tabIconPath = $arTabConfig['ICON'];
 		}
-		if( array_key_exists('ICON', $arTabConfig) ) {
+		if( array_key_exists('DIV', $arTabConfig) ) {
 			$this->_tabHtmlContainer = $arTabConfig['DIV'];
 		}
 		return $this;
@@ -461,14 +510,25 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 class Tab extends ATab implements ISettings {
 	protected $_Settings = null;
 
-	// +++ ISettings implementation
-	public function __construct($moduleID, $settingsID, $arTabConfig, $arSettings = array()) {
-		$this->_Settings = new Settings($moduleID, $settingsID, $arSettings);
+	public function __construct($moduleID, $settingsID, $arTabConfig, $Settings) {
+		if( is_array($Settings) ) {
+			$this->_Settings = new Settings($moduleID, $settingsID, $Settings);
+		}
+		elseif( $Settings instanceof Settings ) {
+			$this->initSettings($Settings);
+		}
 		if( is_array($arTabConfig) && !array_key_exists('DIV', $arTabConfig) ) {
 			$arTabConfig['DIV'] = strtoupper('sett_'.str_replace('.', '_', $moduleID).'_'.$settingsID);
 		}
 		$this->setTabConfig($arTabConfig);
 	}
+	public function initSettings(Settings $Settings) {
+		if( $Settings instanceof Settings ) {
+			$this->_Settings = $Settings;
+		}
+	}
+
+	// +++ ISettings implementation
 	public function getSettingModuleID() {
 		return $this->_Settings->getSettingModuleID();
 	}
@@ -496,6 +556,9 @@ class Tab extends ATab implements ISettings {
 	}
 	public function saveSettings($arSettings) {
 		$this->_Settings->saveSettings($arSettings);
+	}
+	public function restoreDefaults() {
+		$this->_Settings->restoreDefaults();
 	}
 	public function getOptionInput($optionCode, $arAttributes = array()) {
 		return $this->_Settings->getOptionInput($optionCode, $arAttributes);
@@ -618,7 +681,9 @@ class AdminPage {
 		}
 		$BXTabControl->Buttons();
 		?>
-		<input type="submit" name="Update" value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_VAL")?>"
+		<input type="submit" name="Update"
+			   class="adm-btn-save"
+			   value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_VAL")?>"
 			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_TITLE")?>">
 		<!-- <input type="submit" name="Apply" value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_VAL")?>"
 			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_TITLE")?>"> -->
@@ -628,6 +693,9 @@ class AdminPage {
 				   onclick="window.location='<?echo htmlspecialchars(\CUtil::addslashes($_REQUEST["back_url_settings"]))?>'">
 			<!-- <input type="hidden" name="back_url_settings" value="<?=htmlspecialchars($_REQUEST["back_url_settings"])?>"> -->
 		<? endif?>
+		<input type="submit" name="RestoreDefaults"
+			   value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_DEF_VAL")?>"
+			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_DEF_TITLE")?>">
 		<?=bitrix_sessid_post();?>
 		<?
 		$BXTabControl->End();
@@ -637,7 +705,7 @@ class AdminPage {
 
 	}
 
-	public function checkRequest() {
+	public function checkSaveRequest() {
 		if ($_SERVER['REQUEST_METHOD'] == 'POST'
 			&& strlen($_POST['Update'] . $_POST['Apply']) > 0
 			&& check_bitrix_sessid()
@@ -650,7 +718,27 @@ class AdminPage {
 	public function save($bResirectAfterSave = true) {
 		foreach($this->_arTabs as $Tab) {
 			/** @var Tab $Tab */
-			$Tab->saveTabData();
+			$Tab->saveSettingsRequestData();
+		}
+		if( true === $bResirectAfterSave) {
+			$this->redirectAfterSave();
+		}
+	}
+
+	public function checkRestoreRequest() {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST'
+			&& strlen($_POST['RestoreDefaults']) > 0
+			&& check_bitrix_sessid()
+		) {
+			return true;
+		}
+		return false;
+	}
+
+	public function restoreDefaults($bResirectAfterSave = true){
+		foreach($this->_arTabs as $Tab) {
+			/** @var Tab $Tab */
+			$Tab->restoreDefaults();
 		}
 		if( true === $bResirectAfterSave) {
 			$this->redirectAfterSave();

@@ -24,7 +24,7 @@ IncludeModuleLangFile(__FILE__);
 	</style>
 <?
 
-$ModuleSettings = new SettingsAdminPage('LessCssSettings');
+$ModuleSettings = new SettingsAdminPage('OpenBXCoreModuleOptions');
 $ModuleSettings->addTab(new SettingsTab(
 	'obx.core',
 	'LESSCSS',
@@ -44,8 +44,11 @@ $ModuleSettings->addTab(new SettingsTab(
 	)
 ));
 
-if($ModuleSettings->checkRequest()) {
+if($ModuleSettings->checkSaveRequest()) {
 	$ModuleSettings->save();
+}
+if($ModuleSettings->checkRestoreRequest()) {
+	$ModuleSettings->restoreDefaults();
 }
 $ModuleSettings->show();
 ?>

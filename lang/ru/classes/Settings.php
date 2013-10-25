@@ -5,3 +5,5 @@ $MESS['OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_VAL'] = 'Применить';
 $MESS['OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_TITLE'] = 'Применить';
 $MESS['OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_VAL'] = 'Отменить';
 $MESS['OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_TITLE'] = 'Отменить';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_VAL'] = 'По умолчанию';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_TITLE'] = 'Установить значения по умолчанию';
