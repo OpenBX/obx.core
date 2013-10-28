@@ -10,6 +10,7 @@
 
 namespace OBX\Core\Settings;
 use OBX\Core\CMessagePoolDecorator;
+use OBX\Core\IMessagePool;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -17,6 +18,7 @@ interface ISettings {
 	function getSettingModuleID();
 	function getSettingsID();
 	function syncSettings();
+	function syncOption($optionCode);
 	function getSettings();
 	function getOption($optionCode, $bReturnOptionArray = false);
 	function saveSettings($arSettings);
@@ -29,8 +31,11 @@ interface ISettingsConfig extends ISettings {
 	function readConfig($configRelativePath = null);
 }
 
-class Settings implements ISettings {
+class Settings extends CMessagePoolDecorator implements ISettings {
 	const SETT_INPUT_NAME_CONTAINER = 'obx_settings';
+
+	const E_VALIDATION_FAILED = 1;
+
 	protected $_settingsModuleID = null;
 	protected $_settingsID = null;
 	protected $_bSettingsInit = false;
@@ -86,17 +91,27 @@ class Settings implements ISettings {
 
 	public function syncSettings() {
 		foreach($this->_arSettings as $optionCode => &$arOption) {
-			if( strlen($arOption['NAME']) > 0 ) {
-				if( !array_key_exists('VALUE', $arOption) ) $arOption['VALUE'] = '';
-				$arOption['VALUE'] = \COption::GetOptionString(
-					$this->getSettingModuleID(),
-					$this->getSettingsID().'_'.$optionCode,
-					$arOption['VALUE']
-				);
-			}
-			else {
-				unset($this->_arSettings[$optionCode]);
-			}
+			$this->_syncOption($optionCode, $arOption);
+		}
+	}
+
+	public function syncOption($optionCode) {
+		if( array_key_exists($optionCode, $this->_arSettings) ) {
+			$arOption = &$this->_arSettings[$optionCode];
+			$this->_syncOption($optionCode, $arOption);
+		}
+	}
+	protected function _syncOption(&$optionCode, &$arOption) {
+		if( strlen($arOption['NAME']) > 0 ) {
+			if( !array_key_exists('VALUE', $arOption) ) $arOption['VALUE'] = '';
+			$arOption['VALUE'] = \COption::GetOptionString(
+				$this->getSettingModuleID(),
+				$this->getSettingsID().'_'.$optionCode,
+				$arOption['VALUE']
+			);
+		}
+		else {
+			unset($this->_arSettings[$optionCode]);
 		}
 	}
 
@@ -117,6 +132,24 @@ class Settings implements ISettings {
 		return $this->_addOption($optionCode, $arOption);
 	}
 
+	public function __validatorNotEmpty($optionCode, &$arOption, Settings $Settings) {
+		if(!array_key_exists('VALUE', $arOption) || strlen($arOption['VALUE'])<1) {
+			$Settings->addError(GetMessage('OBX_CORE_SETTINGS_VALIDATION_NOT_EMPTY', array(
+				'#OPTION#' => '"'.$arOption['NAME'].'" ('.$optionCode.')'
+			)), self::E_VALIDATION_FAILED);
+			return false;
+		}
+		return true;
+	}
+	public function __validatorBlank($optionCode, &$arOption, Settings $Settings) {
+		return true;
+	}
+	static protected function __sortSettings(array &$A, array &$B) {
+		if ($A['SORT'] == $B['SORT']) {
+			return 0;
+		}
+		return ($A['SORT'] < $B['SORT']) ? -1 : 1;
+	}
 	protected function _addOption(&$optionCode, &$arOption) {
 		if (!preg_match('~^[a-zA-Z0-9\_]*$~', $optionCode)) {
 			throw new \ErrorException('Wrong option code');
@@ -134,24 +167,38 @@ class Settings implements ISettings {
 		) {
 			throw new \ErrorException('Option type incorrect');
 		}
+		$defaultValidator = array($this, '__validatorNotEmpty');
 		if($arOption['TYPE'] == 'CHECKBOX') {
 			$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
 			$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
+			$defaultValidator = array($this, '__validatorBlank');
 		}
-
+		if(!array_key_exists('CHECK_FUNC', $arOption)) {
+			$arOption['CHECK_FUNC'] = $defaultValidator;
+		}
+		elseif(!is_callable($arOption['CHECK_FUNC'])) {
+			$arOption['CHECK_FUNC'] = $defaultValidator;
+		}
 		if(!array_key_exists('VALUE', $arOption)) {
 			$arOption['VALUE'] = '';
 		}
 		// Перед первой синхронизацией VALUE задает значение по умолчанию DEFAULT
 		$arOption['DEFAULT'] = $arOption['VALUE'];
+		if(!array_key_exists('SORT', $arOption)) {
+			$arOption['SORT'] = 100;
+		}
+		$arOption['SORT'] = intval($arOption['SORT']);
 
 		$this->_arSettings[$optionCode] = array(
 			'NAME' => $arOption['NAME'],
 			'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
 			'TYPE' => $arOption['TYPE'],
 			'VALUE' => $arOption['VALUE'],
-			'DEFAULT' => $arOption['DEFAULT']
+			'DEFAULT' => $arOption['DEFAULT'],
+			'CHECK_FUNC' => $arOption['CHECK_FUNC'],
+			'SORT' => $arOption['SORT']
 		);
+		uasort($this->_arSettings, array(__CLASS__, '__sortSettings'));
 		if($arOption['TYPE'] == 'LIST') {
 			if( !array_key_exists('VALUES', $arOption)
 				|| !is_array($arOption['VALUES'])
@@ -197,17 +244,32 @@ class Settings implements ISettings {
 
 	/**
 	 * @param $arSettings
+	 * @return bool
 	 */
 	public function saveSettings($arSettings) {
+		$bAllSuccess = true;
 		foreach ($arSettings as $optionCode => &$optionValue) {
+			$funcValidator = null;
 			if( array_key_exists($optionCode, $this->_arSettings) ) {
 				if( is_array($optionValue) ) {
+					if( array_key_exists('CHECK_FUNC', $optionValue) && is_callable($optionValue['CHECK_FUNC'])) {
+						$funcValidator = $optionValue['CHECK_FUNC'];
+					}
 					if( array_key_exists('VALUE', $optionValue) ) {
 						$optionValue = $optionValue['VALUE'];
 					}
 					else {
 						$optionValue = null;
 					}
+				}
+				$arOption = $this->_arSettings[$optionCode];
+				if($funcValidator !== null) {
+					$arOption['CHECK_FUNC'] = $funcValidator;
+				}
+				$arOption['VALUE'] = $optionValue;
+				if( false === call_user_func_array($arOption['CHECK_FUNC'], array($optionCode, &$arOption, $this)) ) {
+					$bAllSuccess = false;
+					continue;
 				}
 				\COption::SetOptionString(
 					$this->getSettingModuleID(),
@@ -218,6 +280,7 @@ class Settings implements ISettings {
 				$this->_arSettings[$optionCode]['VALUE'] = $optionValue;
 			}
 		}
+		return $bAllSuccess;
 	}
 
 	/**
@@ -226,7 +289,10 @@ class Settings implements ISettings {
 	public function restoreDefaults() {
 		$arDefaults = array();
 		foreach($this->_arSettings as $optionCode => &$arOption) {
-			$arDefaults[$optionCode] = $arOption['DEFAULT'];
+			$arDefaults[$optionCode] = array(
+				'VALUE' => $arOption['DEFAULT'],
+				'CHECK_FUNC' => array($this, '__validatorBlank')
+			);
 		}
 		$this->saveSettings($arDefaults);
 	}
@@ -307,6 +373,9 @@ class Settings implements ISettings {
 		return ' name="'.static::SETT_INPUT_NAME_CONTAINER.'['.$this->getSettingModuleID().']['.$this->getSettingsID().']['.$optionCode.']"';
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function saveSettingsRequestData() {
 		if( !array_key_exists(static::SETT_INPUT_NAME_CONTAINER, $_REQUEST) ) {
 			return ;
@@ -333,7 +402,7 @@ class Settings implements ISettings {
 				}
 			}
 		}
-		$this->saveSettings($arSettings);
+		return $this->saveSettings($arSettings);
 	}
 }
 
@@ -508,15 +577,15 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 
 
 class Tab extends ATab implements ISettings {
+	/** @var Settings */
 	protected $_Settings = null;
 
 	public function __construct($moduleID, $settingsID, $arTabConfig, $Settings) {
 		if( is_array($Settings) ) {
-			$this->_Settings = new Settings($moduleID, $settingsID, $Settings);
+			$Settings = new Settings($moduleID, $settingsID, $Settings);
 		}
-		elseif( $Settings instanceof Settings ) {
-			$this->initSettings($Settings);
-		}
+		$this->initSettings($Settings);
+
 		if( is_array($arTabConfig) && !array_key_exists('DIV', $arTabConfig) ) {
 			$arTabConfig['DIV'] = strtoupper('sett_'.str_replace('.', '_', $moduleID).'_'.$settingsID);
 		}
@@ -525,6 +594,10 @@ class Tab extends ATab implements ISettings {
 	public function initSettings(Settings $Settings) {
 		if( $Settings instanceof Settings ) {
 			$this->_Settings = $Settings;
+			$Settings->setMessagePool($this->getMessagePool());
+		}
+		else {
+			throw new \ErrorException('Settings initialization failed');
 		}
 	}
 
@@ -537,6 +610,10 @@ class Tab extends ATab implements ISettings {
 	}
 	public function syncSettings() {
 		$this->_Settings->syncSettings();
+	}
+
+	public function syncOption($optionCode) {
+		$this->_Settings->syncOption($optionCode);
 	}
 	public function getSettings() {
 		return $this->_Settings->getSettings();
@@ -563,8 +640,11 @@ class Tab extends ATab implements ISettings {
 	public function getOptionInput($optionCode, $arAttributes = array()) {
 		return $this->_Settings->getOptionInput($optionCode, $arAttributes);
 	}
+	/**
+	 * @return bool
+	 */
 	public function saveSettingsRequestData() {
-		$this->_Settings->saveSettingsRequestData();
+		return $this->_Settings->saveSettingsRequestData();
 	}
 	// ^^^ ISettings implementation
 
@@ -606,9 +686,11 @@ interface IAdminPage {
 class AdminPage {
 	protected $_tabControlName = null;
 	protected $_arTabs = array();
+	protected $_defRestoreConfirmMessage = null;
 
 	public function __construct($tabControlName) {
 		$this->_tabControlName = $tabControlName;
+		$this->_defRestoreConfirmMessage = GetMessage('OBX_CORE_SETT_ADM_PAGE_BTN_DEF_RESTORE_CONFIRM');
 	}
 
 	public function readConfig($configRelativePath) {
@@ -665,6 +747,12 @@ class AdminPage {
 		return $BXTabControl;
 	}
 
+	public function setRestoreConfirmMessage($strMessage) {
+		if(strlen($strMessage)>0) {
+			$this->_defRestoreConfirmMessage = htmlspecialchars($strMessage);
+		}
+	}
+
 	public function show($bShowHtmlForm = true) {
 		$BXTabControl = $this->getBXTabControl();
 		if( true === $bShowHtmlForm) {
@@ -674,8 +762,8 @@ class AdminPage {
 		/** @var Tab $Tab */
 		foreach($this->_arTabs as $Tab) {
 			$BXTabControl->BeginNextTab();
-			$Tab->showMessages();
-			$Tab->showErrors();
+			$Tab->showMessages(2);
+			$Tab->showErrors(2);
 			$Tab->showTabContent();
 			$BXTabControl->EndTab();
 		}
@@ -695,7 +783,8 @@ class AdminPage {
 		<? endif?>
 		<input type="submit" name="RestoreDefaults"
 			   value="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_DEF_VAL")?>"
-			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_DEF_TITLE")?>">
+			   title="<?=GetMessage("OBX_CORE_SETT_ADM_PAGE_BTN_DEF_TITLE")?>"
+			   onclick="if(confirm('<?=$this->_defRestoreConfirmMessage?>')) return true; else return false;">
 		<?=bitrix_sessid_post();?>
 		<?
 		$BXTabControl->End();
@@ -715,12 +804,13 @@ class AdminPage {
 		return false;
 	}
 
-	public function save($bResirectAfterSave = true) {
+	public function save($bRedirectAfterSave = true) {
+		$bAllSuccess = true;
 		foreach($this->_arTabs as $Tab) {
 			/** @var Tab $Tab */
-			$Tab->saveSettingsRequestData();
+			$bAllSuccess = $Tab->saveSettingsRequestData() && $bAllSuccess;
 		}
-		if( true === $bResirectAfterSave) {
+		if( true === ($bRedirectAfterSave&&$bAllSuccess) ) {
 			$this->redirectAfterSave();
 		}
 	}
