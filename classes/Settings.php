@@ -191,7 +191,8 @@ class Settings extends CMessagePoolDecorator implements ISettings {
 
 		$this->_arSettings[$optionCode] = array(
 			'NAME' => $arOption['NAME'],
-			'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?$arOption['DESCRIPTION']:''),
+			'DESCRIPTION' => (array_key_exists('DESCRIPTION', $arOption)?trim($arOption['DESCRIPTION']):''),
+			'HINT' => (array_key_exists('HINT', $arOption)?trim($arOption['HINT']):''),
 			'TYPE' => $arOption['TYPE'],
 			'VALUE' => $arOption['VALUE'],
 			'DEFAULT' => $arOption['DEFAULT'],
@@ -515,9 +516,9 @@ abstract class ATab extends CMessagePoolDecorator implements ITab {
 		return $this->_tabHtmlContainer;
 	}
 
-	abstract public function showTabContent();
-	abstract public function showTabScripts();
-	abstract public function saveTabData();
+	//abstract public function showTabContent();
+	//abstract public function showTabScripts();
+	//abstract public function saveTabData();
 
 	public function showMessages($colspan = -1) {
 		$colspan = intval($colspan);
@@ -652,9 +653,12 @@ class Tab extends ATab implements ISettings {
 	public function showTabContent() {
 		$arSettings = $this->_Settings->getSettings();
 		$idPrefix = 'sett_'.str_replace('.', '_', $this->getSettingModuleID()).'_';
-		foreach($arSettings as $optionCode => &$arOption):?>
+		foreach($arSettings as $optionCode => &$arOption):
+			$bWithDescription = (strlen(trim($arOption['DESCRIPTION']))>0)?true:false;
+			$bWithHint = (strlen(trim($arOption['HINT']))>0)?true:false;
+		?>
 		<tr>
-			<td>
+			<td<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
 				<label for="<?=$idPrefix.$optionCode?>">
 				<?=$arOption['NAME']?>
 				<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
@@ -662,8 +666,11 @@ class Tab extends ATab implements ISettings {
 				<?endif?>
 				</label>
 			</td>
-			<td>
+			<td<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
 				<?=$this->_Settings->getOptionInput($optionCode, array('id' => $idPrefix.$optionCode))?>
+				<?if($bWithHint):?>
+				<img src="/bitrix/js/main/core/images/hint.gif" onmouseover="BX.hint(this, '<?=$arOption['HINT']?>')" />
+				<?endif?>
 			</td>
 		</tr>
 		<?endforeach;
