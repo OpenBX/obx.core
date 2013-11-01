@@ -85,12 +85,15 @@ return $arModuleVersion;
  * * Небольшой рефакторинг классов Settings
  *
  * [1.1.6]
- * === Settings ===
- * * Исправлена ошибка в методе OBX\Core\Settings\Settings::getOptionInput()
- * * Добавлена возможность задавать валидацию для настроек
- * * Добавлена возможность сортировать настройки (поле SORT)
- * * Исправлена ошибка вида
- *   Fatal error: Can't inherit abstract function OBX\Core\Settings\ITab::showTabContent()
- *   (previously declared abstract in OBX\Core\Settings\ATab)
- *   in .../bitrix/modules/obx.core/classes/Settings.php on line 295
+ * ===== Settings =====
+ * -== Исправлена ошибка в методе OBX\Core\Settings\Settings::getOptionInput()
+ * -== Добавлена возможность задавать валидацию для настроек
+ * -== Добавлена возможность сортировать настройки (поле SORT)
+ * -== Исправлена ошибка вида
+ *     Fatal error: Can't inherit abstract function OBX\Core\Settings\ITab::showTabContent()
+ *     (previously declared abstract in OBX\Core\Settings\ATab)
+ *     in .../bitrix/modules/obx.core/classes/Settings.php on line 295
+ * ===== Сборщик =====
+ * -== Для файлов description.ru добавлена возможность
+ *     размечать текст в виде списков и конвертировать в html (ul-li)
  */

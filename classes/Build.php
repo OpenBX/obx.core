@@ -2880,19 +2880,28 @@ HELP;
 			}
 		}
 		// генерируем описание обновления
-		$updateDescription = '';
+		$arUpdateDescriptions = array();
 		foreach($this->_arReleases as $releaseVersion => &$arRelease) {
 			if(
-				self::compareVersions($releaseVersion, $versionFrom)>=0
+				self::compareVersions($releaseVersion, $versionFrom)>0
 				&& self::compareVersions($releaseVersion, $versionTo)<=0
 			) {
-				$updateDescription .= "\n".'['.$releaseVersion.']'."\n";
+				$arUpdateDescriptions[$releaseVersion] = '';
 				if( array_key_exists('DESCRIPTION', $arRelease) ) {
-					$updateDescription .= $arRelease['DESCRIPTION']."\n";
+					$arUpdateDescriptions[$releaseVersion] = "\n"
+						.'['.$releaseVersion.']'."\n"
+						.self::convertUpdateDescription($arRelease['DESCRIPTION']);
 				}
 			}
 		}
-		file_put_contents($updateDir.'/description.ru', $updateDescription);
+		// sort version => desc
+		uksort($arUpdateDescriptions, function($versionA, $versionB) {
+			$arVersionA = OBX_Build::readVersion($versionA);
+			$arVersionB = OBX_Build::readVersion($versionB);
+			if($arVersionA['RAW_VERSION'] == $arVersionB['RAW_VERSION']) return 0;
+			return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? 1 : -1;
+		});
+		file_put_contents($updateDir.'/description.ru', implode("\n", $arUpdateDescriptions));
 
 		$genPhpFileHead = '<'."?php\n"
 			."// Файл сгенерирован. Не редактируйте! \n"
@@ -3131,6 +3140,66 @@ DOC;
 			.'unset($GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
+	}
+
+	static public function convertUpdateDescription($descriptionText) {
+		$listLevel = 0;
+		$descriptionHtml = '';
+		$arDescription = explode("\n", $descriptionText);
+		$lineCount = count($arDescription);
+		$iLine = 0;
+		$bLiOpened = false;
+		$ulStyles = ' style="padding-left: 25px; padding-top: 5px; padding-bottom: 10px;"';
+		foreach($arDescription as &$descriptionLine) {
+			$iLine++;
+			if( strpos($descriptionLine, '-=') === false ) {
+				$descriptionHtml .= $descriptionLine."\n";
+			}
+			else {
+				if( strpos($descriptionLine, '-===') === 0 ) {
+					$newListLevel = 3;
+				}
+				elseif( strpos($descriptionLine, '-==') === 0 ) {
+					$newListLevel = 2;
+				}
+				elseif( strpos($descriptionLine, '-=') === 0 ) {
+					$newListLevel = 1;
+				}
+
+				if($bLiOpened) {
+					$descriptionHtml .= '</li>'."\n";
+					$bLiOpened = false;
+				}
+				if( ($newListLevel - $listLevel) > 0 ) {
+					$descriptionHtml .= str_repeat('<ul'.$ulStyles.'>'."\n", ($newListLevel - $listLevel));
+				}
+				elseif( ($newListLevel - $listLevel) < 0 ) {
+					$descriptionHtml .= str_repeat('</ul>'."\n", ($listLevel - $newListLevel));
+				}
+
+				if( strpos($descriptionLine, '-===*') === 0
+					|| strpos($descriptionLine, '-==*') === 0
+					|| strpos($descriptionLine, '-=*') === 0
+				) {
+					$descriptionHtml .= preg_replace('~^\-\={1,3}\*~', '<li style="font-weight: bold;">', $descriptionLine)."\n";
+				}
+				else {
+					$descriptionHtml .= preg_replace('~^\-\={1,3}~', '<li>', $descriptionLine)."\n";
+				}
+
+				$bLiOpened = true;
+				$listLevel = $newListLevel;
+			}
+			if($iLine == $lineCount && $listLevel > 0) {
+				$descriptionHtml .= '</li>'."\n";
+				$bLiOpened = false;
+				$descriptionHtml .= str_repeat('</ul>'."\n", $listLevel);
+			}
+		}
+
+		//echo $descriptionHtml;
+		//$descriptionHtml = $descriptionText;
+		return $descriptionHtml;
 	}
 
 	public function buildUpdate($versionTo = null) {
