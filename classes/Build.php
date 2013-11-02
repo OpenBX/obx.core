@@ -40,6 +40,7 @@ class OBX_Build {
 	protected $_releaseDir = null;
 	protected $_arReleases = array();
 	protected $_lastPubReleaseVersion = null;
+	protected $_lastDevReleaseVersion = null;
 
 	// Версия модуля, если он собирается как подмодуль
 	protected $_dependencyVersion = null;
@@ -165,7 +166,7 @@ class OBX_Build {
 			return null;
 		}
 		if( $arModuleMaxVersion['RAW_VERSION'] < $arModuleMinVersion['RAW_VERSION'] ) {
-			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указан интервал версий зависимости'."\n";
+			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указан интервал версий зависимости (мин.версия < макс.версия)'."\n";
 			return null;
 		}
 		if( !is_dir($this->_modulesDir.'/'.$arModuleMaxVersion['MODULE_ID']) ) {
@@ -201,8 +202,25 @@ class OBX_Build {
 			}
 			if($bNewDependency) {
 				$Dependency = new self($arModuleMaxVersion['MODULE_ID'], $this);
-				$Dependency->_dependencyVersion = $arModuleMaxVersion['VERSION'];
-				$Dependency->_dependencyMinVersion = $arModuleMinVersion['VERSION'];
+				if($arModuleMaxVersion['VERSION'] == 'stable') {
+					$Dependency->_dependencyVersion = $Dependency->_lastPubReleaseVersion;
+				}
+				elseif($arModuleMaxVersion['VERSION'] == 'last') {
+					$Dependency->_dependencyVersion = $Dependency->_version;
+				}
+				else {
+					$Dependency->_dependencyVersion = $arModuleMaxVersion['VERSION'];
+				}
+
+				if($arModuleMinVersion['VERSION'] == 'stable') {
+					$Dependency->_dependencyMinVersion = $Dependency->_lastPubReleaseVersion;
+				}
+				elseif($arModuleMinVersion['VERSION'] == 'last') {
+					$Dependency->_dependencyMinVersion = $Dependency->_version;
+				}
+				else {
+					$Dependency->_dependencyMinVersion = $arModuleMinVersion['VERSION'];
+				}
 			}
 		}
 
@@ -338,6 +356,7 @@ class OBX_Build {
 					die();
 				}
 				$bOpenedBlock = true;
+				continue;
 			}
 
 			if(strpos($strResourceLine, '}') !== false) {
@@ -522,7 +541,8 @@ class OBX_Build {
 							'UPDATE_FROM' => false,
 							'EXCLUDE' => array(),
 							'EXCLUDE_PATH' => array(),
-							'DESCRIPTION' => array(),
+							'DESCRIPTION' =>'',
+							'DESCRIPTION_RAW' =>'',
 						);
 					}
 					$arResourceLineByColon = explode(':', $strResourceLine);
@@ -539,8 +559,10 @@ class OBX_Build {
 						}
 					}
 					elseif($releaseOpt == 'description' ) {
+						$arReleasesList['RELEASES_LIST'][$blockSection]['DESCRIPTION_RAW'] = $releaseOptValue;
 						$releaseOptValue = preg_replace('~\n\t*~is', "\n", $releaseOptValue);
 						$arReleasesList['RELEASES_LIST'][$blockSection]['DESCRIPTION'] = $releaseOptValue;
+
 					}
 					elseif($releaseOpt == 'state') {
 						if(
@@ -1064,9 +1086,6 @@ if(!defined("BX_ROOT")) {
 	 */
 	static public function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = '', $ExcludePath = '', &$arExcludePath = null)
 	{
-		if (strpos($path_to."/", $path_from."/")===0 || realpath($path_to) === realpath($path_from))
-			return false;
-
 		if($arExcludePath === null) {
 			$arExcludePath = array();
 			if( is_string($ExcludePath) && strlen(trim($ExcludePath))>0 ) {
@@ -1085,12 +1104,41 @@ if(!defined("BX_ROOT")) {
 				}
 				if($path_from_dir !== null) {
 					foreach($ExcludePath as $excludePathItem) {
+						if( substr($excludePathItem, -1) == '/') {
+							$excludePathItem = substr($excludePathItem, 0, -1);
+						}
 						if( substr($excludePathItem, 0, 1) != '/' ) {
 							$excludePathItem = $path_from_dir.'/'.$excludePathItem;
 						}
 						$arExcludePath = array_merge($arExcludePath, glob($excludePathItem));
 					}
 				}
+			}
+		}
+
+		if( strpos($path_to."/", $path_from."/")===0 || realpath($path_to) === realpath($path_from) ) {
+			$bDeny = true;
+			// +++ [pronix:2013-11-02]
+			// нельзя скопировать папку from в папку target, если папка target находится в папке from (from/target)
+			// поскольку есть шанс влететь в рексурсивное копирование
+			// !но если папка 2 находится в исключениях, то можно продолжить копирование
+			if( in_array($path_to, $arExcludePath) ) {
+				$bDeny = false;
+			}
+			if( true === $bDeny) {
+				foreach($arExcludePath as $exclPathItem) {
+					if(
+						strpos($path_to."/", $exclPathItem."/")===0
+						||
+						realpath($path_to) === realpath($exclPathItem)
+					) {
+						$bDeny = false;
+					}
+				}
+			}
+			/// ^^^
+			if( true === $bDeny) {
+				return false;
 			}
 		}
 
@@ -2377,23 +2425,46 @@ HELP;
 							.')'
 							.'\-'
 						.')?'
-						.'([\d]{1,2})\.([\d]{1,2})\.([\d]{1,2})(?:\-r([\d]{1,4}))?$~';
+						.'(?:'
+							.'([\d]{1,2})\.([\d]{1,2})\.([\d]{1,2})(?:\-r([\d]{1,4}))?'
+							.'|'
+							.'(stable|last)'
+						.')'
+						.'$~';
 		$arVersion = array();
 		if( preg_match($regVersion, $moduleVersion, $arMatches) ) {
-			$arVersion['MODULE_ID'] = $arMatches[1];
-			$arVersion['MAJOR'] = $arMatches[2];
-			$arVersion['MINOR'] = $arMatches[3];
-			$arVersion['FIXES'] = $arMatches[4];
-			$arVersion['REVISION'] = 0;
-			$arVersion['VERSION'] = $arMatches[2].'.'.$arMatches[3].'.'.$arMatches[4];
-			if($arMatches[5]) {
-				$arVersion['REVISION'] = $arMatches[5];
-				$arVersion['VERSION'] .= '-r'.$arVersion['REVISION'];
+			if($arMatches[6] == 'stable') {
+				$arVersion['MODULE_ID'] = $arMatches[1];
+				$arVersion['MAJOR'] = 98;
+				$arVersion['MINOR'] = 99;
+				$arVersion['FIXES'] = 99;
+				$arVersion['REVISION'] = 9999;
+				$arVersion['VERSION'] = 'stable';
+			}
+			elseif($arMatches[6] == 'last') {
+				$arVersion['MODULE_ID'] = $arMatches[1];
+				$arVersion['MAJOR'] = 99;
+				$arVersion['MINOR'] = 99;
+				$arVersion['FIXES'] = 99;
+				$arVersion['REVISION'] = 9999;
+				$arVersion['VERSION'] = 'last';
+			}
+			else {
+				$arVersion['MODULE_ID'] = $arMatches[1];
+				$arVersion['MAJOR'] = $arMatches[2];
+				$arVersion['MINOR'] = $arMatches[3];
+				$arVersion['FIXES'] = $arMatches[4];
+				$arVersion['REVISION'] = 0;
+				$arVersion['VERSION'] = $arMatches[2].'.'.$arMatches[3].'.'.$arMatches[4];
+				if($arMatches[5]) {
+					$arVersion['REVISION'] = $arMatches[5];
+					$arVersion['VERSION'] .= '-r'.$arVersion['REVISION'];
+				}
 			}
 			$arVersion['RAW_VERSION'] =
-				  ($arVersion['MAJOR'] * 1000000000)
-				+ ($arVersion['MINOR'] * 10000000)
-				+ ($arVersion['FIXES'] * 10000)
+				($arVersion['MAJOR']   * 100000000)
+				+ ($arVersion['MINOR'] *   1000000)
+				+ ($arVersion['FIXES'] *     10000)
 				+ ($arVersion['REVISION'])
 			;
 		}
@@ -2405,6 +2476,12 @@ HELP;
 		$arVersionB = self::readVersion($versionB);
 		if($arVersionA['RAW_VERSION'] == $arVersionB['RAW_VERSION']) return 0;
 		return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? -1 : 1;
+	}
+	static public function compareVersionsDesc($versionA, $versionB) {
+		$arVersionA = self::readVersion($versionA);
+		$arVersionB = self::readVersion($versionB);
+		if($arVersionA['RAW_VERSION'] == $arVersionB['RAW_VERSION']) return 0;
+		return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? 1 : -1;
 	}
 
 
@@ -2533,8 +2610,32 @@ HELP;
 
 			$this->_arReleases[$version] = $arRelease;
 			if( $arRelease['STATE'] == 'done' ) {
-				$this->_lastPubReleaseVersion = $version;
+				if(
+					$this->_lastPubReleaseVersion == null
+					|| self::compareVersions($version, $this->_lastPubReleaseVersion)>=0
+				) {
+					$this->_lastPubReleaseVersion = $version;
+				}
 			}
+			if( $arRelease['STATE'] == 'dev' ) {
+				if(
+					$this->_lastDevReleaseVersion == null
+					|| self::compareVersions($version, $this->_lastDevReleaseVersion)>=0
+				) {
+					$this->_lastDevReleaseVersion = $version;
+				}
+			}
+		}
+		if($this->_lastDevReleaseVersion == null) {
+			$this->_lastDevReleaseVersion = $this->_lastPubReleaseVersion;
+		}
+		if(self::compareVersions($this->_lastPubReleaseVersion, $this->_lastDevReleaseVersion)>0) {
+			echo 'ОШИБКА: последний выпуск помеченный как стабильный '
+				.'('.$this->_moduleName.'-'.$this->_lastPubReleaseVersion.')'
+				.' новее последнего выпуска в режиме разработки '
+				.'('.$this->_moduleName.'-'.$this->_lastDevReleaseVersion.').'
+				."\n".'        Поправьте вашу конфигурацию выпусков'."\n";
+			die();
 		}
 	}
 
@@ -2550,7 +2651,7 @@ HELP;
 		}
 		self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version);
 		$arExclude = array_merge(array('.git', 'modules'), $this->_arReleases[$this->_version]['EXCLUDE']);
-		$arExcludePath = array_merge($this->_arReleases[$this->_version]['EXCLUDE_PATH']);
+		$arExcludePath = $this->_arReleases[$this->_version]['EXCLUDE_PATH'];
 		foreach($arExcludePath as &$excludePathEntry) {
 			if( substr($excludePathEntry, 0, 1) == '/' ) {
 				$excludePathEntry = $this->_docRootDir.$excludePathEntry;
@@ -2562,6 +2663,9 @@ HELP;
 			,true, true, FALSE, $arExclude, $arExcludePath
 		);
 		$this->removeSQLFileComments($this->_releaseFolder.'/release-'.$this->_version.'/install/db/');
+		$this->_addChangeLogToReleaseVersionFile();
+
+		// Копируем подмодули внутрь супер модуля
 		foreach($this->_arDepModules as $Dependency) {
 			/** @var OBX_Build $Dependency */
 			$arDepVersion = self::readVersion($Dependency->_dependencyVersion);
@@ -2583,7 +2687,7 @@ HELP;
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'
 				,true, true, FALSE, array('.git', 'modules')
 			);
-			// Даем папке с релизом подмодуля правильное имя
+			// Даём папке с релизом подмодуля правильное имя
 			rename(
 				 $this->_releaseDir.'/release-'.$this->_version.'/install/modules/release-'.$Dependency->_dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName
@@ -2626,6 +2730,24 @@ HELP;
 				}
 			}
 			closedir($depReleaseDir);
+		}
+	}
+
+	protected function _addChangeLogToReleaseVersionFile() {
+		$changeLog = 'ChangeLog:'."\n * ";
+		if(is_file($this->_releaseDir.'/release-'.$this->_version.'/install/version.php')) {
+			$arReleasesList = $this->_arReleases;
+			uksort($arReleasesList, 'OBX_Build::compareVersionsDesc');
+			foreach($arReleasesList as $releaseVersion => $arRelease) {
+				$changeLog .= "\n * \n * [".$releaseVersion."] \n";
+				$arRelease['DESCRIPTION_RAW'] = str_replace("\n\t\t\t", "\n", $arRelease['DESCRIPTION_RAW']);
+				$changeLog .= " * ".str_replace("\n", "\n * ", $arRelease['DESCRIPTION_RAW']);
+			}
+			$versionFileContent = file_get_contents($this->_releaseDir.'/release-'.$this->_version.'/install/version.php');
+			if( strpos($versionFileContent, '#CHANGE_LOG#') ) {
+				$versionFileContent = str_replace('#CHANGE_LOG#', $changeLog, $versionFileContent);
+				file_put_contents($this->_releaseDir.'/release-'.$this->_version.'/install/version.php', $versionFileContent);
+			}
 		}
 	}
 
@@ -2805,8 +2927,18 @@ HELP;
 		$arVersionFrom = self::readVersion($versionFrom);
 		$arVersionTo = self::readVersion($versionTo);
 		if(empty($arVersionTo)) {
-			$versionTo = $this->_version;
+			$versionTo = $this->_lastDevReleaseVersion;
 			$arVersionTo = self::readVersion($versionTo);
+		}
+		else {
+			if( $arVersionTo['VERSION'] == 'stable') {
+				$versionTo = $this->_lastPubReleaseVersion;
+				$arVersionTo = self::readVersion($versionTo);
+			}
+			elseif($arVersionTo['VERSION'] == 'last') {
+				$versionTo = $this->_version;
+				$arVersionTo = self::readVersion($versionTo);
+			}
 		}
 		if(empty($arVersionFrom)) {
 			if(
@@ -2823,6 +2955,16 @@ HELP;
 				$versionFrom = $this->_lastPubReleaseVersion;
 			}
 			$arVersionFrom = self::readVersion($versionFrom);
+		}
+		else {
+			if( $arVersionFrom['VERSION'] == 'stable') {
+				$versionFrom = $this->_lastPubReleaseVersion;
+				$arVersionFrom = self::readVersion($versionFrom);
+			}
+			elseif($arVersionFrom['VERSION'] == 'last') {
+				$versionFrom = $this->_version;
+				$arVersionFrom = self::readVersion($versionFrom);
+			}
 		}
 		echo 'Обновление '.$this->_moduleName.'-['.$versionFrom.' => '.$versionTo.']'."\n";
 		if($arVersionFrom['RAW_VERSION'] == $arVersionTo['RAW_VERSION']) {
@@ -2895,12 +3037,7 @@ HELP;
 			}
 		}
 		// sort version => desc
-		uksort($arUpdateDescriptions, function($versionA, $versionB) {
-			$arVersionA = OBX_Build::readVersion($versionA);
-			$arVersionB = OBX_Build::readVersion($versionB);
-			if($arVersionA['RAW_VERSION'] == $arVersionB['RAW_VERSION']) return 0;
-			return ($arVersionA['RAW_VERSION'] < $arVersionB['RAW_VERSION'])? 1 : -1;
-		});
+		uksort($arUpdateDescriptions, 'OBX_Build::compareVersionsDesc');
 		file_put_contents($updateDir.'/description.ru', implode("\n", $arUpdateDescriptions));
 
 		$genPhpFileHead = '<'."?php\n"
@@ -3259,15 +3396,3 @@ DOC;
 
 	}
 }
-
-/*
- * 1. СБОРКА ОБНОВЛЕНИЙ ФАЙЛОВ МОДУЛЕЙ
- * 1.1 Скопировать релиз
- * 1.2 Снять контрольные суммы
- * 1.3 Создать папку обновлений
- * 1.4 Скопировать в папку обновлений файлы по разнице контролных сумм
- * 1.5 Генерируем файлы с кодом копирования обновленных файлов модуля
- *
- * 2. СБОРКА ОБНОВЛЕНИЙ ПОДМОДУЛЯ
- * 2.1 Собираем подмодуль автономно (см. СБОРКА ОБНОВЛЕНИЙ ФАЙЛОВ МОДУЛЕЙ)
- */
