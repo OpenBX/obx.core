@@ -583,6 +583,15 @@ class OBX_Build {
 						) {
 							$arReleasesList['RELEASES_LIST'][$blockSection]['STATE'] = 'done';
 						}
+						if(
+							$releaseOptValue == 'plan'
+							|| $releaseOptValue == 'planning'
+							|| $releaseOptValue == 'roadmap'
+							|| $releaseOptValue == 'road_map'
+							|| $releaseOptValue == 'future'
+						) {
+							$arReleasesList['RELEASES_LIST'][$blockSection]['STATE'] = 'plan';
+						}
 					}
 					elseif($releaseOpt == 'exclude') {
 						$arReleasesList['RELEASES_LIST'][$blockSection]['EXCLUDE'][] = $releaseOptValue;
