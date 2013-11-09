@@ -144,7 +144,7 @@ class Parser extends ParserDB {
 			elseif($xmlChunk[0] == "!" || $xmlChunk[0] == "?") {
 				if(substr($xmlChunk, 0, 4) === "?xml") {
 					if( preg_match('#encoding[\s]*=[\s]*"(.*?)"#i', $xmlChunk, $arMatch) ) {
-						$this->charset = $arMatch[1];
+						$this->_fileCharset = $arMatch[1];
 						if(strtoupper($this->_fileCharset) === strtoupper(LANG_CHARSET)) {
 							$this->_fileCharset = null;
 						}
