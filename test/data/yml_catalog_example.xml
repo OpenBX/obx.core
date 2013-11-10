@@ -2,8 +2,8 @@
 <!DOCTYPE yml_catalog SYSTEM "shops.dtd">
 <yml_catalog date="2013-03-18 07:31">
   <shop>
-    <name></name>
-    <company></company>
+    <name>Магазин БутикБукс</name>
+    <company>ООО БутикБукс</company>
     <url>http://www.butikbooks.ru</url>
     <currencies>
       <currency id="RUR" rate="1.0"/>

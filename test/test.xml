@@ -13,6 +13,7 @@
 			<file>Settings.php</file>
 			<file>XmlParserTest.php</file>
 			<file>XmlParserAttr.php</file>
+			<file>XmlParserEvent.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>

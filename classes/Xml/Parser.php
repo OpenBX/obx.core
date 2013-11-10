@@ -23,22 +23,24 @@ class Parser extends ParserDB {
 
 	protected $_filePosition = 0;
 
-	/**
-	 * @var int Рзмер порции данных считываемых и xml-файла в байтах
-	 */
+	/** @var int Рзмер порции данных считываемых и xml-файла в байтах */
 	protected $_chunkReadSize = 10240;
 	protected $_buffer = null;
 	protected $_bufferLength = 0;
 	protected $_bufferPosition = 0;
 
-	/**
-	 * @var string Время между итерациями парсинга в секундах
-	 */
+	/** @var string Время между итерациями парсинга в секундах */
 	protected $_readTimeLimit = 0;
 
 	protected $_arElementStack = array();
 
 	protected $_bReadyToReadXML = false;
+
+	protected $_breakReading = false;
+	protected $_bCallOnBeforeAdd = false;
+	protected $_bCallOnAfterAdd = false;
+	protected $_onBeforeAdd = null;
+	protected $_onAfterAdd = null;
 
 	/**
 	 * @param string $filePath
@@ -70,6 +72,13 @@ class Parser extends ParserDB {
 		$this->_bReadyToReadXML = true;
 	}
 
+	public function getFilePath() {
+		return $this->_filePath;
+	}
+
+	public function getFileDescriptor() {
+		return $this->_file;
+	}
 	public function getFilePosition() {
 		return $this->_filePosition;
 	}
@@ -130,13 +139,16 @@ class Parser extends ParserDB {
 		fseek($this->_file, $this->_filePosition);
 		$this->_fileCharset = 'windows-1251';
 		while( $xmlChunk = $this->getChunk() ) {
+			if( true == $this->_breakReading ) {
+				return true;
+			}
 			if( null !== $this->_fileCharset ) {
 				if( $this->_fileCharset ) {
 					$xmlChunk = $APPLICATION->ConvertCharset($xmlChunk, $this->_fileCharset, LANG_CHARSET);
 				}
 			}
 			if($xmlChunk[0] == "/") {
-				$this->endElement($xmlChunk);
+				$this->endElement();
 				if(time() > $end_time) {
 					break;
 				}
@@ -157,6 +169,10 @@ class Parser extends ParserDB {
 		}
 
 		return feof($this->_file);
+	}
+
+	public function breakReading() {
+		$this->_breakReading = true;
 	}
 
 	protected function getChunk() {
@@ -337,7 +353,10 @@ class Parser extends ParserDB {
 		return $result;
 	}
 
-
+	/**
+	 * @param $xmlChunk
+	 * @return void
+	 */
 	protected function storeChunk($xmlChunk) {
 		static $arRegSearch = array(
 			'~&(quot|#34);~i',
@@ -416,6 +435,14 @@ class Parser extends ParserDB {
 				$arFields["ATTRIBUTES"] = $DBelementAttrs;
 			}
 
+			if(true === $this->_bCallOnBeforeAdd) {
+				call_user_func_array($this->_onBeforeAdd, array(
+					$this, &$arFields
+				));
+			}
+			if( true === $this->_breakReading ) {
+				return;
+			}
 			$ID = $this->add($arFields);
 
 			if($bHaveChildren) {
@@ -424,17 +451,41 @@ class Parser extends ParserDB {
 			else {
 				$this->_arElementStack[$c-1]["R"] = $right+1;
 			}
+
+			if(true === $this->_bCallOnAfterAdd) {
+				call_user_func_array($this->_onAfterAdd, array(
+					$this, &$arFields, $ID
+				));
+			}
 		}
 
 	}
+	public function onBeforeAdd($CallBack) {
+		if( is_callable($CallBack) ) {
+			$this->_bCallOnBeforeAdd = true;
+			$this->_onBeforeAdd = $CallBack;
+			return true;
+		}
+		return false;
+	}
 
-	protected function endElement() {
+	public function onAfterAdd($CallBack) {
+		if( is_callable($CallBack) ) {
+			$this->_bCallOnAfterAdd = true;
+			$this->_onAfterAdd = $CallBack;
+			return true;
+		}
+		return false;
+	}
+
+	public function endElement() {
 		/** @global \CDatabase $DB */
 		global $DB;
 		$child = array_pop($this->_arElementStack);
 		$this->_arElementStack[count($this->_arElementStack)-1]["R"] = $child["R"]+1;
-		if($child["R"] != $child["RO"])
+		if($child["R"] != $child["RO"]) {
 			$DB->Query("UPDATE ".$this->_tempTableName." SET RIGHT_MARGIN = ".intval($child["R"])." WHERE ID = ".intval($child["ID"]));
+		}
 	}
 
 	public function getAllChildrenArray($arParent, $bWithAttributes = false)
@@ -446,7 +497,7 @@ class Parser extends ParserDB {
 		if( !is_array($arParent) ) {
 			$rs = $this->getList(
 				array(),
-				array('ID' => $arParent),
+				array('ID' => intval($arParent)),
 				array('ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')
 			);
 			$arParent = $rs->Fetch();
