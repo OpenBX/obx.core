@@ -11,6 +11,6 @@
 namespace OBX\Core\Http;
 
 
-class Client {
-
-} 
+class MultiRequest {
+	protected $_arRequestList = array();
+}
