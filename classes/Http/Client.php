@@ -8,12 +8,9 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-$arModuleVersion = array(
-	"VERSION" => "1.2.0",
-	"VERSION_DATE" => "2013-11-17",
-);
-return $arModuleVersion;
+namespace OBX\Core\Http;
 
-/**
- * #CHANGE_LOG#
- */
+
+class Client {
+
+} 
