@@ -11,8 +11,10 @@ namespace OBX\Core\Http\Exceptions;
 
 class RequestError extends \ErrorException {
 	const E_CURL_NOT_INSTALLED = 1;
-	const E_WRONG_FILE_PATH = 2;
-	const E_CANT_OPEN_FILE = 3;
+	const E_WRONG_PATH = 2;
+	const E_PERM_DENIED = 3;
+	const E_FILE_NAME_TOO_LOG = 4;
+	const E_NO_ACCESS_DWN_FOLDER = 5;
 	static protected $_arLangMessages = null;
 	static protected $_bCURLChecked = false;
 
@@ -26,15 +28,24 @@ class RequestError extends \ErrorException {
 	 */
 	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous) {
 		if( self::$_arLangMessages === null ) {
-			self::$_arLangMessages = IncludeModuleLangFile(__FILE__, true);
+			self::$_arLangMessages = IncludeModuleLangFile(__FILE__, false, true);
 		}
 		if(empty($message)) {
 			switch($code) {
-				case self::E_WRONG_FILE_PATH:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_WRONG_FILE_PATH'];
+				case self::E_CURL_NOT_INSTALLED:
+					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_CURL_NOT_INSTALLED'];
 					break;
-				case self::E_CANT_OPEN_FILE:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_CANT_OPEN_FILE'];
+				case self::E_WRONG_PATH:
+					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_WRONG_PATH'];
+					break;
+				case self::E_PERM_DENIED:
+					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_PERM_DENIED'];
+					break;
+				case self::E_FILE_NAME_TOO_LOG:
+					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_FILE_NAME_TOO_LOG'];
+					break;
+				case self::E_NO_ACCESS_DWN_FOLDER:
+					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_NO_ACCESS_DWN_FOLDER'];
 					break;
 			}
 		}

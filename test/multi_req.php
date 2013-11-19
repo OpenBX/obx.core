@@ -4,8 +4,8 @@ namespace OBX\Core\Test;
 
 class TestMultiRequests extends \PHPUnit_Framework_TestCase
 {
-	protected $_url = 'http://smokeoffice12.loc/bitrix/tools/obx.core/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
-	//protected $_url = 'http://smokeoffice12.loc/bitrix/modules.build/dvt.marketpizza/build/release-1.0.4.tar.gz?';
+	//protected $_url = 'http://smokeoffice12.loc/bitrix/tools/obx.core/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
+	protected $_url = 'http://smokeoffice12.loc/bitrix/modules.build/dvt.marketpizza/build/release-1.0.4.tar.gz?';
 	protected $_arCH = array();
 	protected $_arResponseList = array();
 	protected $_arRespHeaderList = array();
@@ -22,11 +22,11 @@ class TestMultiRequests extends \PHPUnit_Framework_TestCase
 		curl_setopt($ch, CURLOPT_TIMEOUT_MS, 2000);
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 2000);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_HEADER, false);
+		curl_setopt($ch, CURLOPT_HEADER, true);
 		//curl_setopt($ch, CURLOPT_NOBODY, true);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Range: bytes=0-1'));
-		//$fd = fopen(__DIR__.'/../../../tmp/obx.core/file.No.'.$this->_iDwn, 'w');
-		//curl_setopt($ch, CURLOPT_FILE, $fd);
+		//curl_setopt($ch, CURLOPT_HTTPHEADER, array('Range: bytes=0-1'));
+		$fd = fopen(__DIR__.'/../../../tmp/obx.core/file.No.'.$this->_iDwn, 'w');
+		curl_setopt($ch, CURLOPT_FILE, $fd);
 	}
 
 	public function test() {
