@@ -13,20 +13,75 @@ use OBX\Core\Http\Request;
 use OBX\Core\Http\MultiRequest;
 
 class TestRequest extends TestCase {
+	static protected $_urlTestFiles = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/';
 	static protected $_urlJSON = 'http://smokeoffice12.loc/bitrix/tools/obx.core/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
 
 	public function getCurDir(){
 		return __DIR__;
 	}
 
+	public function getFilesList() {
+		return array(
+			array('favicon.ico'),
+			array('favicon.png'),
+			array('favicon.jpg'),
+			array('favicon.gif'),
+			array('favicon.7z'),
+			array('favicon.ico.rar'),
+			array('favicon.ico.tar.bz2'),
+			array('favicon.ico.zip'),
+			array('favicon.tar.gz'),
+			array('favicon.tar.xz'),
+			array('test.html'),
+			array('test.txt'),
+			array('test.odp'),
+			array('test.ods'),
+			array('test.odt'),
+			array('test.doc'),
+			array('test.docx'),
+			array('test.ppt'),
+			array('test.pptx'),
+			array('test.xls'),
+			array('test.xlsx'),
+
+		);
+	}
+
 	/**
-	 * @depends testSetFileSavePath
-	 * @depends testSetDirSavePath
+	 *
 	 */
-	public function _testDownloadToFile() {
+	public function testDownloadJSONToFile() {
 		$Request = new Request(self::$_urlJSON.'&test=testDownloadToFile&download=Y');
 		$bSuccess = $Request->downloadToFile('/upload/obx.core/test/testDownloadToFile.json');
 	}
+
+	/**
+	 * @depends testDownloadJSONToFile
+	 */
+	public function testDownloadJSONToDir() {
+		$Request = new Request(self::$_urlJSON.'&test=testDownloadToDir&download=Y');
+		$Request->downloadToDir('/upload/obx.core/test');
+	}
+
+	/**
+	 * @depends testDownloadJSONToFile
+	 * @dataProvider getFilesList
+	 */
+	public function testDownloadToFile($fileName) {
+		$Request = new Request(self::$_urlTestFiles.$fileName);
+		$Request->downloadToFile('/upload/obx.core/test/'.$fileName);
+	}
+
+	/**
+	 * @depends testDownloadJSONToDir
+	 * @dataProvider getFilesList
+	 */
+	public function _testDownloadToDir($fileName) {
+		$Request = new Request(self::$_urlTestFiles.$fileName);
+		$Request->downloadToDir('/upload/obx.core/test');
+	}
+
+
 
 	/**
 	 * @depends testDownloadToFile
@@ -35,14 +90,7 @@ class TestRequest extends TestCase {
 
 	}
 
-	/**
-	 * @depends testDownloadToFile
-	 */
-	public function _testDownloadToDir() {
-		$Request = new Request(self::$_urlJSON.'&test=testDownloadToDir&download=Y');
-		$Request->downloadToDir('/upload/obx.core/test');
 
-	}
 	public function _testDownloadUrlToFile() {
 		$bSuccess = Request::downloadUrlToFile(
 			self::$_urlJSON.'&test=testDownloadUrlToFile&download=Y',
