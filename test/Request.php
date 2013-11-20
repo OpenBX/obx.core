@@ -47,10 +47,40 @@ class TestRequest extends TestCase {
 		);
 	}
 
+	public function testEncodePost() {
+		$arPOST = array(
+			'key1' => 'val1',
+			'arr1' => array(
+				'key11' => 'val11',
+				'key12' => 'val12'
+			),
+			'arr2' => array(
+				'key21' => 'val21',
+				'arr22' => array(
+					'key221' => 'val221'
+				)
+			),
+			'key3' => 'val3'
+		);
+		$expectedQuery = 'key1=val1&arr1[key11]=val11&arr1[key12]=val12&arr2[key21]=val21&arr2[arr22][key221]=val221&key3=val3';
+		$actualQuery = Request::arrayToCurlPost($arPOST);
+		$this->assertEquals($expectedQuery, $actualQuery);
+	}
+
+	public function testGetContent() {
+		$Request = new Request(self::$_urlJSON.'&test=testGetContent');
+		$Request->setPost(array(
+			'key1' => 'val1'
+		));
+		$body = $Request->send();
+		$header = $Request->getHeader();
+		$arHeader = $Request->getHeader(true);
+	}
+
 	/**
 	 *
 	 */
-	public function testDownloadJSONToFile() {
+	public function _testDownloadJSONToFile() {
 		$Request = new Request(self::$_urlJSON.'&test=testDownloadToFile&download=Y');
 		$bSuccess = $Request->downloadToFile('/upload/obx.core/test/testDownloadToFile.json');
 	}
@@ -58,7 +88,7 @@ class TestRequest extends TestCase {
 	/**
 	 * @depends testDownloadJSONToFile
 	 */
-	public function testDownloadJSONToDir() {
+	public function _testDownloadJSONToDir() {
 		$Request = new Request(self::$_urlJSON.'&test=testDownloadToDir&download=Y');
 		$Request->downloadToDir('/upload/obx.core/test');
 	}
@@ -67,7 +97,7 @@ class TestRequest extends TestCase {
 	 * @depends testDownloadJSONToFile
 	 * @dataProvider getFilesList
 	 */
-	public function testDownloadToFile($fileName) {
+	public function _testDownloadToFile($fileName) {
 		$Request = new Request(self::$_urlTestFiles.$fileName);
 		$Request->downloadToFile('/upload/obx.core/test/'.$fileName);
 	}
@@ -102,13 +132,6 @@ class TestRequest extends TestCase {
 			self::$_urlJSON.'&test=testDownloadUrlToFile&download=Y',
 			'/upload/obx.core/test'
 		);
-	}
-
-	public function _testGetContent() {
-		$Request = new Request(self::$_urlJSON.'&test=testGetContent');
-		$body = $Request->send();
-		$header = $Request->getHeader(false);
-		$arHeader = $Request->getHeader();
 	}
 
 	public function _testSaveContentToFile() {

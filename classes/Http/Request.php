@@ -193,6 +193,10 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT_MS, $milliseconds);
 	}
 
+	public function setFolloowingRedirect($times) {
+		curl_setopt($this->_curlHandler, CURLOPT_FOLLOWLOCATION, true);
+	}
+
 	public function getDownloadDir() {
 		return $this->_dwnDir;
 	}
@@ -206,6 +210,30 @@ class Request {
 		}
 		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].$downloadFolder;
 		return true;
+	}
+
+	public function setPost($arPOST) {
+		curl_setopt($this->_curlHandler, CURLOPT_POST, true);
+		$postQuery = self::arrayToCurlPost($arPOST);
+		curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $postQuery);
+	}
+
+	static public function arrayToCurlPost(&$arPOST, $nested = null) {
+		$postQuery = '';
+		$bFirst = true;
+		foreach($arPOST as $field => &$value) {
+			if($nested !== null) {
+				$field = $nested.'['.$field.']';
+			}
+			if( is_array($value) ) {
+				$postQuery .= (($bFirst)?'':'&').self::arrayToCurlPost($value, $field);
+			}
+			else {
+				$postQuery .= (($bFirst)?'':'&').$field.'='.urlencode($value);
+			}
+			$bFirst = false;
+		}
+		return $postQuery;
 	}
 
 	protected function _exec() {
@@ -230,9 +258,22 @@ class Request {
 	public function send() {
 		$this->_initCURL();
 		curl_setopt($this->_curlHandler, CURLOPT_NOBODY, false);
-		$this->_parseResponse($this->_exec());
+		$response = $this->_exec();
+		$this->_parseResponse($response);
 		$this->_arHeader = $this->_parseHeader($this->_header);
 		$this->_setRequestComplete();
+		return $this->_body;
+	}
+
+	public function getHeader($bReturnRawHeader = false) {
+		if($bReturnRawHeader !== false) {
+			return $this->_arHeader;
+		}
+		return $this->_header;
+	}
+
+	public function getBody() {
+		return $this->_body;
 	}
 
 	public function requestHeader($bReturnRawHeader = false) {
@@ -300,6 +341,8 @@ class Request {
 			fclose($this->_dwnFileHandler);
 			$this->_dwnFileHandler = null;
 			$contentType = $this->getContentType();
+			//определяем расширение имени файла
+
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 		}
 		elseif($this->_bRequestComplete === true) {
