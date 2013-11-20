@@ -30,8 +30,24 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	 * }
 	 * @return string
 	 */
-	abstract public function getCurDir();
+	abstract static public function getCurDir();
 
+	static protected $_bPathVarInit = false;
+	static protected $_docRoot = '';
+	static protected $_modulesDir = '';
+
+	final static protected function _initPathVar() {
+		if(true !== self::$_bPathVarInit) {
+			self::$_docRoot = str_replace('/bitrix/modules/obx.core/classes', '', __DIR__);
+			self::$_modulesDir = self::$_docRoot.'/bitrix/modules';
+			self::$_bPathVarInit = true;
+		}
+	}
+
+	public function __construct($name = NULL, array $data = array(), $dataName = ''){
+		self::_initPathVar();
+		parent::__construct($name, $data, $dataName);
+	}
 
 	public function testSetMaxExecutionTime() {
 		if(intval(ini_get('max_execution_time')) > 0) {
@@ -58,7 +74,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	static public function includeLang($file) {
 		$file = str_replace(array('\\', '//'), '/', $file);
 		$fileName = substr($file, strrpos($file, '/'));
-		$langFile = __DIR__.'/lang/'.LANGUAGE_ID.'/'.$fileName;
+		$langFile = static::getCurDir().'/lang/'.LANGUAGE_ID.'/'.$fileName;
 		if( file_exists($langFile) ) {
 			__IncludeLang($langFile);
 			return true;
@@ -67,7 +83,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	}
 
 	protected function callTest($testCaseName, $testName) {
-		$fileName = dirname(__FILE__).'/'.$testCaseName.'.php';
+		$fileName = static::getCurDir().'/'.$testCaseName.'.php';
 		if( !file_exists($fileName) ) {
 			$this->fail('ERROR: Can\'t invoke test. File not found');
 		}

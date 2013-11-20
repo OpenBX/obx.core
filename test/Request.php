@@ -16,7 +16,7 @@ class TestRequest extends TestCase {
 	static protected $_urlTestFiles = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/';
 	static protected $_urlJSON = 'http://smokeoffice12.loc/bitrix/tools/obx.core/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
 
-	public function getCurDir(){
+	static public function getCurDir() {
 		return __DIR__;
 	}
 
@@ -74,15 +74,72 @@ class TestRequest extends TestCase {
 		));
 		$body = $Request->send();
 		$header = $Request->getHeader();
-		$arHeader = $Request->getHeader(true);
+		$arContentJSON = json_decode($body, true);
+		$this->assertTrue(is_array($arContentJSON));
+		$this->assertArrayHasKey('get', $arContentJSON);
+		$this->assertArrayHasKey('test', $arContentJSON['get']);
+		$this->assertEquals('testGetContent', $arContentJSON['get']['test']);
+		$this->assertArrayHasKey('post', $arContentJSON);
+		$this->assertArrayHasKey('key1', $arContentJSON['post']);
+		$this->assertEquals('val1', $arContentJSON['post']['key1']);
+	}
+
+	public function testSaveContentToFile() {
+		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToFile');
+		$body = $Request->send();
+		$Request->saveToFile('/upload/obx.core/test/testSaveContentToFile.json');
+		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/testSaveContentToFile.json');
+		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/testSaveContentToFile.json');
+		$arJSONFileContent = json_decode($fileContent, true);
+		$this->assertTrue(is_array($arJSONFileContent));
+		$this->assertArrayHasKey('get', $arJSONFileContent);
+		$this->assertArrayHasKey('test', $arJSONFileContent['get']);
+		$this->assertEquals('testSaveContentToFile', $arJSONFileContent['get']['test']);
+		$arContentJSON = json_decode($body, true);
+		$this->assertTrue(is_array($arContentJSON));
+		$this->assertArrayHasKey('get', $arContentJSON);
+		$this->assertArrayHasKey('test', $arContentJSON['get']);
+		$this->assertEquals('testSaveContentToFile', $arContentJSON['get']['test']);
+	}
+
+	public function testSaveContentToDir() {
+		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToDir&download=Y');
+		$body = $Request->send();
+		$Request->saveToDir('/upload/obx.core/test/');
+		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/testSaveContentToDir.json');
+		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/testSaveContentToDir.json');
+
+		$arJSONFileContent = json_decode($fileContent, true);
+		$this->assertTrue(is_array($arJSONFileContent));
+		$this->assertArrayHasKey('get', $arJSONFileContent);
+		$this->assertArrayHasKey('test', $arJSONFileContent['get']);
+		$this->assertEquals('testSaveContentToDir', $arJSONFileContent['get']['test']);
+		$arContentJSON = json_decode($body, true);
+		$this->assertTrue(is_array($arContentJSON));
+		$this->assertArrayHasKey('get', $arContentJSON);
+		$this->assertArrayHasKey('test', $arContentJSON['get']);
+		$this->assertEquals('testSaveContentToDir', $arContentJSON['get']['test']);
+	}
+
+	public function testParseHeader() {
+		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToFile&download=Y');
+		$body = $Request->send();
+		$arHeader = $Request->getHeader();
+		$this->assertTrue(is_array($arHeader));
+		$this->assertArrayHasKey('CHARSET', $arHeader);
+		$this->assertArrayHasKey('COOKIES', $arHeader);
+		$this->assertEquals('UTF-8', $Request->getCharset());
+		$this->assertEquals('application/json', $Request->getContentType());
 	}
 
 	/**
 	 *
 	 */
-	public function _testDownloadJSONToFile() {
+	public function testDownloadJSONToFile() {
 		$Request = new Request(self::$_urlJSON.'&test=testDownloadToFile&download=Y');
 		$bSuccess = $Request->downloadToFile('/upload/obx.core/test/testDownloadToFile.json');
+		$this->assertEquals('application/json', $Request->getContentType());
+		$this->assertEquals('UTF-8', $Request->getCharset());
 	}
 
 	/**
