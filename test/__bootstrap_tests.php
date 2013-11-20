@@ -16,6 +16,7 @@ if( $wwwRootStrPos === false ) {
 }
 
 $_SERVER['DOCUMENT_ROOT'] = substr($curDir, 0, $wwwRootStrPos);
+//print_r($_SERVER);
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 __IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/__bootstrap_tests.php');
 global $USER;

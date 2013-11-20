@@ -39,12 +39,15 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	final static protected function _initPathVar() {
 		if(true !== self::$_bPathVarInit) {
 			self::$_docRoot = str_replace('/bitrix/modules/obx.core/classes', '', __DIR__);
+			//$_SERVER['DOCUMENT_ROOT'] = self::$_docRoot;
 			self::$_modulesDir = self::$_docRoot.'/bitrix/modules';
 			self::$_bPathVarInit = true;
 		}
 	}
 
 	public function __construct($name = NULL, array $data = array(), $dataName = ''){
+		$this->setPreserveGlobalState(false);
+		$this->setBackupGlobals(false);
 		self::_initPathVar();
 		parent::__construct($name, $data, $dataName);
 	}
