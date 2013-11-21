@@ -32,8 +32,18 @@ $arModuleClasses = array(
 	,'OBX\Core\CMessagePoolDecorator'			=> 'classes/MessagePool.php'
 	,'OBX\Core\Http\Exceptions\RequestError'	=> 'classes/Http/Exceptions/RequestError.php'
 	,'OBX\Core\Http\Request'					=> 'classes/Http/Request.php'
+	,'OBX\Core\Http\RequestBXFile'				=> 'classes/Http/RequestBXFile.php'
 	,'OBX\Core\Http\MultiRequest'				=> 'classes/Http/MultiRequest.php'
 	,'OBX\Core\Http\Download'					=> 'classes/Http/Download.php'
+	,'OBX\Core\Wizard\ImportIBlock'				=> 'classes/WizardImportIBlock.php'
+	,'OBX\Core\Settings\ISettings'				=> 'classes/Settings.php'
+	,'OBX\Core\Settings\Settings'				=> 'classes/Settings.php'
+	,'OBX\Core\Settings\ITab'					=> 'classes/Settings.php'
+	,'OBX\Core\Settings\ATab'					=> 'classes/Settings.php'
+	,'OBX\Core\Settings\Tab'					=> 'classes/Settings.php'
+	,'OBX\Core\Settings\IAdminPage'				=> 'classes/Settings.php'
+	,'OBX\Core\Settings\AdminPage'				=> 'classes/Settings.php'
+	,'OBX\Core\Test\TestCase'					=> 'classes/TestCase.php'
 );
 if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.php';
@@ -46,15 +56,7 @@ if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';
 	$arModuleClasses['OBX\Core\Xml\Exceptions\ParserError']	= 'classes/Xml/Exceptions/Parser.php';
 }
-$arModuleClasses['OBX\Core\Wizard\ImportIBlock']		= 'classes/WizardImportIBlock.php';
-$arModuleClasses['OBX\Core\Settings\ISettings']			= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\Settings']			= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\ITab']				= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\ATab']				= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\Tab']				= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\IAdminPage']		= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Settings\AdminPage']			= 'classes/Settings.php';
-$arModuleClasses['OBX\Core\Test\TestCase']				= 'classes/TestCase.php';
+
 
 
 $arStaticIncludeSkip = array(

@@ -14,7 +14,8 @@ use OBX\Core\Http\MultiRequest;
 
 class TestRequest extends TestCase {
 	static protected $_urlTestFiles = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/';
-	static protected $_urlJSON = 'http://smokeoffice12.loc/bitrix/tools/obx.core/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
+	static protected $_urlJSON = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
+	static protected $_url404 = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/test.response.php?get_404=Y';
 
 	static public function getCurDir() {
 		return __DIR__;
@@ -73,7 +74,7 @@ class TestRequest extends TestCase {
 			'key1' => 'val1'
 		));
 		$body = $Request->send();
-		$header = $Request->getHeader();
+		$Request->getHeader();
 		$arContentJSON = json_decode($body, true);
 		$this->assertTrue(is_array($arContentJSON));
 		$this->assertArrayHasKey('get', $arContentJSON);
@@ -87,9 +88,9 @@ class TestRequest extends TestCase {
 	public function testSaveContentToFile() {
 		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToFile');
 		$body = $Request->send();
-		$Request->saveToFile('/upload/obx.core/test/testSaveContentToFile.json');
-		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/testSaveContentToFile.json');
-		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/testSaveContentToFile.json');
+		$Request->saveToFile('/upload/obx.core/test/toFile/testSaveContentToFile.json');
+		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/toFile/testSaveContentToFile.json');
+		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/toFile/testSaveContentToFile.json');
 		$arJSONFileContent = json_decode($fileContent, true);
 		$this->assertTrue(is_array($arJSONFileContent));
 		$this->assertArrayHasKey('get', $arJSONFileContent);
@@ -105,9 +106,9 @@ class TestRequest extends TestCase {
 	public function testSaveContentToDir() {
 		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToDir&download=Y');
 		$body = $Request->send();
-		$Request->saveToDir('/upload/obx.core/test/');
-		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/testSaveContentToDir.json');
-		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/testSaveContentToDir.json');
+		$Request->saveToDir('/upload/obx.core/test/toDir/');
+		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/toDir/testSaveContentToDir.json');
+		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/toDir/testSaveContentToDir.json');
 
 		$arJSONFileContent = json_decode($fileContent, true);
 		$this->assertTrue(is_array($arJSONFileContent));
@@ -123,7 +124,7 @@ class TestRequest extends TestCase {
 
 	public function testParseHeader() {
 		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToFile&download=Y');
-		$body = $Request->send();
+		$Request->send();
 		$arHeader = $Request->getHeader();
 		$this->assertTrue(is_array($arHeader));
 		$this->assertArrayHasKey('CHARSET', $arHeader);
@@ -137,38 +138,75 @@ class TestRequest extends TestCase {
 	 */
 	public function testDownloadJSONToFile() {
 		$Request = new Request(self::$_urlJSON.'&test=testDownloadToFile&download=Y');
-		$bSuccess = $Request->downloadToFile('/upload/obx.core/test/testDownloadToFile.json');
+		$Request->downloadToFile('/upload/obx.core/test/toFile/testDownloadToFile.json');
 		$this->assertEquals('application/json', $Request->getContentType());
 		$this->assertEquals('UTF-8', $Request->getCharset());
+	}
+
+	public function getFileNameFromUrlData(){
+		return array(
+			array('https://somedom.ru/some_file.tar.gz', 'some_file.tar.gz', 'tar.gz'),
+			array('https://somedom.ru/some_file.tar.xz', 'some_file.tar.xz', 'tar.xz'),
+			array('https://somedom.ru/some_file.tar.lzma', 'some_file.tar.lzma', 'tar.lzma'),
+			array('https://somedom.ru/some_file.tar.bz2', 'some_file.tar.bz2', 'tar.bz2'),
+			array('https://somedom.ru/some_file.tgz', 'some_file.tgz', 'tgz'),
+			array('https://somedom.ru/no_ext_file', 'no_ext_file', ''),
+			array('https://somedom.ru/some_dir/', 'some_dir', ''),
+			array('https://somedom.ru/some_req.tar.gz?somevar=someval', 'some_req.tar.gz', 'tar.gz'),
+			array('https://somedom.ru/some_req.tgz?somevar=someval', 'some_req.tgz', 'tgz'),
+			array('https://somedom.ru/no_ext_req?somevar=someval', 'no_ext_req', ''),
+			array('https://somedom.ru/some_dir_req/?somevar=someval', 'some_dir_req', ''),
+			array('https://somedom.ru/?somevar=someval', '', ''),
+			array('https://somedom.ru/some%20file%20with%20space?somevar=someval', 'some file with space', ''),
+		);
+	}
+	/** @dataProvider getFileNameFromUrlData */
+	public function testGetFileNameFromUrl($url, $expectedFileName, $expectedFileExt) {
+		$this->assertEquals($expectedFileName, Request::getFileNameFromUrl($url, $fileExt));
+		$this->assertEquals($expectedFileExt, $fileExt);
 	}
 
 	/**
 	 * @depends testDownloadJSONToFile
 	 */
-	public function _testDownloadJSONToDir() {
+	public function testDownloadJSONToDir() {
 		$Request = new Request(self::$_urlJSON.'&test=testDownloadToDir&download=Y');
-		$Request->downloadToDir('/upload/obx.core/test');
+		$Request->downloadToDir('/upload/obx.core/test/toDir');
 	}
 
 	/**
 	 * @depends testDownloadJSONToFile
 	 * @dataProvider getFilesList
 	 */
-	public function _testDownloadToFile($fileName) {
+	public function testDownloadToFile($fileName) {
 		$Request = new Request(self::$_urlTestFiles.$fileName);
-		$Request->downloadToFile('/upload/obx.core/test/'.$fileName);
+		$Request->downloadToFile('/upload/obx.core/test/toFile/'.$fileName);
 	}
 
 	/**
 	 * @depends testDownloadJSONToDir
 	 * @dataProvider getFilesList
 	 */
-	public function _testDownloadToDir($fileName) {
+	public function testDownloadToDir($fileName) {
 		$Request = new Request(self::$_urlTestFiles.$fileName);
-		$Request->downloadToDir('/upload/obx.core/test');
+		$relPath = '/upload/obx.core/test/download/gen_names/';
+		$Request->downloadToDir($relPath);
+		$fileFullPath = self::$_docRoot.$relPath.$Request->getSavedFileName();
+		$this->assertEquals($fileFullPath, $Request->getSavedFilePath(false));
+		$this->assertFileExists($fileFullPath);
+
+		$RequestRealNames = new Request(self::$_urlTestFiles.$fileName);
+		$relPath = '/upload/obx.core/test/download/real_names/';
+		$RequestRealNames->downloadToDir($relPath, Request::SAVE_TO_DIR_REPLACE);
+		$fileFullPath = self::$_docRoot.$relPath.$RequestRealNames->getSavedFileName();
+		$this->assertEquals($fileFullPath, $RequestRealNames->getSavedFilePath(false));
+		$this->assertFileExists($fileFullPath);
 	}
 
-
+	public function _testGetContent404() {
+		$Request = new Request(static::$_url404);
+		$Request->send();
+	}
 
 	/**
 	 * @depends testDownloadToFile
@@ -178,57 +216,63 @@ class TestRequest extends TestCase {
 	}
 
 
-	public function _testDownloadUrlToFile() {
-		$bSuccess = Request::downloadUrlToFile(
+	public function testDownloadUrlToFile() {
+		$relFilePath = '/upload/obx.core/test/testDownloadUrlToFile.json';
+		Request::downloadUrlToFile(
 			self::$_urlJSON.'&test=testDownloadUrlToFile&download=Y',
-			'/upload/obx.core/test/testDownloadUrlToFile.json'
+			$relFilePath
 		);
+		$this->assertFileExists(self::$_docRoot.$relFilePath);
 	}
-	public function _testDownloadUrlToDir() {
-		$bSuccess = Request::downloadUrlToDir(
-			self::$_urlJSON.'&test=testDownloadUrlToFile&download=Y',
-			'/upload/obx.core/test'
+	public function testDownloadUrlToDir() {
+		$relDirPath = '/upload/obx.core/test/';
+		Request::downloadUrlToDir(
+			self::$_urlJSON.'&test=testDownloadUrlToDir&download=Y',
+			$relDirPath,
+			Request::SAVE_TO_DIR_REPLACE
 		);
+		$this->assertFileExists(self::$_docRoot.$relDirPath.'test.response.json');
 	}
 
-	public function _testSaveContentToFile() {
-
-	}
-
-	public function _testSaveContentToDir() {
+	public function testLongWaiting() {
 
 	}
 
-	public function _testMultiDownload() {
+	public function testMultiDownload() {
+		$sleep = '';
+		//$sleep = '&sleep=1';
 		$MultiRequest = new MultiRequest();
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=1');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=2');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=3');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=4');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=5');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=6');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=7');
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload&download=Y&req=8');
-		$MultiRequest->downloadToDir('/upload/obx.core/test');
-	}
-
-	public function _testMultiRequestAdd() {
-		$MultiRequest = new MultiRequest();
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=1'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=2'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=3'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=4'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=5'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=6'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=7'));
-		$MultiRequest->addRequest(new Request(self::$_urlJSON.'&test=testMultiRequestAdd&req=8'));
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload1&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload2&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload3&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload4&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload5&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload6&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload7&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload8&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload9&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload10&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload11&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload12&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload13&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload14&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload15&download=Y&download=Y'.$sleep);
+		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload16&download=Y&download=Y'.$sleep);
+		//$MultiRequest->setWaiting(4);
+		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_1/', Request::SAVE_TO_DIR_GEN_NEW);
 		$arRequestList = $MultiRequest->getRequestList();
-		$MultiRequest->exec();
-		/** @var REquest $Request */
+		/** @var Request $Request */
 		foreach($arRequestList as $Request) {
-			$header = $Request->getHeader(false);
-			$arHeader = $Request->getHeader();
-			$body = $Request->getBody();
+			$this->assertFileExists($Request->getSavedFilePath());
 		}
+	}
+
+	public function testMultiDownloadFiles() {
+		$arDownloadFiles = $this->getFilesList();
+		$MultiRequest = new MultiRequest();
+		foreach($arDownloadFiles as $fileName) {
+			$MultiRequest->addRequest(new Request(self::$_urlTestFiles.$fileName));
+		}
+		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_2/', Request::SAVE_TO_DIR_REPLACE);
 	}
 }

@@ -46,8 +46,8 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function __construct($name = NULL, array $data = array(), $dataName = ''){
-		$this->setPreserveGlobalState(false);
-		$this->setBackupGlobals(false);
+		//$this->setPreserveGlobalState(false);
+		//$this->setBackupGlobals(false);
 		self::_initPathVar();
 		parent::__construct($name, $data, $dataName);
 	}
