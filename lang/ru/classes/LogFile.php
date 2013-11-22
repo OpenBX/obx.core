@@ -7,16 +7,4 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
-
-namespace OBX\Core\Http;
-
-
-class RequestBXFile extends Request {
-	public function saveToBXFile($filePath) {
-
-	}
-
-	public function saveToIBElement($IBLOCK, $target) {
-
-	}
-} 
+ 

@@ -8,9 +8,9 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Http;
+namespace OBX\Core\Curl;
 use OBX\Core\CMessagePoolDecorator;
-use OBX\Core\Http\Exceptions\RequestError;
+use OBX\Core\Curl\Exceptions\RequestError;
 
 class MultiRequest extends CMessagePoolDecorator {
 

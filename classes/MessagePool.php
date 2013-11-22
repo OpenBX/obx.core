@@ -81,6 +81,17 @@ class CMessagePool implements IMessagePool
 	protected $_arCommonMessagePool = array();
 	protected $_countCommonMessages = 0;
 
+	/**
+	 * @var null|LogFile
+	 */
+	protected $_LogFile = null;
+
+	public function registerLogFile(LogFile $LogFile = null) {
+		if($LogFile instanceof LogFile) {
+			$this->_LogFile = $LogFile;
+		}
+	}
+
 	public function addMessage($text, $code = 0) {
 		$arMessage = array(
 			"TEXT" => $text,
@@ -91,6 +102,9 @@ class CMessagePool implements IMessagePool
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = $arMessage;
 		$this->_countMessages++;
 		$this->_countCommonMessages++;
+		if($this->_LogFile) {
+			$this->_LogFile->logMessage($text, LogFile::MSG_TYPE_NOTE);
+		}
 	}
 	public function addWarning($text, $code = 0) {
 		$arMessage = array(
@@ -102,6 +116,9 @@ class CMessagePool implements IMessagePool
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = $arMessage;
 		$this->_countWarnings++;
 		$this->_countCommonMessages++;
+		if($this->_LogFile) {
+			$this->_LogFile->logMessage($text.((!empty($code))?'. Warning code: '.$code:''), LogFile::MSG_TYPE_WARNING);
+		}
 	}
 	public function addError($text, $code = 0) {
 		$arMessage = array(
@@ -113,9 +130,10 @@ class CMessagePool implements IMessagePool
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = $arMessage;
 		$this->_countErrors++;
 		$this->_countCommonMessages++;
+		if($this->_LogFile) {
+			$this->_LogFile->logMessage($text.((!empty($code))?'. Error code: '.$code:''), LogFile::MSG_TYPE_ERROR);
+		}
 	}
-
-
 
 
 	public function getLastMessage($return = 'TEXT') {

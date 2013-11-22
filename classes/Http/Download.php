@@ -10,7 +10,14 @@
 
 namespace OBX\Core\Http;
 
-
+/**
+ * Class Download
+ * @package OBX\Core\Http
+ * Класс служащий для скачивания файлов
+ * Необходимо построить по архитектуре, описанной Александром Сербулом
+ * в статье http://habrahabr.ru/company/bitrix/blog/198540/
+ * только не принимать запросы, а отправлять их :)
+ */
 class Download {
 
 } 

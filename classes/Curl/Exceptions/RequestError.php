@@ -1,12 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: maximum
- * Date: 18.11.13
- * Time: 0:18
- */
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @license Affero GPLv3                     **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
-namespace OBX\Core\Http\Exceptions;
+namespace OBX\Core\Curl\Exceptions;
 
 
 class RequestError extends \ErrorException {
@@ -33,19 +35,19 @@ class RequestError extends \ErrorException {
 		if(empty($message)) {
 			switch($code) {
 				case self::E_CURL_NOT_INSTALLED:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_CURL_NOT_INSTALLED'];
+					$message = self::$_arLangMessages['OBX_CORE_CURL_E_NOT_INSTALLED'];
 					break;
 				case self::E_WRONG_PATH:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_WRONG_PATH'];
+					$message = self::$_arLangMessages['OBX_CORE_CURL_E_WRONG_PATH'];
 					break;
 				case self::E_PERM_DENIED:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_PERM_DENIED'];
+					$message = self::$_arLangMessages['OBX_CORE_CURL_E_PERM_DENIED'];
 					break;
 				case self::E_FILE_NAME_TOO_LOG:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_FILE_NAME_TOO_LOG'];
+					$message = self::$_arLangMessages['OBX_CORE_CURL_E_FILE_NAME_TOO_LOG'];
 					break;
 				case self::E_NO_ACCESS_DWN_FOLDER:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_REQ_E_NO_ACCESS_DWN_FOLDER'];
+					$message = self::$_arLangMessages['OBX_CORE_CURL_E_NO_ACCESS_DWN_FOLDER'];
 					break;
 			}
 		}

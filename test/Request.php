@@ -9,8 +9,8 @@
  ***********************************************/
 
 namespace OBX\Core\Test;
-use OBX\Core\Http\Request;
-use OBX\Core\Http\MultiRequest;
+use OBX\Core\Curl\Request;
+use OBX\Core\Curl\MultiRequest;
 
 class TestRequest extends TestCase {
 	static protected $_urlTestFiles = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/';
@@ -270,7 +270,8 @@ class TestRequest extends TestCase {
 	public function testMultiDownloadFiles() {
 		$arDownloadFiles = $this->getFilesList();
 		$MultiRequest = new MultiRequest();
-		foreach($arDownloadFiles as $fileName) {
+		foreach($arDownloadFiles as &$dataPropArgs) {
+			$fileName = &$dataPropArgs[0];
 			$MultiRequest->addRequest(new Request(self::$_urlTestFiles.$fileName));
 		}
 		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_2/', Request::SAVE_TO_DIR_REPLACE);
