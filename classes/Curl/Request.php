@@ -807,15 +807,18 @@ class Request {
 			//определяем имя файла и его расширние файла
 			$contentType = $this->getContentType();
 			if($fileNameMode === self::SAVE_TO_DIR_GEN_ALL) {
-				$fileName = static::generateDownloadName().'.'.static::getFileExtByContentType($contentType);
+				$baseName = static::generateDownloadName();
+				$fileExt = static::getFileExtByContentType($contentType);
+				$fileName = $baseName.'.'.$fileExt;
 			}
 			else {
-				$fileName = static::getFileNameFromUrl($this->_url, $fileExt);
+				$fileName = static::getFileNameFromUrl($this->_url, $fileExt, $baseName);
 				if( empty($fileName) ) {
 					if(empty($fileExt)) {
 						$fileExt = static::getFileExtByContentType($contentType);
 					}
-					$fileName = static::generateDownloadName().'.'.$fileExt;
+					$baseName = static::generateDownloadName();
+					$fileName = $baseName.'.'.$fileExt;
 				}
 				else {
 					switch($fileExt) {
@@ -832,7 +835,28 @@ class Request {
 			if( $fileNameMode === self::SAVE_TO_DIR_GEN_NEW
 				&& file_exists($path.'/'.$fileName)
 			) {
-				$fileName = static::generateDownloadName().'.'.static::getFileExtByContentType($contentType);
+				$arExistFiles = glob($path.'/'.$baseName.'.[0-9]{0,6}.'.$fileExt);
+				if( empty($arExistFiles) ) {
+					if(file_exists($path.'/'.$baseName.'.1.'.$fileExt)) {
+						$baseName = static::generateDownloadName();
+						$fileExt = static::getFileExtByContentType($contentType);
+						$fileName = $baseName.'.'.$fileExt;
+					}
+					else {
+						$baseName = $baseName.'.1';
+						$fileName = $baseName.'.'.$fileExt;
+					}
+				}
+				else {
+					natsort($arExistFiles);
+					$lastFileName = $arExistFiles[count($arExistFiles)-1];
+					$lastFileNum = substr($lastFileName, strlen($path.'/'.$baseName)+1, strrpos($lastFileName, '.'.$fileExt));
+					$lastFileNum = intval($lastFileNum);
+					if($lastFileNum>0) {
+						$fileName = $baseName.'.'.($lastFileNum+1).'.'.$fileExt;
+					}
+					unset($arExistFiles);
+				}
 			}
 			$this->_saveFileName = $fileName;
 			$this->_saveRelPath = $relPath.'/'.$fileName;
@@ -866,6 +890,10 @@ class Request {
 		}
 	}
 
+	public function _sortFilesDesc($a, $b) {
+
+	}
+
 	public function getSavedFilePath($bRelative = false) {
 		if(false !== $bRelative) {
 			return $this->_saveRelPath;
@@ -877,20 +905,23 @@ class Request {
 		return $this->_saveFileName;
 	}
 
-	static public function getFileNameFromUrl($url, &$fileExt = null) {
+	static public function getFileNameFromUrl($url, &$fileExt = null, &$baseName = null) {
 		$arUrl = parse_url($url);
 		$fileName = trim(urldecode(basename($arUrl['path'])));
 		$fileExt = '';
 		$dotPos = strrpos($fileName, '.');
 		if( $dotPos !== false) {
 			$fileExt = strtolower(substr($fileName, $dotPos+1));
+			$baseName = substr($fileName, 0, $dotPos);
 			switch($fileExt) {
 				case 'gz':
 				case 'bz2':
 				case 'xz':
 				case 'lzma':
-					if(strrpos(strtolower($fileName), 'tar.'.$fileExt) === (strlen($fileName)-strlen('tar.'.$fileExt))) {
+					$possibleArchDotPos = strrpos(strtolower($fileName), 'tar.'.$fileExt);
+					if( $possibleArchDotPos === (strlen($fileName)-strlen('tar.'.$fileExt)) ) {
 						$fileExt = 'tar.'.$fileExt;
+						$baseName = substr($fileName, 0, $possibleArchDotPos);
 					}
 					break;
 					//case 'php':
