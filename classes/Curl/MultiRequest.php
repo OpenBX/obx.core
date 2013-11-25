@@ -115,7 +115,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 	}
 
-	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GEN_ALL) {
+	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GENERATE) {
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
 			$Request->_initDownload();

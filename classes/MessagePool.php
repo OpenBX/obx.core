@@ -302,15 +302,17 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 			self::$MessagePool[$className] = $MessPool;
 		}
 	}
-
+	static public function registerLogFile(LogFile $LogFile) {
+		return self::getMessagePool()->registerLogFile($LogFile);
+	}
 	static public function addMessage($text, $code = 0) {
-		return self::getMessagePool()->addMessage($text, $code);
+		self::getMessagePool()->addMessage($text, $code);
 	}
 	static public function addError($text, $code = 0) {
-		return self::getMessagePool()->addError($text, $code);
+		self::getMessagePool()->addError($text, $code);
 	}
 	static public function addWarning($text, $code = 0) {
-		return self::getMessagePool()->addWarning($text, $code);
+		self::getMessagePool()->addWarning($text, $code);
 	}
 	static public function getLastError($return = 'TEXT') {
 		return self::getMessagePool()->getLastError($return);
@@ -355,16 +357,16 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 		return self::getMessagePool()->countMessagePoolData();
 	}
 	static public function clearMessages() {
-		return self::getMessagePool()->clearMessages();
+		self::getMessagePool()->clearMessages();
 	}
 	static public function clearErrors() {
-		return self::getMessagePool()->clearErrors();
+		self::getMessagePool()->clearErrors();
 	}
 	static public function clearWarnings() {
-		return self::getMessagePool()->clearWarnings();
+		self::getMessagePool()->clearWarnings();
 	}
 	static public function clearMessagePool() {
-		return self::getMessagePool()->clearMessagePool();
+		self::getMessagePool()->clearMessagePool();
 	}
 }
 

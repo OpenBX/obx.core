@@ -26,11 +26,16 @@ class Request {
 	const DEFAULT_WAITING = 10;
 	const DOWNLOAD_FILE_EXT = 'dwn';
 	const DOWNLOAD_FOLDER = '/bitrix/tmp/obx.core';
+
 	// При сохранении файла в папку имя определяется автоматом.
 	// если файл уже существует, то
-	const SAVE_TO_DIR_REPLACE = 1; // Заменить существующий файл
-	const SAVE_TO_DIR_GEN_NEW = 2; // Сгенерировать новое имя
-	const SAVE_TO_DIR_GEN_ALL = 3; // Не брать имя, а только расширение и генерировать имя
+
+	/** @const Заменить существующий файл */
+	const SAVE_TO_DIR_REPLACE = 1;
+	/** @const Сгенерировать новое имя, если уже есть файл с таким именем, добавить к имени счетчик */
+	const SAVE_TO_DIR_COUNT = 2;
+	/** @const Не определять имя, а только расширение и генерировать имя */
+	const SAVE_TO_DIR_GENERATE = 3;
 	static $_bDefaultDwnDirChecked = false;
 
 	protected $_url = null;
@@ -52,7 +57,7 @@ class Request {
 
 	protected $_maxRedirects = 5;
 	protected $_bApplyServerCookie = false;
-	protected $_allowSave404ToFile = false;
+	protected $_bAllowSave404ToFile = false;
 	protected $_timeout = 0;
 	protected $_waiting = 0;
 
@@ -294,7 +299,7 @@ class Request {
 	}
 
 	public function setAllowSave404ToFile($bAllow = true) {
-		$this->_allowSave404ToFile = ($bAllow !== false)?true:false;
+		$this->_bAllowSave404ToFile = ($bAllow !== false)?true:false;
 	}
 
 	/**
@@ -734,7 +739,12 @@ class Request {
 			$this->_contentType = $this->_arHeader['Content-Type']['VALUE_MAIN'];
 		}
 		if($this->_lastCurlErrNo === CURLE_OK) {
-			$this->_setRequestComplete();
+			if($this->_bAllowSave404ToFile) {
+				$this->_setRequestComplete();
+			}
+			elseif($this->getStatus() == 200) {
+				$this->_setRequestComplete();
+			}
 		}
 	}
 
@@ -795,7 +805,12 @@ class Request {
 	public function _afterDownload(CMessagePool $MessagePool = null) {
 		$this->_after_exec($MessagePool);
 		if($this->_lastCurlErrNo === CURLE_OK) {
-			$this->_setDownloadComplete();
+			if($this->_bAllowSave404ToFile) {
+				$this->_setDownloadComplete();
+			}
+			elseif($this->getStatus() == 200) {
+				$this->_setDownloadComplete();
+			}
 		}
 	}
 
@@ -825,14 +840,14 @@ class Request {
 	 * @param int $fileNameMode
 	 * @throws Exceptions\RequestError
 	 */
-	public function saveToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GEN_ALL){
+	public function saveToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE){
 		switch($fileNameMode) {
-			case self::SAVE_TO_DIR_GEN_ALL:
-			case self::SAVE_TO_DIR_GEN_NEW:
+			case self::SAVE_TO_DIR_GENERATE:
+			case self::SAVE_TO_DIR_COUNT:
 			case self::SAVE_TO_DIR_REPLACE:
 				break;
 			default:
-				$fileNameMode = self::SAVE_TO_DIR_GEN_ALL;
+				$fileNameMode = self::SAVE_TO_DIR_GENERATE;
 				break;
 		}
 		$relPath = str_replace(array('\\', '//'), '/', $relPath);
@@ -846,7 +861,7 @@ class Request {
 			$this->_dwnFileHandler = null;
 			//определяем имя файла и его расширние файла
 			$contentType = $this->getContentType();
-			if($fileNameMode === self::SAVE_TO_DIR_GEN_ALL) {
+			if($fileNameMode === self::SAVE_TO_DIR_GENERATE) {
 				$baseName = static::generateDownloadName();
 				$fileExt = static::getFileExtByContentType($contentType);
 				$fileName = $baseName.'.'.$fileExt;
@@ -872,7 +887,7 @@ class Request {
 					}
 				}
 			}
-			if( $fileNameMode === self::SAVE_TO_DIR_GEN_NEW
+			if( $fileNameMode === self::SAVE_TO_DIR_COUNT
 				&& file_exists($path.'/'.$fileName)
 			) {
 				$arExistFiles = glob($path.'/'.$baseName.'.[0-9]*.'.$fileExt);
@@ -1000,7 +1015,7 @@ class Request {
 		$this->saveToFile($relPath);
 	}
 
-	public function downloadToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GEN_ALL) {
+	public function downloadToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
 		$this->_initDownload();
 		curl_exec($this->_curlHandler);
 		$this->_afterDownload();
@@ -1075,7 +1090,7 @@ class Request {
 		return $Request->downloadToFile($fileRelPath);
 	}
 
-	static public function downloadUrlToDir($url, $dirRelPath, $fileNameMode = self::SAVE_TO_DIR_GEN_ALL) {
+	static public function downloadUrlToDir($url, $dirRelPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
 		$Request = new self($url);
 		return $Request->downloadToDir($dirRelPath, $fileNameMode);
 	}
