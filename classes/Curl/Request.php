@@ -22,7 +22,7 @@ use OBX\Core\Curl\Exceptions\RequestError;
  */
 class Request {
 
-	const DEFAULT_TIMEOUT = 10;
+	const DEFAULT_TIMEOUT = 20;
 	const DEFAULT_WAITING = 10;
 	const DOWNLOAD_FILE_EXT = 'dwn';
 	const DOWNLOAD_FOLDER = '/bitrix/tmp/obx.core';
@@ -53,6 +53,8 @@ class Request {
 	protected $_maxRedirects = 5;
 	protected $_bApplyServerCookie = false;
 	protected $_allowSave404ToFile = false;
+	protected $_timeout = 0;
+	protected $_waiting = 0;
 
 	protected $_lastCurlError = null;
 	protected $_lastCurlErrNo = null;
@@ -169,13 +171,6 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_MAXREDIRS, $this->_maxRedirects);
 	}
 
-	public function _resetCURL() {
-		curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
-		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($this->_curlHandler, CURLOPT_HEADER, true);
-		curl_setopt($this->_curlHandler, CURLOPT_NOBODY, false);
-		//curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, array('Range: bytes=0-0'));
-	}
 	public function __destruct() {
 		if($this->_bDownloadComplete === true) {
 			if($this->_dwnFileHandler != null) {
@@ -208,14 +203,28 @@ class Request {
 		return $this->_curlHandler;
 	}
 
+	/**
+	 * Максимально позволенное количество секунд для выполнения cURL-функций.
+	 * @param $seconds
+	 */
 	public function setTimeout($seconds) {
 		$seconds = intval($seconds);
-		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $seconds);
+		$this->_timeout = $seconds;
+	}
+	public function getTimeout() {
+		return $this->_timeout;
 	}
 
+	/**
+	 * Количество секунд ожидания при попытке соединения. Используйте 0 для бесконечного ожидания.
+	 * @param $seconds
+	 */
 	public function setWaiting($seconds) {
 		$seconds = intval($seconds);
-		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $seconds);
+		$this->_waiting = $seconds;
+	}
+	public function getWaiting() {
+		return $this->_waiting;
 	}
 
 	public function setMaxRedirects($times) {
@@ -251,7 +260,8 @@ class Request {
 
 	public function setPost($arPOST) {
 		curl_setopt($this->_curlHandler, CURLOPT_POST, true);
-		$postQuery = self::arrayToCurlPost($arPOST);
+		//$postQuery = self::arrayToCurlPost($arPOST);
+		$postQuery = http_build_query($arPOST);
 		curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $postQuery);
 	}
 
@@ -283,8 +293,8 @@ class Request {
 		$this->_bApplyServerCookie = (true === $bApply)?true:false;
 	}
 
-	public function setAllowSave404ToFile() {
-
+	public function setAllowSave404ToFile($bAllow = true) {
+		$this->_allowSave404ToFile = ($bAllow !== false)?true:false;
 	}
 
 	/**
@@ -426,7 +436,18 @@ class Request {
 		$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
 		$this->_lastCurlError = curl_error($this->_curlHandler);
 		// TODO: Реализовать русские сообщения curl_error
-		if($this->_lastCurlErrNo != CURLE_OK) {
+		if($this->_lastCurlErrNo == CURLE_OK) {
+			if( !empty($this->_lastCurlError)
+				&& strpos($this->_lastCurlError, 'timed out')
+				&& strpos($this->_lastCurlError, 'millisec')
+			) {
+				if(!defined('CURLE_OPERATION_TIMEDOUT')) {
+					define('CURLE_OPERATION_TIMEDOUT', 28);
+				}
+				$this->_lastCurlErrNo = CURLE_OPERATION_TIMEDOUT;
+			}
+		}
+		if($this->_lastCurlErrNo == CURLE_OK) {
 			switch($this->_lastCurlErrNo) {
 				case CURLE_UNSUPPORTED_PROTOCOL:
 					// The URL you passed to libcurl used a protocol that this libcurl does not support.
@@ -682,15 +703,27 @@ class Request {
 					break;
 			}
 		}
+		if( $MessagePool instanceof CMEssagePool ) {
+			$MessagePool->addError($this->_lastCurlError, 'curl_'.$this->_lastCurlErrNo);
+		}
+	}
+
+	public function _initSend(){
+		curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
+		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($this->_curlHandler, CURLOPT_HEADER, true);
+		curl_setopt($this->_curlHandler, CURLOPT_NOBODY, false);
+		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
+		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
 	}
 
 	public function send() {
-		$this->_resetCURL();
+		$this->_initSend();
 		$response = curl_exec($this->_curlHandler);
-		$this->_after_send($response);
+		$this->_afterSend($response);
 		return $this->_body;
 	}
-	public function _after_send(&$response, CMessagePool $MessagePool = null){
+	public function _afterSend(&$response, CMessagePool $MessagePool = null){
 		$this->_after_exec($MessagePool);
 		$this->_parseResponse($response);
 		$this->_arHeader = $this->parseHeader($this->_header);
@@ -700,7 +733,9 @@ class Request {
 		if( !empty($this->_arHeader['Content-Type']['VALUE_MAIN']) ) {
 			$this->_contentType = $this->_arHeader['Content-Type']['VALUE_MAIN'];
 		}
-		$this->_setRequestComplete();
+		if($this->_lastCurlErrNo === CURLE_OK) {
+			$this->_setRequestComplete();
+		}
 	}
 
 	public function getHeader($bReturnRawHeader = false) {
@@ -748,15 +783,20 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, false);
 		curl_setopt($this->_curlHandler, CURLOPT_HEADER, false);
 		curl_setopt($this->_curlHandler, CURLOPT_FILE, $this->_dwnFileHandler);
+		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
+		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
 	}
 	public function download() {
 		$this->_initDownload();
 		curl_exec($this->_curlHandler);
-		$this->_after_download();
+		$this->_afterDownload();
 	}
 
-	public function _after_download() {
-		$this->_setDownloadComplete();
+	public function _afterDownload(CMessagePool $MessagePool = null) {
+		$this->_after_exec($MessagePool);
+		if($this->_lastCurlErrNo === CURLE_OK) {
+			$this->_setDownloadComplete();
+		}
 	}
 
 	/**
@@ -835,7 +875,7 @@ class Request {
 			if( $fileNameMode === self::SAVE_TO_DIR_GEN_NEW
 				&& file_exists($path.'/'.$fileName)
 			) {
-				$arExistFiles = glob($path.'/'.$baseName.'.[0-9]{0,6}.'.$fileExt);
+				$arExistFiles = glob($path.'/'.$baseName.'.[0-9]*.'.$fileExt);
 				if( empty($arExistFiles) ) {
 					if(file_exists($path.'/'.$baseName.'.1.'.$fileExt)) {
 						$baseName = static::generateDownloadName();
@@ -848,7 +888,7 @@ class Request {
 					}
 				}
 				else {
-					natsort($arExistFiles);
+					usort($arExistFiles, 'strnatcmp');
 					$lastFileName = $arExistFiles[count($arExistFiles)-1];
 					$lastFileNum = substr($lastFileName, strlen($path.'/'.$baseName)+1, strrpos($lastFileName, '.'.$fileExt));
 					$lastFileNum = intval($lastFileNum);
@@ -890,10 +930,6 @@ class Request {
 		}
 	}
 
-	public function _sortFilesDesc($a, $b) {
-
-	}
-
 	public function getSavedFilePath($bRelative = false) {
 		if(false !== $bRelative) {
 			return $this->_saveRelPath;
@@ -918,8 +954,8 @@ class Request {
 				case 'bz2':
 				case 'xz':
 				case 'lzma':
-					$possibleArchDotPos = strrpos(strtolower($fileName), 'tar.'.$fileExt);
-					if( $possibleArchDotPos === (strlen($fileName)-strlen('tar.'.$fileExt)) ) {
+					$possibleArchDotPos = strrpos(strtolower($fileName), '.tar.'.$fileExt);
+					if( $possibleArchDotPos === (strlen($fileName)-strlen('.tar.'.$fileExt)) ) {
 						$fileExt = 'tar.'.$fileExt;
 						$baseName = substr($fileName, 0, $possibleArchDotPos);
 					}
@@ -959,7 +995,7 @@ class Request {
 	public function downloadToFile($relPath) {
 		$this->_initDownload();
 		curl_exec($this->_curlHandler);
-		$this->_after_download();
+		$this->_afterDownload();
 		//if($this->_sta)
 		$this->saveToFile($relPath);
 	}
@@ -967,7 +1003,7 @@ class Request {
 	public function downloadToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GEN_ALL) {
 		$this->_initDownload();
 		curl_exec($this->_curlHandler);
-		$this->_after_download();
+		$this->_afterDownload();
 		$this->saveToDir($relPath, $fileNameMode);
 	}
 

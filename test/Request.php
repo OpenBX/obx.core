@@ -63,7 +63,9 @@ class TestRequest extends TestCase {
 			),
 			'key3' => 'val3'
 		);
-		$expectedQuery = 'key1=val1&arr1[key11]=val11&arr1[key12]=val12&arr2[key21]=val21&arr2[arr22][key221]=val221&key3=val3';
+		//$expectedQuery = 'key1=val1&arr1[key11]=val11&arr1[key12]=val12&arr2[key21]=val21&arr2[arr22][key221]=val221&key3=val3';
+		$expectedQuery = http_build_query($arPOST);
+
 		$actualQuery = Request::arrayToCurlPost($arPOST);
 		$this->assertEquals($expectedQuery, $actualQuery);
 	}
@@ -206,13 +208,14 @@ class TestRequest extends TestCase {
 	public function _testGetContent404() {
 		$Request = new Request(static::$_url404);
 		$Request->send();
+		//$Request->saveToFile()
 	}
 
 	/**
 	 * @depends testDownloadToFile
 	 */
 	public function _download404() {
-
+		$Request = new Request(static::$_url404);
 	}
 
 
@@ -240,25 +243,11 @@ class TestRequest extends TestCase {
 
 	public function testMultiDownload() {
 		$sleep = '';
-		//$sleep = '&sleep=1';
+		//$sleep = '&sleep=5';
 		$MultiRequest = new MultiRequest();
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload1&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload2&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload3&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload4&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload5&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload6&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload7&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload8&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload9&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload10&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload11&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload12&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload13&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload14&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload15&download=Y'.$sleep);
-		$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload16&download=Y'.$sleep);
-		$MultiRequest->setWaiting(4);
+		for($i=0; $i < 100; $i++) {
+			$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload'.$i.'&download=Y'.$sleep);
+		}
 		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_1/', Request::SAVE_TO_DIR_GEN_NEW);
 		$arRequestList = $MultiRequest->getRequestList();
 		/** @var Request $Request */
@@ -267,13 +256,32 @@ class TestRequest extends TestCase {
 		}
 	}
 
+	public function testMultiDownloadTimeout() {
+		//$sleep = '';
+		$sleep = '&sleep=5';
+		$MultiRequest = new MultiRequest();
+		for($i=0; $i < 40; $i++) {
+			$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload'.$i.'&download=Y'.$sleep);
+		}
+		$MultiRequest->setTimeout(4);
+		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_3/', Request::SAVE_TO_DIR_GEN_NEW);
+		$arRequestList = $MultiRequest->getRequestList();
+		/** @var Request $Request */
+		foreach($arRequestList as $Request) {
+			$this->assertNull($Request->getSavedFilePath());
+		}
+	}
+
 	public function testMultiDownloadFiles() {
 		$arDownloadFiles = $this->getFilesList();
 		$MultiRequest = new MultiRequest();
 		foreach($arDownloadFiles as &$dataPropArgs) {
 			$fileName = &$dataPropArgs[0];
-			$MultiRequest->addRequest(new Request(self::$_urlTestFiles.$fileName));
+			for($i=0; $i < 10; $i++) {
+				$MultiRequest->addRequest(new Request(self::$_urlTestFiles.$fileName));
+			}
 		}
-		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_2/', Request::SAVE_TO_DIR_REPLACE);
+		//$MultiRequest->downloadToDir('/upload/obx.core/test/multi_2/', Request::SAVE_TO_DIR_REPLACE);
+		$MultiRequest->downloadToDir('/upload/obx.core/test/multi_2/', Request::SAVE_TO_DIR_GEN_NEW);
 	}
 }

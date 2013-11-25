@@ -89,7 +89,9 @@ class CMessagePool implements IMessagePool
 	public function registerLogFile(LogFile $LogFile = null) {
 		if($LogFile instanceof LogFile) {
 			$this->_LogFile = $LogFile;
+			return true;
 		}
+		return false;
 	}
 
 	public function addMessage($text, $code = 0) {
@@ -367,6 +369,9 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 }
 
 class CMessagePoolDecorator implements IMessagePool {
+	/**
+	 * @var null|CMessagePool
+	 */
 	protected $MessagePool = null;
 
 	/**
@@ -385,13 +390,13 @@ class CMessagePoolDecorator implements IMessagePool {
 	}
 
 	public function addMessage($text, $code = 0) {
-		return $this->getMessagePool()->addMessage($text, $code);
+		$this->getMessagePool()->addMessage($text, $code);
 	}
 	public function addError($text, $code = 0) {
-		return $this->getMessagePool()->addError($text, $code);
+		$this->getMessagePool()->addError($text, $code);
 	}
 	public function addWarning($text, $code = 0) {
-		return $this->getMessagePool()->addWarning($text, $code);
+		$this->getMessagePool()->addWarning($text, $code);
 	}
 	public function getLastError($return = 'TEXT') {
 		return $this->getMessagePool()->getLastError($return);
@@ -436,15 +441,15 @@ class CMessagePoolDecorator implements IMessagePool {
 		return $this->getMessagePool()->countMessagePoolData();
 	}
 	public function clearMessages() {
-		return $this->getMessagePool()->clearMessages();
+		$this->getMessagePool()->clearMessages();
 	}
 	public function clearErrors() {
-		return $this->getMessagePool()->clearErrors();
+		$this->getMessagePool()->clearErrors();
 	}
 	public function clearWarnings() {
-		return $this->getMessagePool()->clearWarnings();
+		$this->getMessagePool()->clearWarnings();
 	}
 	public function clearMessagePool() {
-		return $this->getMessagePool()->clearMessagePool();
+		$this->getMessagePool()->clearMessagePool();
 	}
 }

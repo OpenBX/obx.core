@@ -11,12 +11,16 @@
 namespace OBX\Core\Curl;
 use OBX\Core\CMessagePoolDecorator;
 use OBX\Core\Curl\Exceptions\RequestError;
+use OBX\Core\Exceptions\LogFileError;
+use OBX\Core\LogFile;
 
 class MultiRequest extends CMessagePoolDecorator {
 
 	protected $_curlMulti = null;
 	protected $_arRequestList = array();
 	protected $_iRequest = 0;
+	protected $_timeout = 0;
+	protected $_waiting = 0;
 
 	public function __construct() {
 		$this->_curlMulti = curl_multi_init();
@@ -62,12 +66,37 @@ class MultiRequest extends CMessagePoolDecorator {
 			$Request->setWaiting($seconds);
 		}
 	}
+	public function getWaiting() {
+		return $this->_waiting;
+	}
 
 	public function setTimeout($seconds) {
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
 			$Request->setTimeout($seconds);
 		}
+	}
+	public function getTimeout() {
+		return $this->_timeout;
+	}
+
+	/**
+	 * @param LogFile $LogFile
+	 * @return bool
+	 */
+	public function setLogFile(LogFile $LogFile) {
+		return $this->getMessagePool()->registerLogFile($LogFile);
+	}
+
+	public function setLogFilePath($relFilePath) {
+		try {
+			$LogFile = new LogFile('Multi Request Client (cURL)', $relFilePath);
+			return $this->getMessagePool()->registerLogFile($LogFile);
+		}
+		catch(LogFileError $e) {
+			$this->addError($e->getMessage(), $e->getCode());
+		}
+		return false;
 	}
 
 	public function getRequestList() {
@@ -81,7 +110,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
-			$Request->_after_download();
+			$Request->_afterDownload($this->getMessagePool());
 
 		}
 	}
@@ -93,17 +122,17 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
-			$Request->_after_download();
+			$Request->_afterDownload($this->getMessagePool());
 			$Request->saveToDir($relPath, $fileNameMode);
 		}
 	}
 
 	protected function _exec() {
 		$countRunning = 0;
-		$resE = curl_multi_exec($this->_curlMulti, $countRunning);
+		curl_multi_exec($this->_curlMulti, $countRunning);
 		do {
-			$resE = curl_multi_exec($this->_curlMulti, $countRunning);
-			usleep(1000);
+			curl_multi_exec($this->_curlMulti, $countRunning);
+			usleep(50);
 		} while($countRunning>0);
 	}
 
@@ -115,7 +144,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		$arResponseList = array();
 		foreach($this->_arRequestList as $reqNo => &$Request) {
 			/** @var Request $Request */
-			$Request->_resetCURL();
+			$Request->_initSend();
 		}
 
 		$this->_exec();
@@ -123,7 +152,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		foreach($this->_arRequestList as $reqNo => &$Request) {
 			/** @var Request $Request */
 			$response = curl_multi_getcontent($Request->getCurlHandler());
-			$Request->_after_send($response);
+			$Request->_afterSend($response, $this->getMessagePool());
 			if( $bReturnResponse !== false ) {
 				$arResponseList[$reqNo] = $response;
 			}
