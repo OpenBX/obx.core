@@ -47,6 +47,7 @@ class Request {
 	protected $_arHeader = array();
 
 	protected $_dwnDir = null;
+	protected $_dwnFolder = null;
 	protected $_dwnFileHandler = null;
 	protected $_dwnName = null;
 	protected $_saveRelPath = null;
@@ -169,7 +170,8 @@ class Request {
 		$this->_curlHandler = curl_init();
 		$this->setTimeout(static::DEFAULT_TIMEOUT);
 		$this->setWaiting(static::DEFAULT_WAITING);
-		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER;
+		$this->_dwnFolder = static::DOWNLOAD_FOLDER;
+		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].$this->_dwnFolder;
 		$this->_url = $url;
 		curl_setopt($this->_curlHandler, CURLOPT_URL, $this->_url);
 		curl_setopt($this->_curlHandler, CURLOPT_FOLLOWLOCATION, true);
@@ -251,15 +253,20 @@ class Request {
 	public function getDownloadDir() {
 		return $this->_dwnDir;
 	}
+
+	public function getDownloadFolder() {
+		return $this->_dwnFolder;
+	}
 	public function setDownloadDir($downloadFolder) {
 		$downloadFolder = rtrim(str_replace(array('\\', '//'), '/', $downloadFolder), '/');
-		if($downloadFolder != static::DOWNLOAD_FOLDER) {
+		if($downloadFolder == $this->_dwnFolder) {
 			return false;
 		}
 		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].$downloadFolder) ) {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
 		}
 		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].$downloadFolder;
+		$this->_dwnFolder = $downloadFolder;
 		return true;
 	}
 
@@ -967,20 +974,16 @@ class Request {
 			switch($fileExt) {
 				case 'gz':
 				case 'bz2':
+				case 'bz':
 				case 'xz':
 				case 'lzma':
+				case '7z':
 					$possibleArchDotPos = strrpos(strtolower($fileName), '.tar.'.$fileExt);
 					if( $possibleArchDotPos === (strlen($fileName)-strlen('.tar.'.$fileExt)) ) {
 						$fileExt = 'tar.'.$fileExt;
 						$baseName = substr($fileName, 0, $possibleArchDotPos);
 					}
 					break;
-					//case 'php':
-					//case 'asp':
-					//case 'aspx':
-					//case 'jsp':
-					//	$fileExt = 'html';
-					//	$fileName = substr($fileName, 0, $dotPos).'.html';
 			}
 		}
 		return $fileName;

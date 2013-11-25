@@ -23,6 +23,8 @@ namespace OBX\Core {
 	{
 
 		static protected $arPropIdToPropCode = array();
+		static protected $arPropCodeToPropId = array();
+
 		static function getPropIdByCode($IBLOCK_ID, $PROP_CODE, &$arProp = array(), &$ERR_MSG = array()) {
 			if( !\CModule::IncludeModule('iblock') ) {
 				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED');
@@ -55,7 +57,7 @@ namespace OBX\Core {
 			self::$arPropIdToPropCode = array();
 		}
 
-		static protected $arPropCodeToPropId = array();
+
 		static public function getPropCodeById($IBLOCK_ID, $PROP_ID, &$ERR_MSG = array()) {
 			if( !\CModule::IncludeModule("iblock") ) {
 				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED');
