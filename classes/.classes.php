@@ -31,6 +31,7 @@ $arModuleClasses = array(
 	,'OBX\Core\CMessagePoolStatic'				=> 'classes/MessagePool.php'
 	,'OBX\Core\CMessagePoolDecorator'			=> 'classes/MessagePool.php'
 	,'OBX\Core\LogFile'							=> 'classes/LogFile.php'
+	,'OBX\Core\Mime'							=> 'classes/Mime.php'
 	,'OBX\Core\Exceptions\LogFileError'			=> 'classes/Exceptions/LogFileError.php'
 	,'OBX\Core\Curl\Exceptions\RequestError'	=> 'classes/Curl/Exceptions/RequestError.php'
 	,'OBX\Core\Curl\Request'					=> 'classes/Curl/Request.php'

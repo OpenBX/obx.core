@@ -11,7 +11,9 @@
 namespace OBX\Core\Curl;
 use OBX\Core\CMessagePool;
 use OBX\Core\Curl\Exceptions\RequestError;
+use OBX\Core\Mime;
 
+IncludeModuleLangFile(__FILE__);
 
 /**
  * Class Request
@@ -50,6 +52,8 @@ class Request {
 	protected $_dwnFolder = null;
 	protected $_dwnFileHandler = null;
 	protected $_dwnName = null;
+	protected $_originalName = null;
+	protected $_originalExt = null;
 	protected $_saveRelPath = null;
 	protected $_savePath = null;
 	protected $_saveFileName = null;
@@ -69,113 +73,14 @@ class Request {
 	protected $_responseStatus = null;
 
 
-	static protected $_arMimeExt = array(
-		// images
-		'image/x-icon' => 'ico',
-		'image/png' => 'png',
-		'image/jpeg' => 'jpg',
-		'image/gif' => 'gif',
-		'image/x-tiff' => 'tiff',
-		'image/tiff' => 'tiff',
-		'image/svg+xml' => 'svg',
-		'application/pcx' => 'pcx',
-		'image/x-bmp' => 'bmp',
-		'image/x-MS-bmp' => 'bmp',
-		'image/x-ms-bmp' => 'bmp',
-
-		//compressed types
-		'application/x-rar-compressed' => 'rar',
-		'application/x-rar' => 'rar',
-		'application/x-tar' => 'tar',
-		'application/x-bzip2' => 'bz2',
-		'application/x-bzip-compressed-tar' => 'tar.bz2',
-		'application/x-bzip2-compressed-tar' => 'tar.bz2',
-		'application/zip' => 'zip',
-		'application/x-gzip' => 'gz',
-		'application/x-gzip-compressed-tar' => 'tar.gz',
-		'application/x-xz' => 'xz',
-
-		// text
-		'application/json' => 'json',
-		'text/html' => 'html',
-		'text/plain' => 'txt',
-
-		//doc
-		//open docs
-		'application/vnd.oasis.opendocument.text' => 'odt',
-		'application/vnd.oasis.opendocument.spreadsheet' => 'pds',
-		'application/vnd.oasis.opendocument.presentation' => 'odp',
-		'application/vnd.oasis.opendocument.graphics' => 'odg',
-		'application/vnd.oasis.opendocument.chart' => 'odc',
-		'application/vnd.oasis.opendocument.formula' => 'odf',
-		'application/vnd.oasis.opendocument.image' => 'odi',
-		'application/vnd.oasis.opendocument.text-master' => 'odm',
-		'application/vnd.oasis.opendocument.text-template' => 'ott',
-		'application/vnd.oasis.opendocument.spreadsheet-template' => 'ots',
-		'application/vnd.oasis.opendocument.presentation-template' => 'otp',
-		'application/vnd.oasis.opendocument.graphics-template' => 'otg',
-		'application/vnd.oasis.opendocument.chart-template' => 'otc',
-		'application/vnd.oasis.opendocument.formula-template' => 'otf',
-		'application/vnd.oasis.opendocument.image-template' => 'oti',
-		'application/vnd.oasis.opendocument.text-web' => 'oth',
-		//prop docs
-		'application/rtf' => 'rtf',
-		'application/pdf' => 'pdf',
-		'application/postscript' => 'ps',
-		'application/x-dvi' => 'dvi',
-		'application/msword' => 'doc',
-		'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
-		'application/vnd.ms-powerpoint' => 'ppt',
-		'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
-		'application/vnd.ms-excel' => 'xls',
-		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
-
-		//Video
-		'video/mpeg' => 'mpg',
-		'video/x-mpeg' => 'mpg',
-		'video/sgi-movie' => 'movi',
-		'video/x-sgi-movie' => 'movi',
-		'video/msvideo' => 'avi',
-		'video/x-msvideo' => 'avi',
-		'video/fli' => 'fli',
-		'video/x-fli' => 'fli',
-		'video/quicktime' => 'mov',
-		'video/x-quicktime' => 'mov',
-		'application/x-shockwave-flash' => 'swf',
-		'video/x-ms-wmv' => 'wmv',
-		'video/x-ms-asf' => 'asf',
-
-		//Audio
-		'audio/midi' => 'midi',
-		'audio/x-midi' => 'midi',
-		'audio/mod' => 'mod',
-		'audio/x-mod' => 'mod',
-		'audio/mpeg3' => 'mp3',
-		'audio/x-mpeg3' => 'mp3',
-		'audio/mpeg-url' => 'mp3',
-		'audio/x-mpeg-url' => 'mp3',
-		'audio/mpeg2' => 'mp2',
-		'audio/x-mpeg2' => 'mp2',
-		'audio/mpeg' => 'mpa',
-		'audio/x-mpeg' => 'mpa',
-		'audio/wav' => 'wav',
-		'audio/x-wav' => 'wav',
-		'audio/flac' => 'flac',
-		'audio/x-ogg' => 'ogg'
-	);
 
 	public function __construct($url) {
 		RequestError::checkCURL();
 		self::_checkDefaultDwnDir();
-		$this->_curlHandler = curl_init();
-		$this->setTimeout(static::DEFAULT_TIMEOUT);
-		$this->setWaiting(static::DEFAULT_WAITING);
 		$this->_dwnFolder = static::DOWNLOAD_FOLDER;
 		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].$this->_dwnFolder;
 		$this->_url = $url;
-		curl_setopt($this->_curlHandler, CURLOPT_URL, $this->_url);
-		curl_setopt($this->_curlHandler, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($this->_curlHandler, CURLOPT_MAXREDIRS, $this->_maxRedirects);
+		$this->_initCURL();
 	}
 
 	public function __destruct() {
@@ -185,17 +90,31 @@ class Request {
 				$this->_dwnFileHandler = null;
 			}
 			unlink($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT);
+			if(is_dir($this->_dwnDir.'/'.$this->_dwnName)) {
+				DeleteDirFilesEx($this->_dwnFolder.'/'.$this->_dwnName);
+			}
 		}
 		curl_close($this->_curlHandler);
 	}
 	protected function __clone() {}
+
+	protected function _initCURL() {
+		if(null === $this->_curlHandler) {
+			$this->_curlHandler = curl_init();
+			$this->setTimeout(static::DEFAULT_TIMEOUT);
+			$this->setWaiting(static::DEFAULT_WAITING);
+			curl_setopt($this->_curlHandler, CURLOPT_URL, $this->_url);
+			curl_setopt($this->_curlHandler, CURLOPT_FOLLOWLOCATION, true);
+			curl_setopt($this->_curlHandler, CURLOPT_MAXREDIRS, $this->_maxRedirects);
+		}
+	}
 
 	/**
 	 * @throws Exceptions\RequestError
 	 */
 	static protected function _checkDefaultDwnDir() {
 		if( false === static::$_bDefaultDwnDirChecked ) {
-			if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER) ) {
+			if( ! ($bSuccess = CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER)) ) {
 				throw new RequestError('', RequestError::E_NO_ACCESS_DWN_FOLDER);
 			}
 			static::$_bDefaultDwnDirChecked = true;
@@ -721,6 +640,12 @@ class Request {
 	}
 
 	public function _initSend(){
+		$this->_bRequestComplete = false;
+		$this->_header = null;
+		$this->_arHeader = array();
+		$this->_body = null;
+		$this->_receivedCode = null;
+		$this->_initCURL();
 		curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($this->_curlHandler, CURLOPT_HEADER, true);
@@ -751,6 +676,25 @@ class Request {
 			}
 			elseif($this->getStatus() == 200) {
 				$this->_setRequestComplete();
+			}
+		}
+		if(true === $this->_bRequestComplete) {
+			//Определим имя файла
+			if( array_key_exists('Content-Disposition', $this->_arHeader)
+				&& array_key_exists('OPTIONS', $this->_arHeader['Content-Disposition'])
+				&& array_key_exists('filename', $this->_arHeader['Content-Disposition']['OPTIONS'])
+				&& !empty($this->_arHeader['Content-Disposition']['OPTIONS']['filename'])
+			) {
+				$fileName = $this->_arHeader['Content-Disposition']['OPTIONS']['filename'];
+				$dotPos = strrpos($fileName, '.');
+				$this->_originalExt = '';
+				if($dotPos !== false ) {
+					$this->_originalExt = substr($fileName, $dotPos+1);
+				}
+				$this->_originalName = substr($fileName, 0, $dotPos);
+			}
+			else {
+				$this->_fillOriginalName($this->_contentType);
 			}
 		}
 	}
@@ -795,7 +739,7 @@ class Request {
 		}
 		$this->_dwnFileHandler = fopen($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, 'w');
 		if( !$this->_dwnFileHandler ) {
-			throw new RequestError('', RequestError::E_PERM_DENIED);
+			throw new RequestError(GetMessage('OBX\Core\Curl\Request::E_OPEN_DWN_FAILED'), RequestError::E_PERM_DENIED);
 		}
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, false);
 		curl_setopt($this->_curlHandler, CURLOPT_HEADER, false);
@@ -819,6 +763,33 @@ class Request {
 				$this->_setDownloadComplete();
 			}
 		}
+		if(true === $this->_bDownloadComplete) {
+			fclose($this->_dwnFileHandler);
+			$this->_dwnFileHandler = null;
+			$contentType = $this->getContentType();
+			$this->_fillOriginalName($contentType);
+		}
+	}
+
+	protected function _fillOriginalName(&$contentType) {
+		$fileName = static::getFileNameFromUrl($this->_url, $fileExt, $baseName);
+		if( empty($fileName) ) {
+			$baseName = static::generateDownloadName();
+		}
+		if(empty($fileExt)) {
+			$fileExt = Mime::getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
+		}
+		else {
+			switch($fileExt) {
+				case 'php':
+				case 'asp':
+				case 'aspx':
+				case 'jsp':
+					$fileExt = Mime::getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
+			}
+		}
+		$this->_originalName = $baseName;
+		$this->_originalExt = $fileExt;
 	}
 
 	/**
@@ -832,10 +803,12 @@ class Request {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
 		}
 		if( $this->_bDownloadComplete === true ) {
-			fclose($this->_dwnFileHandler);
-			$this->_dwnFileHandler = null;
+			//fclose($this->_dwnFileHandler);
+			//$this->_dwnFileHandler = null;
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
-			copy($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, $path);
+			if( !copy($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, $path) ) {
+				throw new RequestError('', RequestError::E_FILE_SAVE_FAILED);
+			}
 		}
 		elseif($this->_bRequestComplete === true) {
 			file_put_contents($path, $this->_body);
@@ -863,93 +836,62 @@ class Request {
 		if( !CheckDirPath($path.'/') ) {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
 		}
-		if( $this->_bDownloadComplete === true ) {
-			fclose($this->_dwnFileHandler);
-			$this->_dwnFileHandler = null;
-			//определяем имя файла и его расширние файла
-			$contentType = $this->getContentType();
-			if($fileNameMode === self::SAVE_TO_DIR_GENERATE) {
-				$baseName = static::generateDownloadName();
-				$fileExt = static::getFileExtByContentType($contentType);
-				$fileName = $baseName.'.'.$fileExt;
-			}
-			else {
-				$fileName = static::getFileNameFromUrl($this->_url, $fileExt, $baseName);
-				if( empty($fileName) ) {
-					if(empty($fileExt)) {
-						$fileExt = static::getFileExtByContentType($contentType);
-					}
+		if( $this->_bDownloadComplete !== true && $this->_bRequestComplete !== true ) {
+			return;
+		}
+		if($fileNameMode === self::SAVE_TO_DIR_GENERATE) {
+			$baseName = static::generateDownloadName();
+			$fileExt = $this->_originalExt;
+			$fileName = $baseName.'.'.$fileExt;
+		}
+		else {
+			$baseName = $this->_originalName;
+			$fileExt = $this->_originalExt;
+			$fileName = $baseName.'.'.$fileExt;
+		}
+		if( $fileNameMode === self::SAVE_TO_DIR_COUNT
+			&& file_exists($path.'/'.$fileName)
+		) {
+			$arExistFiles = glob($path.'/'.$baseName.'.[0-9]*.'.$fileExt);
+			if( empty($arExistFiles) ) {
+				if(file_exists($path.'/'.$baseName.'.1.'.$fileExt)) {
 					$baseName = static::generateDownloadName();
+					$fileExt = $this->_originalExt;
 					$fileName = $baseName.'.'.$fileExt;
 				}
 				else {
-					switch($fileExt) {
-						case 'php':
-						case 'asp':
-						case 'aspx':
-						case 'jsp':
-							$fileLangExt = $fileExt;
-							$fileExt = static::getFileExtByContentType($contentType);
-							$fileName = substr($fileName, 0, strrpos($fileName, '.'.$fileLangExt)).'.'.$fileExt;
-					}
+					$baseName = $baseName.'.1';
+					$fileName = $baseName.'.'.$fileExt;
 				}
 			}
-			if( $fileNameMode === self::SAVE_TO_DIR_COUNT
-				&& file_exists($path.'/'.$fileName)
-			) {
-				$arExistFiles = glob($path.'/'.$baseName.'.[0-9]*.'.$fileExt);
-				if( empty($arExistFiles) ) {
-					if(file_exists($path.'/'.$baseName.'.1.'.$fileExt)) {
-						$baseName = static::generateDownloadName();
-						$fileExt = static::getFileExtByContentType($contentType);
-						$fileName = $baseName.'.'.$fileExt;
-					}
-					else {
-						$baseName = $baseName.'.1';
-						$fileName = $baseName.'.'.$fileExt;
-					}
+			else {
+				usort($arExistFiles, 'strnatcmp');
+				$lastFileName = $arExistFiles[count($arExistFiles)-1];
+				$lastFileNum = substr($lastFileName, strlen($path.'/'.$baseName)+1, strrpos($lastFileName, '.'.$fileExt));
+				$lastFileNum = intval($lastFileNum);
+				if($lastFileNum>0) {
+					$fileName = $baseName.'.'.($lastFileNum+1).'.'.$fileExt;
 				}
-				else {
-					usort($arExistFiles, 'strnatcmp');
-					$lastFileName = $arExistFiles[count($arExistFiles)-1];
-					$lastFileNum = substr($lastFileName, strlen($path.'/'.$baseName)+1, strrpos($lastFileName, '.'.$fileExt));
-					$lastFileNum = intval($lastFileNum);
-					if($lastFileNum>0) {
-						$fileName = $baseName.'.'.($lastFileNum+1).'.'.$fileExt;
-					}
-					unset($arExistFiles);
-				}
+				unset($arExistFiles);
 			}
-			$this->_saveFileName = $fileName;
-			$this->_saveRelPath = $relPath.'/'.$fileName;
-			$this->_savePath = $path.'/'.$fileName;
+		}
+		static::fixFileName($fileName);
+		$this->_saveFileName = $fileName;
+		$this->_saveRelPath = $relPath.'/'.$fileName;
+		$this->_savePath = $path.'/'.$fileName;
+		if(true === $this->_bDownloadComplete) {
 			copy($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, $this->_savePath);
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 		}
-		elseif($this->_bRequestComplete === true) {
-			$arHeader = $this->getHeader();
-			$contentType = $this->getContentType();
-			//Определим имя файла
-			if( array_key_exists('Content-Disposition', $arHeader)
-				&& array_key_exists('OPTIONS', $arHeader['Content-Disposition'])
-				&& array_key_exists('filename', $arHeader['Content-Disposition']['OPTIONS'])
-				&& !empty($arHeader['Content-Disposition']['OPTIONS']['filename'])
-			) {
-				$fileName = $arHeader['Content-Disposition']['OPTIONS']['filename'];
-			}
-			else {
-				if(array_key_exists($arHeader, static::$_arMimeExt)) {
-					$fileName = $this->_dwnName.'.'.static::$_arMimeExt[$contentType];
-				}
-				else {
-					$fileName = $this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT;
-				}
-			}
-			$this->_saveFileName = $fileName;
-			$this->_saveRelPath = $relPath.'/'.$fileName;
-			$this->_savePath = $path.'/'.$fileName;
+		elseif(true === $this->_bRequestComplete) {
 			file_put_contents($this->_savePath, $this->_body);
 		}
+	}
+
+	static protected function fixFileName(&$fileName) {
+		$fileName = str_replace(array(
+			'\\', '/', ':', '*', '?', '<', '>', '|', '"', "\n", "\r"
+		), '', $fileName);
 	}
 
 	public function getSavedFilePath($bRelative = false) {
@@ -966,6 +908,7 @@ class Request {
 	static public function getFileNameFromUrl($url, &$fileExt = null, &$baseName = null) {
 		$arUrl = parse_url($url);
 		$fileName = trim(urldecode(basename($arUrl['path'])));
+		static::fixFileName($fileName);
 		$fileExt = '';
 		$dotPos = strrpos($fileName, '.');
 		if( $dotPos !== false) {
@@ -980,7 +923,7 @@ class Request {
 				case '7z':
 					$possibleArchDotPos = strrpos(strtolower($fileName), '.tar.'.$fileExt);
 					if( $possibleArchDotPos === (strlen($fileName)-strlen('.tar.'.$fileExt)) ) {
-						$fileExt = 'tar.'.$fileExt;
+						 $fileExt = 'tar.'.$fileExt;
 						$baseName = substr($fileName, 0, $possibleArchDotPos);
 					}
 					break;
@@ -989,20 +932,6 @@ class Request {
 		return $fileName;
 	}
 
-	/**
-	 * Если определить не удалось, вернет self::DOWNLOAD_FILE_EXT
-	 * @param $contentType
-	 * @return string
-	 */
-	static public function getFileExtByContentType($contentType) {
-		if(array_key_exists($contentType, static::$_arMimeExt)) {
-			$fileExt = static::$_arMimeExt[$contentType];
-		}
-		else {
-			$fileExt = static::DOWNLOAD_FILE_EXT;
-		}
-		return $fileExt;
-	}
 	protected function _setDownloadComplete($bComplete = true) {
 		$this->_bDownloadComplete = ($bComplete!==false)?true:false;
 	}
@@ -1083,18 +1012,14 @@ class Request {
 	public function getCurlLastErrorCode() {
 		return $this->_lastCurlErrNo;
 	}
-	
-	static public function getMimeExtList() {
-		return static::$_arMimeExt;
-	}
 
 	static public function downloadUrlToFile($url, $fileRelPath) {
 		$Request = new self($url);
-		return $Request->downloadToFile($fileRelPath);
+		$Request->downloadToFile($fileRelPath);
 	}
 
 	static public function downloadUrlToDir($url, $dirRelPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
 		$Request = new self($url);
-		return $Request->downloadToDir($dirRelPath, $fileNameMode);
+		$Request->downloadToDir($dirRelPath, $fileNameMode);
 	}
 } 

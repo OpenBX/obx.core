@@ -22,30 +22,49 @@ namespace OBX\Core {
 	class Tools
 	{
 
-		static protected $arPropIdToPropCode = array();
-		static protected $arPropCodeToPropId = array();
+		static protected $arIBlockPropCache = array();
+		static protected $arIBlockPropCodeIndex = array();
 
-		static function getPropIdByCode($IBLOCK_ID, $PROP_CODE, &$arProp = array(), &$ERR_MSG = array()) {
+		static protected function addIBlock2PropCache($IBLOCK_ID) {
+			$IBLOCK_ID = intval($IBLOCK_ID);
+			if( !array_key_exists($IBLOCK_ID, self::$arIBlockPropCache) ) {
+				self::$arIBlockPropCache[$IBLOCK_ID] = array();
+				self::$arIBlockPropCodeIndex[$IBLOCK_ID] = array();
+			}
+			if( count(self::$arIBlockPropCache[$IBLOCK_ID])<1 ) {
+				$properties = \CIBlockProperty::GetList(
+					Array('sort'=>'asc', 'name'=>'asc'),
+					Array('ACTIVE'=>'Y', 'IBLOCK_ID'=>$IBLOCK_ID)
+				);
+				while ($prop_fields = $properties->GetNext()) {
+					self::$arIBlockPropCache[$IBLOCK_ID][$prop_fields['ID']] = $prop_fields;
+					$prop_fields['CODE'] = trim($prop_fields['CODE']);
+					if(!empty($prop_fields['CODE'])) {
+						self::$arIBlockPropCodeIndex[$IBLOCK_ID][$prop_fields['CODE']] =
+							&self::$arIBlockPropCache[$IBLOCK_ID][$prop_fields['ID']];
+					}
+				}
+			}
+		}
+
+		/**
+		 * @param int $IBLOCK_ID
+		 * @param string $PROP_CODE
+		 * @param null|array $arProp
+		 * @param array $ERR_MSG
+		 * @return bool|int
+		 */
+		static function getPropIdByCode($IBLOCK_ID, $PROP_CODE, &$arProp = null, array &$ERR_MSG = array()) {
 			if( !\CModule::IncludeModule('iblock') ) {
 				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED');
 				return false;
 			}
 			$PROP_CODE = strtoupper($PROP_CODE);
 
-			if( !isset(self::$arPropIdToPropCode[$IBLOCK_ID]) ) {
-				self::$arPropIdToPropCode[$IBLOCK_ID] = array();
-			}
-
-			if( count(self::$arPropIdToPropCode[$IBLOCK_ID])<1 ) {
-				$properties = \CIBlockProperty::GetList(Array("sort"=>"asc", "name"=>"asc"), Array("ACTIVE"=>"Y", "IBLOCK_ID"=>$IBLOCK_ID));
-				while ($prop_fields = $properties->GetNext()) {
-					//echo $prop_fields["ID"]." - ".$prop_fields["NAME"]."<br>";
-					self::$arPropIdToPropCode[$IBLOCK_ID][strtoupper($prop_fields["CODE"])] = $prop_fields;
-				}
-			}
+			self::addIBlock2PropCache($IBLOCK_ID);
 			if ( array_key_exists($PROP_CODE, self::$arPropIdToPropCode[$IBLOCK_ID]) ) {
-				$arProp = self::$arPropIdToPropCode[$IBLOCK_ID][$PROP_CODE];
-				return self::$arPropIdToPropCode[$IBLOCK_ID][$PROP_CODE]["ID"];
+				$arProp = self::$arIBlockPropCodeIndex[$IBLOCK_ID][$PROP_CODE];
+				return $arProp['ID'];
 			}
 			else {
 				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND');
@@ -53,42 +72,37 @@ namespace OBX\Core {
 			}
 
 		}
-		static public function clearPropIdByCodeCache(){
-			self::$arPropIdToPropCode = array();
+		static public function clearIBlockPropCache() {
+			self::$arIBlockPropCache = array();
+			self::$arIBlockPropCodeIndex = array();
 		}
 
 
-		static public function getPropCodeById($IBLOCK_ID, $PROP_ID, &$ERR_MSG = array()) {
-			if( !\CModule::IncludeModule("iblock") ) {
+		/**
+		 * @param int $IBLOCK_ID
+		 * @param int $PROP_ID
+		 * @param array $arProp
+		 * @param array $ERR_MSG
+		 * @return bool|string
+		 */
+		static public function getPropCodeById($IBLOCK_ID, $PROP_ID, &$arProp = array(), &$ERR_MSG = array()) {
+			if( !\CModule::IncludeModule('iblock') ) {
 				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED');
 				return false;
 			}
 
-			if( !isset(self::$arPropCodeToPropId[$IBLOCK_ID]) ) {
-				self::$arPropCodeToPropId[$IBLOCK_ID] = array();
-			}
-
-			if( count(self::$arPropCodeToPropId[$IBLOCK_ID])<1 ) {
-				$properties = \CIBlockProperty::GetList(Array("sort"=>"asc", "name"=>"asc"), Array("ACTIVE"=>"Y", "IBLOCK_ID"=>$IBLOCK_ID));
-				while ($prop_fields = $properties->GetNext())
-				{
-					//echo $prop_fields["ID"]." - ".$prop_fields["CODE"]."<br>";
-					self::$arPropCodeToPropId[$IBLOCK_ID][$prop_fields["ID"]] = $prop_fields["CODE"];
-				}
-			}
-			if ( isset(self::$arPropCodeToPropId[$IBLOCK_ID][$PROP_ID]) ) {
-				return self::$arPropCodeToPropId[$IBLOCK_ID][$PROP_ID];
+			self::addIBlock2PropCache($IBLOCK_ID);
+			if ( array_key_exists($PROP_ID, self::$arIBlockPropCache[$IBLOCK_ID]) ) {
+				$arProp = self::$arIBlockPropCache[$IBLOCK_ID][$PROP_ID];
+				return $arProp['CODE'];
 			}
 			else {
 				$ERR_MSG[] = GetMessage('OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND');
 				return false;
 			}
 		}
-		static public function clearPropCodeByIdCache() {
-			self::$arPropCodeToPropId = array();
-		}
 
-		static function cropString($str, $len, $endOfLine = "") {
+		static function cropString($str, $len, $endOfLine = '') {
 			$str = trim($str);
 			$len = intval($len);
 			if (strlen($str) < 1 || $len < 1) {
@@ -98,7 +112,7 @@ namespace OBX\Core {
 				return $str;
 			}
 			$len++;
-			$str = substr($str, 0, strrpos(substr($str, 0, $len), " ")).$endOfLine;
+			$str = substr($str, 0, strrpos(substr($str, 0, $len), ' ')).$endOfLine;
 			return $str;
 		}
 
@@ -252,7 +266,7 @@ namespace OBX\Core {
 			if(!$SectionID)
 				return false;
 			if(@isset($arRelationTable[$SectionID])) {
-				return $arRelationTable[$SectionID]["PARENT_SECTION_ID"];
+				return $arRelationTable[$SectionID]['PARENT_SECTION_ID'];
 			}
 			return false;
 		}
@@ -343,19 +357,19 @@ namespace OBX\Core {
 			if( is_dir($frDir) ) {
 				$d = dir($frDir);
 				while( $entry = $d->read() ) {
-					if( $entry=="." || $entry==".." ) {
+					if( $entry=='.' || $entry=='..' ) {
 						continue;
 					}
 					if( in_array($entry, $arExclude) ) {
 						continue;
 					}
-					if( is_dir($toDir."/".$entry) ) {
-						//echo "delete dir: ".$toDir."/".$entry."<br />\n";
-						self::deleteDirFilesEx($toDir."/".$entry, true);
+					if( is_dir($toDir.'/'.$entry) ) {
+						//echo 'delete dir: '.$toDir.'/'.$entry."<br />\n";
+						self::deleteDirFilesEx($toDir.'/'.$entry, true);
 					}
 					else {
-						//echo "delete file: ".$toDir."/".$entry."<br />\n";
-						@unlink($toDir."/".$entry);
+						//echo 'delete file: '.$toDir.'/'.$entry."<br />\n";
+						@unlink($toDir.'/'.$entry);
 					}
 				}
 				$d->close();
@@ -374,7 +388,7 @@ namespace OBX\Core {
 			if(strlen($path) == 0 || $path == '/')
 				return false;
 			if(!$bIsPathFull) {
-				$full_path = $_SERVER["DOCUMENT_ROOT"].$path;
+				$full_path = $_SERVER['DOCUMENT_ROOT'].$path;
 			}
 			else {
 				$full_path = $path;
@@ -393,10 +407,10 @@ namespace OBX\Core {
 				{
 					while(($file = readdir($handle)) !== false)
 					{
-						if($file == "." || $file == "..")
+						if($file == '.' || $file == '..')
 							continue;
 
-						if(!self::deleteDirFilesEx($path."/".$file, $bIsPathFull))
+						if(!self::deleteDirFilesEx($path.'/'.$file, $bIsPathFull))
 							$f = false;
 					}
 					closedir($handle);
@@ -411,14 +425,14 @@ namespace OBX\Core {
 		/**
 		 * Допустим подае такой $FIELDS:
 		 * array(
-		 * 		"TRACKING_ID" => "D6Jvd38Mpa",
-		 * 		"DELIVERY" => array(
-		 * 			"ID" => 543,
-		 * 			"CHECKED" => "Y",
+		 * 		'TRACKING_ID' => 'D6Jvd38Mpa',
+		 * 		'DELIVERY' => array(
+		 * 			'ID' => 543,
+		 * 			'CHECKED' => 'Y',
 		 * 		),
-		 * 		"key1" => "value1",
-		 * 		"key2" => "value2",
-		 * 		"key3" => "value3",
+		 * 		'key1' => 'value1',
+		 * 		'key2' => 'value2',
+		 * 		'key3' => 'value3',
 		 * 	)
 		 * Тогда файлы шаблона выглядят так:
 		 * <?php
@@ -444,13 +458,13 @@ namespace OBX\Core {
 			foreach($FIELDS as $varName => $varValue) {
 				if( !is_array($varValue) ) {
 					$arNewVar = array($varName => $varValue);
-					extract($arNewVar, EXTR_PREFIX_SAME, "TPL_");
+					extract($arNewVar, EXTR_PREFIX_SAME, 'TPL_');
 				}
 				else {
 					foreach($varValue as $subVarName => $subVarValue) {
 						if( !is_array($subVarValue) ) {
-							$arNewSubVar = array($varName."_".$subVarName => $subVarValue);
-							extract($arNewSubVar, EXTR_PREFIX_SAME, "TPL_");
+							$arNewSubVar = array($varName.'_'.$subVarName => $subVarValue);
+							extract($arNewSubVar, EXTR_PREFIX_SAME, 'TPL_');
 						}
 					}
 				}
@@ -574,16 +588,16 @@ namespace OBX\Core {
 			self::$_bLessJSHeadConnected = true;
 		}
 		static public function setLessJSPath($lessJSPath, $bShowLessHead = true) {
-			if( strpos($lessJSPath, 'less')===false || substr($lessJSPath, -3)!=".js" ) {
+			if( strpos($lessJSPath, 'less')===false || substr($lessJSPath, -3)!='.js' ) {
 				return false;
 			}
-			if( is_file($_SERVER["DOCUMENT_ROOT"].$lessJSPath) ) {
+			if( is_file($_SERVER['DOCUMENT_ROOT'].$lessJSPath) ) {
 				self::$_lessJSPath = $lessJSPath;
 			}
-			elseif( is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$lessJSPath) ) {
+			elseif( is_file($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/'.$lessJSPath) ) {
 				$lessJSPath = str_replace(
 					array('//', '///'), array('/', '/'),
-					SITE_TEMPLATE_PATH."/".$lessJSPath
+					SITE_TEMPLATE_PATH.'/'.$lessJSPath
 				);
 				self::$_lessJSPath = $lessJSPath;
 			}
@@ -613,12 +627,12 @@ namespace OBX\Core {
 		 */
 		static public function addLess($lessFilePath, $sort = 500) {
 			if( !in_array($lessFilePath, self::$_arLessFiles) ) {
-				if( substr($lessFilePath, -5) == ".less" ) {
+				if( substr($lessFilePath, -5) == '.less' ) {
 					$compiledLessFilePath = substr($lessFilePath, 0, -5).self::$_lessCompiledExt;
 					$sort = intval($sort);
-					if( is_file($_SERVER["DOCUMENT_ROOT"].$lessFilePath)
+					if( is_file($_SERVER['DOCUMENT_ROOT'].$lessFilePath)
 						|| (
-							is_file($_SERVER["DOCUMENT_ROOT"].$compiledLessFilePath)
+							is_file($_SERVER['DOCUMENT_ROOT'].$compiledLessFilePath)
 							&& self::isLessProductionReady())
 					) {
 						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
@@ -627,19 +641,19 @@ namespace OBX\Core {
 						return true;
 					}
 					elseif(
-						is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$lessFilePath)
+						is_file($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/'.$lessFilePath)
 						|| (
-							is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$compiledLessFilePath)
+							is_file($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/'.$compiledLessFilePath)
 							&& self::isLessProductionReady()
 						)
 						//					// На случай если мы будем комипировать less в папку css
 						//					|| (
 						//						substr($compiledLessFilePath, 0, 5) == 'less/'
 						//						&& self::isLessProductionReady()
-						//						&& is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/css/".substr($compiledLessFilePath, 5))
+						//						&& is_file($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/css/'.substr($compiledLessFilePath, 5))
 						//					)
 					) {
-						self::$_arLessFiles[self::$_lessFilesCounter] = SITE_TEMPLATE_PATH."/".$lessFilePath;
+						self::$_arLessFiles[self::$_lessFilesCounter] = SITE_TEMPLATE_PATH.'/'.$lessFilePath;
 						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
 						self::$_lessFilesCounter++;
 						return true;
@@ -677,18 +691,18 @@ namespace OBX\Core {
 			elseif( is_string($component) ) {
 				$component = str_replace(array('\\', '//'), '/', $component);
 				if(
-					($bxrootpos = strpos($component, BX_ROOT."/templates")) !== false
+					($bxrootpos = strpos($component, BX_ROOT.'/templates')) !== false
 					||
-					($bxrootpos = strpos($component, BX_ROOT."/components")) !== false
+					($bxrootpos = strpos($component, BX_ROOT.'/components')) !== false
 				) {
 					$component = substr($component, $bxrootpos);
 				}
-				if( ($extpos = strrpos($component, ".php")) !== false
-					|| ($extpos = strrpos($component, ".less")) !== false
+				if( ($extpos = strrpos($component, '.php')) !== false
+					|| ($extpos = strrpos($component, '.less')) !== false
 				) {
-					if( $dirseppos = strrpos($component, "/") ) {
+					if( $dirseppos = strrpos($component, '/') ) {
 						$templateFolder = substr($component, 0, $dirseppos);
-						if($lessFilePath == null && strrpos($component, ".less") !== false) {
+						if($lessFilePath == null && strrpos($component, '.less') !== false) {
 							$lessFilePath = substr($component, $dirseppos);
 							$lessFilePath = ltrim($lessFilePath, '/');
 						}
@@ -700,13 +714,13 @@ namespace OBX\Core {
 			}
 			$sort = intval($sort);
 			if( $lessFilePath == null ) {
-				if( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/style.less")
-					|| (is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/style.less.css")
+				if( is_file($_SERVER['DOCUMENT_ROOT'].$templateFolder.'/style.less')
+					|| (is_file($_SERVER['DOCUMENT_ROOT'].$templateFolder.'/style.less.css')
 						&& self::isLessProductionReady())
 				) {
 					$lessFilePath = str_replace(
 						array('//', '///'), array('/', '/'),
-						$templateFolder."/style.less"
+						$templateFolder.'/style.less'
 					);
 					if( !in_array($lessFilePath, self::$_arLessFiles) ) {
 						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
@@ -717,15 +731,15 @@ namespace OBX\Core {
 					return true;
 				}
 			}
-			elseif( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/".$lessFilePath)
-				|| (is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/".$lessFilePath.".css")
+			elseif( is_file($_SERVER['DOCUMENT_ROOT'].$templateFolder.'/'.$lessFilePath)
+				|| (is_file($_SERVER['DOCUMENT_ROOT'].$templateFolder.'/'.$lessFilePath.'.css')
 					&& self::isLessProductionReady() )
 			) {
 				$lessFilePath = str_replace(
 					array('//', '///'), array('/', '/'),
-					$templateFolder."/".$lessFilePath
+					$templateFolder.'/'.$lessFilePath
 				);
-				if( substr($lessFilePath, -5) == ".less" ) {
+				if( substr($lessFilePath, -5) == '.less' ) {
 					if( !in_array($lessFilePath, self::$_arLessFiles) ) {
 						self::$_arLessFiles[self::$_lessFilesCounter] = $lessFilePath;
 						self::$_arLessFilesSort[self::$_lessFilesCounter] = $sort;
@@ -753,16 +767,16 @@ namespace OBX\Core {
 		 */
 		static public function addDeferredJS($jsFilePath, $sort = 500) {
 			if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
-				if( substr($jsFilePath, -3) == ".js" ) {
+				if( substr($jsFilePath, -3) == '.js' ) {
 					$sort = intval($sort);
-					if( is_file($_SERVER["DOCUMENT_ROOT"].$jsFilePath) ) {
+					if( is_file($_SERVER['DOCUMENT_ROOT'].$jsFilePath) ) {
 						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = $jsFilePath;
 						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
 						self::$_deferredFileCounter++;
 						return true;
 					}
-					elseif( is_file($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/".$jsFilePath) ) {
-						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = SITE_TEMPLATE_PATH."/".$jsFilePath;
+					elseif( is_file($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/'.$jsFilePath) ) {
+						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = SITE_TEMPLATE_PATH.'/'.$jsFilePath;
 						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
 						self::$_deferredFileCounter++;
 						return true;
@@ -813,20 +827,20 @@ namespace OBX\Core {
 			elseif( is_string($component) ) {
 				$component = str_replace(array('\\', '//'), '/', $component);
 				if(
-					($bxrootpos = strpos($component, BX_ROOT."/templates")) !== false
+					($bxrootpos = strpos($component, BX_ROOT.'/templates')) !== false
 					||
-					($bxrootpos = strpos($component, BX_ROOT."/components")) !== false
+					($bxrootpos = strpos($component, BX_ROOT.'/components')) !== false
 				) {
 					$component = substr($component, $bxrootpos);
 				}
-				if( ($extpos = strrpos($component, ".php")) !== false
-					|| ($extpos = strrpos($component, ".js")) !== false
+				if( ($extpos = strrpos($component, '.php')) !== false
+					|| ($extpos = strrpos($component, '.js')) !== false
 				) {
-					if( $dirseppos = strrpos($component, "/") ) {
+					if( $dirseppos = strrpos($component, '/') ) {
 						$templateFolder = substr($component, 0, $dirseppos);
-						if($jsFilePath == null && strrpos($component, ".js") !== false) {
+						if($jsFilePath == null && strrpos($component, '.js') !== false) {
 							$jsFilePath = substr($component, $dirseppos);
-							while( substr($jsFilePath, 0, 1) == "/" ) {
+							while( substr($jsFilePath, 0, 1) == '/' ) {
 								$jsFilePath = substr($jsFilePath, 1);
 							}
 						}
@@ -838,10 +852,10 @@ namespace OBX\Core {
 			}
 			$sort = intval($sort);
 			if( $jsFilePath == null ) {
-				if( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/script_deferred.js") ) {
+				if( is_file($_SERVER['DOCUMENT_ROOT'].$templateFolder.'/script_deferred.js') ) {
 					$jsFilePath = str_replace(
 						array('//', '///'), array('/', '/'),
-						$templateFolder."/script_deferred.js"
+						$templateFolder.'/script_deferred.js'
 					);
 					if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
 						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = $jsFilePath;
@@ -852,12 +866,12 @@ namespace OBX\Core {
 					return true;
 				}
 			}
-			elseif( is_file($_SERVER["DOCUMENT_ROOT"].$templateFolder."/".$jsFilePath) ) {
+			elseif( is_file($_SERVER['DOCUMENT_ROOT'].$templateFolder.'/'.$jsFilePath) ) {
 				$jsFilePath = str_replace(
 					array('//', '///'), array('/', '/'),
-					$templateFolder."/".$jsFilePath
+					$templateFolder.'/'.$jsFilePath
 				);
-				if( substr($jsFilePath, -3) == ".js" ) {
+				if( substr($jsFilePath, -3) == '.js' ) {
 					if( !in_array($jsFilePath, self::$_arDeferredJSFiles) ) {
 						self::$_arDeferredJSFiles[self::$_deferredFileCounter] = $jsFilePath;
 						self::$_arDeferredJSFilesSort[self::$_deferredFileCounter] = $sort;
@@ -880,34 +894,32 @@ namespace OBX\Core {
 		static public function bxDateToArray($bxDateString, $dayStep = 0) {
 			$bxDateString = trim($bxDateString);
 			if ($bxDateString == 'today') {
-				$bxDateString = \ConvertTimeStamp(time(), "FULL");
+				$bxDateString = \ConvertTimeStamp(time(), 'FULL');
 			}
 			if(strlen($bxDateString)==0) {
 				return array();
 			}
 			$itemDate = array();
-			$itemDate["STRING"] = $bxDateString;
-			$itemDate["Year"] = ConvertDateTime($itemDate["STRING"], "YYYY");
-			$itemDate["Month"] = ConvertDateTime($itemDate["STRING"], "MM");
-			$itemDate["Day"] = ConvertDateTime($itemDate["STRING"], "DD");
-			$itemDate["Hour"] = ConvertDateTime($itemDate["STRING"], "HH");
-			$itemDate["Minute"] = ConvertDateTime($itemDate["STRING"], "MI");
-			$itemDate["Second"] = ConvertDateTime($itemDate["STRING"], "SS");
+			$itemDate['STRING'] = $bxDateString;
+			$itemDate['Year'] = ConvertDateTime($itemDate['STRING'], 'YYYY');
+			$itemDate['Month'] = ConvertDateTime($itemDate['STRING'], 'MM');
+			$itemDate['Day'] = ConvertDateTime($itemDate['STRING'], 'DD');
+			$itemDate['Hour'] = ConvertDateTime($itemDate['STRING'], 'HH');
+			$itemDate['Minute'] = ConvertDateTime($itemDate['STRING'], 'MI');
+			$itemDate['Second'] = ConvertDateTime($itemDate['STRING'], 'SS');
 
-			$itemDate["Day"] = $itemDate["Day"] + $dayStep;
+			$itemDate['Day'] = $itemDate['Day'] + $dayStep;
 
-			$itemDate["TIME_STAMP"] = mktime(
-				$itemDate["Hour"],
-				$itemDate["Minute"],
-				$itemDate["Second"],
-				$itemDate["Month"],
-				$itemDate["Day"],
-				$itemDate["Year"]
+			$itemDate['TIME_STAMP'] = mktime(
+				$itemDate['Hour'],
+				$itemDate['Minute'],
+				$itemDate['Second'],
+				$itemDate['Month'],
+				$itemDate['Day'],
+				$itemDate['Year']
 			);
-			$itemDate["STRING"] = ConvertTimeStamp($itemDate["TIME_STAMP"], "SHORT");
-			$itemDate["STRING_FULL"] = ConvertTimeStamp($itemDate["TIME_STAMP"], "FULL");
-			//echo $itemTimeStamp."<br />";
-			//echo "|".$arItem["DATE"]."|".date("d.m.Y", $itemTimeStamp)."<br />";
+			$itemDate['STRING'] = ConvertTimeStamp($itemDate['TIME_STAMP'], 'SHORT');
+			$itemDate['STRING_FULL'] = ConvertTimeStamp($itemDate['TIME_STAMP'], 'FULL');
 
 			/************************************************************************************
 			 *** Постфиксы для названий ключей чассивов дней недели и месяцев для русского языка
@@ -920,105 +932,105 @@ namespace OBX\Core {
 			 ***	Предложный		Препозитив (Preposition)	О ком? О чём?	RuP
 			 ***/
 
-			switch($itemDate["Month"]) {
+			switch($itemDate['Month']) {
 				case 1:
-					$itemDate["MonthEn"] = "January";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('January');
-					$itemDate["MonthRuG"] = GetMessage('JanuaryG');
+					$itemDate['MonthEn'] = 'January';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('January');
+					$itemDate['MonthRuG'] = GetMessage('JanuaryG');
 					break;
 				case 2:
-					$itemDate["MonthEn"] = "February";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('February');
-					$itemDate["MonthRuG"] = GetMessage('FebruaryG');
+					$itemDate['MonthEn'] = 'February';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('February');
+					$itemDate['MonthRuG'] = GetMessage('FebruaryG');
 					break;
 				case 3:
-					$itemDate["MonthEn"] = "March";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('March');
-					$itemDate["MonthRuG"] = GetMessage('MarchG');
+					$itemDate['MonthEn'] = 'March';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('March');
+					$itemDate['MonthRuG'] = GetMessage('MarchG');
 					break;
 				case 4:
-					$itemDate["MonthEn"] = "April";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('April');
-					$itemDate["MonthRuG"] = GetMessage('AprilG');
+					$itemDate['MonthEn'] = 'April';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('April');
+					$itemDate['MonthRuG'] = GetMessage('AprilG');
 					break;
 				case 5:
-					$itemDate["MonthEn"] = "May";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('May');
-					$itemDate["MonthRuG"] = GetMessage('MayG');
+					$itemDate['MonthEn'] = 'May';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('May');
+					$itemDate['MonthRuG'] = GetMessage('MayG');
 					break;
 				case 6:
-					$itemDate["MonthEn"] = "June";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('June');
-					$itemDate["MonthRuG"] = GetMessage('JuneG');
+					$itemDate['MonthEn'] = 'June';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('June');
+					$itemDate['MonthRuG'] = GetMessage('JuneG');
 					break;
 				case 7:
-					$itemDate["MonthEn"] = "July";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('July');
-					$itemDate["MonthRuG"] = GetMessage('JulyG');
+					$itemDate['MonthEn'] = 'July';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('July');
+					$itemDate['MonthRuG'] = GetMessage('JulyG');
 					break;
 				case 8:
-					$itemDate["MonthEn"] = "August";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('August');
-					$itemDate["MonthRuG"] = GetMessage('AugustG');
+					$itemDate['MonthEn'] = 'August';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('August');
+					$itemDate['MonthRuG'] = GetMessage('AugustG');
 					break;
 				case 9:
-					$itemDate["MonthEn"] = "September";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('September');
-					$itemDate["MonthRuG"] = GetMessage('SeptemberG');
+					$itemDate['MonthEn'] = 'September';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('September');
+					$itemDate['MonthRuG'] = GetMessage('SeptemberG');
 					break;
 				case 10:
-					$itemDate["MonthEn"] = "October";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('October');
-					$itemDate["MonthRuG"] = GetMessage('OctoberG');
+					$itemDate['MonthEn'] = 'October';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('October');
+					$itemDate['MonthRuG'] = GetMessage('OctoberG');
 					break;
 				case 11:
-					$itemDate["MonthEn"] = "November";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('November');
-					$itemDate["MonthRuG"] = GetMessage('NovemberG');
+					$itemDate['MonthEn'] = 'November';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('November');
+					$itemDate['MonthRuG'] = GetMessage('NovemberG');
 					break;
 				case 12:
-					$itemDate["MonthEn"] = "December";
-					$itemDate["MonthRu"] = $itemDate["MonthRuN"] = GetMessage('December');
-					$itemDate["MonthRuG"] = GetMessage('DecemberG');
+					$itemDate['MonthEn'] = 'December';
+					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('December');
+					$itemDate['MonthRuG'] = GetMessage('DecemberG');
 					break;
 			}
 
-			$itemDate["DayOfWeek"] = date("w", $itemDate["TIME_STAMP"]);
-			switch ($itemDate["DayOfWeek"]) {
+			$itemDate['DayOfWeek'] = date('w', $itemDate['TIME_STAMP']);
+			switch ($itemDate['DayOfWeek']) {
 				case 1:
-					$itemDate["DayOfWeekRu"] = $itemDate["DayOfWeekRuN"] = GetMessage('Monday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('MondayA');
-					$itemDate["DayOfWeekEn"] = "Monday";
+					$itemDate['DayOfWeekRu'] = $itemDate['DayOfWeekRuN'] = GetMessage('Monday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('MondayA');
+					$itemDate['DayOfWeekEn'] = 'Monday';
 					break;
 				case 2:
-					$itemDate["DayOfWeekRu"] = GetMessage('Tuesday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('TuesdayA');
-					$itemDate["DayOfWeekEn"] = "Tuesday";
+					$itemDate['DayOfWeekRu'] = GetMessage('Tuesday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('TuesdayA');
+					$itemDate['DayOfWeekEn'] = 'Tuesday';
 					break;
 				case 3:
-					$itemDate["DayOfWeekRu"] = GetMessage('Wednesday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('WednesdayA');
-					$itemDate["DayOfWeekEn"] = "Wednesday";
+					$itemDate['DayOfWeekRu'] = GetMessage('Wednesday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('WednesdayA');
+					$itemDate['DayOfWeekEn'] = 'Wednesday';
 					break;
 				case 4:
-					$itemDate["DayOfWeekRu"] = GetMessage('Thursday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('ThursdayA');
-					$itemDate["DayOfWeekEn"] = "Thursday";
+					$itemDate['DayOfWeekRu'] = GetMessage('Thursday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('ThursdayA');
+					$itemDate['DayOfWeekEn'] = 'Thursday';
 					break;
 				case 5:
-					$itemDate["DayOfWeekRu"] = GetMessage('Friday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('FridayA');
-					$itemDate["DayOfWeekEn"] = "Friday";
+					$itemDate['DayOfWeekRu'] = GetMessage('Friday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('FridayA');
+					$itemDate['DayOfWeekEn'] = 'Friday';
 					break;
 				case 6:
-					$itemDate["DayOfWeekRu"] = GetMessage('Saturday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('SaturdayA');
-					$itemDate["DayOfWeekEn"] = "Saturday";
+					$itemDate['DayOfWeekRu'] = GetMessage('Saturday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('SaturdayA');
+					$itemDate['DayOfWeekEn'] = 'Saturday';
 					break;
 				case 7:
-					$itemDate["DayOfWeekRu"] = GetMessage('Sunday');
-					$itemDate["DayOfWeekRuA"] = GetMessage('SundayA');
-					$itemDate["DayOfWeekEn"] = "Sunday";
+					$itemDate['DayOfWeekRu'] = GetMessage('Sunday');
+					$itemDate['DayOfWeekRuA'] = GetMessage('SundayA');
+					$itemDate['DayOfWeekEn'] = 'Sunday';
 			}
 
 			return $itemDate;
@@ -1125,14 +1137,14 @@ namespace OBX\Core {
 					}
 					$arCountFuncCallWithTitleKey[$collapse]++;
 
-					$elemTitle = $collapse."#".$arCountFuncCallWithTitleKey[$collapse];
-					$elemId = rand(1,500).$collapse."#".$arCountFuncCallWithTitleKey[$collapse];
+					$elemTitle = $collapse.'#'.$arCountFuncCallWithTitleKey[$collapse];
+					$elemId = rand(1,500).$collapse.'#'.$arCountFuncCallWithTitleKey[$collapse];
 				}
 				else {
-					$elemTitle = "dData#".$arCountFuncCall;
+					$elemTitle = 'dData#'.$arCountFuncCall;
 					$elemId = rand(1,500).$arCountFuncCall;
 				}
-				$elemId = str_replace(array("'", '"'), "_", $elemId);
+				$elemId = str_replace(array("'", '"'), '_', $elemId);
 			}
 			?>
 			<?php if($bCollapse):?>

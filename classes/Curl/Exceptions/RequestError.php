@@ -17,6 +17,7 @@ class RequestError extends \ErrorException {
 	const E_PERM_DENIED = 3;
 	const E_FILE_NAME_TOO_LOG = 4;
 	const E_NO_ACCESS_DWN_FOLDER = 5;
+	const E_FILE_SAVE_FAILED = 6;
 	static protected $_arLangMessages = null;
 	static protected $_bCURLChecked = false;
 
@@ -28,7 +29,7 @@ class RequestError extends \ErrorException {
 	 * @param int $lineno [optional] The line number where the exception is thrown.
 	 * @param \Exception $previous [optional] The previous exception used for the exception chaining.
 	 */
-	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous) {
+	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous = null) {
 		if( self::$_arLangMessages === null ) {
 			self::$_arLangMessages = IncludeModuleLangFile(__FILE__, false, true);
 		}
@@ -48,6 +49,9 @@ class RequestError extends \ErrorException {
 					break;
 				case self::E_NO_ACCESS_DWN_FOLDER:
 					$message = self::$_arLangMessages['OBX_CORE_CURL_E_NO_ACCESS_DWN_FOLDER'];
+					break;
+				case self::E_FILE_SAVE_FAILED:
+					$message = self::$_arLangMessages['OBX_CORE_CURL_E_FILE_SAVE_FAILED'];
 					break;
 			}
 		}

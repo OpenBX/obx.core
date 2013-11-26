@@ -19,7 +19,27 @@ class TestRequestBXFile extends _Request {
 	public function testSaveToBXFile() {
 		$Request = new RequestBXFile(self::$_urlTestFiles.'/favicon.png');
 		$Request->download();
-		$Request->saveToBXFile('/upload//obx.core/test/RequestBXFile');
+		$fileID = $Request->saveToBXFile('/upload//obx.core/test/RequestBXFile');
+		$this->assertTrue(($fileID > 0));
+		$arFile = \CFile::GetFileArray($fileID);
+		$this->assertEquals('favicon.png', $arFile['ORIGINAL_NAME']);
+		$this->assertEquals('image/png', $arFile['CONTENT_TYPE']);
+		$this->assertFileExists(self::$_docRoot.'/upload/'.$arFile['SUBDIR'].'/'.$arFile['FILE_NAME']);
+		\CFile::DoDelete($arFile['ID']);
+		$this->assertFileNotExists(self::$_docRoot.'/upload/'.$arFile['SUBDIR'].'/'.$arFile['FILE_NAME']);
+	}
+
+	public function testSaveToBXFileAfterGetContent() {
+		$Request = new RequestBXFile(self::$_urlTestFiles.'/favicon.png');
+		$Request->send();
+		$fileID = $Request->saveToBXFile('/upload//obx.core/test/RequestBXFile');
+		$this->assertTrue(($fileID > 0));
+		$arFile = \CFile::GetFileArray($fileID);
+		$this->assertEquals('favicon.png', $arFile['ORIGINAL_NAME']);
+		$this->assertEquals('image/png', $arFile['CONTENT_TYPE']);
+		$this->assertFileExists(self::$_docRoot.'/upload/'.$arFile['SUBDIR'].'/'.$arFile['FILE_NAME']);
+		\CFile::DoDelete($arFile['ID']);
+		$this->assertFileNotExists(self::$_docRoot.'/upload/'.$arFile['SUBDIR'].'/'.$arFile['FILE_NAME']);
 	}
 
 	public function testSaveToIBElement() {
