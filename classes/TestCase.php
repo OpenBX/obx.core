@@ -35,6 +35,23 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	static protected $_bPathVarInit = false;
 	static protected $_docRoot = '';
 	static protected $_modulesDir = '';
+	static protected $_arTestIBlockType = null;
+	static protected $_arTestIBlocks = array();
+	static protected $_arTestIBProps = array();
+	/**
+	 * Идентификатор тестового пользователя
+	 * @var int
+	 * @static
+	 * @access protected
+	 */
+	static protected $_arTestUser = array();
+	/**
+	 * Идентификатор ещё одого тестового пользователя
+	 * @var int
+	 * @static
+	 * @access protected
+	 */
+	static protected $_arSomeOtherTestUser = array();
 
 	final static protected function _initPathVar() {
 		if(true !== self::$_bPathVarInit) {
@@ -58,21 +75,6 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		}
 		$this->assertEquals(0, ini_get('max_execution_time'));
 	}
-
-	/**
-	 * Идентификатор тестового пользователя
-	 * @var int
-	 * @static
-	 * @access protected
-	 */
-	static protected $_arTestUser = array();
-	/**
-	 * Идентификатор ещё одого тестового пользователя
-	 * @var int
-	 * @static
-	 * @access protected
-	 */
-	static protected $_arSomeOtherTestUser = array();
 
 	static public function includeLang($file) {
 		$file = str_replace(array('\\', '//'), '/', $file);
@@ -157,7 +159,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		}
 	}
 
-	protected function getBXLangList() {
+	public function getBXLangList() {
 		$rsLang = \CLanguage::GetList($by='sort', $sort='asc', $arLangFilter=array('ACTIVE' => 'Y'));
 		$arLangList = array();
 		while( $arLang = $rsLang->Fetch() ) {
@@ -166,7 +168,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		return $arLangList;
 	}
 
-	protected function getBXSitesArray() {
+	public function getBXSitesArray() {
 		$rsSites = \CSite::GetList($by='sort', $order='desc', array(''));
 		$arSites = array();
 		while ($arSite = $rsSites->Fetch()) {
@@ -174,9 +176,145 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		}
 		return $arSites;
 	}
-	protected function getBXSitesList() {
+	public function getBXSitesList() {
 		$arSites = $this->getBXSitesArray();
 		return array_keys($arSites);
 	}
 
+	public function getTestIBlockType() {
+		if(self::$_arTestIBlockType !== null) {
+			return self::$_arTestIBlockType;
+		}
+		$testIBlockType = 'obx_test_type';
+		$rsIBlockType = \CIBlockType::GetByID($testIBlockType);
+		self::$_arTestIBlockType = $rsIBlockType->Fetch();
+		if( !self::$_arTestIBlockType ) {
+			$arIBlockTypeFields = array(
+				'ID'=>$testIBlockType,
+				'SECTIONS'=>'Y',
+				'IN_RSS'=>'N',
+				'SORT'=>1000,
+				'LANG'=>Array(
+					'en'=>Array(
+						'NAME'=>'OpenBX: Test info blocks',
+						'SECTION_NAME'=>'Sections',
+						'ELEMENT_NAME'=>'Elements'
+					),
+					'ru'=>Array(
+						'NAME'=>'OpenBX: Test info blocks',
+						'SECTION_NAME'=>'Sections',
+						'ELEMENT_NAME'=>'Elements'
+					)
+				)
+			);
+			$obBlockType = new \CIBlockType();
+			global $DB;
+			/** @global \CDatabase $DB */
+			$DB->StartTransaction();
+			$res = $obBlockType->Add($arIBlockTypeFields);
+			if(!$res) {
+				$DB->Rollback();
+				$this->fail('Error: '.$obBlockType->LAST_ERROR);
+			}
+			else {
+				$DB->Commit();
+				$rsIBlockType = \CIBlockType::GetByID($testIBlockType);
+				self::$_arTestIBlockType = $rsIBlockType->Fetch();
+			}
+		}
+		return self::$_arTestIBlockType;
+	}
+
+	public function getTestIBlock($arIBlockFields, $bFailOnNonExist = false) {
+		$arTestIBType = $this->getTestIBlockType();
+		if( !array_key_exists('CODE', $arIBlockFields) ) {
+			$this->fail('Error: can`t create ');
+		}
+		if( !array_key_exists('NAME', $arIBlockFields) ) {
+			$arIBlockFields['NAME'] = $arIBlockFields['CODE'];
+		}
+		if( array_key_exists($arIBlockFields['CODE'], self::$_arTestIBlocks) ) {
+			return self::$_arTestIBlocks[$arIBlockFields['CODE']];
+		}
+		$rsTestIBlock = \CIBlock::GetList(array(), array(
+			'CODE' => $arIBlockFields['CODE'],
+			'IBLOCK_TYPE_ID' => $arTestIBType['ID']
+		));
+		$arTestIBlock = $rsTestIBlock->Fetch();
+		if(!$arTestIBlock) {
+			if($bFailOnNonExist === true) {
+				$this->fail('Error: infoblock "'.$arIBlockFields['CODE'].'" does not exist');
+			}
+			$arIBlockFieldsDef = array(
+				'ACTIVE' => 'Y',
+				'LIST_PAGE_URL' => '',
+				'DETAIL_PAGE_URL' => '',
+				'IBLOCK_TYPE_ID' => $arTestIBType['ID'],
+				'SITE_ID' => $this->getBXSitesList(),
+				'SORT' => 100,
+				'DESCRIPTION' => 'OpenBX: infoblock for unit testing',
+				'GROUP_ID' => Array('2'=>'W')
+			);
+			$arIBlockFields = array_merge($arIBlockFieldsDef, $arIBlockFields);
+			/** @global \CDatabase $DB */
+			global $DB;
+			$DB->StartTransaction();
+			$obIBlock = new \CIBlock();
+			$newIBlockID = $obIBlock->Add($arIBlockFields);
+			if(!$newIBlockID) {
+				$this->fail('Error: '.$obIBlock->LAST_ERROR);
+				$DB->Rollback();
+			}
+			else {
+				$DB->Commit();
+				$rsTestIBlock = \CIBlock::GetList(array(), array(
+					'CODE' => $arIBlockFields['CODE'],
+					'IBLOCK_TYPE_ID' => $arTestIBType['ID']
+				));
+				$arTestIBlock = $rsTestIBlock->Fetch();
+				if(!$arTestIBlock) {
+					$this->fail('Error: Can`t get just created infoblock');
+				}
+			}
+		}
+		self::$_arTestIBlocks[$arIBlockFields['CODE']] = $arTestIBlock;
+		return self::$_arTestIBlocks[$arIBlockFields['CODE']];
+	}
+
+	/**
+	 * @param int|string|array $iblockCode
+	 * @param $arPropFields
+	 */
+	public function getIBlockProp($iblockCode, $arPropFields) {
+		if(is_array($iblockCode)) {
+			$arIBlockFields = $iblockCode;
+		}
+		elseif(is_numeric($iblockCode)) {
+			$arIBlockFields = array('ID' => intval($iblockCode));
+		}
+		else {
+			$arIBlockFields = array('CODE' => $iblockCode);
+		}
+		$arTestIBlock = $this->getTestIBlock($arIBlockFields, true);
+
+		if(!array_key_exists('CODE', $arPropFields)) {
+			$this->fail('Error: Infoblock property code is empty');
+		}
+
+
+
+		if(!array_key_exists('NAME', $arPropFields) || empty($arPropFields['NAME']) ) {
+			$arIBlockFields['NAME'] = $arIBlockFields['CODE'];
+		}
+		if(array_key_exists('PROPERTY_TYPE', $arIBlockFields) && $arIBlockFields['PROPERTY_TYPE'] == 'L') {
+
+		}
+		//$arIBlockFields['']
+		$arPropFieldsDef = array(
+			'IBLOCK_ID' => $arTestIBlock['ID'],
+			'ACTIVE' => 'Y',
+			'SORT' => '100',
+			'PROPERTY_TYPE' => 'S',
+		);
+	}
 }

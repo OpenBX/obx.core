@@ -16,7 +16,7 @@ final class OBX_Test_VisitorHitDBS extends TestCase {
 	static private $_VisitorsHitDBS = null;
 	static private $_arVisitorsHitsData = array();
 
-	public function getCurDir() {
+	static public function getCurDir() {
 		return dirname(__FILE__);
 	}
 

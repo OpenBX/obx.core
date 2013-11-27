@@ -106,10 +106,10 @@ class RequestBXFile extends Request {
 		$el = new \CIBlockElement();
 		$arFields = array();
 		if($target === self::F_IB_IMG_PREVIEW) {
-			$arFile['DETAIL_PICTURE'] = $arFile;
+			$arFields['PREVIEW_PICTURE'] = $arFile;
 		}
 		else {
-			$arFile['PREVIEW_PICTURE'] = $arFile;
+			$arFields['DETAIL_PICTURE'] = $arFile;
 		}
 		return $el->Update($elementID, $arFields);
 

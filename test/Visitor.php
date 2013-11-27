@@ -16,7 +16,7 @@ final class OBX_Test_Visitor extends TestCase {
 	static private $_arVisitorsData = array();
 	static private $_arVisitorsIDs = array();
 
-	public function getCurDir() {
+	static public function getCurDir() {
 		return dirname(__FILE__);
 	}
 
