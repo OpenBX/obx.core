@@ -83,10 +83,51 @@ class TestRequestBXFile extends _Request {
 	}
 
 	public function testSaveToIBProp() {
-		
+		$RequestPng = new RequestBXFile(self::$_urlTestFiles.'/favicon.png');
+		$RequestPng->download();
+		$RequestJpg = new RequestBXFile(self::$_urlTestFiles.'/favicon.jpg');
+		$RequestJpg->download();
+		$arTestIBlock = $this->getTestIBlock(array('CODE' => 'testRequest'));
+		$arTestProperty = $this->getTestIBlockProp('testRequest', array(
+			'PROPERTY_TYPE' => 'F',
+			'CODE' => 'GALLERY',
+			'MULTIPLE' => 'Y'
+		));
+		$obElement = new \CIBlockElement();
+		$eltID = $obElement->Add(array(
+			'IBLOCK_ID' => $arTestIBlock['ID'],
+			'NAME' => 'test'
+		));
+		$this->assertFalse(empty($eltID));
+		//$eltID = 21952;
+		$bSuccessPng = $RequestPng->saveToIBProp(
+			$arTestIBlock['ID'],
+			$eltID,
+			$arTestProperty['CODE'],
+			RequestBXFile::F_IB_IMG_PROP_REPLACE
+		);
+		$bSuccessJpg = $RequestJpg->saveToIBProp(
+			$arTestIBlock['ID'],
+			$eltID,
+			$arTestProperty['CODE'],
+			RequestBXFile::F_IB_IMG_PROP_APPEND
+		);
+		$this->assertTrue($bSuccessPng);
+		$this->assertTrue($bSuccessJpg);
+		$rsElement = \CIBlockElement::GetByID($eltID);
+		$RecElement = $rsElement->GetNextElement();
+		$arElement = $RecElement->GetFields();
+		$arElement['PROPERTIES'] = $RecElement->GetProperties();
+		$this->assertArrayHasKey($arTestProperty['CODE'], $arElement['PROPERTIES']);
+		$this->assertEquals($arTestProperty['ID'], $arElement['PROPERTIES'][$arTestProperty['CODE']]['ID']);
+		$this->assertEquals(2, count($arElement['PROPERTIES'][$arTestProperty['CODE']]['VALUE']));
+		foreach($arElement['PROPERTIES'][$arTestProperty['CODE']]['VALUE'] as $fileID) {
+			$arFile = \CFile::GetFileArray($fileID);
+			$this->assertEquals(16, $arFile['WIDTH']);
+			$this->assertEquals(16, $arFile['HEIGHT']);
+		}
+		$this->assertTrue(\CIBlockElement::Delete($eltID));
 	}
-
-
 
 }
  

@@ -225,10 +225,15 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		return self::$_arTestIBlockType;
 	}
 
+	/**
+	 * @param $arIBlockFields
+	 * @param bool $bFailOnNonExist
+	 * @return mixed
+	 */
 	public function getTestIBlock($arIBlockFields, $bFailOnNonExist = false) {
 		$arTestIBType = $this->getTestIBlockType();
 		if( !array_key_exists('CODE', $arIBlockFields) ) {
-			$this->fail('Error: can`t create ');
+			$this->fail('Error: can`t create');
 		}
 		if( !array_key_exists('NAME', $arIBlockFields) ) {
 			$arIBlockFields['NAME'] = $arIBlockFields['CODE'];
@@ -262,8 +267,8 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 			$obIBlock = new \CIBlock();
 			$newIBlockID = $obIBlock->Add($arIBlockFields);
 			if(!$newIBlockID) {
-				$this->fail('Error: '.$obIBlock->LAST_ERROR);
 				$DB->Rollback();
+				$this->fail('Error: '.$obIBlock->LAST_ERROR);
 			}
 			else {
 				$DB->Commit();
@@ -282,39 +287,79 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @param int|string|array $iblockCode
+	 * @param int|string $iblockCode
 	 * @param $arPropFields
+	 * @param bool $bFailOnNonExist
+	 * @return array
 	 */
-	public function getIBlockProp($iblockCode, $arPropFields) {
-		if(is_array($iblockCode)) {
-			$arIBlockFields = $iblockCode;
-		}
-		elseif(is_numeric($iblockCode)) {
-			$arIBlockFields = array('ID' => intval($iblockCode));
-		}
-		else {
-			$arIBlockFields = array('CODE' => $iblockCode);
-		}
-		$arTestIBlock = $this->getTestIBlock($arIBlockFields, true);
-
+	public function getTestIBlockProp($iblockCode, $arPropFields, $bFailOnNonExist = false) {
+		$arTestIBlock = $this->getTestIBlock(array('CODE' => $iblockCode), true);
+		$this->assertTrue(is_array($arTestIBlock));
+		$this->assertArrayHasKey('ID', $arTestIBlock);
 		if(!array_key_exists('CODE', $arPropFields)) {
 			$this->fail('Error: Infoblock property code is empty');
 		}
 
-
-
-		if(!array_key_exists('NAME', $arPropFields) || empty($arPropFields['NAME']) ) {
-			$arIBlockFields['NAME'] = $arIBlockFields['CODE'];
+		if( array_key_exists($arTestIBlock['CODE'], self::$_arTestIBProps)
+			&& array_key_exists($arPropFields['CODE'], self::$_arTestIBProps[$arTestIBlock['CODE']])
+		) {
+			return self::$_arTestIBProps[$arTestIBlock['CODE']][$arPropFields['CODE']];
 		}
-		if(array_key_exists('PROPERTY_TYPE', $arIBlockFields) && $arIBlockFields['PROPERTY_TYPE'] == 'L') {
 
-		}
-		//$arIBlockFields['']
-		$arPropFieldsDef = array(
+		$rsProperty = \CIBlockProperty::GetList(array(), array(
 			'IBLOCK_ID' => $arTestIBlock['ID'],
-			'ACTIVE' => 'Y',
-			'SORT' => '100',
-			'PROPERTY_TYPE' => 'S',
-		);
+			'CODE' => $arPropFields['CODE']
+		));
+
+		$arProperty = $rsProperty->Fetch();
+		if(!$arProperty) {
+			if($bFailOnNonExist) {
+				$this->fail('Error: Property CODE="'.$arPropFields['CODE'].'" does not exist');
+			}
+			if(!array_key_exists('NAME', $arPropFields) || empty($arPropFields['NAME']) ) {
+				$arPropFields['NAME'] = $arPropFields['CODE'];
+			}
+			if( array_key_exists('PROPERTY_TYPE', $arPropFields)
+				&& $arPropFields['PROPERTY_TYPE'] == 'L'
+				&& (
+					!is_array($arPropFields['VALUES'])
+					||
+					empty($arPropFields['VALUES'])
+				)
+			) {
+				$this->fail('Error: Can\'t create property of type = list without values');
+			}
+			$arPropFieldsDef = array(
+				'IBLOCK_ID' => $arTestIBlock['ID'],
+				'PROPERTY_TYPE' => 'S',
+				'MULTIPLE' => 'N',
+				'ACTIVE' => 'Y',
+				'SORT' => '100'
+			);
+			$arPropFields = array_merge($arPropFieldsDef, $arPropFields);
+			$obProperty = new \CIBlockProperty();
+			/** @global \CDatabase $DB */
+			global $DB;
+			$DB->StartTransaction();
+			$newPropID = $obProperty->Add($arPropFields);
+			if($newPropID>0) {
+				$DB->Commit();
+				$rsProperty = \CIBlockProperty::GetByID($newPropID);
+				$arProperty = $rsProperty->Fetch();
+				if(!$arProperty) {
+					$this->fail('Error: can\'t get just created infoblock property');
+				}
+			}
+			else {
+				$DB->Rollback();
+				$this->fail('Error: Can\'t create property: '.$obProperty->LAST_ERROR);
+			}
+
+		}
+		if( !array_key_exists($arTestIBlock['CODE'], self::$_arTestIBProps) ) {
+			self::$_arTestIBProps[$arTestIBlock['CODE']] = array();
+		}
+		self::$_arTestIBProps[$arTestIBlock['CODE']][$arProperty['CODE']] = $arProperty;
+		return self::$_arTestIBProps[$arTestIBlock['CODE']][$arPropFields['CODE']];
 	}
 }

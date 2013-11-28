@@ -77,19 +77,9 @@ class RequestBXFile extends Request {
 	 * @throws RequestError
 	 */
 	public function saveToIBElement($elementID, $target = self::F_IB_IMG_DETAIL, $description = '') {
-		static $arAcceptTypes = array(
-			'image/png' => 'png',
-			'image/jpeg' => 'jpg',
-			'image/gif' => 'gif'
-		);
 		if(true !== $this->_bRequestComplete && true !== $this->_bDownloadComplete) {
 			return false;
 		}
-		$contentType = $this->getContentType();
-		if( !array_key_exists($contentType, $arAcceptTypes) ) {
-			return false;
-		}
-
 		if($this->_dwnName === null) {
 			$this->_dwnName = static::generateDownloadName();
 		}
@@ -121,6 +111,7 @@ class RequestBXFile extends Request {
 	 * @param int|string $propCode
 	 * @param int $action
 	 * @param string $description
+	 * @throws RequestError
 	 * @return bool
 	 */
 	public function saveToIBProp($iblockID, $elementID, $propCode, $action = self::F_IB_IMG_PROP_APPEND, $description = '') {
@@ -151,30 +142,48 @@ class RequestBXFile extends Request {
 			return false;
 		}
 
-		$fileID = $this->saveToBXFile('iblock', 0, $description, 'iblock');
-		if($fileID < 1) {
-			return false;
+		if($this->_dwnName === null) {
+			$this->_dwnName = static::generateDownloadName();
+		}
+		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_dwnName) ) {
+			throw new RequestError('', RequestError::E_PERM_DENIED);
+		}
+		$saveDirFolder = static::DOWNLOAD_FOLDER.'/'.$this->_dwnName;
+		$saveFileRelPath = $saveDirFolder.'/'.$this->_originalName.'.'.$this->_originalExt;
+		$this->saveToFile($saveFileRelPath);
+		$arFile = \CFile::MakeFileArray($saveFileRelPath);
+		if(is_string($description) && !empty($description)) {
+			$arFile['description'] = $description;
 		}
 
 		$arPropValues = array();
 		if($action == self::F_IB_IMG_PROP_APPEND && $arProp['MULTIPLE'] == 'Y') {
-			$rsPropValues = \CIBlockElement::GetProperty($iblockID, $elementID, $by = 'sort', $order = 'asc', array(
+			$rsPropValues = \CIBlockElement::GetProperty($iblockID, $elementID, 'sort', 'asc', array(
 				'ID' => $arProp['ID']
 			));
 			$arPropValues = array();
-			if($arValue = $rsPropValues->Fetch()) {
-				$arPropValues[$arValue['ID']] = $arValue['VALUE'];
-				if(!is_array($arPropValues[$arValue['ID']])) {
-					$arPropValues[$arValue['ID']] = array($arPropValues[$arValue['ID']]);
+			$iValue = 0;
+			$curPropID = 0;
+			while($arValue = $rsPropValues->Fetch()) {
+				$curPropID = $arValue['ID'];
+				if( !array_key_exists($curPropID, $arPropValues) ) {
+					$arPropValues[$curPropID] = array();
 				}
-				$arPropValues[$arValue['ID']][] = $fileID;
+				if(!empty($arValue['VALUE'])) {
+					$arExistFile = \CFile::GetFileArray($arValue['VALUE']);
+					if($arExistFile) {
+						$arPropValues[$curPropID][$iValue] = \CFile::MakeFileArray($arExistFile['SRC']);
+						$arPropValues[$curPropID][$iValue]['old_file'] = $arValue['VALUE'];
+						$iValue++;
+					}
+				}
 			}
-			else {
-				$arPropValues[$arProp['ID']] = $fileID;
+			if($arProp['ID'] == $curPropID) {
+				$arPropValues[$curPropID][$iValue] = $arFile;
 			}
 		}
 		else {
-			$arPropValues[$arProp['ID']] = $fileID;
+			$arPropValues[$arProp['ID']] = $arFile;
 		}
 		\CIBlockElement::SetPropertyValuesEx($elementID, $iblockID, $arPropValues);
 		return true;

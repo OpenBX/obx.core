@@ -26,6 +26,9 @@ namespace OBX\Core {
 		static protected $arIBlockPropCodeIndex = array();
 
 		static protected function addIBlock2PropCache($IBLOCK_ID) {
+			if(!is_numeric($IBLOCK_ID)) {
+				return;
+			}
 			$IBLOCK_ID = intval($IBLOCK_ID);
 			if( !array_key_exists($IBLOCK_ID, self::$arIBlockPropCache) ) {
 				self::$arIBlockPropCache[$IBLOCK_ID] = array();
@@ -62,7 +65,7 @@ namespace OBX\Core {
 			$PROP_CODE = strtoupper($PROP_CODE);
 
 			self::addIBlock2PropCache($IBLOCK_ID);
-			if ( array_key_exists($PROP_CODE, self::$arPropIdToPropCode[$IBLOCK_ID]) ) {
+			if ( array_key_exists($PROP_CODE, self::$arIBlockPropCodeIndex[$IBLOCK_ID]) ) {
 				$arProp = self::$arIBlockPropCodeIndex[$IBLOCK_ID][$PROP_CODE];
 				return $arProp['ID'];
 			}
