@@ -38,6 +38,7 @@ $arModuleClasses = array(
 	,'OBX\Core\Curl\RequestBXFile'				=> 'classes/Curl/RequestBXFile.php'
 	,'OBX\Core\Curl\MultiRequest'				=> 'classes/Curl/MultiRequest.php'
 	,'OBX\Core\Http\Download'					=> 'classes/Http/Download.php'
+	,'OBX\Core\Http\Exceptions\DownloadError'	=> 'classes/Http/Exceptions/DownloadError.php'
 	,'OBX\Core\Http\Request'					=> 'classes/Http/Request.php'
 	,'OBX\Core\Wizard\ImportIBlock'				=> 'classes/WizardImportIBlock.php'
 	,'OBX\Core\Settings\ISettings'				=> 'classes/Settings.php'
