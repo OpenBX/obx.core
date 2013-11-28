@@ -18,6 +18,7 @@ namespace OBX\Core\Http;
  * как в качестве базового класса для клиента так и для сервера
  */
 class Request {
+
 	static public function getFileNameFromUrl($url, &$fileExt = null, &$baseName = null) {
 		$arUrl = parse_url($url);
 		$fileName = trim(urldecode(basename($arUrl['path'])));

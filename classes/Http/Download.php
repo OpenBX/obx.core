@@ -28,6 +28,8 @@ class Download extends CMessagePoolDecorator {
 	static protected $_arInstances = array();
 	static protected $_bDefaultDwnDirChecked = false;
 
+	protected $_url = null;
+	protected $_urlSign = null;
 	protected $_currentStatus = null;
 	protected $_htmlStatusTemplate = <<<HTML
 
@@ -63,17 +65,20 @@ HTML;
 	}
 
 	/**
-	 * Для нужд тестирования
+	 * Метод для тестирования класса
 	 */
 	static public function _clearInstanceCache() {
 		static::$_arInstances = array();
 	}
 
-	protected function __construct($url) {
+	protected function __construct($url, $urlSign = null) {
 		$this->_timeLimit = static::DEF_TIME_LIMIT;
 		$this->_userAgent = static::DEF_USER_AGENT;
 		static::_checkDefaultDwnDir();
-
+		if($urlSign === null) {
+			$this->_url = $url;
+			$this->_urlSign = md5($url);
+		}
 	}
 	protected function __clone() {}
 	function __destruct() {}
