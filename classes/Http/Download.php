@@ -75,8 +75,10 @@ HTML;
 		$this->_timeLimit = static::DEF_TIME_LIMIT;
 		$this->_userAgent = static::DEF_USER_AGENT;
 		static::_checkDefaultDwnDir();
+		$arUrl = parse_url($url);
+		$this->_url = $url;
+
 		if($urlSign === null) {
-			$this->_url = $url;
 			$this->_urlSign = md5($url);
 		}
 	}
