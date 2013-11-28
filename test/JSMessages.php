@@ -15,7 +15,7 @@ require_once dirname(__FILE__).'/../classes/TestCase.php';
 
 class JSMessagesTest extends TestCase
 {
-	public function getCurDir() {
+	static public function getCurDir() {
 		return dirname(__FILE__);
 	}
 	public function testBuffer(){

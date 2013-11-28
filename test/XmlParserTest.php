@@ -14,7 +14,7 @@ use OBX\Core\Xml\Parser as XmlParser;
 use OBX\Core\Xml\Exceptions\ParserError as XmlParserError;
 
 class XmlParserTest extends TestCase {
-	public function getCurDir() {
+	static public function getCurDir() {
 		return dirname(__FILE__);
 	}
 
