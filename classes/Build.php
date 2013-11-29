@@ -2748,6 +2748,7 @@ HELP;
 			$arReleasesList = $this->_arReleases;
 			uksort($arReleasesList, 'OBX_Build::compareVersionsDesc');
 			foreach($arReleasesList as $releaseVersion => $arRelease) {
+				if($arRelease['STATE'] == 'plan') continue;
 				$changeLog .= "\n * \n * [".$releaseVersion."] \n";
 				$arRelease['DESCRIPTION_RAW'] = str_replace("\n\t\t\t", "\n", $arRelease['DESCRIPTION_RAW']);
 				$changeLog .= " * ".str_replace("\n", "\n * ", $arRelease['DESCRIPTION_RAW']);
