@@ -206,7 +206,7 @@ class OBX_Build {
 					$Dependency->_dependencyVersion = $Dependency->_lastPubReleaseVersion;
 				}
 				elseif($arModuleMaxVersion['VERSION'] == 'last') {
-					$Dependency->_dependencyVersion = $Dependency->_version;
+					$Dependency->_dependencyVersion = $Dependency->_lastDevReleaseVersion;
 				}
 				else {
 					$Dependency->_dependencyVersion = $arModuleMaxVersion['VERSION'];
