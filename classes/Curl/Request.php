@@ -737,7 +737,7 @@ class Request {
 		if(null === $this->_dwnName) {
 			$this->_dwnName = static::generateDownloadName();
 		}
-		$this->_dwnFileHandler = fopen($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, 'w');
+		$this->_dwnFileHandler = fopen($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, 'wb');
 		if( !$this->_dwnFileHandler ) {
 			throw new RequestError(GetMessage('OBX\Core\Curl\Request::E_OPEN_DWN_FAILED'), RequestError::E_PERM_DENIED);
 		}
@@ -964,10 +964,10 @@ class Request {
 					$this->_contentType = $arHeader['Content-Type']['VALUE_MAIN'];
 				}
 				if( $this->_contentCharset === null
-					&& array_key_exists('CHARSET', $arHeader['Content-Type'])
-					&& $arHeader['Content-Type']['CHARSET'] != null
+					&& array_key_exists('CHARSET', $arHeader)
+					&& $arHeader['CHARSET'] != null
 				) {
-					$this->_contentCharset = $arHeader['Content-Type']['CHARSET'];
+					$this->_contentCharset = $arHeader['CHARSET'];
 				}
 			}
 		}

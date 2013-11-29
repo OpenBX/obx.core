@@ -17,13 +17,11 @@
 global $DBType, $DB;
 $DBType = strtolower($DB->type);
 
-define('OBX_MAGIC_WORD', '__I_KNOW_WHAT_I_DO__');
-define('I_KNOW_WHAT_I_DO', '__I_KNOW_WHAT_I_DO__');
-
 $arModuleClasses = array(
 	 'OBX\Core\Tools'							=> 'classes/Tools.php'
 	,'OBX_Tools'								=> 'classes/Tools.php'
 	,'OBX\Core\EventD'							=> 'classes/EventD.php'
+	,'OBX\Core\Exceptions\AError'				=> 'classes/Exceptions/AError.php'
 	,'OBX\Core\JSMessages'						=> 'classes/JSMessages.php'
 	,'OBX\Core\IMessagePool'					=> 'classes/MessagePool.php'
 	,'OBX\Core\IMessagePoolStatic'				=> 'classes/MessagePool.php'

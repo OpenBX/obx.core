@@ -8,12 +8,12 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+namespace OBX\Core\Test;
 use OBX\Core\Http\Download;
-use OBX\Core\Test\TestCase;
 
 class TestDownloadBigFile extends TestCase {
 
-	static protected $_urlBigFile = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
+	static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
 
 	static public function getCurDir() {
 		return __DIR__;
@@ -28,7 +28,7 @@ class TestDownloadBigFile extends TestCase {
 			$Download->loadFile();
 			$iSteps++;
 		}
-		while($Download->isFinished());
+		while(!$Download->isFinished());
 	}
 
 	public function testDownloadOnOneInstance() {

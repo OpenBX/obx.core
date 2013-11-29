@@ -12,8 +12,16 @@ namespace OBX\Core;
 
 class Mime {
 
-	static protected $_arMimeExt = null;
+	const GRP_UNKNOWN = null;
+	const GRP_TEXT = 'text';
+	const GRP_IMAGE = 'image';
+	const GRP_ARCH = 'archive';
+	const GRP_DOC = 'document';
+	const GRP_AUDIO = 'audio';
+	const GRP_VIDEO = 'video';
 
+	static protected $_arMimeExt = null;
+	static protected $_arMimeGroups = null;
 	static protected $_arMimeText = array(
 		'application/json' => 'json',
 		'text/html' => 'html',
@@ -43,6 +51,7 @@ class Mime {
 		'application/x-bzip-compressed-tar' => 'tar.bz2',
 		'application/x-bzip2-compressed-tar' => 'tar.bz2',
 		'application/zip' => 'zip',
+		'application/x-7z-compressed' => '7z',
 		'application/x-gzip' => 'gz',
 		'application/x-gzip-compressed-tar' => 'tar.gz',
 		'application/x-xz' => 'xz',
@@ -119,14 +128,36 @@ class Mime {
 
 
 	static public function _init() {
-		if( static::$_arMimeExt === null ) {
+		if( null === static::$_arMimeExt ) {
 			static::$_arMimeExt = array_merge(
 				static::$_arMimeText,
 				static::$_arMimeImages,
 				static::$_arMimeCompressedTypes,
+				static::$_arMimeDocuments,
 				static::$_arMimeAudio,
 				static::$_arMimeVideo
 			);
+		}
+		if( null === static::$_arMimeGroups ) {
+			static::$_arMimeGroups = array();
+			foreach(static::$_arMimeText as $type => $ext) {
+				static::$_arMimeGroups[$type] = static::GRP_TEXT;
+			}
+			foreach(static::$_arMimeImages as $type => $ext) {
+				static::$_arMimeGroups[$type] = static::GRP_IMAGE;
+			}
+			foreach(static::$_arMimeCompressedTypes as $type => $ext) {
+				static::$_arMimeGroups[$type] = static::GRP_ARCH;
+			}
+			foreach(static::$_arMimeDocuments as $type => $ext) {
+				static::$_arMimeGroups[$type] = static::GRP_DOC;
+			}
+			foreach(static::$_arMimeAudio as $type => $ext) {
+				static::$_arMimeGroups[$type] = static::GRP_AUDIO;
+			}
+			foreach(static::$_arMimeVideo as $type => $ext) {
+				static::$_arMimeGroups[$type] = static::GRP_VIDEO;
+			}
 		}
 	}
 
@@ -141,13 +172,25 @@ class Mime {
 	/**
 	 * @param string $type
 	 * @param string $fileExt
+	 * @param int|null $group
 	 * @return bool
 	 */
-	static public function addType($type, $fileExt) {
+	static public function addType($type, $fileExt, $group = null) {
 		if( array_key_exists($type, static::$_arMimeExt) ) {
 			return false;
 		}
 		static::$_arMimeExt[$type] = $fileExt;
+		if(null !== $group) {
+			switch($group) {
+				case static::GRP_TEXT:
+				case static::GRP_IMAGE:
+				case static::GRP_ARCH:
+				case static::GRP_DOC:
+				case static::GRP_AUDIO:
+				case static::GRP_VIDEO:
+				static::$_arMimeGroups[$type] = $group;
+			}
+		}
 		return true;
 	}
 
@@ -161,6 +204,13 @@ class Mime {
 			return static::$_arMimeExt[$mimeType];
 		}
 		return $defaultExt;
+	}
+
+	static public function getContentGroup($mimeType) {
+		if(array_key_exists($mimeType, static::$_arMimeGroups)) {
+			return static::$_arMimeGroups[$mimeType];
+		}
+		return static::GRP_UNKNOWN;
 	}
 }
 Mime::_init();

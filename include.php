@@ -21,6 +21,7 @@
 //	return false;
 //}
 
-$arModuleClasses = require dirname(__FILE__).'/classes/.classes.php';
+require __DIR__.'/classes/.constants.php';
+$arModuleClasses = require __DIR__.'/classes/.classes.php';
 CModule::AddAutoloadClasses('obx.core', $arModuleClasses);
 ?>

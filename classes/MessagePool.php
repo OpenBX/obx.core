@@ -86,12 +86,23 @@ class CMessagePool implements IMessagePool
 	 */
 	protected $_LogFile = null;
 
+	/**
+	 * @param LogFile $LogFile
+	 * @return bool
+	 */
 	public function registerLogFile(LogFile $LogFile = null) {
 		if($LogFile instanceof LogFile) {
 			$this->_LogFile = $LogFile;
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @return null|LogFile
+	 */
+	public function getLogFile() {
+		return $this->_LogFile;
 	}
 
 	public function addMessage($text, $code = 0) {
@@ -134,6 +145,17 @@ class CMessagePool implements IMessagePool
 		$this->_countCommonMessages++;
 		if($this->_LogFile) {
 			$this->_LogFile->logMessage($text.((!empty($code))?'. Error code: '.$code:''), LogFile::MSG_TYPE_ERROR);
+		}
+	}
+
+	/**
+	 * @param \ErrorException $Exception
+	 * @throws \ErrorException
+	 */
+	public function throwErrorException(\ErrorException $Exception){
+		if($Exception instanceof \ErrorException) {
+			$this->addError($Exception->getMessage(), $Exception->getCode());
+			throw $Exception;
 		}
 	}
 
@@ -305,11 +327,22 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function registerLogFile(LogFile $LogFile) {
 		return self::getMessagePool()->registerLogFile($LogFile);
 	}
+	static public function getLogFile() {
+		return self::getMessagePool()->getLogFile();
+	}
 	static public function addMessage($text, $code = 0) {
 		self::getMessagePool()->addMessage($text, $code);
 	}
 	static public function addError($text, $code = 0) {
 		self::getMessagePool()->addError($text, $code);
+	}
+
+	/**
+	 * @param \ErrorException $Exception
+	 * @throws \ErrorException
+	 */
+	static public function throwErrorException(\ErrorException $Exception){
+		self::getMessagePool()->throwErrorException($Exception);
 	}
 	static public function addWarning($text, $code = 0) {
 		self::getMessagePool()->addWarning($text, $code);
@@ -391,11 +424,25 @@ class CMessagePoolDecorator implements IMessagePool {
 		}
 	}
 
+	public function registerLogFile(LogFile $LogFile) {
+		return $this->getMessagePool()->registerLogFile($LogFile);
+	}
+	public function getLogFile() {
+		return $this->getMessagePool()->getLogFile();
+	}
 	public function addMessage($text, $code = 0) {
 		$this->getMessagePool()->addMessage($text, $code);
 	}
 	public function addError($text, $code = 0) {
 		$this->getMessagePool()->addError($text, $code);
+	}
+
+	/**
+	 * @param \ErrorException $Exception
+	 * @throws \ErrorException
+	 */
+	public function throwErrorException(\ErrorException $Exception){
+		$this->getMessagePool()->throwErrorException($Exception);
 	}
 	public function addWarning($text, $code = 0) {
 		$this->getMessagePool()->addWarning($text, $code);

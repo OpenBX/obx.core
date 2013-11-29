@@ -7,32 +7,38 @@
  */
 
 namespace OBX\Core\Http\Exceptions;
+use OBX\Core\Exceptions\AError;
 
 
-class DownloadError extends \ErrorException {
+class DownloadError extends AError {
 	const E_NO_ACCESS_DWN_FOLDER = 1;
+	const E_WRONG_PROTOCOL = 2;
+	const E_CONN_FAIL = 3;
+	const E_CANT_OPEN_DWN_FILE = 4;
+	const E_CANT_WRT_2_DWN_FILE = 5;
 
-	static protected $_arLangMessages = null;
-
-	/**
-	 * @param string $message [optional] The Exception message to throw.
-	 * @param int $code [optional] The Exception code.
-	 * @param int $severity [optional] The severity level of the exception.
-	 * @param string $filename [optional] The filename where the exception is thrown.
-	 * @param int $lineno [optional] The line number where the exception is thrown.
-	 * @param \Exception $previous [optional] The previous exception used for the exception chaining.
-	 */
-	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous = null) {
+	static public function getLangMessage($errorCode) {
+		$message = '';
 		if( self::$_arLangMessages === null ) {
 			self::$_arLangMessages = IncludeModuleLangFile(__FILE__, false, true);
 		}
-		if(empty($message)) {
-			switch($code) {
-				case self::E_NO_ACCESS_DWN_FOLDER:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_E_NO_ACCESS_DWN_FOLDER'];
-					break;
-			}
+		switch($errorCode) {
+			case self::E_NO_ACCESS_DWN_FOLDER:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_NO_ACCESS_DWN_FOLDER'];
+				break;
+			case self::E_WRONG_PROTOCOL:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_WRONG_PROTOCOL'];
+				break;
+			case self::E_CONN_FAIL:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CONN_FAIL'];
+				break;
+			case self::E_CANT_OPEN_DWN_FILE:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_OPEN_DWN_FILE'];
+				break;
+			case self::E_CANT_WRT_2_DWN_FILE:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_WRT_2_DWN_FILE'];
+				break;
 		}
-		parent::__construct($message, $code, $severity, $filename, $lineno, $previous);
+		return $message;
 	}
 } 
