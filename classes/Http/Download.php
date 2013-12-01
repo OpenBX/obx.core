@@ -306,9 +306,9 @@ HTML;
 		$startTime = getmicrotime();
 		$this->_loadStepFromFile();
 		while( ! ($this->_bComplete = feof($this->_socket)) ) {
-			if ($this->_timeLimit>0 && (getmicrotime()-$startTime)>$this->_timeLimit) {
-				break;
-			}
+//			if ($this->_timeLimit>0 && (getmicrotime()-$startTime)>$this->_timeLimit) {
+//				break;
+//			}
 			$result = fread($this->_socket, 256*1024);
 			if(false === $bHeaderRead) {
 				$header .= $result;
@@ -382,8 +382,12 @@ HTML;
 				@unlink($this->_dwnStateFilePath);
 				return true;
 			}
-			//if(filesiz)
+			// filesize имеет проблемы с определением размера файла более 2Гб на 32-битных системах
+			// потому этой ф-ией пользоваться не будем и проверять размер не будем
+			// доверимся информации полученной из state-файла
+
 		}
+		return true;
 	}
 
 	protected function _saveStepToFile() {
