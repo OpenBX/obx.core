@@ -382,7 +382,7 @@ HTML;
 				@unlink($this->_dwnStateFilePath);
 				return true;
 			}
-			if(filesiz)
+			//if(filesiz)
 		}
 	}
 
