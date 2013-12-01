@@ -182,7 +182,7 @@ HTML;
 		$this->_buildRequestHeader();
 	}
 
-	public function getHeaders() {
+	public function requestHeaders() {
 		$requestHeader = '';
 		if($this->_bUseProxy) {
 			$requestHeader .= 'HEAD '.$this->_url." HTTP/1.0\r\n";
@@ -300,12 +300,15 @@ HTML;
 	public function loadFile() {
 		$this->_openConnection();
 		fwrite($this->_socket, $this->_requestHeader);
-		$arReplyHeader = array();
-		$downloadsize = 0;
 		// stream_set_blocking($this->_socket, 0); :)
 		$bHeaderRead = false;
 		$header = '';
+		$startTime = getmicrotime();
+		$this->_loadStepFromFile();
 		while( ! ($this->_bComplete = feof($this->_socket)) ) {
+			if ($this->_timeLimit>0 && (getmicrotime()-$startTime)>$this->_timeLimit) {
+				break;
+			}
 			$result = fread($this->_socket, 256*1024);
 			if(false === $bHeaderRead) {
 				$header .= $result;
@@ -323,16 +326,23 @@ HTML;
 			}
 			$this->_writeResult($result);
 		}
-
+		if( true === $this->_bComplete ) {
+			if($this->_bufferLoaded > 0) {
+				$result = null;
+				$this->_writeResult($result, true);
+			}
+			@unlink($this->_dwnStateFilePath);
+		}
+		else {
+			$this->_saveStepToFile();
+		}
 		return $this->_bComplete;
 	}
 
-	protected function _writeResult(&$result) {
-		$iterationSize = strlen($result);
-		$this->_fileLoaded += $iterationSize;
-		$this->_bufferLoaded += $iterationSize;
+	protected function _writeResult(&$result, $bForceWrite = false) {
 		$this->_buffer .= $result;
-		if($this->_bufferLoaded >= $this->_bufferSize) {
+		$this->_bufferLoaded += strlen($result);
+		if(true === $bForceWrite || $this->_bufferLoaded >= $this->_bufferSize || $this->_bComplete) {
 			if(!$this->_dwnFileHandler) {
 				$this->_dwnFileHandler = fopen(
 					OBX_DOC_ROOT.$this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt, 'ab'
@@ -342,17 +352,38 @@ HTML;
 				}
 			}
 			$bytesWritten = fwrite($this->_dwnFileHandler, $this->_buffer);
-			if(false === $bytesWritten) {
+			if(false === $bytesWritten || $this->_bufferLoaded !== $bytesWritten ) {
 				$this->throwErrorException(new DownloadError('', DownloadError::E_CANT_WRT_2_DWN_FILE));
 			}
+			$this->_fileLoaded += $this->_bufferLoaded;
 			$this->_buffer = null;
 			$this->_bufferLoaded = 0;
-			$this->_saveStepToFile();
 		}
 	}
 
 	protected function _loadStepFromFile() {
-
+		if( is_file($this->_dwnStateFilePath) ) {
+			$stateJson = file_get_contents($this->_dwnStateFilePath);
+			if(false === $stateJson) {
+				return false;
+			}
+			$arStateJson = json_decode($stateJson, true);
+			if(empty($arStateJson)) {
+				return false;
+			}
+			if(empty($arStateJson['fileLoaded'])) {
+				return false;
+			}
+			$arStateJson['fileLoaded'] = intval($arStateJson['fileLoaded']);
+			if($arStateJson['fileLoaded'] < 1 ) {
+				return false;
+			}
+			if( !is_file(OBX_DOC_ROOT.$this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt) ) {
+				@unlink($this->_dwnStateFilePath);
+				return true;
+			}
+			if(filesiz)
+		}
 	}
 
 	protected function _saveStepToFile() {
