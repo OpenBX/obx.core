@@ -539,7 +539,7 @@ HTML;
 	}
 
 	public function getFileLoaded() {
-
+		return $this->_fileLoaded;
 	}
 
 	public function getFileBaseName() {
@@ -552,6 +552,14 @@ HTML;
 
 	public function getFileName() {
 		return $this->_dwnFileBaseName.'.'.$this->_dwnFileExt;
+	}
+
+	public function getFilePath() {
+		return $this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt;
+	}
+
+	public function getDownloadFolder() {
+		return $this->_dwnFolder;
 	}
 
 	public function saveFile($dirRelPath, $fileName = null, $bForceSave = false) {
@@ -568,5 +576,10 @@ HTML;
 		if( !CheckDirPath(OBX_DOC_ROOT.$dirRelPath.'/') ) {
 			$this->throwErrorException(new DownloadError('', DownloadError::E_CANT_SAVE_TO_FOLDER));
 		}
+		rename(
+			OBX_DOC_ROOT.$this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt,
+			OBX_DOC_ROOT.$dirRelPath.'/'.$fileName
+		);
+		DeleteDirFilesEx($this->_dwnFolder);
 	}
 }

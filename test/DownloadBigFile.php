@@ -42,6 +42,21 @@ class TestDownloadBigFile extends TestCase {
 		}
 		//echo "\n";
 		while(!$Download->isFinished());
+		$this->assertFileExists(OBX_DOC_ROOT.$Download->getDownloadFolder());
+		$this->assertFileExists(OBX_DOC_ROOT.$Download->getFilePath());
+
+		$this->assertEquals(
+			$Download->getFileExpectedSize(),
+			$Download->getFileLoaded()
+		);
+		$this->assertEquals(
+			$Download->getFileLoaded(),
+			filesize(OBX_DOC_ROOT.$Download->getFilePath())
+		);
+		$Download->saveFile('/upload/obx.core/test/Download');
+		$this->assertFileExists(OBX_DOC_ROOT.'/upload/obx.core/test/Download/'.$Download->getFileName());
+		$this->assertFileNotExists(OBX_DOC_ROOT.$Download->getFilePath());
+		$this->assertFileNotExists(OBX_DOC_ROOT.$Download->getDownloadFolder());
 	}
 
 	public function _testDownloadOnOneInstance() {
