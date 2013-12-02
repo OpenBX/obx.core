@@ -15,6 +15,8 @@ interface IMessagePool
 	function addMessage($text, $code = 0);
 	function addWarning($text, $code = 0);
 	function addError($text, $code = 0);
+	function addErrorException(\ErrorException $Exception);
+	function throwErrorException(\ErrorException $Exception);
 
 	function getLastMessage($return = 'TEXT');
 	function getLastWarning($return = 'TEXT');
@@ -45,6 +47,8 @@ interface IMessagePoolStatic
 	static function addMessage($text, $code = 0);
 	static function addWarning($text, $code = 0);
 	static function addError($text, $code = 0);
+	static function addErrorException(\ErrorException $Exception);
+	static function throwErrorException(\ErrorException $Exception);
 
 	static function getLastMessage($return = 'TEXT');
 	static function getLastWarning($return = 'TEXT');
