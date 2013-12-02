@@ -31,6 +31,9 @@ class Download extends CMessagePoolDecorator {
 
 	static protected $_arInstances = array();
 	static protected $_bDefaultDwnDirChecked = false;
+	static protected $_bInitStatic = false;
+	static protected $_bUTF = false;
+	static protected $_bMBStringOrig = false;
 
 	protected $_url = null;
 	protected $_host = null;
@@ -58,11 +61,13 @@ class Download extends CMessagePoolDecorator {
 	protected $_dwnFileHandler = null;
 	protected $_dwnFileBaseName = null;
 	protected $_dwnFileExt = null;
+	protected $_dwnFileOpenMode = 'wb';
 	protected $_dwnStateFilePath = null;
 	protected $_buffer = null;
 	protected $_bufferSize = null;
 	protected $_bufferLoaded = 0;
 	protected $_fileLoaded = 0;
+	protected $_fileExpectedSize = null;
 	protected $_contentExpectedSize = null;
 	protected $_contentType = null;
 	protected $_contentCharset = null;
@@ -92,6 +97,9 @@ HTML;
 	 * @return Download
 	 */
 	static public function getInstance($url) {
+		if( static::$_bInitStatic === false ) {
+			static::_initStatic();
+		}
 		$urlSign = md5($url);
 		if( array_key_exists($urlSign, static::$_arInstances) ) {
 			return static::$_arInstances[$urlSign];
@@ -106,7 +114,20 @@ HTML;
 	static public function _clearInstanceCache() {
 		static::$_arInstances = array();
 	}
-
+	static protected function _initStatic() {
+		if( defined('BX_UTF') ) {
+			static::$_bUTF = true;
+			if( function_exists('mb_orig_strpos')
+				&& function_exists('mb_orig_strlen')
+				&& function_exists('mb_orig_substr')
+			) {
+				static::$_bMBStringOrig = true;
+			}
+			else {
+				static::$_bMBStringOrig = false;
+			}
+		}
+	}
 	protected function __construct($url, $dwnName = null) {
 		$this->_timeLimit = static::DEF_TIME_LIMIT;
 		$this->_userAgent = static::DEF_USER_AGENT;
@@ -148,10 +169,15 @@ HTML;
 		$this->_timeLimit = static::DEF_TIME_LIMIT;
 		$this->_timeOutConn = static::DEF_TIME_CONN_OUT;
 		$this->_bufferSize = static::DEF_BUFFER_SIZE;
+		$bStateLoaded = $this->_loadStepFromFile();
+		$this->_dwnFileOpenMode = ($bStateLoaded===true)?'ab':'wb';
 		$this->_buildRequestHeader();
 	}
 	protected function __clone() {}
-	function __destruct() {}
+	public function __destruct() {
+		fclose($this->_dwnFileHandler);
+		fclose($this->_socket);
+	}
 
 	/**
 	 * @throws Exceptions\DownloadError
@@ -167,19 +193,34 @@ HTML;
 	}
 
 	public function setTimeLimit($seconds) {
-
+		$seconds = intval($seconds);
+		$this->_timeLimit = $seconds;
 	}
 
 	public function setConnectionTimeOut($seconds){
-
+		$seconds = intval($seconds);
+		$this->_timeOutConn = $seconds;
 	}
 
 	public function setUserAgent($userAgent) {
 		$this->_buildRequestHeader();
 	}
 
-	public function setProxy($proxyAddr, $proxyPort, $proxyUserName, $proxyPassword) {
+	public function setProxy($proxyAddr, $proxyPort, $proxyUserName = null, $proxyPassword = null) {
+		$this->_proxyAddress = $proxyAddr;
+		$this->_proxyPort = $proxyPort;
+		$this->_proxyUser = $proxyUserName;
+		$this->_proxyPassword = $proxyPassword;
+		$this->_bUseProxy = true;
 		$this->_buildRequestHeader();
+	}
+
+	public function unsetProxy() {
+		$this->_bUseProxy = false;
+		$this->_proxyAddress = null;
+		$this->_proxyPort = null;
+		$this->_proxyUser = null;
+		$this->_proxyPassword = null;
 	}
 
 	public function requestHeaders() {
@@ -227,6 +268,17 @@ HTML;
 		}
 		if($this->_userAgent !== null) {
 			$this->_requestHeader .= 'User-Agent: '.$this->_userAgent."\r\n";
+		}
+		if($this->_rangeFrom > 0) {
+			if($this->_rangeTo > 0) {
+				$this->_requestHeader .= 'Range: bytes='.$this->_rangeFrom.'-'.$this->_rangeTo."\r\n";
+			}
+			else {
+				$this->_requestHeader .= 'Range: bytes='.$this->_rangeFrom."-\r\n";
+			}
+		}
+		elseif($this->_rangeTo > 0) {
+			$this->_requestHeader .= 'Range: bytes=0-'.$this->_rangeTo."\r\n";
 		}
 		$this->_requestHeader .= "\r\n";
 	}
@@ -289,6 +341,9 @@ HTML;
 		}
 		if(array_key_exists('Content-Length', $this->_arHeader)) {
 			$this->_contentExpectedSize = $this->_arHeader['Content-Length']['VALUE'];
+			if($this->_rangeFrom < 1) {
+				$this->_fileExpectedSize = $this->_contentExpectedSize;
+			}
 		}
 		$this->_responseStatusCode = $this->_arHeader['STATUS']['CODE'];
 		$this->_responseStatusMsg = $this->_arHeader['STATUS']['MESSAGE'];
@@ -304,19 +359,37 @@ HTML;
 		$bHeaderRead = false;
 		$header = '';
 		$startTime = getmicrotime();
-		$this->_loadStepFromFile();
-		while( ! ($this->_bComplete = feof($this->_socket)) ) {
-//			if ($this->_timeLimit>0 && (getmicrotime()-$startTime)>$this->_timeLimit) {
-//				break;
-//			}
+		while( ! ($this->_bComplete = (
+					feof($this->_socket)
+					|| (
+						$this->_rangeTo > 0
+						&& $this->_fileLoaded >= $this->_rangeTo
+					)
+				))
+		) {
+			if ($this->_timeLimit>0 && (getmicrotime()-$startTime)>$this->_timeLimit) {
+				break;
+			}
 			$result = fread($this->_socket, 256*1024);
 			if(false === $bHeaderRead) {
 				$header .= $result;
-				if(strpos($header, "\r\n\r\n") !== false) {
-					$posHSplit = strrpos($header, "\r\n\r\n");
-					$result = substr($header, $posHSplit+4);
-					$header = substr($header, 0, $posHSplit+2);
-					$this->_headerSize = strlen($header);
+				if(static::$_bMBStringOrig) {
+					$posHSplit = mb_orig_strpos($header, "\r\n\r\n");
+				}
+				else {
+					$posHSplit = strpos($header, "\r\n\r\n");
+				}
+				if($posHSplit !== false) {
+					if(static::$_bMBStringOrig) {
+						$result = mb_orig_substr($header, $posHSplit+4);
+						$header = mb_orig_substr($header, 0, $posHSplit+2);
+						$this->_headerSize = mb_orig_strlen($header);
+					}
+					else {
+						$result = substr($header, $posHSplit+4);
+						$header = substr($header, 0, $posHSplit+2);
+						$this->_headerSize = strlen($header);
+					}
 					$this->_readHeaderData($header);
 					$bHeaderRead = true;
 				}
@@ -326,26 +399,37 @@ HTML;
 			}
 			$this->_writeResult($result);
 		}
+		if($this->_bufferLoaded > 0) {
+			$result = null;
+			$this->_writeResult($result, true);
+		}
 		if( true === $this->_bComplete ) {
-			if($this->_bufferLoaded > 0) {
-				$result = null;
-				$this->_writeResult($result, true);
-			}
 			@unlink($this->_dwnStateFilePath);
 		}
 		else {
 			$this->_saveStepToFile();
 		}
+		fclose($this->_socket); $this->_socket = null;
+		fclose($this->_dwnFileHandler); $this->_dwnFileHandler = null;
 		return $this->_bComplete;
 	}
 
+
+
 	protected function _writeResult(&$result, $bForceWrite = false) {
 		$this->_buffer .= $result;
-		$this->_bufferLoaded += strlen($result);
+		if(static::$_bMBStringOrig) {
+			$this->_bufferLoaded += mb_orig_strlen($result);
+		}
+		else {
+			$this->_bufferLoaded += strlen($result);
+		}
+
 		if(true === $bForceWrite || $this->_bufferLoaded >= $this->_bufferSize || $this->_bComplete) {
 			if(!$this->_dwnFileHandler) {
 				$this->_dwnFileHandler = fopen(
-					OBX_DOC_ROOT.$this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt, 'ab'
+					OBX_DOC_ROOT.$this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt,
+					$this->_dwnFileOpenMode
 				);
 				if( !$this->_dwnFileHandler ) {
 					$this->throwErrorException(new DownloadError('', DownloadError::E_CANT_OPEN_DWN_FILE));
@@ -378,16 +462,31 @@ HTML;
 			if($arStateJson['fileLoaded'] < 1 ) {
 				return false;
 			}
-			if( !is_file(OBX_DOC_ROOT.$this->_dwnFolder.'/'.$this->_dwnFileBaseName.'.'.$this->_dwnFileExt) ) {
-				@unlink($this->_dwnStateFilePath);
-				return true;
+			if(empty($arStateJson['dwnFileBaseName'])) {
+				return false;
 			}
+			if(empty($arStateJson['dwnFileExt'])) {
+				return false;
+			}
+			if( !is_file(OBX_DOC_ROOT.$this->_dwnFolder.'/'.$arStateJson['dwnFileBaseName'].'.'.$arStateJson['dwnFileExt']) ) {
+				@unlink($this->_dwnStateFilePath);
+				return false;
+			}
+			$this->_dwnFileBaseName = $arStateJson['dwnFileBaseName'];
+			$this->_dwnFileExt = $arStateJson['dwnFileExt'];
+			$this->_fileLoaded = $arStateJson['fileLoaded'];
+
 			// filesize имеет проблемы с определением размера файла более 2Гб на 32-битных системах
 			// потому этой ф-ией пользоваться не будем и проверять размер не будем
 			// доверимся информации полученной из state-файла
 
+			$this->_rangeFrom = $arStateJson['fileLoaded'];
+			if(!empty($arStateJson['fileExpectedSize'])) {
+				$this->_fileExpectedSize = $arStateJson['fileExpectedSize'];
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	protected function _saveStepToFile() {
@@ -398,7 +497,8 @@ HTML;
 			'dwnFileBaseName' => $this->_dwnFileBaseName,
 			'dwnFileExt' => $this->_dwnFileExt,
 			'fileLoaded' => $this->_fileLoaded,
-			'contentExpectedSize' => $this->_contentExpectedSize
+			'contentExpectedSize' => $this->_contentExpectedSize,
+			'fileExpectedSize' => $this->_fileExpectedSize
 		);
 		$bytesWritten = file_put_contents($this->_dwnStateFilePath, json_encode($arStateJson));
 		return ($bytesWritten !== false)?true:false;
@@ -409,5 +509,64 @@ HTML;
 	 */
 	public function isFinished() {
 		return $this->_bComplete;
+	}
+
+	/**
+	 * @param int $precision
+	 * @return float|int|null
+	 */
+	public function getProgress($precision = 0) {
+		if($this->_fileExpectedSize === null) {
+			return null;
+		}
+		$precision = intval($precision);
+
+		if($precision == 0) {
+			$percent = intval(($this->_fileLoaded / $this->_fileExpectedSize) * 100);
+		}
+		else {
+			$percent = round(($this->_fileLoaded / $this->_fileExpectedSize) * 100, $precision);
+		}
+		return $percent;
+	}
+
+	public function getFileExpectedSize() {
+		return $this->_fileExpectedSize;
+	}
+
+	public function getContentExpectedSize() {
+		return $this->_contentExpectedSize;
+	}
+
+	public function getFileLoaded() {
+
+	}
+
+	public function getFileBaseName() {
+		return $this->_dwnFileBaseName;
+	}
+
+	public function getFileExt() {
+		return $this->_dwnFileExt;
+	}
+
+	public function getFileName() {
+		return $this->_dwnFileBaseName.'.'.$this->_dwnFileExt;
+	}
+
+	public function saveFile($dirRelPath, $fileName = null, $bForceSave = false) {
+		if( $this->_bComplete !== true && $bForceSave !== false) {
+			$this->throwErrorException(new DownloadError('', DownloadError::E_CANT_SAVE_NOT_FINISHED));
+			return false;
+		}
+		if($fileName === null) {
+			$fileName = $this->getFileName();
+		}
+		else {
+			Request::fixFileName($fileName);
+		}
+		if( !CheckDirPath(OBX_DOC_ROOT.$dirRelPath.'/') ) {
+			$this->throwErrorException(new DownloadError('', DownloadError::E_CANT_SAVE_TO_FOLDER));
+		}
 	}
 }

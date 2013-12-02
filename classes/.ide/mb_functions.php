@@ -1,4 +1,6 @@
 <?php
+define('_doc_optional_str_', '_doc_optional_str_');
+define('_doc_optional_int_', -1);
 /***********************************************
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
@@ -22,7 +24,7 @@ function mb_orig_strlen($haystack) {}
  * @param string $encoding
  * @return int | false
  */
-function mb_orig_strpos($haystack , $needle, $offset = 0, $encoding ) {}
+function mb_orig_strpos($haystack , $needle, $offset = 0, $encoding = _doc_optional_str_ ) {}
 
 /**
  * @param string $string
@@ -30,4 +32,4 @@ function mb_orig_strpos($haystack , $needle, $offset = 0, $encoding ) {}
  * @param int $length
  * @return string
  */
-function mb_orig_substr ($string, $start, $length) {}
+function mb_orig_substr ($string, $start, $length = _doc_optional_int_) {}

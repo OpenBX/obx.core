@@ -16,6 +16,8 @@ class DownloadError extends AError {
 	const E_CONN_FAIL = 3;
 	const E_CANT_OPEN_DWN_FILE = 4;
 	const E_CANT_WRT_2_DWN_FILE = 5;
+	const E_CANT_SAVE_NOT_FINISHED = 6;
+	const E_CANT_SAVE_TO_FOLDER = 7;
 
 	static public function getLangMessage($errorCode) {
 		$message = '';
@@ -37,6 +39,12 @@ class DownloadError extends AError {
 				break;
 			case self::E_CANT_WRT_2_DWN_FILE:
 				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_WRT_2_DWN_FILE'];
+				break;
+			case self::E_CANT_SAVE_NOT_FINISHED:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_SAVE_NOT_FINISHED'];
+				break;
+			case self::E_CANT_SAVE_TO_FOLDER:
+				$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_SAVE_TO_FOLDER'];
 				break;
 		}
 		return $message;

@@ -76,6 +76,10 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(0, ini_get('max_execution_time'));
 	}
 
+	public function cleanPHPBuffer() {
+		while(ob_end_flush() !== false) {};
+	}
+
 	static public function includeLang($file) {
 		$file = str_replace(array('\\', '//'), '/', $file);
 		$fileName = substr($file, strrpos($file, '/'));

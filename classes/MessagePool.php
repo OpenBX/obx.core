@@ -159,6 +159,15 @@ class CMessagePool implements IMessagePool
 		}
 	}
 
+	/**
+	 * @param \ErrorException $Exception
+	 */
+	public function addErrorException(\ErrorException $Exception){
+		if($Exception instanceof \ErrorException) {
+			$this->addError($Exception->getMessage(), $Exception->getCode());
+		}
+	}
+
 
 	public function getLastMessage($return = 'TEXT') {
 		$arLastMessage = $this->_arMessages[$this->_countMessages-1];
@@ -344,6 +353,12 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function throwErrorException(\ErrorException $Exception){
 		self::getMessagePool()->throwErrorException($Exception);
 	}
+	/**
+	 * @param \ErrorException $Exception
+	 */
+	static public function addErrorException(\ErrorException $Exception){
+		self::getMessagePool()->addErrorException($Exception);
+	}
 	static public function addWarning($text, $code = 0) {
 		self::getMessagePool()->addWarning($text, $code);
 	}
@@ -443,6 +458,12 @@ class CMessagePoolDecorator implements IMessagePool {
 	 */
 	public function throwErrorException(\ErrorException $Exception){
 		$this->getMessagePool()->throwErrorException($Exception);
+	}
+	/**
+	 * @param \ErrorException $Exception
+	 */
+	public function addErrorException(\ErrorException $Exception){
+		$this->getMessagePool()->addErrorException($Exception);
 	}
 	public function addWarning($text, $code = 0) {
 		$this->getMessagePool()->addWarning($text, $code);

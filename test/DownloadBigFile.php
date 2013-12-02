@@ -22,17 +22,29 @@ class TestDownloadBigFile extends TestCase {
 
 	public function testDownload() {
 		$iSteps = 0;
+		//$progressPrint = null;
+		$this->cleanPHPBuffer();
+		$progress = 0;
 		do {
 			Download::_clearInstanceCache();
 			$Download = Download::getInstance(self::$_urlBigFile);
-			$Download->setTimeLimit(5);
+			$Download->setTimeLimit(1);
 			$Download->loadFile();
+			$this->assertGreaterThan($progress, $Download->getProgress(2));
+			$progress = $Download->getProgress(2);
+			$this->assertLessThanOrEqual(100, $progress);
+			//if($progressPrint !== null) {
+			//	echo str_repeat(chr(8), strlen($progressPrint));
+			//}
+			//$progressPrint = $progress.'%';
+			//echo $progressPrint;
 			$iSteps++;
 		}
+		//echo "\n";
 		while(!$Download->isFinished());
 	}
 
-	public function testDownloadOnOneInstance() {
+	public function _testDownloadOnOneInstance() {
 		$iSteps = 0;
 		$Download = Download::getInstance(self::$_urlBigFile);
 		$Download->setTimeLimit(5);
@@ -43,7 +55,7 @@ class TestDownloadBigFile extends TestCase {
 		while($Download->isFinished());
 	}
 
-	public function testLoadTwiceOnOneInstance() {
+	public function _testLoadTwiceOnOneInstance() {
 
 	}
 }
