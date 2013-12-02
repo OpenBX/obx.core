@@ -29,7 +29,7 @@ class Parser extends ParserDB {
 	protected $_bufferLength = 0;
 	protected $_bufferPosition = 0;
 
-	/** @var string Время между итерациями парсинга в секундах */
+	/** @var int Время между итерациями парсинга в секундах */
 	protected $_readTimeLimit = 0;
 
 	protected $_arElementStack = array();
@@ -42,12 +42,30 @@ class Parser extends ParserDB {
 	protected $_onBeforeAdd = null;
 	protected $_onAfterAdd = null;
 
+	static protected $_arAllowFileExt = array(
+		'xml'
+	);
+
+	static public function addAllowedFileExt($fileExt) {
+		if(!in_array($fileExt, static::$_arAllowFileExt)) {
+			static::$_arAllowFileExt[] = $fileExt;
+		}
+	}
+
 	/**
 	 * @param string $filePath
 	 * @throws ParserError
 	 */
 	public function __construct($filePath) {
-		if( is_file($filePath) && substr($filePath, strrpos($filePath, '.')) == '.xml' )  {
+		if( is_file($filePath) )  {
+			$dotPos = strrpos($filePath, '.');
+			$fileExt = substr($filePath, $dotPos+1);
+			if(!in_array($fileExt, static::$_arAllowFileExt)) {
+				throw new ParserError(
+					GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_XML_FILE_EXT_NOT_ALLOWED'),
+					ParserError::E_XML_FILE_EXT_NOT_ALLOWED
+				);
+			}
 			$this->_filePath = $filePath;
 			$this->_file = fopen($filePath, 'r');
 			if( !$this->_file ) {

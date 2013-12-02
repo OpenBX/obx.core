@@ -19,4 +19,5 @@ class ParserError extends \ErrorException {
 	const E_ADD_IDX_ON_EXISTS_TBL = 6;
 	const E_WRONG_ATTR_NAME = 7;
 	const E_ATTR_EXISTS = 8;
+	const E_XML_FILE_EXT_NOT_ALLOWED = 9;
 }
