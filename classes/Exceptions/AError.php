@@ -11,7 +11,10 @@ namespace OBX\Core\Exceptions;
 
 abstract class AError extends \ErrorException {
 
-	static protected $_arLangMessages = null;
+	static protected $_arLangFilesLoaded = array();
+	static protected $_arLangMessages = array();
+	const _FILE_ = null;
+	const LANG_PREFIX = null;
 
 	/**
 	 * @param string $message [optional] The Exception message to throw.
@@ -28,32 +31,40 @@ abstract class AError extends \ErrorException {
 		parent::__construct($message, $code, $severity, $filename, $lineno, $previous);
 	}
 
-	static abstract public function getLangMessage($errorCode);
-	/*
-	 * this method must be implemented like this example:
-		 static public function getLangMessage($errorCode) {
-			if( self::$_arLangMessages === null ) {
-				self::$_arLangMessages = IncludeModuleLangFile(__FILE__, false, true);
-			}
-			$message = '';
-			switch($errorCode) {
-				case self::E_NO_ACCESS_DWN_FOLDER:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_NO_ACCESS_DWN_FOLDER'];
-					break;
-				case self::E_WRONG_PROTOCOL:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_WRONG_PROTOCOL'];
-					break;
-				case self::E_CONN_FAIL:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CONN_FAIL'];
-					break;
-				case self::E_CANT_OPEN_DWN_FILE:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_OPEN_DWN_FILE'];
-					break;
-				case self::E_CANT_WRT_2_DWN_FILE:
-					$message = self::$_arLangMessages['OBX_CORE_HTTP_DWN_E_CANT_WRT_2_DWN_FILE'];
-					break;
-			}
-			return $message;
+	static protected function loadMessages(&$class) {
+		if(array_key_exists($class, self::$_arLangMessages)) {
+			return ;
 		}
+		if(static::_FILE_ === null) {
+			throw new \ErrorException('You must redeclare '.$class.'::_FILE_ constant exactly: const _FILE_ = __FILE__;');
+		}
+		if(static::LANG_PREFIX === null) {
+			throw new \ErrorException('You must redeclare '.$class.'::LANG_PREFIX constant exactly: const LANG_PREFIX = "YOUR_EXCEPTION_PREFIX";');
+		}
+		self::$_arLangMessages[$class] = IncludeModuleLangFile(static::_FILE_, false, true);
+	}
+
+	/**
+	 * @param $errorCode
+	 * @param array|null $arReplace
+	 * @return string
+	 * @throws \ErrorException
 	 */
+	static public function getLangMessage($errorCode, $arReplace = null) {
+		$class = get_called_class();
+		self::loadMessages($class);
+		$message = '';
+		if(array_key_exists($errorCode, static::$_arLangMessages[$class])) {
+			$message = static::$_arLangMessages[$class][$errorCode];
+		}
+//		else {
+//			throw new \ErrorException('Lang message for error code '.get_called_class().'::'.$errorCode.' not found');
+//		}
+		if(null !== $arReplace && is_array($arReplace)) {
+			$arReplaceSearch = array_keys($arReplace);
+			$arReplaceTarget = array_values($arReplace);
+			$message = str_replace($arReplaceSearch, $arReplaceTarget, $message);
+		}
+		return $message;
+	}
 } 
