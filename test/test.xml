@@ -2,7 +2,7 @@
 	@product OBX:Core Bitrix Module
 	@authors
 		Maksim S. Makarov aka pr0n1x
-	@License GPLv3
+	@License Affero GPLv3
 	@mailto rootfavell@gmail.com
 -->
 <phpunit bootstrap="./__bootstrap_tests.php">
@@ -12,6 +12,7 @@
 			<file>JSMessages.php</file>
 			<file>Request.php</file>
 			<file>RequestBXFile.php</file>
+			<file>DownloadBigFile.php</file>
 			<file>XmlParserTest.php</file>
 			<file>XmlParserAttr.php</file>
 			<file>XmlParserEvent.php</file>

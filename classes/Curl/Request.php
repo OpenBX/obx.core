@@ -89,10 +89,12 @@ class Request {
 				fclose($this->_dwnFileHandler);
 				$this->_dwnFileHandler = null;
 			}
-			unlink($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT);
 			if(is_dir($this->_dwnDir.'/'.$this->_dwnName)) {
 				DeleteDirFilesEx($this->_dwnFolder.'/'.$this->_dwnName);
 			}
+		}
+		if(is_file($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT)) {
+			@unlink($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT);
 		}
 		curl_close($this->_curlHandler);
 	}
