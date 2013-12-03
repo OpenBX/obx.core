@@ -14,7 +14,7 @@ use OBX\Core\Exceptions\AError;
 
 class DownloadError extends AError {
 	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'OBX_CORE_HTTP_DWN_';
+	const LANG_PREFIX = 'OBX_CORE_HTTP_DWN_ERROR_';
 	const E_NO_ACCESS_DWN_FOLDER = 1;
 	const E_WRONG_PROTOCOL = 2;
 	const E_CONN_FAIL = 3;

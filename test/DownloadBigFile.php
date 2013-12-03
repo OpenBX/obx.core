@@ -16,9 +16,7 @@ class TestDownloadBigFile extends TestCase {
 	static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
 	//static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/zero_file_300M';
 
-	static public function getCurDir() {
-		return __DIR__;
-	}
+	const _DIR_ = __DIR__;
 
 	public function testDownload() {
 		$iSteps = 0;

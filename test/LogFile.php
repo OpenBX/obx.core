@@ -13,9 +13,7 @@ use OBX\Core\Exceptions\LogFileError;
 use OBX\Core\CMessagePool;
 
 class TestLogFile extends TestCase {
-	static public function getCurDir() {
-		return __DIR__;
-	}
+	const _DIR_ = __DIR__;
 
 	public function testCanTOpenFile() {
 		$bSuccess = CheckDirPath(self::$_docRoot.'/bitrix/tmp/obx.core/', BX_DIR_PERMISSIONS);

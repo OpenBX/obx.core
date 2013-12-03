@@ -14,14 +14,12 @@ use OBX\Core\Xml\Parser as XmlParser;
 use OBX\Core\Xml\Exceptions\ParserError as XmlParserError;
 
 class XmlParserTest extends TestCase {
-	static public function getCurDir() {
-		return dirname(__FILE__);
-	}
+	const _DIR_ = __DIR__;
 
 	public function getXmlFilePath() {
 		return array(
 			array(
-				$this->getCurDir().'/data/yml_catalog_example.xml'
+				static::_DIR_.'/data/yml_catalog_example.xml'
 			)
 		);
 	}
@@ -101,7 +99,7 @@ class XmlParserTest extends TestCase {
 		$BXParser = new \CIBlockXMLFile('dvt_yml_import_temp');
 		$BXParser->CreateTemporaryTables();
 		$NS = array();
-		$fp = fopen($this->getCurDir().'/data/yml_catalog_example.xml', 'r');
+		$fp = fopen(static::_DIR_.'/data/yml_catalog_example.xml', 'r');
 		$BXParser->ReadXMLToDatabase($fp, $NS, 0, 10240);
 	}
 }

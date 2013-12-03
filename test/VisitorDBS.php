@@ -17,9 +17,7 @@ final class OBX_Test_VisitorDBS extends TestCase {
 	static private $_VisitorsDBS = null;
 	static private $_arVisitorsData = array();
 
-	static public function getCurDir() {
-		return dirname(__FILE__);
-	}
+	const _DIR_ = __DIR__;
 
 	public static function setUpBeforeClass() {
 		self::$_VisitorsDBS = VisitorDBS::getInstance();

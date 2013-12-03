@@ -21,16 +21,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	//$this->setPreserveGlobalState(false);
 	protected $preserveGlobalState = false;
 
-	/**
-	 * Метод должен вернуть путь до текущей папки с тестами
-	 * Для каждого свой
-	 * реализация везде повторяется
-	 * public function getCurDir() {
-	 * 		return dirname(__FILE__);
-	 * }
-	 * @return string
-	 */
-	abstract static public function getCurDir();
+	const _DIR_ = null;
 
 	static protected $_bPathVarInit = false;
 	static protected $_docRoot = '';
@@ -54,6 +45,12 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	static protected $_arSomeOtherTestUser = array();
 
 	final static protected function _initPathVar() {
+		if(static::_DIR_ === null) {
+			throw new \ErrorException(
+				'Unit Test Error: You must redeclare constant "'.get_called_class().'::_DIR_".'
+				.' Exactly: const _DIR_ = __DIR__;'
+			);
+		}
 		if(true !== self::$_bPathVarInit) {
 			self::$_docRoot = str_replace('/bitrix/modules/obx.core/classes', '', __DIR__);
 			//$_SERVER['DOCUMENT_ROOT'] = self::$_docRoot;
@@ -83,7 +80,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	static public function includeLang($file) {
 		$file = str_replace(array('\\', '//'), '/', $file);
 		$fileName = substr($file, strrpos($file, '/'));
-		$langFile = static::getCurDir().'/lang/'.LANGUAGE_ID.'/'.$fileName;
+		$langFile = static::_DIR_.'/lang/'.LANGUAGE_ID.'/'.$fileName;
 		if( file_exists($langFile) ) {
 			__IncludeLang($langFile);
 			return true;
@@ -92,7 +89,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	}
 
 	protected function callTest($testCaseName, $testName) {
-		$fileName = static::getCurDir().'/'.$testCaseName.'.php';
+		$fileName = static::_DIR_.'/'.$testCaseName.'.php';
 		if( !file_exists($fileName) ) {
 			$this->fail('ERROR: Can\'t invoke test. File not found');
 		}

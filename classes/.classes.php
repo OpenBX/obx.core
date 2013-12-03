@@ -57,7 +57,7 @@ if($DBType === 'mysql') {
 	//$arModuleClasses['OBX\Core\ModuleDependencies']		= 'classes/ModuleDependencies.php';
 	$arModuleClasses['OBX\Core\Xml\ParserDB']				= 'classes/Xml/ParserDB.'.$DBType.'.php';
 	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';
-	$arModuleClasses['OBX\Core\Xml\Exceptions\ParserError']	= 'classes/Xml/Exceptions/Parser.php';
+	$arModuleClasses['OBX\Core\Xml\Exceptions\ParserError']	= 'classes/Xml/Exceptions/ParserError.php';
 }
 
 

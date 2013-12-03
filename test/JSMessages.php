@@ -15,9 +15,7 @@ require_once dirname(__FILE__).'/../classes/TestCase.php';
 
 class JSMessagesTest extends TestCase
 {
-	static public function getCurDir() {
-		return dirname(__FILE__);
-	}
+	const _DIR_ = __DIR__;
 	public function testBuffer(){
 		$JSLang = JSMessages::getInstance('obx.market');
 		$JSLang->showHead();
