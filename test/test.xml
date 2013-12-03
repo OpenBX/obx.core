@@ -16,6 +16,7 @@
 			<file>XmlParserTest.php</file>
 			<file>XmlParserAttr.php</file>
 			<file>XmlParserEvent.php</file>
+			<file>TestErrorExceptions.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>
