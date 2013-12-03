@@ -11,7 +11,6 @@ namespace OBX\Core\Exceptions;
 
 abstract class AError extends \ErrorException {
 
-	static protected $_arLangFilesLoaded = array();
 	static protected $_arLangMessages = array();
 	const _FILE_ = null;
 	const LANG_PREFIX = null;
@@ -54,8 +53,10 @@ abstract class AError extends \ErrorException {
 		$class = get_called_class();
 		self::loadMessages($class);
 		$message = '';
-		if(array_key_exists($errorCode, static::$_arLangMessages[$class])) {
-			$message = static::$_arLangMessages[$class][$errorCode];
+		$arLangMessages = self::$_arLangMessages[$class];
+		$langPrefix = static::LANG_PREFIX;
+		if(array_key_exists($langPrefix.$errorCode, $arLangMessages)) {
+			$message = self::$_arLangMessages[$class][$langPrefix.$errorCode];
 		}
 //		else {
 //			throw new \ErrorException('Lang message for error code '.get_called_class().'::'.$errorCode.' not found');

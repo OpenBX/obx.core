@@ -69,11 +69,11 @@ class Parser extends ParserDB {
 			$this->_filePath = $filePath;
 			$this->_file = fopen($filePath, 'r');
 			if( !$this->_file ) {
-				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_CANT_OPEN'), ParserError::XML_FILE_CANT_OPEN);
+				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_CANT_OPEN'), ParserError::E_XML_FILE_CANT_OPEN);
 			}
 		}
 		else {
-			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_NOT_FOUND'), ParserError::XML_FILE_NOT_FOUND);
+			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_NOT_FOUND'), ParserError::E_XML_FILE_NOT_FOUND);
 		}
 		if( defined('BX_UTF') ) {
 			$this->_bUTF = true;

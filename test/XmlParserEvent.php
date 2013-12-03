@@ -14,14 +14,12 @@ use OBX\Core\Xml\Parser as XmlParser;
 use OBX\Core\Xml\Exceptions\ParserError as XmlParserError;
 
 class XmlParserEvent extends TestCase {
-	static public function getCurDir() {
-		return dirname(__FILE__);
-	}
+	const _DIR_ = __DIR__;
 
 	public function getXmlFilePath() {
 		return array(
 			array(
-				$this->getCurDir().'/data/yml_catalog_example.xml'
+				static::_DIR_.'/data/yml_catalog_example.xml'
 			)
 		);
 	}

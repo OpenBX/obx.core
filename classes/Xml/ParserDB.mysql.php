@@ -107,7 +107,7 @@ class ParserDB {
 			else {
 				throw new ParserError(
 					GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_WRONG_NAME')
-					, ParserError::TMP_TBL_WRONG_NAME
+					, ParserError::E_TMP_TBL_WRONG_NAME
 				);
 			}
 		}
@@ -214,7 +214,7 @@ class ParserDB {
 		}
 
 		if($DB->TableExists($this->_tempTableName)) {
-			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_EXISTS'), ParserError::TMP_TBL_EXISTS);
+			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_EXISTS'), ParserError::E_TMP_TBL_EXISTS);
 		}
 
 		$sqlAttrFieldsCreate = '';
@@ -282,7 +282,7 @@ class ParserDB {
 		if( !$this->isTempTableCreated() ) {
 			throw new ParserError(
 				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_IDX_ON_EXISTS_TBL'),
-				ParserError::E_ADD_IDX_ON_EXISTS_TBL
+				ParserError::E_ADD_IDX_NO_EXISTS_TBL
 			);
 		}
 		if($this->_bUseSessionIDIntTempTable) {

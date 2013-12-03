@@ -7,8 +7,11 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
-$MESS['OBX_CORE_LOGFILE_E_WRONG_PATH'] = 'Неверно указан путь до файла-журнала';
-$MESS['OBX_CORE_LOGFILE_E_PERM_DENIED'] = 'Не удалось открыть файл-журнал, доступ запрещен';
-$MESS['OBX_CORE_LOGFILE_E_CANT_OPEN'] = 'Не удалось открыть файл';
-$MESS['OBX_CORE_LOGFILE_E_SENDER_IS_EMPTY'] = 'Отправитель сообщений не указан';
+
+use OBX\Core\Exceptions\LogFileError as _;
+
+$MESS[_::LANG_PREFIX._::E_WRONG_PATH] = 'Неверно указан путь до файла-журнала';
+$MESS[_::LANG_PREFIX._::E_PERM_DENIED] = 'Не удалось открыть файл-журнал, доступ запрещен';
+$MESS[_::LANG_PREFIX._::E_CANT_OPEN] = 'Не удалось открыть файл';
+$MESS[_::LANG_PREFIX._::E_SENDER_IS_EMPTY] = 'Отправитель сообщений не указан';
  

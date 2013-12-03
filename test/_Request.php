@@ -7,9 +7,7 @@ abstract class _Request extends TestCase {
 	static protected $_urlJSON = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
 	static protected $_url404 = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/test.response.php?get_404=Y';
 
-	static public function getCurDir() {
-		return __DIR__;
-	}
+	const _DIR_ = __DIR__;
 
 	public function getFilesList() {
 		return array(
