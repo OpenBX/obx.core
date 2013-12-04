@@ -99,7 +99,7 @@ class TestRequestBXFile extends _Request {
 			'NAME' => 'test'
 		));
 		$this->assertFalse(empty($eltID));
-		$eltID = 22155;
+		//$eltID = 22155;
 		$bSuccessPng = $RequestPng->saveToIBProp(
 			$arTestIBlock['ID'],
 			$eltID,
@@ -126,7 +126,7 @@ class TestRequestBXFile extends _Request {
 			$this->assertEquals(16, $arFile['WIDTH']);
 			$this->assertEquals(16, $arFile['HEIGHT']);
 		}
-		//$this->assertTrue(\CIBlockElement::Delete($eltID));
+		$this->assertTrue(\CIBlockElement::Delete($eltID));
 	}
 
 }
