@@ -156,36 +156,14 @@ class RequestBXFile extends Request {
 			$arFile['description'] = $description;
 		}
 
-		$arPropValues = array();
-		if($action == self::F_IB_IMG_PROP_APPEND && $arProp['MULTIPLE'] == 'Y') {
-			$rsPropValues = \CIBlockElement::GetProperty($iblockID, $elementID, 'sort', 'asc', array(
-				'ID' => $arProp['ID']
-			));
-			$arPropValues = array();
-			$iValue = 0;
-			$curPropID = 0;
-			while($arValue = $rsPropValues->Fetch()) {
-				$curPropID = $arValue['ID'];
-				if( !array_key_exists($curPropID, $arPropValues) ) {
-					$arPropValues[$curPropID] = array();
-				}
-				if(!empty($arValue['VALUE'])) {
-					$arExistFile = \CFile::GetFileArray($arValue['VALUE']);
-					if($arExistFile) {
-						$arPropValues[$curPropID][$iValue] = \CFile::MakeFileArray($arExistFile['SRC']);
-						$arPropValues[$curPropID][$iValue]['old_file'] = $arValue['VALUE'];
-						$iValue++;
-					}
-				}
-			}
-			if($arProp['ID'] == $curPropID) {
-				$arPropValues[$curPropID][$iValue] = $arFile;
-			}
+		switch($action) {
+			case self::F_IB_IMG_PROP_REPLACE:
+				\CIBlockElement::SetPropertyValuesEx($elementID, $iblockID, array($arProp['ID'] => $arFile));
+				break;
+			case self::F_IB_IMG_PROP_APPEND:
+				\CIBlockElement::SetPropertyValues($elementID, $iblockID, $arFile, $arProp['ID']);
+				break;
 		}
-		else {
-			$arPropValues[$arProp['ID']] = $arFile;
-		}
-		\CIBlockElement::SetPropertyValuesEx($elementID, $iblockID, $arPropValues);
 		return true;
 	}
 }
