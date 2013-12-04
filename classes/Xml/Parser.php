@@ -120,27 +120,27 @@ class Parser extends ParserDB {
 
 
 	/**
-	 * @param array $NEXT_STEP - массив с данными для пошагового чтения xml
+	 * @param array $STATE - массив с данными для пошагового чтения xml
 	 * @return bool feof($this->_file)
 	 */
-	public function readXML(&$NEXT_STEP) {
+	public function readXML(&$STATE) {
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(!array_key_exists("obx_xml_prs_charset", $NEXT_STEP)) {
-			$NEXT_STEP["obx_xml_prs_charset"] = null;
+		if(!array_key_exists("obx_xml_prs_charset", $STATE)) {
+			$STATE["obx_xml_prs_charset"] = null;
 		}
-		$this->_fileCharset = &$NEXT_STEP["obx_xml_prs_charset"];
+		$this->_fileCharset = &$STATE["obx_xml_prs_charset"];
 
-		if(!array_key_exists("obx_xml_prs_element_stack", $NEXT_STEP)) {
-			$NEXT_STEP["obx_xml_prs_element_stack"] = array();
+		if(!array_key_exists("obx_xml_prs_element_stack", $STATE)) {
+			$STATE["obx_xml_prs_element_stack"] = array();
 		}
-		$this->_arElementStack = &$NEXT_STEP["obx_xml_prs_element_stack"];
+		$this->_arElementStack = &$STATE["obx_xml_prs_element_stack"];
 
-		if(!array_key_exists("obx_xml_prs_file_position", $NEXT_STEP)) {
+		if(!array_key_exists("obx_xml_prs_file_position", $STATE)) {
 			$NS["obx_xml_prs_file_position"] = 0;
 		}
-		$this->_filePosition = &$NEXT_STEP["obx_xml_prs_file_position"];
+		$this->_filePosition = &$STATE["obx_xml_prs_file_position"];
 
 		$this->_buffer = '';
 		$this->_bufferPosition = 0;
