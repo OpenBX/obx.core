@@ -7,7 +7,7 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
-use OBX\Core\Xml\Exceptions\ParserError as _;
+use OBX\Core\Exceptions\Xml\ParserError as _;
 $MESS[_::LANG_PREFIX._::E_XML_FILE_NOT_FOUND] = 'файл не найден';
 $MESS[_::LANG_PREFIX._::E_XML_FILE_CANT_OPEN] = 'Не удалось открыть yml-файл';
 $MESS[_::LANG_PREFIX._::E_TMP_TBL_WRONG_NAME] = 'Не верно задано имя временной таблицы';

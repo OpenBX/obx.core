@@ -8,7 +8,7 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Http\Exceptions;
+namespace OBX\Core\Exceptions\Http;
 use OBX\Core\Exceptions\AError;
 
 

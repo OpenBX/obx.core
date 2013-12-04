@@ -9,7 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Curl;
-use OBX\Core\Curl\Exceptions\RequestError;
+use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Tools;
 
 class RequestBXFile extends Request {
@@ -26,7 +26,7 @@ class RequestBXFile extends Request {
 	 * @param int $oldFileID
 	 * @param string $description
 	 * @param string $MODULE_ID
-	 * @throws Exceptions\RequestError
+	 * @throws RequestError
 	 * @return int
 	 */
 	public function saveToBXFile($relUploadDirPath, $oldFileID = 0, $description = '', $MODULE_ID = null) {

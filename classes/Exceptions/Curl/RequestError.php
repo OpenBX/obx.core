@@ -8,7 +8,7 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Curl\Exceptions;
+namespace OBX\Core\Exceptions\Curl;
 
 
 use OBX\Core\Exceptions\AError;
@@ -21,7 +21,9 @@ class RequestError extends AError {
 	const E_PERM_DENIED = 3;
 	const E_FILE_NAME_TOO_LOG = 4;
 	const E_NO_ACCESS_DWN_FOLDER = 5;
-	const E_FILE_SAVE_FAILED = 6;
+	const E_OPEN_DWN_FAILED = 6;
+	const E_FILE_SAVE_FAILED = 7;
+	const E_FILE_SAVE_NO_RESPONSE = 8;
 	static protected $_bCURLChecked = false;
 
 	static public function checkCURL() {

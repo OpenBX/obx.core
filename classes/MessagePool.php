@@ -10,6 +10,8 @@
 
 namespace OBX\Core;
 
+use OBX\Core\Exceptions\AError;
+
 interface IMessagePool
 {
 	function addMessage($text, $code = 0);
@@ -157,6 +159,12 @@ class CMessagePool implements IMessagePool
 	 * @throws \ErrorException
 	 */
 	public function throwErrorException(\ErrorException $Exception){
+		if($Exception instanceof AError) {
+			$class = get_class($Exception);
+			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
+			$this->addError($Exception->getMessage(), $errorCode);
+			throw $Exception;
+		}
 		if($Exception instanceof \ErrorException) {
 			$this->addError($Exception->getMessage(), $Exception->getCode());
 			throw $Exception;
@@ -167,6 +175,11 @@ class CMessagePool implements IMessagePool
 	 * @param \ErrorException $Exception
 	 */
 	public function addErrorException(\ErrorException $Exception){
+		if($Exception instanceof AError) {
+			$class = get_class($Exception);
+			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
+			$this->addError($Exception->getMessage(), $errorCode);
+		}
 		if($Exception instanceof \ErrorException) {
 			$this->addError($Exception->getMessage(), $Exception->getCode());
 		}

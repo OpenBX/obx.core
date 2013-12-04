@@ -7,7 +7,7 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
-use OBX\Core\Http\Exceptions\DownloadError as _;
+use OBX\Core\Exceptions\Http\DownloadError as _;
 $MESS[_::LANG_PREFIX._::E_NO_ACCESS_DWN_FOLDER] = 'Нет доступа во временную папку для загрузки файлов';
 $MESS[_::LANG_PREFIX._::E_WRONG_PROTOCOL] = 'Неверно указан протокол (необходим http)';
 $MESS[_::LANG_PREFIX._::E_CONN_FAIL] = 'Не удалось соединиться с сервером';

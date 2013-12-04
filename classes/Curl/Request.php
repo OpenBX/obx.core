@@ -9,8 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Curl;
-use OBX\Core\CMessagePool;
-use OBX\Core\Curl\Exceptions\RequestError;
+use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Mime;
 
 IncludeModuleLangFile(__FILE__);
@@ -112,7 +111,7 @@ class Request {
 	}
 
 	/**
-	 * @throws Exceptions\RequestError
+	 * @throws RequestError
 	 */
 	static protected function _checkDefaultDwnDir() {
 		if( false === static::$_bDefaultDwnDirChecked ) {
@@ -181,7 +180,7 @@ class Request {
 	public function setDownloadDir($downloadFolder) {
 		$downloadFolder = rtrim(str_replace(array('\\', '//'), '/', $downloadFolder), '/');
 		if($downloadFolder == $this->_dwnFolder) {
-			return false;
+			return true;
 		}
 		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].$downloadFolder) ) {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
@@ -365,7 +364,7 @@ class Request {
 		return $arHeader;
 	}
 
-	protected function _after_exec(CMessagePool $MessagePool = null) {
+	protected function _after_exec() {
 		$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
 		$this->_lastCurlError = curl_error($this->_curlHandler);
 		// TODO: Реализовать русские сообщения curl_error
@@ -636,8 +635,8 @@ class Request {
 					break;
 			}
 		}
-		if( $MessagePool instanceof CMEssagePool ) {
-			$MessagePool->addError($this->_lastCurlError, 'curl_'.$this->_lastCurlErrNo);
+		else {
+			throw new RequestError($this->_lastCurlError, 'curl_'.$this->_lastCurlErrNo);
 		}
 	}
 
@@ -662,8 +661,8 @@ class Request {
 		$this->_afterSend($response);
 		return $this->_body;
 	}
-	public function _afterSend(&$response, CMessagePool $MessagePool = null){
-		$this->_after_exec($MessagePool);
+	public function _afterSend(&$response){
+		$this->_after_exec();
 		$this->_parseResponse($response);
 		$this->_arHeader = $this->parseHeader($this->_header);
 		if($this->_arHeader['CHARSET'] !== null) {
@@ -725,13 +724,9 @@ class Request {
 		return md5('OBX\Core\Curl\Request_'.time().'_'.rand(0, 9999));
 	}
 
-	/**
-	 * @return bool
-	 * @throws Exceptions\RequestError
-	 */
 	public function _initDownload() {
 		if($this->_bDownloadSuccess === true) {
-			return true;
+			return;
 		}
 		if(null === $this->_dwnDir) {
 			$this->setDownloadDir(static::DOWNLOAD_FOLDER);
@@ -741,7 +736,7 @@ class Request {
 		}
 		$this->_dwnFileHandler = fopen($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, 'wb');
 		if( !$this->_dwnFileHandler ) {
-			throw new RequestError(GetMessage('OBX\Core\Curl\Request::E_OPEN_DWN_FAILED'), RequestError::E_PERM_DENIED);
+			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, false);
 		curl_setopt($this->_curlHandler, CURLOPT_HEADER, false);
@@ -755,8 +750,8 @@ class Request {
 		$this->_afterDownload();
 	}
 
-	public function _afterDownload(CMessagePool $MessagePool = null) {
-		$this->_after_exec($MessagePool);
+	public function _afterDownload() {
+		$this->_after_exec();
 		if($this->_lastCurlErrNo === CURLE_OK) {
 			if($this->getStatus() == 200) {
 				$this->_setDownloadComplete();
@@ -796,7 +791,7 @@ class Request {
 
 	/**
 	 * @param $relPath
-	 * @throws Exceptions\RequestError
+	 * @throws RequestError
 	 */
 	public function saveToFile($relPath) {
 		$relPath = str_replace(array('\\', '//'), '/', $relPath);
@@ -815,12 +810,15 @@ class Request {
 		elseif($this->_bRequestSuccess === true) {
 			file_put_contents($path, $this->_body);
 		}
+		else {
+			throw new RequestError('', RequestError::E_FILE_SAVE_NO_RESPONSE);
+		}
 	}
 
 	/**
 	 * @param $relPath
 	 * @param int $fileNameMode
-	 * @throws Exceptions\RequestError
+	 * @throws RequestError
 	 */
 	public function saveToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
 		if( true !== $this->_bDownloadSuccess && true !== $this->_bRequestSuccess ) {
@@ -890,6 +888,9 @@ class Request {
 		elseif(true === $this->_bRequestSuccess) {
 			file_put_contents($this->_savePath, $this->_body);
 		}
+		else {
+			throw new RequestError('', RequestError::E_FILE_SAVE_NO_RESPONSE);
+		}
 	}
 
 	static protected function fixFileName(&$fileName) {
@@ -943,14 +944,22 @@ class Request {
 		$this->_bRequestSuccess = ($bComplete!==false)?true:false;
 	}
 
+	/**
+	 * @param $relPath
+	 * @return bool
+	 */
 	public function downloadToFile($relPath) {
 		$this->_initDownload();
 		curl_exec($this->_curlHandler);
 		$this->_afterDownload();
 		//if($this->_sta)
-		$this->saveToFile($relPath);
+		return $this->saveToFile($relPath);
 	}
 
+	/**
+	 * @param $relPath
+	 * @param int $fileNameMode
+	 */
 	public function downloadToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
 		$this->_initDownload();
 		curl_exec($this->_curlHandler);

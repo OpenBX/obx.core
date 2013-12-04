@@ -10,7 +10,7 @@
 
 namespace OBX\Core\Http;
 use OBX\Core\CMessagePoolDecorator;
-use OBX\Core\Http\Exceptions\DownloadError;
+use OBX\Core\Exceptions\Http\DownloadError;
 use OBX\Core\Mime;
 
 IncludeModuleLangFile(__FILE__);
@@ -180,7 +180,7 @@ HTML;
 	}
 
 	/**
-	 * @throws Exceptions\DownloadError
+	 * @throws DownloadError
 	 */
 	static protected function _checkDefaultDwnDir() {
 		if( false === static::$_bDefaultDwnDirChecked ) {

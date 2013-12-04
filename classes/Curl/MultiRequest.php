@@ -10,7 +10,7 @@
 
 namespace OBX\Core\Curl;
 use OBX\Core\CMessagePoolDecorator;
-use OBX\Core\Curl\Exceptions\RequestError;
+use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Exceptions\LogFileError;
 use OBX\Core\LogFile;
 
@@ -52,7 +52,7 @@ class MultiRequest extends CMessagePoolDecorator {
 			$bSuccess = $this->addRequest($Request);
 		}
 		catch(RequestError $e) {
-			$this->addError($e->getMessage(), $e->getCode());
+			$this->addErrorException($e);
 			return false;
 		}
 		return $bSuccess;
@@ -114,11 +114,17 @@ class MultiRequest extends CMessagePoolDecorator {
 	public function download() {
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			$Request->_initDownload();
+			try {$Request->_initDownload();}
+			catch(RequestError $e) {
+				$this->getMessagePool()->addErrorException($e);
+			}
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
-			$Request->_afterDownload($this->getMessagePool());
+			try { $Request->_afterDownload($this->getMessagePool()); }
+			catch(RequestError $e) {
+				$this->getMessagePool()->addErrorException($e);
+			}
 			//$this->_bAllDownloadsSuccess = $Request->isDownloadSuccess() && $this->_bAllDownloadsSuccess;
 		}
 		$this->_bDownloadsComplete = true;
@@ -127,13 +133,21 @@ class MultiRequest extends CMessagePoolDecorator {
 	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GENERATE) {
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			$Request->_initDownload();
+			try {$Request->_initDownload();}
+			catch(RequestError $e) {
+				$this->getMessagePool()->addErrorException($e);
+			}
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
-			$Request->_afterDownload($this->getMessagePool());
+			try {
+				$Request->_afterDownload($this->getMessagePool());
+				$Request->saveToDir($relPath, $fileNameMode);
+			}
+			catch(RequestError $e) {
+				$this->getMessagePool()->addErrorException($e);
+			}
 			//$this->_bAllDownloadsSuccess = $Request->isDownloadSuccess() && $this->_bAllDownloadsSuccess;
-			$Request->saveToDir($relPath, $fileNameMode);
 		}
 		$this->_bDownloadsComplete = true;
 	}
@@ -180,7 +194,7 @@ class MultiRequest extends CMessagePoolDecorator {
 				$Request->saveToDir($relPath, $saveMode);
 			}
 			catch(RequestError $e) {
-				$this->addError($e->getMessage(), $e->getCode());
+				$this->addWarning($e->getMessage(), $e->getCode());
 			}
 		}
 	}

@@ -8,7 +8,7 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Xml\Exceptions;
+namespace OBX\Core\Exceptions\Xml;
 
 use OBX\Core\Exceptions\AError;
 

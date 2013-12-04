@@ -9,7 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Xml;
-use OBX\Core\Xml\Exceptions\ParserError;
+use OBX\Core\Exceptions\Xml\ParserError;
 IncludeModuleLangFile(__FILE__);
 
 class Parser extends ParserDB {

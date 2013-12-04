@@ -7,4 +7,3 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
-$MESS['OBX\Core\Curl\Request::E_OPEN_DWN_FAILED'] = 'Не удалось открыть файл загрузки';

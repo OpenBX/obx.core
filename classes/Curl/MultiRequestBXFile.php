@@ -9,7 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Curl;
-use OBX\Core\Curl\Exceptions\RequestError;
+use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Tools;
 
 class MultiRequestBXFile extends MultiRequest {
