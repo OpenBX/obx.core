@@ -21,7 +21,6 @@ $arModuleClasses = array(
 	 'OBX\Core\Tools'							=> 'classes/Tools.php'
 	,'OBX_Tools'								=> 'classes/Tools.php'
 	,'OBX\Core\EventD'							=> 'classes/EventD.php'
-	,'OBX\Core\Exceptions\AError'				=> 'classes/Exceptions/AError.php'
 	,'OBX\Core\JSMessages'						=> 'classes/JSMessages.php'
 	,'OBX\Core\IMessagePool'					=> 'classes/MessagePool.php'
 	,'OBX\Core\IMessagePoolStatic'				=> 'classes/MessagePool.php'
@@ -30,14 +29,11 @@ $arModuleClasses = array(
 	,'OBX\Core\CMessagePoolDecorator'			=> 'classes/MessagePool.php'
 	,'OBX\Core\LogFile'							=> 'classes/LogFile.php'
 	,'OBX\Core\Mime'							=> 'classes/Mime.php'
-	,'OBX\Core\Exceptions\LogFileError'			=> 'classes/Exceptions/LogFileError.php'
-	,'OBX\Core\Curl\Exceptions\RequestError'	=> 'classes/Curl/Exceptions/RequestError.php'
 	,'OBX\Core\Curl\Request'					=> 'classes/Curl/Request.php'
 	,'OBX\Core\Curl\RequestBXFile'				=> 'classes/Curl/RequestBXFile.php'
 	,'OBX\Core\Curl\MultiRequest'				=> 'classes/Curl/MultiRequest.php'
 	,'OBX\Core\Curl\MultiRequestBXFile'			=> 'classes/Curl/MultiRequestBXFile.php'
 	,'OBX\Core\Http\Download'					=> 'classes/Http/Download.php'
-	,'OBX\Core\Http\Exceptions\DownloadError'	=> 'classes/Http/Exceptions/DownloadError.php'
 	,'OBX\Core\Http\Request'					=> 'classes/Http/Request.php'
 	,'OBX\Core\Wizard\ImportIBlock'				=> 'classes/WizardImportIBlock.php'
 	,'OBX\Core\Settings\ISettings'				=> 'classes/Settings.php'
@@ -48,6 +44,12 @@ $arModuleClasses = array(
 	,'OBX\Core\Settings\IAdminPage'				=> 'classes/Settings.php'
 	,'OBX\Core\Settings\AdminPage'				=> 'classes/Settings.php'
 	,'OBX\Core\Test\TestCase'					=> 'classes/TestCase.php'
+	,'OBX\Core\Exceptions\AError'				=> 'classes/Exceptions/AError.php'
+	,'OBX\Core\Exceptions\LogFileError'			=> 'classes/Exceptions/LogFileError.php'
+	,'OBX\Core\Exceptions\Curl\RequestError'	=> 'classes/Exceptions/Curl/RequestError.php'
+	,'OBX\Core\Exceptions\Curl\CurlError'		=> 'classes/Exceptions/Curl/CurlError.php'
+	,'OBX\Core\Exceptions\Http\DownloadError'	=> 'classes/Exceptions/Http/DownloadError.php'
+
 );
 if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.php';
@@ -58,7 +60,7 @@ if($DBType === 'mysql') {
 	//$arModuleClasses['OBX\Core\ModuleDependencies']		= 'classes/ModuleDependencies.php';
 	$arModuleClasses['OBX\Core\Xml\ParserDB']				= 'classes/Xml/ParserDB.'.$DBType.'.php';
 	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';
-	$arModuleClasses['OBX\Core\Xml\Exceptions\ParserError']	= 'classes/Xml/Exceptions/ParserError.php';
+	$arModuleClasses['OBX\Core\Exceptions\Xml\ParserError']	= 'classes/Exceptions/Xml/ParserError.php';
 }
 
 

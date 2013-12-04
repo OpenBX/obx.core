@@ -26,8 +26,8 @@ class XmlParserTest extends TestCase {
 
 	/**
 	 * @param string $filePath
-	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::XML_FILE_NOT_FOUND
+	 * @expectedException \OBX\Core\Exceptions\Xml\Par`serError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Xml\ParserError::XML_FILE_NOT_FOUND
 	 * @dataProvider getXmlFilePath
 	 */
 	public function testWrongFile($filePath) {
@@ -36,9 +36,9 @@ class XmlParserTest extends TestCase {
 
 	/**
 	 * @param string $filePath
-	 * @throws \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::XML_FILE_CANT_OPEN
+	 * @throws \OBX\Core\Exceptions\Xml\ParserError
+	 * @expectedException \OBX\Core\Exceptions\Xml\ParserError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Xml\ParserError::XML_FILE_CANT_OPEN
 	 * @dataProvider getXmlFilePath
 	 */
 	public function testWrongFilePrivileges($filePath) {
@@ -61,8 +61,8 @@ class XmlParserTest extends TestCase {
 
 	/**
 	 * @param $filePath
-	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_EXISTS
+	 * @expectedException \OBX\Core\Exceptions\Xml\ParserError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Xml\ParserError::TMP_TBL_EXISTS
 	 * @dataProvider getXmlFilePath
 	 */
 	public function testCreateTableExists($filePath) {
