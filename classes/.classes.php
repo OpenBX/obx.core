@@ -35,6 +35,7 @@ $arModuleClasses = array(
 	,'OBX\Core\Curl\Request'					=> 'classes/Curl/Request.php'
 	,'OBX\Core\Curl\RequestBXFile'				=> 'classes/Curl/RequestBXFile.php'
 	,'OBX\Core\Curl\MultiRequest'				=> 'classes/Curl/MultiRequest.php'
+	,'OBX\Core\Curl\MultiRequestBXFile'			=> 'classes/Curl/MultiRequestBXFile.php'
 	,'OBX\Core\Http\Download'					=> 'classes/Http/Download.php'
 	,'OBX\Core\Http\Exceptions\DownloadError'	=> 'classes/Http/Exceptions/DownloadError.php'
 	,'OBX\Core\Http\Request'					=> 'classes/Http/Request.php'

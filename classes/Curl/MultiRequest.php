@@ -21,6 +21,10 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected $_iRequest = 0;
 	protected $_timeout = 0;
 	protected $_waiting = 0;
+	protected $_bAllRequestsSuccess = false;
+	protected $_bAllDownloadsSuccess = false;
+	protected $_bDownloadsComplete = false;
+	protected $_bRequestsComplete = false;
 
 	public function __construct() {
 		$this->_curlMulti = curl_multi_init();
@@ -36,6 +40,10 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		$this->_arRequestList = null;
 		curl_multi_close($this->_curlMulti);
+	}
+
+	static public function generateMultiDownloadName() {
+		return md5(__CLASS__.time().'_'.rand(0, 9999));
 	}
 
 	public function addUrl($url) {
@@ -111,8 +119,9 @@ class MultiRequest extends CMessagePoolDecorator {
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
 			$Request->_afterDownload($this->getMessagePool());
-
+			//$this->_bAllDownloadsSuccess = $Request->isDownloadSuccess() && $this->_bAllDownloadsSuccess;
 		}
+		$this->_bDownloadsComplete = true;
 	}
 
 	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GENERATE) {
@@ -123,8 +132,10 @@ class MultiRequest extends CMessagePoolDecorator {
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
 			$Request->_afterDownload($this->getMessagePool());
+			//$this->_bAllDownloadsSuccess = $Request->isDownloadSuccess() && $this->_bAllDownloadsSuccess;
 			$Request->saveToDir($relPath, $fileNameMode);
 		}
+		$this->_bDownloadsComplete = true;
 	}
 
 	protected function _exec() {
@@ -156,17 +167,17 @@ class MultiRequest extends CMessagePoolDecorator {
 			if( $bReturnResponse !== false ) {
 				$arResponseList[$reqNo] = $response;
 			}
+			//$this->_bAllRequestsSuccess = $Request->isRequestSuccess() && $this->_bAllRequestsSuccess;
 		}
+		$this->_bRequestsComplete = true;
 		return $arResponseList;
 	}
 
-
-
-	public function saveToDir($relPath) {
+	public function saveToDir($relPath, $saveMode = Request::SAVE_TO_DIR_GENERATE) {
 		foreach($this->_arRequestList as $reqNo => &$Request) {
 			/** @var Request $Request */
 			try {
-				$Request->saveToDir($relPath);
+				$Request->saveToDir($relPath, $saveMode);
 			}
 			catch(RequestError $e) {
 				$this->addError($e->getMessage(), $e->getCode());

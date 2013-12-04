@@ -42,7 +42,7 @@ class RequestBXFile extends Request {
 		}
 		$fileID = -1;
 		$oldFileID = intval($oldFileID);
-		if($this->_bDownloadComplete || $this->_bRequestComplete) {
+		if($this->_bDownloadSuccess || $this->_bRequestSuccess) {
 			if($this->_dwnName === null) {
 				$this->_dwnName = static::generateDownloadName();
 			}
@@ -77,7 +77,7 @@ class RequestBXFile extends Request {
 	 * @throws RequestError
 	 */
 	public function saveToIBElement($elementID, $target = self::F_IB_IMG_DETAIL, $description = '') {
-		if(true !== $this->_bRequestComplete && true !== $this->_bDownloadComplete) {
+		if(true !== $this->_bRequestSuccess && true !== $this->_bDownloadSuccess) {
 			return false;
 		}
 		if($this->_dwnName === null) {
@@ -115,7 +115,7 @@ class RequestBXFile extends Request {
 	 * @return bool
 	 */
 	public function saveToIBProp($iblockID, $elementID, $propCode, $action = self::F_IB_IMG_PROP_APPEND, $description = '') {
-		if(true !== $this->_bRequestComplete && true !== $this->_bDownloadComplete) {
+		if(true !== $this->_bRequestSuccess && true !== $this->_bDownloadSuccess) {
 			return false;
 		}
 

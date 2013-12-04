@@ -57,8 +57,8 @@ class Request {
 	protected $_saveRelPath = null;
 	protected $_savePath = null;
 	protected $_saveFileName = null;
-	protected $_bDownloadComplete = false;
-	protected $_bRequestComplete = false;
+	protected $_bDownloadSuccess = false;
+	protected $_bRequestSuccess = false;
 
 	protected $_maxRedirects = 5;
 	protected $_bApplyServerCookie = false;
@@ -84,7 +84,7 @@ class Request {
 	}
 
 	public function __destruct() {
-		if($this->_bDownloadComplete === true) {
+		if($this->_bDownloadSuccess === true) {
 			if($this->_dwnFileHandler != null) {
 				fclose($this->_dwnFileHandler);
 				$this->_dwnFileHandler = null;
@@ -642,7 +642,7 @@ class Request {
 	}
 
 	public function _initSend(){
-		$this->_bRequestComplete = false;
+		$this->_bRequestSuccess = false;
 		$this->_header = null;
 		$this->_arHeader = array();
 		$this->_body = null;
@@ -673,14 +673,14 @@ class Request {
 			$this->_contentType = $this->_arHeader['Content-Type']['VALUE_MAIN'];
 		}
 		if($this->_lastCurlErrNo === CURLE_OK) {
-			if($this->_bAllowSave404ToFile) {
+			if($this->getStatus() == 200) {
 				$this->_setRequestComplete();
 			}
-			elseif($this->getStatus() == 200) {
+			elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
 				$this->_setRequestComplete();
 			}
 		}
-		if(true === $this->_bRequestComplete) {
+		if(true === $this->_bRequestSuccess) {
 			//Определим имя файла
 			if( array_key_exists('Content-Disposition', $this->_arHeader)
 				&& array_key_exists('OPTIONS', $this->_arHeader['Content-Disposition'])
@@ -722,7 +722,7 @@ class Request {
 	}
 
 	static public function generateDownloadName() {
-		return md5(time().'_'.rand(0, 9999));
+		return md5('OBX\Core\Curl\Request_'.time().'_'.rand(0, 9999));
 	}
 
 	/**
@@ -730,7 +730,7 @@ class Request {
 	 * @throws Exceptions\RequestError
 	 */
 	public function _initDownload() {
-		if($this->_bDownloadComplete === true) {
+		if($this->_bDownloadSuccess === true) {
 			return true;
 		}
 		if(null === $this->_dwnDir) {
@@ -758,14 +758,14 @@ class Request {
 	public function _afterDownload(CMessagePool $MessagePool = null) {
 		$this->_after_exec($MessagePool);
 		if($this->_lastCurlErrNo === CURLE_OK) {
-			if($this->_bAllowSave404ToFile) {
+			if($this->getStatus() == 200) {
 				$this->_setDownloadComplete();
 			}
-			elseif($this->getStatus() == 200) {
+			elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
 				$this->_setDownloadComplete();
 			}
 		}
-		if(true === $this->_bDownloadComplete) {
+		if(true === $this->_bDownloadSuccess) {
 			fclose($this->_dwnFileHandler);
 			$this->_dwnFileHandler = null;
 			$contentType = $this->getContentType();
@@ -804,7 +804,7 @@ class Request {
 		if( !CheckDirPath($path) ) {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
 		}
-		if( $this->_bDownloadComplete === true ) {
+		if( $this->_bDownloadSuccess === true ) {
 			//fclose($this->_dwnFileHandler);
 			//$this->_dwnFileHandler = null;
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
@@ -812,7 +812,7 @@ class Request {
 				throw new RequestError('', RequestError::E_FILE_SAVE_FAILED);
 			}
 		}
-		elseif($this->_bRequestComplete === true) {
+		elseif($this->_bRequestSuccess === true) {
 			file_put_contents($path, $this->_body);
 		}
 	}
@@ -822,7 +822,10 @@ class Request {
 	 * @param int $fileNameMode
 	 * @throws Exceptions\RequestError
 	 */
-	public function saveToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE){
+	public function saveToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
+		if( true !== $this->_bDownloadSuccess && true !== $this->_bRequestSuccess ) {
+			return;
+		}
 		switch($fileNameMode) {
 			case self::SAVE_TO_DIR_GENERATE:
 			case self::SAVE_TO_DIR_COUNT:
@@ -833,14 +836,13 @@ class Request {
 				break;
 		}
 		$relPath = str_replace(array('\\', '//'), '/', $relPath);
-		$relPath = rtrim($relPath, '/');
-		$path = $_SERVER['DOCUMENT_ROOT'].$relPath;
+		$relPath = str_replace('../', '', $relPath);
+		$relPath = '/'.trim($relPath, '/');
+		$path = OBX_DOC_ROOT.$relPath;
 		if( !CheckDirPath($path.'/') ) {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
 		}
-		if( $this->_bDownloadComplete !== true && $this->_bRequestComplete !== true ) {
-			return;
-		}
+
 		if($fileNameMode === self::SAVE_TO_DIR_GENERATE) {
 			$baseName = static::generateDownloadName();
 			$fileExt = $this->_originalExt;
@@ -881,11 +883,11 @@ class Request {
 		$this->_saveFileName = $fileName;
 		$this->_saveRelPath = $relPath.'/'.$fileName;
 		$this->_savePath = $path.'/'.$fileName;
-		if(true === $this->_bDownloadComplete) {
+		if(true === $this->_bDownloadSuccess) {
 			copy($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, $this->_savePath);
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 		}
-		elseif(true === $this->_bRequestComplete) {
+		elseif(true === $this->_bRequestSuccess) {
 			file_put_contents($this->_savePath, $this->_body);
 		}
 	}
@@ -935,10 +937,10 @@ class Request {
 	}
 
 	protected function _setDownloadComplete($bComplete = true) {
-		$this->_bDownloadComplete = ($bComplete!==false)?true:false;
+		$this->_bDownloadSuccess = ($bComplete!==false)?true:false;
 	}
 	protected function _setRequestComplete($bComplete = true) {
-		$this->_bRequestComplete = ($bComplete!==false)?true:false;
+		$this->_bRequestSuccess = ($bComplete!==false)?true:false;
 	}
 
 	public function downloadToFile($relPath) {
@@ -1023,5 +1025,13 @@ class Request {
 	static public function downloadUrlToDir($url, $dirRelPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
 		$Request = new self($url);
 		$Request->downloadToDir($dirRelPath, $fileNameMode);
+	}
+
+	public function isDownloadSuccess() {
+		return $this->_bDownloadSuccess;
+	}
+
+	public function isRequestSuccess() {
+		return $this->_bRequestSuccess;
 	}
 } 
