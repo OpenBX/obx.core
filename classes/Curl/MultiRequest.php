@@ -19,10 +19,9 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected $_curlMulti = null;
 	protected $_arRequestList = array();
 	protected $_iRequest = 0;
+	protected $_iRequestsSuccess = 0;
 	protected $_timeout = 0;
 	protected $_waiting = 0;
-	protected $_bAllRequestsSuccess = false;
-	protected $_bAllDownloadsSuccess = false;
 	protected $_bDownloadsComplete = false;
 	protected $_bRequestsComplete = false;
 
@@ -63,6 +62,7 @@ class MultiRequest extends CMessagePoolDecorator {
 			return false;
 		}
 		$this->_arRequestList[$this->_iRequest] = $Request;
+		$this->_countRequests++;
 		curl_multi_add_handle($this->_curlMulti, $Request->getCurlHandler());
 		$this->_iRequest++;
 		return true;
@@ -112,6 +112,9 @@ class MultiRequest extends CMessagePoolDecorator {
 	}
 
 	public function download() {
+		if(true === $this->_bDownloadsComplete) {
+			return;
+		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
 			try {$Request->_initDownload();}
@@ -125,12 +128,17 @@ class MultiRequest extends CMessagePoolDecorator {
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
-			//$this->_bAllDownloadsSuccess = $Request->isDownloadSuccess() && $this->_bAllDownloadsSuccess;
+			if($Request->isDownloadSuccess()) {
+				$this->_iRequestsSuccess++;
+			}
 		}
 		$this->_bDownloadsComplete = true;
 	}
 
 	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GENERATE) {
+		if(true === $this->_bDownloadsComplete) {
+			return;
+		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
 			try {$Request->_initDownload();}
@@ -147,7 +155,9 @@ class MultiRequest extends CMessagePoolDecorator {
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
-			//$this->_bAllDownloadsSuccess = $Request->isDownloadSuccess() && $this->_bAllDownloadsSuccess;
+			if($Request->isDownloadSuccess()) {
+				$this->_iRequestsSuccess++;
+			}
 		}
 		$this->_bDownloadsComplete = true;
 	}
@@ -163,10 +173,19 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	/**
 	 * @param bool $bReturnResponse
-	 * @return array
+	 * @return array|null
 	 */
 	public function send($bReturnResponse = false) {
 		$arResponseList = array();
+		if(true === $this->_bRequestsComplete) {
+			if( $bReturnResponse !== false ) {
+				/** @var Request $Request */
+				foreach($this->_arRequestList as $reqNo => $Request) {
+					$arResponseList[$reqNo] = $Request->getBody();
+				}
+			}
+			return $arResponseList;
+		}
 		foreach($this->_arRequestList as $reqNo => &$Request) {
 			/** @var Request $Request */
 			$Request->_initSend();
@@ -181,7 +200,9 @@ class MultiRequest extends CMessagePoolDecorator {
 			if( $bReturnResponse !== false ) {
 				$arResponseList[$reqNo] = $response;
 			}
-			//$this->_bAllRequestsSuccess = $Request->isRequestSuccess() && $this->_bAllRequestsSuccess;
+			if($Request->isRequestSuccess()) {
+				$this->_iRequestsSuccess++;
+			}
 		}
 		$this->_bRequestsComplete = true;
 		return $arResponseList;
@@ -199,4 +220,20 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 	}
 
+	public function getRequestsCount() {
+		return $this->_iRequest;
+	}
+
+	public function getSuccessRequestsCount() {
+		return $this->_iRequestsSuccess;
+	}
+
+	public function getResponseList() {
+		/** @var Request $Request */
+		$arResponseList = array();
+		foreach($this->_arRequestList as $reqNo => $Request) {
+			$arResponseList[$reqNo] = $Request->getBody();
+		}
+		return $arResponseList;
+	}
 }

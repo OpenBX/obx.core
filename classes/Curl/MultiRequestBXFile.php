@@ -86,6 +86,9 @@ class MultiRequestBXFile extends MultiRequest {
 					$arFileList[] = \CFile::MakeFileArray($relFilePath);
 				}
 			}
+			else {
+
+			}
 		}
 
 		if(!empty($arFileList)) {
