@@ -61,19 +61,16 @@ class Parser extends ParserDB {
 			$dotPos = strrpos($filePath, '.');
 			$fileExt = substr($filePath, $dotPos+1);
 			if(!in_array($fileExt, static::$_arAllowFileExt)) {
-				throw new ParserError(
-					GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_XML_FILE_EXT_NOT_ALLOWED'),
-					ParserError::E_XML_FILE_EXT_NOT_ALLOWED
-				);
+				throw new ParserError('', ParserError::E_XML_FILE_EXT_NOT_ALLOWED);
 			}
 			$this->_filePath = $filePath;
 			$this->_file = fopen($filePath, 'r');
 			if( !$this->_file ) {
-				throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_CANT_OPEN'), ParserError::E_XML_FILE_CANT_OPEN);
+				throw new ParserError('', ParserError::E_XML_FILE_CANT_OPEN);
 			}
 		}
 		else {
-			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::XML_FILE_NOT_FOUND'), ParserError::E_XML_FILE_NOT_FOUND);
+			throw new ParserError('', ParserError::E_XML_FILE_NOT_FOUND);
 		}
 		if( defined('BX_UTF') ) {
 			$this->_bUTF = true;

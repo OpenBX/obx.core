@@ -27,8 +27,8 @@ class XmlParserAttr extends TestCase {
 	/**
 	 * @param $filePath
 	 * @dataProvider getXmlFilePath
-	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME
+	 * @expectedException \OBX\Core\Exceptions\Xml\ParserError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Xml\ParserError::E_WRONG_ATTR_NAME
 	 */
 	public function testAddAttrWrongName($filePath) {
 		$Parser = new XmlParser($filePath);
@@ -39,8 +39,8 @@ class XmlParserAttr extends TestCase {
 	/**
 	 * @param $filePath
 	 * @dataProvider getXmlFilePath
-	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::E_ATTR_EXISTS
+	 * @expectedException \OBX\Core\Exceptions\Xml\ParserError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Xml\ParserError::E_ATTR_EXISTS
 	 */
 	public function testAddExistsAttr($filePath) {
 		$Parser = new XmlParser($filePath);
@@ -52,8 +52,8 @@ class XmlParserAttr extends TestCase {
 	/**
 	 * @param $filePath
 	 * @dataProvider getXmlFilePath
-	 * @expectedException \OBX\Core\Xml\Exceptions\ParserError
-	 * @expectedExceptionCode \OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL
+	 * @expectedException \OBX\Core\Exceptions\Xml\ParserError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Xml\ParserError::E_ADD_ATTR_ON_EXISTS_TBL
 	 */
 	public function testAddAttrAfterTableCreation($filePath) {
 		$Parser = new XmlParser($filePath);

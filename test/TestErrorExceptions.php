@@ -11,28 +11,26 @@
 namespace OBX\Core\Test;
 
 
-use OBX\Core\Xml\Exceptions\ParserError;
-
 class TestErrorExceptions extends TestCase {
 	const _DIR_ = __DIR__;
 
 	static public function getClassList() {
 		return array(
 			array(
-				'\OBX\Core\Xml\Exceptions\ParserError',
-				'/obx.core/classes/Xml/Exceptions/ParserError.php'
+				'\OBX\Core\Exceptions\Xml\ParserError',
+				'/obx.core/classes/Exceptions/Xml/ParserError.php'
 			),
 			array(
-				'\OBX\Core\Http\Exceptions\DownloadError',
-				'/obx.core/classes/Http/Exceptions/DownloadError.php'
+				'\OBX\Core\Exceptions\Http\DownloadError',
+				'/obx.core/classes/Exceptions/Http/DownloadError.php'
 			),
 			array(
 				'\OBX\Core\Exceptions\LogFileError',
 				'/obx.core/classes/Exceptions/LogFileError.php'
 			),
 			array(
-				'\OBX\Core\Curl\Exceptions\RequestError',
-				'/obx.core/classes/Curl/Exceptions/RequestError.php'
+				'\OBX\Core\Exceptions\Curl\RequestError',
+				'/obx.core/classes/Exceptions/Curl/RequestError.php'
 			),
 		);
 	}

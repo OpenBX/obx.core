@@ -16,14 +16,14 @@ use OBX\Core\Exceptions\AError;
 class RequestError extends AError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'OBX_CORE_CURL_ERROR_';
-	const E_CURL_NOT_INSTALLED = 1;
-	const E_WRONG_PATH = 2;
-	const E_PERM_DENIED = 3;
-	const E_FILE_NAME_TOO_LOG = 4;
-	const E_NO_ACCESS_DWN_FOLDER = 5;
-	const E_OPEN_DWN_FAILED = 6;
-	const E_FILE_SAVE_FAILED = 7;
-	const E_FILE_SAVE_NO_RESPONSE = 8;
+	const E_CURL_NOT_INSTALLED = 1001;
+	const E_WRONG_PATH = 1002;
+	const E_PERM_DENIED = 1003;
+	const E_FILE_NAME_TOO_LOG = 1004;
+	const E_NO_ACCESS_DWN_FOLDER = 1005;
+	const E_OPEN_DWN_FAILED = 1006;
+	const E_FILE_SAVE_FAILED = 1007;
+	const E_FILE_SAVE_NO_RESPONSE = 1008;
 	static protected $_bCURLChecked = false;
 
 	static public function checkCURL() {

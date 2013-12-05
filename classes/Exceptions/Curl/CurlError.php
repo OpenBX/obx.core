@@ -10,10 +10,7 @@
 
 namespace OBX\Core\Exceptions\Curl;
 
-
-use OBX\Core\Exceptions\AError;
-
-class CurlError extends AError {
+class CurlError extends RequestError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'CURLE_';
 

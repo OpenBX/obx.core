@@ -105,10 +105,7 @@ class ParserDB {
 				$this->_tempTableName = $tableName;
 			}
 			else {
-				throw new ParserError(
-					GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_WRONG_NAME')
-					, ParserError::E_TMP_TBL_WRONG_NAME
-				);
+				throw new ParserError('', ParserError::E_TMP_TBL_WRONG_NAME);
 			}
 		}
 	}
@@ -129,16 +126,10 @@ class ParserDB {
 
 	public function addAttribute($attrName, $nodeName = false, $depthLevel = false, $bFillFromNodeAttr = false, $bAddIndex = false) {
 		if( true === $this->isTempTableCreated() ) {
-			throw new ParserError(
-				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_ATTR_ON_EXISTS_TBL')
-				, ParserError::E_ADD_ATTR_ON_EXISTS_TBL
-			);
+			throw new ParserError('', ParserError::E_ADD_ATTR_ON_EXISTS_TBL);
 		}
 		if(!preg_match('~([a-zA-Z]{1}[a-zA-Z0-9\-\_]{0,29})(?:\:([a-zA-Z]{1}[a-zA-Z0-9\_]{0,29}))?~', $attrName, $arAttrNameMatches)) {
-			throw new ParserError(
-				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_WRONG_ATTR_NAME')
-				, ParserError::E_WRONG_ATTR_NAME
-			);
+			throw new ParserError('', ParserError::E_WRONG_ATTR_NAME);
 		}
 		if( array_key_exists(2, $arAttrNameMatches) ) {
 			$colName = $arAttrNameMatches[2];
@@ -156,10 +147,7 @@ class ParserDB {
 			$this->_arAttributes = array();
 		}
 		if( array_key_exists($colName, $this->_arAttributes) ) {
-			throw new ParserError(
-				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ATTR_EXISTS'),
-				ParserError::E_ATTR_EXISTS
-			);
+			throw new ParserError('', ParserError::E_ATTR_EXISTS);
 		}
 		$this->_arAttributes[$colName] = array(
 			'NAME' => $attrName,
@@ -214,7 +202,7 @@ class ParserDB {
 		}
 
 		if($DB->TableExists($this->_tempTableName)) {
-			throw new ParserError(GetMessage('OBX\Core\Xml\Exceptions\ParserError::TMP_TBL_EXISTS'), ParserError::E_TMP_TBL_EXISTS);
+			throw new ParserError('', ParserError::E_TMP_TBL_EXISTS);
 		}
 
 		$sqlAttrFieldsCreate = '';
@@ -280,10 +268,7 @@ class ParserDB {
 		global $DB;
 		$res = true;
 		if( !$this->isTempTableCreated() ) {
-			throw new ParserError(
-				GetMessage('OBX\Core\Xml\Exceptions\ParserError::E_ADD_IDX_ON_EXISTS_TBL'),
-				ParserError::E_ADD_IDX_NO_EXISTS_TBL
-			);
+			throw new ParserError('', ParserError::E_ADD_IDX_NO_EXISTS_TBL);
 		}
 		if($this->_bUseSessionIDIntTempTable) {
 			if(!$DB->IndexExists($this->_tempTableName, array('SESS_ID', 'PARENT_ID'))) {

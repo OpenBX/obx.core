@@ -11,6 +11,7 @@
 namespace OBX\Core\Test;
 use OBX\Core\Curl\Request;
 use OBX\Core\Curl\MultiRequest;
+use OBX\Core\Exceptions\Curl\RequestError;
 
 require_once __DIR__.'/_Request.php';
 
@@ -239,17 +240,28 @@ class TestRequest extends _Request {
 	}
 
 	public function testGetContent404() {
-		$Request = new Request(static::$_url404);
-		$Request->send();
-		//$Request->setAllowSave404ToFile(false);
-		$Request->saveToFile('/upload/obx.core/test/Request/404/some_404_file.json');
+		try {
+			$Request = new Request(static::$_url404);
+			$Request->send();
+			$Request->saveToFile('/upload/obx.core/test/Request/404/some_404_file.json');
+		}
+		catch(RequestError $e) {
+			$this->assertEquals(RequestError::E_FILE_SAVE_NO_RESPONSE, $e->getCode());
+			$this->assertEquals(RequestError::getLangMessage(RequestError::E_FILE_SAVE_NO_RESPONSE), $e->getMessage());
+		}
 		$this->assertEquals('404', $Request->getStatus());
 		$this->assertFileNotExists(self::$_docRoot.'/upload/obx.core/test/Request/404/some_404_file.json');
 	}
 
 	public function testDownload404() {
-		$Request = new Request(static::$_url404);
-		$Request->downloadToFile('/upload/obx.core/test/Request/404/404.json');
+		try {
+			$Request = new Request(static::$_url404);
+			$Request->downloadToFile('/upload/obx.core/test/Request/404/404.json');
+		}
+		catch(RequestError $e) {
+			$this->assertEquals(RequestError::E_FILE_SAVE_NO_RESPONSE, $e->getCode());
+			$this->assertEquals(RequestError::getLangMessage(RequestError::E_FILE_SAVE_NO_RESPONSE), $e->getMessage());
+		}
 		$this->assertEquals('404', $Request->getStatus());
 		$this->assertFileNotExists(self::$_docRoot.'/upload/obx.core/test/Request/404/404.json');
 
