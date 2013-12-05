@@ -22,7 +22,7 @@ class MultiRequestBXFile extends MultiRequest {
 	public function __destruct() {
 		parent::__destruct();
 		if($this->_multiDwnName !== null) {
-			DeleteDirFilesEx(OBX_DOC_ROOT.$this->_multiDwnFolder);
+			DeleteDirFilesEx($this->_multiDwnFolder);
 		}
 	}
 
