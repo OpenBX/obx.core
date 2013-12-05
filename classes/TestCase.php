@@ -74,7 +74,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 	}
 
 	public function cleanPHPBuffer() {
-		while(ob_end_flush() !== false) {};
+		while(ob_end_clean() !== false) {};
 	}
 
 	static public function includeLang($file) {

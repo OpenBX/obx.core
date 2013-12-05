@@ -24,6 +24,8 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected $_waiting = 0;
 	protected $_bDownloadsComplete = false;
 	protected $_bRequestsComplete = false;
+	const GET_DEFAULT_REQUEST_ID = -9354817;
+								  //DEFAULT
 
 	public function __construct() {
 		$this->_curlMulti = curl_multi_init();
@@ -69,9 +71,10 @@ class MultiRequest extends CMessagePoolDecorator {
 	}
 
 	public function setWaiting($seconds) {
+		$this->_waiting = intval($seconds);
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			$Request->setWaiting($seconds);
+			$Request->setWaiting($this->_waiting);
 		}
 	}
 	public function getWaiting() {
@@ -80,8 +83,9 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	public function setTimeout($seconds) {
 		/** @var Request $Request */
+		$this->_timeout = intval($seconds);
 		foreach($this->_arRequestList as $Request) {
-			$Request->setTimeout($seconds);
+			$Request->setTimeout($this->_timeout);
 		}
 	}
 	public function getTimeout() {
@@ -124,7 +128,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
-			try { $Request->_afterDownload($this->getMessagePool()); }
+			try { $Request->_afterDownload(); }
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
@@ -164,11 +168,29 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	protected function _exec() {
 		$countRunning = 0;
+		$endTime = time()+$this->_timeout;
+		$i = 0;
 		curl_multi_exec($this->_curlMulti, $countRunning);
-		do {
-			curl_multi_exec($this->_curlMulti, $countRunning);
-			usleep(50);
-		} while($countRunning>0);
+		if( $this->_timeout != 0) {
+			do {
+				$i++;
+				if($i%100==0) {
+					if(time() >= $endTime){
+						break;
+					}
+					$i=0;
+				}
+				curl_multi_exec($this->_curlMulti, $countRunning);
+				//usleep(50);
+			} while($countRunning>0);
+		}
+		else {
+			do {
+				curl_multi_exec($this->_curlMulti, $countRunning);
+				//usleep(10);
+			} while($countRunning>0);
+		}
+		$debug=1;
 	}
 
 	/**

@@ -72,11 +72,14 @@ class MultiRequestBXFile extends MultiRequest {
 		}
 
 		$this->_multiDwnName = self::generateMultiDownloadName();
-		$this->_multiDwnFolder = Request::DOWNLOAD_FOLDER.'/'.$this->_multiDwnName;
-		if( !CheckDirPath(OBX_DOC_ROOT.$this->_multiDwnFolder) ) {
+		$this->_multiDwnFolder = Request::DOWNLOAD_FOLDER;
+		if( !CheckDirPath(OBX_DOC_ROOT.$this->_multiDwnFolder.'/'.$this->_multiDwnName) ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
-		$this->saveToDir($this->_multiDwnFolder, Request::SAVE_TO_DIR_COUNT);
+		$this->saveToDir(
+			$this->_multiDwnFolder.'/'.$this->_multiDwnName,
+			Request::SAVE_TO_DIR_COUNT
+		);
 		$arFileList = array();
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
