@@ -44,7 +44,7 @@ class RequestBXFile extends Request {
 		$fileID = -1;
 		$oldFileID = intval($oldFileID);
 		if($this->_bDownloadSuccess || $this->_bRequestSuccess) {
-			if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
+			if( !CheckDirPath(OBX_DOC_ROOT.static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
 				throw new RequestError('', RequestError::E_PERM_DENIED);
 			}
 			$downloadFileRelPath = $this->getDownloadFilePath(false);
@@ -53,6 +53,9 @@ class RequestBXFile extends Request {
 			}
 			elseif($this->_bRequestSuccess) {
 				$this->saveToFile($downloadFileRelPath);
+				$this->_saveFileName = null;
+				$this->_saveRelPath = null;
+				$this->_savePath = null;
 				$arFile = \CFile::MakeFileArray($downloadFileRelPath);
 			}
 			$arFile['name'] = $this->_originalName.'.'.$this->_originalExt;
@@ -86,7 +89,7 @@ class RequestBXFile extends Request {
 		if($this->_ID === null) {
 			$this->_ID = static::generateID();
 		}
-		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
+		if( !CheckDirPath(OBX_DOC_ROOT.static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
 		$downloadFileRelPath = $this->getDownloadFilePath(false);
@@ -95,6 +98,9 @@ class RequestBXFile extends Request {
 		}
 		elseif($this->_bRequestSuccess) {
 			$this->saveToFile($downloadFileRelPath);
+			$this->_saveFileName = null;
+			$this->_saveRelPath = null;
+			$this->_savePath = null;
 			$arFile = \CFile::MakeFileArray($downloadFileRelPath);
 		}
 		$arFile['name'] = $this->_originalName.'.'.$this->_originalExt;
@@ -137,20 +143,17 @@ class RequestBXFile extends Request {
 			$propID = intval($propCode);
 			$propCode = Tools::getPropCodeById($iblockID, $propID, $arProp, $arErr);
 			if($propCode === false) {
-				return false;
+				throw new RequestError('', RequestError::E_BX_FILE_PROP_NOT_FOUND);
 			}
 		}
 		else {
 			$propID = Tools::getPropIdByCode($iblockID, $propCode, $arProp, $arErr);
 			if($propID === false) {
-				return false;
+				throw new RequestError('', RequestError::E_BX_FILE_PROP_NOT_FOUND);
 			}
 		}
-		if(!empty($arErr)) {
-			return false;
-		}
 		if($arProp['PROPERTY_TYPE'] != 'F') {
-			return false;
+			throw new RequestError('', RequestError::E_BX_FILE_PROP_WRONG_TYPE);
 		}
 
 		if($this->_ID === null) {

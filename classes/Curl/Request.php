@@ -428,10 +428,10 @@ class Request {
 		}
 		if($this->_lastCurlErrNo === CURLE_OK) {
 			if($this->getStatus() == 200) {
-				$this->_setRequestComplete();
+				$this->_bRequestSuccess = true;
 			}
 			elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
-				$this->_setRequestComplete();
+				$this->_bRequestSuccess = true;
 			}
 		}
 		if(true === $this->_bRequestSuccess) {
@@ -536,10 +536,10 @@ class Request {
 		$this->_after_exec();
 		if($this->_lastCurlErrNo === CURLE_OK) {
 			if($this->getStatus() == 200) {
-				$this->_setDownloadComplete();
+				$this->_bDownloadSuccess = true;
 			}
 			elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
-				$this->_setDownloadComplete();
+				$this->_bDownloadSuccess = true;
 			}
 		}
 		fclose($this->_dwnFileHandler);
@@ -577,13 +577,13 @@ class Request {
 	 */
 	public function saveToFile($relPath) {
 		$relPath = str_replace(array('\\', '//'), '/', $relPath);
-		$path = $_SERVER['DOCUMENT_ROOT'].$relPath;
+		$relPath = str_replace('../', '', $relPath);
+		$relPath = '/'.trim($relPath, '/');
+		$path = OBX_DOC_ROOT.$relPath;
 		if( !CheckDirPath($path) ) {
 			throw new RequestError('', RequestError::E_WRONG_PATH);
 		}
 		if( $this->_bDownloadSuccess === true ) {
-			//fclose($this->_dwnFileHandler);
-			//$this->_dwnFileHandler = null;
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 			if( !copy($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT, $path) ) {
 				throw new RequestError('', RequestError::E_FILE_SAVE_FAILED);
@@ -595,6 +595,9 @@ class Request {
 		else {
 			throw new RequestError('', RequestError::E_FILE_SAVE_NO_RESPONSE);
 		}
+		$this->_saveFileName = substr($relPath, strrpos($relPath, '/')+1);
+		$this->_saveRelPath = $relPath;
+		$this->_savePath = $path;
 	}
 
 	/**
@@ -717,13 +720,6 @@ class Request {
 			}
 		}
 		return $fileName;
-	}
-
-	protected function _setDownloadComplete($bComplete = true) {
-		$this->_bDownloadSuccess = ($bComplete!==false)?true:false;
-	}
-	protected function _setRequestComplete($bComplete = true) {
-		$this->_bRequestSuccess = ($bComplete!==false)?true:false;
 	}
 
 	/**
