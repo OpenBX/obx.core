@@ -16,8 +16,9 @@ class RequestBXFile extends Request {
 
 	const F_IB_IMG_PREVIEW = 1;
 	const F_IB_IMG_DETAIL = 2;
-	const F_IB_IMG_PROP_REPLACE = 3;
-	const F_IB_IMG_PROP_APPEND = 4;
+	const F_IB_IMG_BOTH = 3;
+	const F_IB_IMG_PROP_REPLACE = 4;
+	const F_IB_IMG_PROP_APPEND = 5;
 
 	/**
 	 * Возвращает -1 в случае ошибки кода битркс и кдиает исключение в случае ошибки obx.core
@@ -36,23 +37,25 @@ class RequestBXFile extends Request {
 			$relUploadDirPath = substr($relUploadDirPath, 7);
 		}
 		$relPath = '/upload/'.$relUploadDirPath;
-		$path = $_SERVER['DOCUMENT_ROOT'].$relPath;
+		$path = OBX_DOC_ROOT.$relPath;
 		if(!CheckDirPath($path)) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
 		$fileID = -1;
 		$oldFileID = intval($oldFileID);
 		if($this->_bDownloadSuccess || $this->_bRequestSuccess) {
-			if($this->_dwnName === null) {
-				$this->_dwnName = static::generateDownloadName();
-			}
-			if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_dwnName) ) {
+			if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
 				throw new RequestError('', RequestError::E_PERM_DENIED);
 			}
-			$saveDirFolder = static::DOWNLOAD_FOLDER.'/'.$this->_dwnName;
-			$saveFileRelPath = $saveDirFolder.'/'.$this->_originalName.'.'.$this->_originalExt;
-			$this->saveToFile($saveFileRelPath);
-			$arFile = \CFile::MakeFileArray($saveFileRelPath);
+			$downloadFileRelPath = $this->getDownloadFilePath(false);
+			if($this->_bDownloadSuccess) {
+				$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+			}
+			elseif($this->_bRequestSuccess) {
+				$this->saveToFile($downloadFileRelPath);
+				$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+			}
+			$arFile['name'] = $this->_originalName.'.'.$this->_originalExt;
 			if($oldFileID>0) {
 				$arFile['old_file'] = $oldFileID;
 			}
@@ -80,16 +83,21 @@ class RequestBXFile extends Request {
 		if(true !== $this->_bRequestSuccess && true !== $this->_bDownloadSuccess) {
 			return false;
 		}
-		if($this->_dwnName === null) {
-			$this->_dwnName = static::generateDownloadName();
+		if($this->_ID === null) {
+			$this->_ID = static::generateID();
 		}
-		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_dwnName) ) {
+		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
-		$saveDirFolder = static::DOWNLOAD_FOLDER.'/'.$this->_dwnName;
-		$saveFileRelPath = $saveDirFolder.'/'.$this->_originalName.'.'.$this->_originalExt;
-		$this->saveToFile($saveFileRelPath);
-		$arFile = \CFile::MakeFileArray($saveFileRelPath);
+		$downloadFileRelPath = $this->getDownloadFilePath(false);
+		if($this->_bDownloadSuccess) {
+			$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+		}
+		elseif($this->_bRequestSuccess) {
+			$this->saveToFile($downloadFileRelPath);
+			$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+		}
+		$arFile['name'] = $this->_originalName.'.'.$this->_originalExt;
 		if(is_string($description) && !empty($description)) {
 			$arFile['description'] = $description;
 		}
@@ -98,11 +106,14 @@ class RequestBXFile extends Request {
 		if($target === self::F_IB_IMG_PREVIEW) {
 			$arFields['PREVIEW_PICTURE'] = $arFile;
 		}
-		else {
+		elseif($target === self::F_IB_IMG_DETAIL) {
+			$arFields['DETAIL_PICTURE'] = $arFile;
+		}
+		elseif($target === self::F_IB_IMG_BOTH) {
+			$arFields['PREVIEW_PICTURE'] = $arFile;
 			$arFields['DETAIL_PICTURE'] = $arFile;
 		}
 		return $el->Update($elementID, $arFields);
-
 	}
 
 	/**
@@ -142,16 +153,21 @@ class RequestBXFile extends Request {
 			return false;
 		}
 
-		if($this->_dwnName === null) {
-			$this->_dwnName = static::generateDownloadName();
+		if($this->_ID === null) {
+			$this->_ID = static::generateID();
 		}
-		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER.'/'.$this->_dwnName) ) {
+		if( !CheckDirPath(OBX_DOC_ROOT.static::DOWNLOAD_FOLDER.'/'.$this->_ID) ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
-		$saveDirFolder = static::DOWNLOAD_FOLDER.'/'.$this->_dwnName;
-		$saveFileRelPath = $saveDirFolder.'/'.$this->_originalName.'.'.$this->_originalExt;
-		$this->saveToFile($saveFileRelPath);
-		$arFile = \CFile::MakeFileArray($saveFileRelPath);
+		$downloadFileRelPath = $this->getDownloadFilePath(false);
+		if($this->_bDownloadSuccess) {
+			$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+		}
+		elseif($this->_bRequestSuccess) {
+			$this->saveToFile($downloadFileRelPath);
+			$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+		}
+		$arFile['name'] = $this->_originalName.'.'.$this->_originalExt;
 		if(is_string($description) && !empty($description)) {
 			$arFile['description'] = $description;
 		}

@@ -47,14 +47,14 @@ class MultiRequest extends CMessagePoolDecorator {
 		return md5(__CLASS__.time().'_'.rand(0, 9999));
 	}
 
-	public function addUrl($url) {
+	public function addUrl($url, $requestID = null) {
 		try {
-			$Request = new Request($url);
+			$Request = new Request($url, $requestID);
 			$bSuccess = $this->addRequest($Request);
 		}
 		catch(RequestError $e) {
 			$this->addErrorException($e);
-			return false;
+			$bSuccess = false;
 		}
 		return $bSuccess;
 	}
@@ -63,8 +63,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		if( !($Request instanceof Request) ) {
 			return false;
 		}
-		$this->_arRequestList[$this->_iRequest] = $Request;
-		$this->_countRequests++;
+		$this->_arRequestList[$Request->getID()] = $Request;
 		curl_multi_add_handle($this->_curlMulti, $Request->getCurlHandler());
 		$this->_iRequest++;
 		return true;
@@ -202,25 +201,25 @@ class MultiRequest extends CMessagePoolDecorator {
 		if(true === $this->_bRequestsComplete) {
 			if( $bReturnResponse !== false ) {
 				/** @var Request $Request */
-				foreach($this->_arRequestList as $reqNo => $Request) {
-					$arResponseList[$reqNo] = $Request->getBody();
+				foreach($this->_arRequestList as $reqID => $Request) {
+					$arResponseList[$reqID] = $Request->getBody();
 				}
 			}
 			return $arResponseList;
 		}
-		foreach($this->_arRequestList as $reqNo => &$Request) {
+		foreach($this->_arRequestList as $reqID => &$Request) {
 			/** @var Request $Request */
 			$Request->_initSend();
 		}
 
 		$this->_exec();
 
-		foreach($this->_arRequestList as $reqNo => &$Request) {
+		foreach($this->_arRequestList as $reqID => &$Request) {
 			/** @var Request $Request */
 			$response = curl_multi_getcontent($Request->getCurlHandler());
 			$Request->_afterSend($response, $this->getMessagePool());
 			if( $bReturnResponse !== false ) {
-				$arResponseList[$reqNo] = $response;
+				$arResponseList[$reqID] = $response;
 			}
 			if($Request->isRequestSuccess()) {
 				$this->_iRequestsSuccess++;
@@ -231,7 +230,7 @@ class MultiRequest extends CMessagePoolDecorator {
 	}
 
 	public function saveToDir($relPath, $saveMode = Request::SAVE_TO_DIR_GENERATE) {
-		foreach($this->_arRequestList as $reqNo => &$Request) {
+		foreach($this->_arRequestList as $reqID => &$Request) {
 			/** @var Request $Request */
 			try {
 				$Request->saveToDir($relPath, $saveMode);

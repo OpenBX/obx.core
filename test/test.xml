@@ -8,7 +8,7 @@
 <phpunit bootstrap="./__bootstrap_tests.php">
 	<testsuites>
 		<testsuite name="OBX_Core_API_Tests">
-			<!-- <directory></directory> -->
+			<directory>./</directory>
 			<file>JSMessages.php</file>
 			<file>Request.php</file>
 			<file>RequestBXFile.php</file>

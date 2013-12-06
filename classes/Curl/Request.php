@@ -51,7 +51,7 @@ class Request {
 	protected $_dwnDir = null;
 	protected $_dwnFolder = null;
 	protected $_dwnFileHandler = null;
-	protected $_dwnName = null;
+	protected $_ID = null;
 	protected $_originalName = null;
 	protected $_originalExt = null;
 	protected $_saveRelPath = null;
@@ -72,15 +72,41 @@ class Request {
 	protected $_contentCharset = null;
 	protected $_responseStatus = null;
 
+	protected $_bCaching = false;
+	/**
+	 * Информация о том содержиться ли ID Request-а где-л. кроме самого класса
+	 * Если мы включаем режим кеширования, то мы не очищаем скачаныне файлы,
+	 * однако если программист не задавал ID или не получал его ($this->getID())
+	 * то он 100% не знает его, а значит и не сможет вновь обратиться к кешу,
+	 * а соответственно и очистить его по завершении всех операций.
+	 * В таком  случае кеш надо очищать в любом случае в деструкторе
+	 * @var bool
+	 */
+	protected $_bEncapsulatedID = true;
 
 
-	public function __construct($url) {
+	public function __construct($url, $requestID = null) {
 		RequestError::checkCURL();
 		self::_checkDefaultDwnDir();
 		$this->_dwnFolder = static::DOWNLOAD_FOLDER;
-		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].$this->_dwnFolder;
+		$this->_dwnDir = OBX_DOC_ROOT.$this->_dwnFolder;
 		$this->_url = $url;
+		$this->_bEncapsulatedID = false;
+		if(null !== $requestID) {
+			$requestID = trim($requestID);
+			if(empty($requestID)) {
+				$this->_bEncapsulatedID = true;
+			}
+		}
+		else {
+			$this->_bEncapsulatedID = true;
+		}
+		if($this->_bEncapsulatedID === true) {
+			$this->_ID = static::generateID();
+		}
 		$this->_initCURL();
+		$this->setTimeout(static::DEFAULT_TIMEOUT);
+		$this->setWaiting(static::DEFAULT_WAITING);
 	}
 
 	public function __destruct() {
@@ -89,22 +115,27 @@ class Request {
 				fclose($this->_dwnFileHandler);
 				$this->_dwnFileHandler = null;
 			}
-			if(is_dir($this->_dwnDir.'/'.$this->_dwnName)) {
-				DeleteDirFilesEx($this->_dwnFolder.'/'.$this->_dwnName);
-			}
 		}
-		if(is_file($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT)) {
-			@unlink($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT);
+		if(is_file($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT)) {
+			// см. описание переменной $this->_bEncapsulatedID
+			if(false === $this->_bCaching || true === $this->_bEncapsulatedID) {
+				@unlink($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT);
+			}
 		}
 		curl_close($this->_curlHandler);
 	}
 	protected function __clone() {}
 
+	public function getID() {
+		if(true === $this->_bCaching && true === $this->_bEncapsulatedID) {
+			$this->_bEncapsulatedID = false;
+		}
+		return $this->_ID;
+	}
+
 	protected function _initCURL() {
 		if(null === $this->_curlHandler) {
 			$this->_curlHandler = curl_init();
-			$this->setTimeout(static::DEFAULT_TIMEOUT);
-			$this->setWaiting(static::DEFAULT_WAITING);
 			curl_setopt($this->_curlHandler, CURLOPT_URL, $this->_url);
 			curl_setopt($this->_curlHandler, CURLOPT_FOLLOWLOCATION, true);
 			curl_setopt($this->_curlHandler, CURLOPT_MAXREDIRS, $this->_maxRedirects);
@@ -169,26 +200,6 @@ class Request {
 	}
 	public function getMaxRedirects() {
 		return $this->_maxRedirects;
-	}
-
-	public function getDownloadDir() {
-		return $this->_dwnDir;
-	}
-
-	public function getDownloadFolder() {
-		return $this->_dwnFolder;
-	}
-	public function setDownloadDir($downloadFolder) {
-		$downloadFolder = rtrim(str_replace(array('\\', '//'), '/', $downloadFolder), '/');
-		if($downloadFolder == $this->_dwnFolder) {
-			return true;
-		}
-		if( !CheckDirPath($_SERVER['DOCUMENT_ROOT'].$downloadFolder) ) {
-			throw new RequestError('', RequestError::E_WRONG_PATH);
-		}
-		$this->_dwnDir = $_SERVER['DOCUMENT_ROOT'].$downloadFolder;
-		$this->_dwnFolder = $downloadFolder;
-		return true;
 	}
 
 	public function setPost($arPOST) {
@@ -368,7 +379,6 @@ class Request {
 	protected function _after_exec() {
 		$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
 		$this->_lastCurlError = curl_error($this->_curlHandler);
-		// TODO: Реализовать русские сообщения curl_error
 		if($this->_lastCurlErrNo == CURLE_OK) {
 			if( !empty($this->_lastCurlError)
 				&& strpos($this->_lastCurlError, 'timed out')
@@ -380,12 +390,7 @@ class Request {
 				$this->_lastCurlErrNo = CURLE_OPERATION_TIMEDOUT;
 			}
 		}
-		if($this->_lastCurlErrNo == CURLE_OK) {
-			switch($this->_lastCurlErrNo) {
-
-			}
-		}
-		else {
+		if($this->_lastCurlErrNo != CURLE_OK) {
 			throw new CurlError($this->_lastCurlError, $this->_lastCurlErrNo);
 		}
 	}
@@ -470,8 +475,35 @@ class Request {
 
 	}
 
-	static public function generateDownloadName() {
+	static public function generateID() {
 		return md5('OBX\Core\Curl\Request_'.time().'_'.rand(0, 9999));
+	}
+
+	public function setDownloadFolder($downloadFolder) {
+		$downloadFolder = str_replace(array('\\', '//'), '/', $downloadFolder);
+		$downloadFolder = str_replace('../', '', $downloadFolder);
+		$downloadFolder = '/'.trim($downloadFolder, '/');
+		if($downloadFolder == $this->_dwnFolder) {
+			return true;
+		}
+		if( !CheckDirPath(OBX_DOC_ROOT.$downloadFolder) ) {
+			throw new RequestError('', RequestError::E_WRONG_PATH);
+		}
+		$this->_dwnDir = OBX_DOC_ROOT.$downloadFolder;
+		$this->_dwnFolder = $downloadFolder;
+		return true;
+	}
+	public function getDownloadFolder($bReturnFullPath = false) {
+		if($bReturnFullPath !== false) {
+			return $this->_dwnDir;
+		}
+		return $this->_dwnFolder;
+	}
+	public function getDownloadFilePath($bReturnFullPath = false) {
+		if($bReturnFullPath !== false) {
+			return $this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT;
+		}
+		return $this->_dwnFolder.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT;
 	}
 
 	public function _initDownload() {
@@ -479,12 +511,12 @@ class Request {
 			return;
 		}
 		if(null === $this->_dwnDir) {
-			$this->setDownloadDir(static::DOWNLOAD_FOLDER);
+			$this->setDownloadFolder(static::DOWNLOAD_FOLDER);
 		}
-		if(null === $this->_dwnName) {
-			$this->_dwnName = static::generateDownloadName();
+		if(null === $this->_ID) {
+			$this->_ID = static::generateID();
 		}
-		$this->_dwnFileHandler = fopen($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, 'wb');
+		$this->_dwnFileHandler = fopen($this->getDownloadFilePath(true), 'wb');
 		if( !$this->_dwnFileHandler ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
@@ -510,9 +542,9 @@ class Request {
 				$this->_setDownloadComplete();
 			}
 		}
+		fclose($this->_dwnFileHandler);
+		$this->_dwnFileHandler = null;
 		if(true === $this->_bDownloadSuccess) {
-			fclose($this->_dwnFileHandler);
-			$this->_dwnFileHandler = null;
 			$contentType = $this->getContentType();
 			$this->_fillOriginalName($contentType);
 		}
@@ -521,7 +553,7 @@ class Request {
 	protected function _fillOriginalName(&$contentType) {
 		$fileName = static::getFileNameFromUrl($this->_url, $fileExt, $baseName);
 		if( empty($fileName) ) {
-			$baseName = static::generateDownloadName();
+			$baseName = static::generateID();
 		}
 		if(empty($fileExt)) {
 			$fileExt = Mime::getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
@@ -553,7 +585,7 @@ class Request {
 			//fclose($this->_dwnFileHandler);
 			//$this->_dwnFileHandler = null;
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
-			if( !copy($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, $path) ) {
+			if( !copy($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT, $path) ) {
 				throw new RequestError('', RequestError::E_FILE_SAVE_FAILED);
 			}
 		}
@@ -592,7 +624,7 @@ class Request {
 		}
 
 		if($fileNameMode === self::SAVE_TO_DIR_GENERATE) {
-			$baseName = static::generateDownloadName();
+			$baseName = static::generateID();
 			$fileExt = $this->_originalExt;
 			$fileName = $baseName.'.'.$fileExt;
 		}
@@ -607,7 +639,7 @@ class Request {
 			$arExistFiles = glob($path.'/'.$baseName.'.[0-9]*.'.$fileExt);
 			if( empty($arExistFiles) ) {
 				if(file_exists($path.'/'.$baseName.'.1.'.$fileExt)) {
-					$baseName = static::generateDownloadName();
+					$baseName = static::generateID();
 					$fileExt = $this->_originalExt;
 					$fileName = $baseName.'.'.$fileExt;
 				}
@@ -632,7 +664,7 @@ class Request {
 		$this->_saveRelPath = $relPath.'/'.$fileName;
 		$this->_savePath = $path.'/'.$fileName;
 		if(true === $this->_bDownloadSuccess) {
-			copy($this->_dwnDir.'/'.$this->_dwnName.'.'.static::DOWNLOAD_FILE_EXT, $this->_savePath);
+			copy($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT, $this->_savePath);
 			curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 		}
 		elseif(true === $this->_bRequestSuccess) {
@@ -793,4 +825,14 @@ class Request {
 	public function isRequestSuccess() {
 		return $this->_bRequestSuccess;
 	}
-} 
+
+	public function setCaching($bCaching = true) {
+		$this->_bCaching = ($bCaching !== false)?true:false;
+	}
+
+	public function clearCache() {
+		if(is_file($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT)) {
+			@unlink($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT);
+		}
+	}
+}

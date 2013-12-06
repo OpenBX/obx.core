@@ -272,6 +272,44 @@ class TestRequest extends _Request {
 		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/Request/404/test.response.json');
 	}
 
+	/**
+	 * @dataProvider getFilesList
+	 */
+	public function testRequestCache($fileName) {
+		$Request = new Request(self::$_urlTestFiles.$fileName);
+		$Request->download();
+		$fullFilePath = $Request->getDownloadFilePath(true);
+		$this->assertFileExists($fullFilePath);
+		// destructor
+		unset($Request);
+		$this->assertFileNotExists($fullFilePath);
+
+		// Тут тестируем хитрую ситуацию. Включаем режим кеширования,
+		// не не задаем и не получаем ID. Соответственно ID инкапулирован в класс
+		// кеш очистится :)
+		$Request = new Request(self::$_urlTestFiles.$fileName);
+		$Request->setCaching(true);
+		$Request->download();
+		$fullFilePath = $Request->getDownloadFilePath(true);
+		$this->assertFileExists($fullFilePath);
+		// destructor
+		unset($Request);
+		$this->assertFileNotExists($fullFilePath);
+
+		// А тут получим ИД, соответственно ID передан из класса и где-то известен
+		// кеш очищать нельзя
+		$Request = new Request(self::$_urlTestFiles.$fileName);
+		$Request->setCaching(true);
+		$Request->getID();
+		$Request->download();
+		$fullFilePath = $Request->getDownloadFilePath(true);
+		$this->assertFileExists($fullFilePath);
+		// destructor
+		unset($Request);
+		$this->assertFileExists($fullFilePath);
+		$this->assertTrue(unlink($fullFilePath));
+	}
+
 	public function testDeleteTempData() {
 		DeleteDirFilesEx(self::$_docRoot.'/upload/obx.core/test/Request');
 	}

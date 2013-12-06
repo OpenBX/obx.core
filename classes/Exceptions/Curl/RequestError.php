@@ -24,6 +24,9 @@ class RequestError extends AError {
 	const E_OPEN_DWN_FAILED = 1006;
 	const E_FILE_SAVE_FAILED = 1007;
 	const E_FILE_SAVE_NO_RESPONSE = 1008;
+
+	const E_M_TIMEOUT_REACHED = 2001;
+
 	static protected $_bCURLChecked = false;
 
 	static public function checkCURL() {

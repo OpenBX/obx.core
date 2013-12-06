@@ -10,6 +10,46 @@
 
 namespace OBX\Core\Exceptions\Curl;
 
+if(!defined('CURLE_NOT_BUILT_IN')) define('CURLE_NOT_BUILT_IN', 4);
+if(!defined('CURLE_REMOTE_ACCESS_DENIED')) define('CURLE_REMOTE_ACCESS_DENIED', 9);
+if(!defined('CURLE_FTP_ACCEPT_FAILED')) define('CURLE_FTP_ACCEPT_FAILED', 10);
+if(!defined('CURLE_FTP_ACCEPT_TIMEOUT')) define('CURLE_FTP_ACCEPT_TIMEOUT', 12);
+if(!defined('CURLE_FTP_COULDNT_SET_TYPE')) define('CURLE_FTP_COULDNT_SET_TYPE', 17);
+if(!defined('CURLE_QUOTE_ERROR')) define('CURLE_QUOTE_ERROR', 21);
+if(!defined('CURLE_HTTP_RETURNED_ERROR')) define('CURLE_HTTP_RETURNED_ERROR', 22);
+if(!defined('CURLE_UPLOAD_FAILED')) define('CURLE_UPLOAD_FAILED', 25);
+if(!defined('CURLE_RANGE_ERROR')) define('CURLE_RANGE_ERROR', 33);
+if(!defined('CURLE_BAD_DOWNLOAD_RESUME')) define('CURLE_BAD_DOWNLOAD_RESUME', 36);
+if(!defined('CURLE_INTERFACE_FAILED')) define('CURLE_INTERFACE_FAILED', 45);
+if(!defined('CURLE_UNKNOWN_OPTION')) define('CURLE_UNKNOWN_OPTION', 48);
+if(!defined('CURLE_PEER_FAILED_VERIFICATION')) define('CURLE_PEER_FAILED_VERIFICATION', 51);
+if(!defined('CURLE_USE_SSL_FAILED')) define('CURLE_USE_SSL_FAILED', 64);
+if(!defined('CURLE_SEND_FAIL_REWIND')) define('CURLE_SEND_FAIL_REWIND', 65);
+if(!defined('CURLE_SSL_ENGINE_INITFAILED')) define('CURLE_SSL_ENGINE_INITFAILED', 66);
+if(!defined('CURLE_LOGIN_DENIED')) define('CURLE_LOGIN_DENIED', 67);
+if(!defined('CURLE_TFTP_NOTFOUND')) define('CURLE_TFTP_NOTFOUND', 68);
+if(!defined('CURLE_TFTP_PERM')) define('CURLE_TFTP_PERM', 69);
+if(!defined('CURLE_REMOTE_DISK_FULL')) define('CURLE_REMOTE_DISK_FULL', 70);
+if(!defined('CURLE_TFTP_ILLEGAL')) define('CURLE_TFTP_ILLEGAL', 71);
+if(!defined('CURLE_TFTP_UNKNOWNID')) define('CURLE_TFTP_UNKNOWNID', 72);
+if(!defined('CURLE_REMOTE_FILE_EXISTS')) define('CURLE_REMOTE_FILE_EXISTS', 73);
+if(!defined('CURLE_TFTP_NOSUCHUSER')) define('CURLE_TFTP_NOSUCHUSER', 74);
+if(!defined('CURLE_CONV_FAILED')) define('CURLE_CONV_FAILED', 75);
+if(!defined('CURLE_CONV_REQD')) define('CURLE_CONV_REQD', 76);
+if(!defined('CURLE_SSL_CACERT_BADFILE')) define('CURLE_SSL_CACERT_BADFILE', 77);
+if(!defined('CURLE_REMOTE_FILE_NOT_FOUND')) define('CURLE_REMOTE_FILE_NOT_FOUND', 78);
+if(!defined('CURLE_SSH')) define('CURLE_SSH', 79);
+if(!defined('CURLE_SSL_SHUTDOWN_FAILED')) define('CURLE_SSL_SHUTDOWN_FAILED', 80);
+if(!defined('CURLE_AGAIN')) define('CURLE_AGAIN', 81);
+if(!defined('CURLE_SSL_CRL_BADFILE')) define('CURLE_SSL_CRL_BADFILE', 82);
+if(!defined('CURLE_SSL_ISSUER_ERROR')) define('CURLE_SSL_ISSUER_ERROR', 83);
+if(!defined('CURLE_FTP_PRET_FAILED')) define('CURLE_FTP_PRET_FAILED', 84);
+if(!defined('CURLE_RTSP_CSEQ_ERROR')) define('CURLE_RTSP_CSEQ_ERROR', 85);
+if(!defined('CURLE_RTSP_SESSION_ERROR')) define('CURLE_RTSP_SESSION_ERROR', 86);
+if(!defined('CURLE_FTP_BAD_FILE_LIST')) define('CURLE_FTP_BAD_FILE_LIST', 87);
+if(!defined('CURLE_CHUNK_FAILED')) define('CURLE_CHUNK_FAILED', 88);
+if(!defined('CURLE_NO_CONNECTION_AVAILABLE')) define('CURLE_NO_CONNECTION_AVAILABLE', 89);
+
 class CurlError extends RequestError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'CURLE_';
