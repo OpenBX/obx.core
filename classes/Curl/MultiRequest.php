@@ -26,6 +26,8 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected $_bRequestsComplete = false;
 	const GET_DEFAULT_REQUEST_ID = -9354817;
 								  //DEFAULT
+	const _FRIEND_CLASS_LINK = 521389614;
+							 //FRIENDCLA(SS)
 
 	public function __construct() {
 		$this->_curlMulti = curl_multi_init();
@@ -120,14 +122,14 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			try {$Request->_initDownload();}
+			try {$Request->_initDownload(self::_FRIEND_CLASS_LINK);}
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
-			try { $Request->_afterDownload(); }
+			try { $Request->_afterDownload(self::_FRIEND_CLASS_LINK); }
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
@@ -144,7 +146,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			try {$Request->_initDownload();}
+			try {$Request->_initDownload(self::_FRIEND_CLASS_LINK);}
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
@@ -152,7 +154,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
 			try {
-				$Request->_afterDownload($this->getMessagePool());
+				$Request->_afterDownload(self::_FRIEND_CLASS_LINK);
 				$Request->saveToDir($relPath, $fileNameMode);
 			}
 			catch(RequestError $e) {
@@ -209,7 +211,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		foreach($this->_arRequestList as $reqID => &$Request) {
 			/** @var Request $Request */
-			$Request->_initSend();
+			$Request->_initSend(self::_FRIEND_CLASS_LINK);
 		}
 
 		$this->_exec();
@@ -217,7 +219,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		foreach($this->_arRequestList as $reqID => &$Request) {
 			/** @var Request $Request */
 			$response = curl_multi_getcontent($Request->getCurlHandler());
-			$Request->_afterSend($response, $this->getMessagePool());
+			$Request->_afterSend($response, self::_FRIEND_CLASS_LINK);
 			if( $bReturnResponse !== false ) {
 				$arResponseList[$reqID] = $response;
 			}

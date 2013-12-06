@@ -11,6 +11,7 @@
 namespace OBX\Core\Test;
 use OBX\Core\Curl\Request;
 use OBX\Core\Curl\MultiRequest;
+use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
 
 require_once __DIR__.'/_Request.php';
@@ -302,6 +303,43 @@ class TestRequest extends _Request {
 		$Request->setCaching(true);
 		$Request->getID();
 		$Request->download();
+		$fullFilePath = $Request->getDownloadFilePath(true);
+		$this->assertFileExists($fullFilePath);
+		// destructor
+		unset($Request);
+		$this->assertFileExists($fullFilePath);
+		$this->assertTrue(unlink($fullFilePath));
+	}
+
+	public function testBigFile() {
+		$requestID = 'TestRequest::testBigFile';
+		$Request = null;
+		$contentExpectedSize = null;
+		while(true) {
+			try {
+				$Request = new Request(self::$_urlBigFile, $requestID);
+				$Request->setCaching(true);
+				$Request->setTimeout(1);
+				if(null !== $contentExpectedSize) {
+					$debug=1;
+				}
+				$Request->download();
+			}
+			catch(CurlError $e) {
+				$this->assertEquals(CurlError::E_OPERATION_TIMEDOUT, $e->getCode());
+				$downloadFilePath = $Request->getDownloadFilePath(true);
+				$contentExpectedSize = $Request->getContentExpectedSize();
+				unset($Request);
+				$this->assertFileExists($downloadFilePath);
+				continue;
+			}
+			$this->assertTrue(
+				$Request->isDownloadSuccess(),
+				'Error: Request::download method must throw Exception or return success'
+			);
+			break;
+		}
+
 		$fullFilePath = $Request->getDownloadFilePath(true);
 		$this->assertFileExists($fullFilePath);
 		// destructor

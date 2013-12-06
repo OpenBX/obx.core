@@ -14,7 +14,7 @@ use OBX\Core\Http\Download;
 class TestDownloadBigFile extends TestCase {
 
 	static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
-	//static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/zero_file_300M';
+	//static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/big_file_300M.zero';
 
 	const _DIR_ = __DIR__;
 

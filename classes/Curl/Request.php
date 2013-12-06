@@ -27,6 +27,7 @@ class Request {
 	const DEFAULT_TIMEOUT = 20;
 	const DEFAULT_WAITING = 10;
 	const DOWNLOAD_FILE_EXT = 'dwn';
+	const DOWNLOAD_STATE_FILE_EXT = 'state';
 	const DOWNLOAD_FOLDER = '/bitrix/tmp/obx.core';
 
 	// При сохранении файла в папку имя определяется автоматом.
@@ -51,6 +52,9 @@ class Request {
 	protected $_dwnDir = null;
 	protected $_dwnFolder = null;
 	protected $_dwnFileHandler = null;
+	protected $_dwnFileSize = 0;
+	protected $_dwnIterationSize = null;
+	protected $_dwnResumeFrom = 0;
 	protected $_ID = null;
 	protected $_originalName = null;
 	protected $_originalExt = null;
@@ -70,6 +74,7 @@ class Request {
 	protected $_lastCurlErrNo = null;
 	protected $_contentType = null;
 	protected $_contentCharset = null;
+	protected $_contentExpectedSize = null;
 	protected $_responseStatus = null;
 
 	protected $_bCaching = false;
@@ -84,6 +89,9 @@ class Request {
 	 */
 	protected $_bEncapsulatedID = true;
 
+	const _FRIEND_CLASS_LINK = 521389614;
+							 //FRIENDCLA(SS)
+
 
 	public function __construct($url, $requestID = null) {
 		RequestError::checkCURL();
@@ -97,6 +105,8 @@ class Request {
 			if(empty($requestID)) {
 				$this->_bEncapsulatedID = true;
 			}
+			static::fixFileName($requestID);
+			$this->_ID = $requestID;
 		}
 		else {
 			$this->_bEncapsulatedID = true;
@@ -147,7 +157,7 @@ class Request {
 	 */
 	static protected function _checkDefaultDwnDir() {
 		if( false === static::$_bDefaultDwnDirChecked ) {
-			if( ! ($bSuccess = CheckDirPath($_SERVER['DOCUMENT_ROOT'].static::DOWNLOAD_FOLDER)) ) {
+			if( ! ($bSuccess = CheckDirPath(OBX_DOC_ROOT.static::DOWNLOAD_FOLDER)) ) {
 				throw new RequestError('', RequestError::E_NO_ACCESS_DWN_FOLDER);
 			}
 			static::$_bDefaultDwnDirChecked = true;
@@ -266,10 +276,10 @@ class Request {
 
 
 	/**
-	 * @param $response
-	 * @access protected
+	 *
 	 */
-	public function _parseResponse(&$response) {
+	public function _parseResponse(&$response, $_friendClass = null) {
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
 		$header_size = curl_getinfo($this->_curlHandler, CURLINFO_HEADER_SIZE);
 		$this->_header = substr($response, 0, $header_size);
 		$this->_body = substr($response, $header_size);
@@ -384,18 +394,16 @@ class Request {
 				&& strpos($this->_lastCurlError, 'timed out')
 				&& strpos($this->_lastCurlError, 'millisec')
 			) {
-				if(!defined('CURLE_OPERATION_TIMEDOUT')) {
-					define('CURLE_OPERATION_TIMEDOUT', 28);
-				}
-				$this->_lastCurlErrNo = CURLE_OPERATION_TIMEDOUT;
+				$this->_lastCurlErrNo = CurlError::E_OPERATION_TIMEDOUT;
 			}
 		}
-		if($this->_lastCurlErrNo != CURLE_OK) {
+		else {
 			throw new CurlError($this->_lastCurlError, $this->_lastCurlErrNo);
 		}
 	}
 
-	public function _initSend(){
+	public function _initSend($_friendClass = null){
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
 		$this->_bRequestSuccess = false;
 		$this->_header = null;
 		$this->_arHeader = array();
@@ -411,14 +419,15 @@ class Request {
 	}
 
 	public function send() {
-		$this->_initSend();
+		$this->_initSend(self::_FRIEND_CLASS_LINK);
 		$response = curl_exec($this->_curlHandler);
-		$this->_afterSend($response);
+		$this->_afterSend($response, self::_FRIEND_CLASS_LINK);
 		return $this->_body;
 	}
-	public function _afterSend(&$response){
+	public function _afterSend(&$response, $_friendClass = null) {
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
 		$this->_after_exec();
-		$this->_parseResponse($response);
+		$this->_parseResponse($response, self::_FRIEND_CLASS_LINK);
 		$this->_arHeader = $this->parseHeader($this->_header);
 		if($this->_arHeader['CHARSET'] !== null) {
 			$this->_contentCharset = $this->_arHeader['CHARSET'];
@@ -506,17 +515,47 @@ class Request {
 		return $this->_dwnFolder.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT;
 	}
 
-	public function _initDownload() {
-		if($this->_bDownloadSuccess === true) {
+
+	protected function _checkResumeDownload() {
+		$filePath = $this->getDownloadFilePath(true);
+		$stateFilePath = $this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT;
+		if( file_exists($filePath) && file_exists($stateFilePath) ) {
+			list($fileSizeFromState, $contentExpectedSizeFromState) = explode('|', file_get_contents($stateFilePath));
+			$fileSizeFromState = intval($fileSizeFromState);
+			$contentExpectedSizeFromState = intval($contentExpectedSizeFromState);
+			$this->_dwnFileSize = intval(filesize($filePath));
+			if($this->_dwnFileSize>0 && $this->_dwnFileSize == $fileSizeFromState) {
+				$this->_contentExpectedSize = $contentExpectedSizeFromState;
+				$this->_dwnResumeFrom = $this->_dwnFileSize;
+				curl_setopt($this->_curlHandler, CURLOPT_RESUME_FROM, $this->_dwnResumeFrom);
+				return true;
+			}
+			else {
+				$this->_dwnFileSize = 0;
+				return false;
+			}
+		}
+		return false;
+	}
+
+	public function _initDownload($_friendClass = null) {
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
+		if(true === $this->_bDownloadSuccess) {
 			return;
 		}
-		if(null === $this->_dwnDir) {
-			$this->setDownloadFolder(static::DOWNLOAD_FOLDER);
+		$this->_dwnFileSize = 0;
+		$openMode = 'wb';
+		if( true === $this->_bCaching && $this->_checkResumeDownload() ) {
+			$openMode = 'ab';
 		}
+		if(true === $this->_bCaching && true === $this->_bDownloadSuccess) {
+			return;
+		}
+
 		if(null === $this->_ID) {
 			$this->_ID = static::generateID();
 		}
-		$this->_dwnFileHandler = fopen($this->getDownloadFilePath(true), 'wb');
+		$this->_dwnFileHandler = fopen($this->getDownloadFilePath(true), $openMode);
 		if( !$this->_dwnFileHandler ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
 		}
@@ -526,24 +565,33 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
 		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
 	}
+
 	public function download() {
-		$this->_initDownload();
+		$this->_initDownload(self::_FRIEND_CLASS_LINK);
 		curl_exec($this->_curlHandler);
-		$this->_afterDownload();
+		$this->_afterDownload(self::_FRIEND_CLASS_LINK);
 	}
 
-	public function _afterDownload() {
-		$this->_after_exec();
-		if($this->_lastCurlErrNo === CURLE_OK) {
-			if($this->getStatus() == 200) {
-				$this->_bDownloadSuccess = true;
-			}
-			elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
-				$this->_bDownloadSuccess = true;
-			}
-		}
+	public function _afterDownload($_friendClass = null) {
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
 		fclose($this->_dwnFileHandler);
 		$this->_dwnFileHandler = null;
+		if( $this->_lastCurlErrNo == CurlError::E_OPERATION_TIMEDOUT
+			&& $this->_bCaching
+		) {
+			$this->getInfo(null, true);
+			file_put_contents(
+				$this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT,
+				($this->_dwnFileSize+$this->_dwnIterationSize).'|'.$this->getContentExpectedSize()
+			);
+		}
+		$this->_after_exec();
+		if($this->getStatus() == 200) {
+			$this->_bDownloadSuccess = true;
+		}
+		elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
+			$this->_bDownloadSuccess = true;
+		}
 		if(true === $this->_bDownloadSuccess) {
 			$contentType = $this->getContentType();
 			$this->_fillOriginalName($contentType);
@@ -724,14 +772,14 @@ class Request {
 
 	/**
 	 * @param $relPath
-	 * @return bool
+	 * @throws RequestError
 	 */
 	public function downloadToFile($relPath) {
-		$this->_initDownload();
+		$this->_initDownload(self::_FRIEND_CLASS_LINK);
 		curl_exec($this->_curlHandler);
-		$this->_afterDownload();
+		$this->_afterDownload(self::_FRIEND_CLASS_LINK);
 		//if($this->_sta)
-		return $this->saveToFile($relPath);
+		$this->saveToFile($relPath);
 	}
 
 	/**
@@ -739,49 +787,22 @@ class Request {
 	 * @param int $fileNameMode
 	 */
 	public function downloadToDir($relPath, $fileNameMode = self::SAVE_TO_DIR_GENERATE) {
-		$this->_initDownload();
+		$this->_initDownload(self::_FRIEND_CLASS_LINK);
 		curl_exec($this->_curlHandler);
-		$this->_afterDownload();
+		$this->_afterDownload(self::_FRIEND_CLASS_LINK);
 		$this->saveToDir($relPath, $fileNameMode);
 	}
 
 	public function getContentType() {
 		if($this->_contentType === null) {
-			$header = curl_getinfo($this->_curlHandler, CURLINFO_CONTENT_TYPE);
-			if(!empty($header)) {
-				$header = 'Content-Type: '.$header."\n";
-				$arHeader = self::parseHeader($header);
-				if( !empty($arHeader['Content-Type']['VALUE_MAIN']) ) {
-					$this->_contentType = $arHeader['Content-Type']['VALUE_MAIN'];
-				}
-				if( $this->_contentCharset === null
-					&& array_key_exists('CHARSET', $arHeader)
-					&& $arHeader['CHARSET'] != null
-				) {
-					$this->_contentCharset = $arHeader['CHARSET'];
-				}
-			}
+			$this->getInfo(null, true);
 		}
 		return $this->_contentType;
 	}
 
 	public function getCharset() {
 		if($this->_contentCharset === null) {
-			$header = curl_getinfo($this->_curlHandler, CURLINFO_CONTENT_TYPE);
-			if(!empty($header)) {
-				$header = 'Content-Type: '.$header."\n";
-				$arHeader = self::parseHeader($header);
-				if( array_key_exists('CHARSET', $arHeader)
-					&& $arHeader['CHARSET'] != null
-				) {
-					$this->_contentCharset = $arHeader['CHARSET'];
-				}
-				if( $this->_contentType === null
-					&& !empty($arHeader['Content-Type']['VALUE_MAIN'])
-				) {
-					$this->_contentType = $arHeader['Content-Type']['VALUE_MAIN'];
-				}
-			}
+			$this->getInfo(null, true);
 		}
 		return $this->_contentCharset;
 	}
@@ -793,8 +814,50 @@ class Request {
 		return $this->_responseStatus;
 	}
 
-	public function getInfo($curlOpt = null){
-		return curl_getinfo($this->_curlHandler, $curlOpt);
+	public function getContentExpectedSize() {
+		if( null === $this->_contentExpectedSize ) {
+			$this->getInfo(null, true);
+		}
+		return $this->_contentExpectedSize;
+	}
+
+	public function getDownloadProgress() {
+
+	}
+
+	public function getInfo($curlOpt = null, $bFillVars = false){
+		if($curlOpt === null) {
+			$info = curl_getinfo($this->_curlHandler);
+			if($bFillVars === true ) {
+				$header = 'Content-Type: '.$info['content_type']."\n";
+				$arHeader = static::parseHeader($header);
+				if( null === $this->_contentType
+					&& !empty($arHeader['Content-Type']['VALUE_MAIN'])
+				) {
+					$this->_contentType = $arHeader['Content-Type']['VALUE_MAIN'];
+				}
+				if( null === $this->_contentCharset
+					&& array_key_exists('CHARSET', $arHeader)
+					&& $arHeader['CHARSET'] != null
+				) {
+					$this->_contentCharset = $arHeader['CHARSET'];
+				}
+				$info['download_content_length'] = intval($info['download_content_length']);
+				if( null === $this->_contentExpectedSize
+					&& $info['download_content_length']>0
+				) {
+					$this->_contentExpectedSize = $info['download_content_length'] + $this->_dwnResumeFrom;
+				}
+				$info['size_download'] = intval($info['size_download']);
+				if( null === $this->_dwnIterationSize  && $info['size_download']>0 ) {
+					$this->_dwnIterationSize = $info['size_download'];
+				}
+			}
+		}
+		else {
+			$info = curl_getinfo($this->_curlHandler, $curlOpt);
+		}
+		return $info;
 	}
 
 	public function getCurlLastError() {
