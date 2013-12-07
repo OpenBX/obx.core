@@ -304,25 +304,23 @@ class TestRequest extends _Request {
 		$Request->getID();
 		$Request->download();
 		$fullFilePath = $Request->getDownloadFilePath(true);
+		$fullStateFilePath = $Request->getDownloadStateFilePath(true);
 		$this->assertFileExists($fullFilePath);
 		// destructor
 		unset($Request);
 		$this->assertFileExists($fullFilePath);
 		$this->assertTrue(unlink($fullFilePath));
+		$this->assertTrue(unlink($fullStateFilePath));
 	}
 
 	public function testBigFile() {
 		$requestID = 'TestRequest::testBigFile';
-		$Request = null;
+		$Request = new Request(self::$_urlBigFile, $requestID);
 		$contentExpectedSize = null;
 		while(true) {
 			try {
-				$Request = new Request(self::$_urlBigFile, $requestID);
-				$Request->setCaching(true);
+				$Request->setCaching(true, true);
 				$Request->setTimeout(1);
-				if(null !== $contentExpectedSize) {
-					$debug=1;
-				}
 				$Request->download();
 			}
 			catch(CurlError $e) {
@@ -331,6 +329,7 @@ class TestRequest extends _Request {
 				$contentExpectedSize = $Request->getContentExpectedSize();
 				unset($Request);
 				$this->assertFileExists($downloadFilePath);
+				$Request = new Request(self::$_urlBigFile, $requestID);
 				continue;
 			}
 			$this->assertTrue(

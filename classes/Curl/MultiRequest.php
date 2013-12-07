@@ -10,6 +10,7 @@
 
 namespace OBX\Core\Curl;
 use OBX\Core\CMessagePoolDecorator;
+use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Exceptions\LogFileError;
 use OBX\Core\LogFile;
@@ -24,6 +25,8 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected $_waiting = 0;
 	protected $_bDownloadsComplete = false;
 	protected $_bRequestsComplete = false;
+	protected $_bCaching = false;
+	protected $_bCachingCheckFileSize = false;
 	const GET_DEFAULT_REQUEST_ID = -9354817;
 								  //DEFAULT
 	const _FRIEND_CLASS_LINK = 521389614;
@@ -35,11 +38,9 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected function __clone() {}
 
 	public function __destruct() {
-		$this->_arRequestList = array();
 		foreach($this->_arRequestList as $Request) {
 			/** @var Request $Request */
-			$curlHandler = &$Request->getCurlHandler();
-			curl_multi_remove_handle($this->_curlMulti, $curlHandler);
+			$Request->_disconnectMultiHandler($this->_curlMulti);
 		}
 		$this->_arRequestList = null;
 		curl_multi_close($this->_curlMulti);
@@ -66,7 +67,7 @@ class MultiRequest extends CMessagePoolDecorator {
 			return false;
 		}
 		$this->_arRequestList[$Request->getID()] = $Request;
-		curl_multi_add_handle($this->_curlMulti, $Request->getCurlHandler());
+		$Request->_connectMultiHandler($this->_curlMulti);
 		$this->_iRequest++;
 		return true;
 	}
@@ -122,14 +123,41 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			try {$Request->_initDownload(self::_FRIEND_CLASS_LINK);}
+			try {
+				$bCanDoExec = $Request->_initDownload(self::_FRIEND_CLASS_LINK);
+			}
 			catch(RequestError $e) {
+				$bCanDoExec = false;
 				$this->getMessagePool()->addErrorException($e);
 			}
+			if(true === $bCanDoExec) {
+				$Request->_connectMultiHandler($this->_curlMulti);
+			}
+			else {
+				$Request->_disconnectMultiHandler();
+			}
 		}
-		$this->_exec();
+		if(true === $this->_bCaching) {
+			try {
+				$this->_exec();
+			}
+			catch(CurlError $e) {
+				$exCode = $e->getCode();
+				if($exCode == CurlError::E_M_TIMEOUT_REACHED) {
+					//foreach($this->_arRequestList)
+				}
+				throw $e;
+			}
+		}
+		else {
+			$this->_exec();
+		}
 		foreach($this->_arRequestList as $Request) {
-			try { $Request->_afterDownload(self::_FRIEND_CLASS_LINK); }
+			try {
+				if( true === $Request->_isMultiHandlerConnected() ) {
+					$Request->_afterDownload(self::_FRIEND_CLASS_LINK);
+				}
+			}
 			catch(RequestError $e) {
 				$this->getMessagePool()->addErrorException($e);
 			}
@@ -146,15 +174,26 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
-			try {$Request->_initDownload(self::_FRIEND_CLASS_LINK);}
+			try {
+				$bCanDoExec = $Request->_initDownload(self::_FRIEND_CLASS_LINK);
+			}
 			catch(RequestError $e) {
+				$bCanDoExec = false;
 				$this->getMessagePool()->addErrorException($e);
+			}
+			if(true === $bCanDoExec) {
+				$Request->_connectMultiHandler($this->_curlMulti);
+			}
+			else {
+				$Request->_disconnectMultiHandler();
 			}
 		}
 		$this->_exec();
 		foreach($this->_arRequestList as $Request) {
 			try {
-				$Request->_afterDownload(self::_FRIEND_CLASS_LINK);
+				if( true === $Request->_isMultiHandlerConnected() ) {
+					$Request->_afterDownload(self::_FRIEND_CLASS_LINK);
+				}
 				$Request->saveToDir($relPath, $fileNameMode);
 			}
 			catch(RequestError $e) {
@@ -177,18 +216,18 @@ class MultiRequest extends CMessagePoolDecorator {
 				$i++;
 				if($i%100==0) {
 					if(time() >= $endTime){
-						break;
+						throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
 					}
 					$i=0;
 				}
 				curl_multi_exec($this->_curlMulti, $countRunning);
-				//usleep(50);
+				usleep(10);
 			} while($countRunning>0);
 		}
 		else {
 			do {
 				curl_multi_exec($this->_curlMulti, $countRunning);
-				//usleep(10);
+				usleep(10);
 			} while($countRunning>0);
 		}
 		$debug=1;
@@ -196,7 +235,7 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	/**
 	 * @param bool $bReturnResponse
-	 * @return array|null
+	 * @return array
 	 */
 	public function send($bReturnResponse = false) {
 		$arResponseList = array();
@@ -258,5 +297,14 @@ class MultiRequest extends CMessagePoolDecorator {
 			$arResponseList[$reqNo] = $Request->getBody();
 		}
 		return $arResponseList;
+	}
+
+	public function setCaching($bCaching = true, $bCheckFileSize = false) {
+		$this->_bCaching = ($bCaching !== false)?true:false;
+		$this->_bCachingCheckFileSize = (true === $bCheckFileSize)?true:false;
+		/** @var Request $Request */
+		foreach($this->_arRequestList as $Request) {
+			$Request->setCaching($this->_bCaching, $this->_bCachingCheckFileSize);
+		}
 	}
 }

@@ -43,6 +43,7 @@ class Request {
 
 	protected $_url = null;
 	protected $_curlHandler = null;
+	protected $_curlMultiHandler = null;
 
 	protected $_header = null;
 	protected $_body = null;
@@ -78,6 +79,7 @@ class Request {
 	protected $_responseStatus = null;
 
 	protected $_bCaching = false;
+	protected $_bCachingCheckFileSize = false;
 	/**
 	 * Информация о том содержиться ли ID Request-а где-л. кроме самого класса
 	 * Если мы включаем режим кеширования, то мы не очищаем скачаныне файлы,
@@ -126,11 +128,17 @@ class Request {
 				$this->_dwnFileHandler = null;
 			}
 		}
-		if(is_file($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT)) {
-			// см. описание переменной $this->_bEncapsulatedID
-			if(false === $this->_bCaching || true === $this->_bEncapsulatedID) {
-				@unlink($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT);
+		// см. описание переменной $this->_bEncapsulatedID
+		if(false === $this->_bCaching || true === $this->_bEncapsulatedID) {
+			$dwnFilePath = $this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT;
+			$dwnStateFilePath = $dwnFilePath.'.'.static::DOWNLOAD_STATE_FILE_EXT;
+			if(is_file($dwnFilePath)) {
+				@unlink($dwnFilePath);
 			}
+			if(is_file($dwnStateFilePath)) {
+				@unlink($dwnStateFilePath);
+			}
+			unset($dwnFilePath, $dwnStateFilePath);
 		}
 		curl_close($this->_curlHandler);
 	}
@@ -395,6 +403,7 @@ class Request {
 				&& strpos($this->_lastCurlError, 'millisec')
 			) {
 				$this->_lastCurlErrNo = CurlError::E_OPERATION_TIMEDOUT;
+				throw new CurlError($this->_lastCurlError, $this->_lastCurlErrNo);
 			}
 		}
 		else {
@@ -514,17 +523,38 @@ class Request {
 		}
 		return $this->_dwnFolder.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT;
 	}
+	public function getDownloadStateFilePath($bReturnFullPath = false) {
+		if($bReturnFullPath !== false) {
+			return $this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT.'.'.static::DOWNLOAD_STATE_FILE_EXT;
+		}
+		return $this->_dwnFolder.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT.'.'.static::DOWNLOAD_STATE_FILE_EXT;
+	}
 
 
+	/**
+	 * @return bool - Can resume file downloading
+	 */
 	protected function _checkResumeDownload() {
 		$filePath = $this->getDownloadFilePath(true);
 		$stateFilePath = $this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT;
 		if( file_exists($filePath) && file_exists($stateFilePath) ) {
-			list($fileSizeFromState, $contentExpectedSizeFromState) = explode('|', file_get_contents($stateFilePath));
-			$fileSizeFromState = intval($fileSizeFromState);
-			$contentExpectedSizeFromState = intval($contentExpectedSizeFromState);
-			$this->_dwnFileSize = intval(filesize($filePath));
+			$this->_readStateFile($urlFromState, $contentType, $charset, $fileSizeFromState, $contentExpectedSizeFromState);
+			// ф-ия filesize кеширует результат, потому в рамках нескольких итераций в одном
+			// скрипте надо очищать кеш http://www.php.net/manual/ru/function.clearstatcache.php
+			if($this->_bCachingCheckFileSize === true) {
+				clearstatcache();
+				$this->_dwnFileSize = intval(filesize($filePath));
+			}
+			else {
+				$this->_dwnFileSize = $fileSizeFromState;
+			}
 			if($this->_dwnFileSize>0 && $this->_dwnFileSize == $fileSizeFromState) {
+				if($this->_dwnFileSize === $contentExpectedSizeFromState) {
+					$this->_contentType = $contentType;
+					$this->_contentCharset = $charset;
+					$this->_bDownloadSuccess = true;
+					return false;
+				}
 				$this->_contentExpectedSize = $contentExpectedSizeFromState;
 				$this->_dwnResumeFrom = $this->_dwnFileSize;
 				curl_setopt($this->_curlHandler, CURLOPT_RESUME_FROM, $this->_dwnResumeFrom);
@@ -538,23 +568,28 @@ class Request {
 		return false;
 	}
 
+	/**
+	 * @param null $_friendClass
+	 * @throws \OBX\Core\Exceptions\Curl\RequestError
+	 * @throws RequestError | \ErrorException
+	 * @return bool - Can do exec
+	 */
 	public function _initDownload($_friendClass = null) {
 		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
 		if(true === $this->_bDownloadSuccess) {
-			return;
+			return false;
 		}
 		$this->_dwnFileSize = 0;
 		$openMode = 'wb';
-		if( true === $this->_bCaching && $this->_checkResumeDownload() ) {
-			$openMode = 'ab';
-		}
-		if(true === $this->_bCaching && true === $this->_bDownloadSuccess) {
-			return;
+		if( true === $this->_bCaching ) {
+			if(true === $this->_checkResumeDownload($openMode) ) {
+				$openMode = 'ab';
+			}
+			if(true === $this->_bDownloadSuccess) {
+				return false;
+			}
 		}
 
-		if(null === $this->_ID) {
-			$this->_ID = static::generateID();
-		}
 		$this->_dwnFileHandler = fopen($this->getDownloadFilePath(true), $openMode);
 		if( !$this->_dwnFileHandler ) {
 			throw new RequestError('', RequestError::E_PERM_DENIED);
@@ -564,38 +599,61 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_FILE, $this->_dwnFileHandler);
 		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
 		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
+		return true;
 	}
 
 	public function download() {
-		$this->_initDownload(self::_FRIEND_CLASS_LINK);
-		curl_exec($this->_curlHandler);
-		$this->_afterDownload(self::_FRIEND_CLASS_LINK);
+		$bCanDoExec = $this->_initDownload(self::_FRIEND_CLASS_LINK);
+		if(true === $bCanDoExec) {
+			curl_exec($this->_curlHandler);
+			$this->_afterDownload(self::_FRIEND_CLASS_LINK);
+		}
 	}
 
 	public function _afterDownload($_friendClass = null) {
 		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
+		if(true === $this->_bDownloadSuccess) {
+			return ;
+		}
 		fclose($this->_dwnFileHandler);
 		$this->_dwnFileHandler = null;
-		if( $this->_lastCurlErrNo == CurlError::E_OPERATION_TIMEDOUT
-			&& $this->_bCaching
-		) {
-			$this->getInfo(null, true);
-			file_put_contents(
-				$this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT,
-				($this->_dwnFileSize+$this->_dwnIterationSize).'|'.$this->getContentExpectedSize()
-			);
+		if( true === $this->_bCaching ) {
+			$this->_saveStateFile();
 		}
 		$this->_after_exec();
-		if($this->getStatus() == 200) {
+		$httpStatus = $this->getStatus();
+		if( $httpStatus == 200
+			||
+			($this->_dwnResumeFrom > 0 && $httpStatus == 206)
+			||
+			(true === $this->_bAllowSave404ToFile && $httpStatus == 404)
+		) {
 			$this->_bDownloadSuccess = true;
-		}
-		elseif($this->getStatus() == 404 && $this->_bAllowSave404ToFile) {
-			$this->_bDownloadSuccess = true;
-		}
-		if(true === $this->_bDownloadSuccess) {
 			$contentType = $this->getContentType();
 			$this->_fillOriginalName($contentType);
 		}
+	}
+
+	protected function _readStateFile(&$url, &$contentType, &$charset, &$fileSize, &$expectedSize) {
+		$stateContent = file_get_contents($this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT);
+		list($url, $contentTypeNCharset, $sizes) = explode("\n", $stateContent);
+		list($contentType, $charset) = explode('|', $contentTypeNCharset);
+		list($fileSize, $expectedSize) = explode('|', $sizes);
+		$fileSize = intval($fileSize);
+		$expectedSize = intval($expectedSize);
+
+	}
+	protected function _saveStateFile() {
+		$this->getInfo(null, true);
+		$stateContent = $this->_url."\n";
+		$stateContent .= $this->_contentType.'|'.$this->_contentCharset."\n";
+		$stateContent .= ($this->_dwnFileSize+$this->_dwnIterationSize)
+						.'|'.$this->getContentExpectedSize();
+		$stateContent .= "\n";
+		file_put_contents(
+			$this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT,
+			$stateContent
+		);
 	}
 
 	protected function _fillOriginalName(&$contentType) {
@@ -885,13 +943,32 @@ class Request {
 		return $this->_bRequestSuccess;
 	}
 
-	public function setCaching($bCaching = true) {
+	public function setCaching($bCaching = true, $bCheckFileSize = false) {
 		$this->_bCaching = ($bCaching !== false)?true:false;
+		$this->_bCachingCheckFileSize = (true === $bCheckFileSize)?true:false;
 	}
 
 	public function clearCache() {
 		if(is_file($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT)) {
 			@unlink($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT);
 		}
+	}
+
+	public function _connectMultiHandler(&$curlMultiHandler) {
+		if( null === $this->_curlMultiHandler) {
+			$this->_curlMultiHandler = &$curlMultiHandler;
+			curl_multi_add_handle($curlMultiHandler, $this->_curlHandler);
+		}
+	}
+
+	public function _disconnectMultiHandler() {
+		if( null !== $this->_curlMultiHandler ) {
+			curl_multi_remove_handle($this->_curlMultiHandler, $this->_curlHandler);
+			$this->_curlMultiHandler = null;
+		}
+	}
+
+	public function _isMultiHandlerConnected() {
+		return (null === $this->_curlMultiHandler)?false:true;
 	}
 }
