@@ -579,6 +579,7 @@ class Request {
 		if(true === $this->_bDownloadSuccess) {
 			return false;
 		}
+		$this->_dwnIterationSize = 0;
 		$this->_dwnFileSize = 0;
 		$openMode = 'wb';
 		if( true === $this->_bCaching ) {
@@ -970,5 +971,11 @@ class Request {
 
 	public function _isMultiHandlerConnected() {
 		return (null === $this->_curlMultiHandler)?false:true;
+	}
+
+	public function _setTimeOutReached($_friendClass = null) {
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
+		$this->_lastCurlErrNo = CurlError::E_OPERATION_TIMEDOUT;
+		$this->_lastCurlError = CurlError::getLangMessage(CurlError::E_OPERATION_TIMEDOUT);
 	}
 }

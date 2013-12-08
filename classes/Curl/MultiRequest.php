@@ -14,6 +14,7 @@ use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Exceptions\LogFileError;
 use OBX\Core\LogFile;
+use OBX\Core\SimpleBenchMark;
 
 class MultiRequest extends CMessagePoolDecorator {
 
@@ -68,6 +69,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		}
 		$this->_arRequestList[$Request->getID()] = $Request;
 		$Request->_connectMultiHandler($this->_curlMulti);
+		$Request->setCaching($this->_bCaching, $this->_bCachingCheckFileSize);
 		$this->_iRequest++;
 		return true;
 	}
@@ -119,7 +121,7 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	public function download() {
 		if(true === $this->_bDownloadsComplete) {
-			return;
+			return true;
 		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
@@ -143,15 +145,20 @@ class MultiRequest extends CMessagePoolDecorator {
 			}
 			catch(CurlError $e) {
 				$exCode = $e->getCode();
-				if($exCode == CurlError::E_M_TIMEOUT_REACHED) {
+				if( $exCode == CurlError::E_M_TIMEOUT_REACHED
+					|| $exCode == CurlError::E_OPERATION_TIMEDOUT
+				) {
 					//foreach($this->_arRequestList)
 				}
-				throw $e;
+				else {
+					throw $e;
+				}
 			}
 		}
 		else {
 			$this->_exec();
 		}
+		$bTimeOutReached = false;
 		foreach($this->_arRequestList as $Request) {
 			try {
 				if( true === $Request->_isMultiHandlerConnected() ) {
@@ -159,13 +166,21 @@ class MultiRequest extends CMessagePoolDecorator {
 				}
 			}
 			catch(RequestError $e) {
+				if($e->getCode() == CurlError::E_OPERATION_TIMEDOUT) {
+					$bTimeOutReached = true;
+				}
 				$this->getMessagePool()->addErrorException($e);
 			}
 			if($Request->isDownloadSuccess()) {
 				$this->_iRequestsSuccess++;
 			}
 		}
+		if(true === $bTimeOutReached) {
+			//throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
+			return false;
+		}
 		$this->_bDownloadsComplete = true;
+		return true;
 	}
 
 	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GENERATE) {
@@ -211,25 +226,21 @@ class MultiRequest extends CMessagePoolDecorator {
 		$endTime = time()+$this->_timeout;
 		$i = 0;
 		curl_multi_exec($this->_curlMulti, $countRunning);
-		if( $this->_timeout != 0) {
-			do {
-				$i++;
-				if($i%100==0) {
-					if(time() >= $endTime){
-						throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
-					}
-					$i=0;
-				}
-				curl_multi_exec($this->_curlMulti, $countRunning);
-				usleep(10);
-			} while($countRunning>0);
+		do {
+			$i++;
+			curl_multi_exec($this->_curlMulti, $countRunning);
+			if($i % 50 === 0) {
+				//$i = 0;
+				//$readyCount = curl_multi_select($this->_curlMulti, 0.1);
+				// в выбрасывании исключения нест смысла
+				// один из запросов и так его выбросит
+				//if(time() >= $endTime) {
+				//	throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
+				//}
+				$debug=1;
+			}
 		}
-		else {
-			do {
-				curl_multi_exec($this->_curlMulti, $countRunning);
-				usleep(10);
-			} while($countRunning>0);
-		}
+		while ($countRunning>0);
 		$debug=1;
 	}
 

@@ -13,6 +13,7 @@ use OBX\Core\Curl\Request;
 use OBX\Core\Curl\MultiRequest;
 use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
+use OBX\Core\SimpleBenchMark;
 
 require_once __DIR__.'/_Request.php';
 
@@ -340,13 +341,27 @@ class TestRequest extends _Request {
 		}
 
 		$fullFilePath = $Request->getDownloadFilePath(true);
+		$fullStatePath =$Request->getDownloadStateFilePath(true);
 		$this->assertFileExists($fullFilePath);
 		// destructor
 		unset($Request);
 		$this->assertFileExists($fullFilePath);
 		$this->assertTrue(unlink($fullFilePath));
+		$this->assertTrue(unlink($fullStatePath));
 	}
 
+	public function testMultiBigFile() {
+		$MultiRequest = new MultiRequest();
+		$MultiRequest->addUrl(self::$_urlBigFile, 'testMultiBigFile');
+		$MultiRequest->addUrl(self::$_urlBigFile300, 'testMultiBigFile300');
+		$MultiRequest->setCaching(true);
+		$MultiRequest->setTimeout(10);
+		SimpleBenchMark::start('_download');
+		while( ! $MultiRequest->download() ) {
+			$time = SimpleBenchMark::stop('_download');
+		}
+		$debug=1;
+	}
 	public function testDeleteTempData() {
 		DeleteDirFilesEx(self::$_docRoot.'/upload/obx.core/test/Request');
 	}
