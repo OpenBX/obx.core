@@ -69,7 +69,7 @@ class MultiRequest extends CMessagePoolDecorator {
 		if( !($Request instanceof Request) ) {
 			return false;
 		}
-		$this->_arRequestList[$Request->getID()] = $Request;
+		$this->_arRequestList[$Request->_getID(self::_FRIEND_CLASS_LINK)] = $Request;
 		$Request->_connectMultiHandler($this->_curlMulti);
 		$Request->setCaching($this->_bCaching, $this->_bCachingCheckFileSize);
 		$this->_iRequest++;
@@ -161,8 +161,8 @@ class MultiRequest extends CMessagePoolDecorator {
 			}
 		}
 		if(true === $bTimeOutReached) {
-			//throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
-			return false;
+			throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
+			//return false;
 		}
 		$this->_bDownloadsComplete = true;
 		return true;
@@ -170,7 +170,7 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	public function downloadToDir($relPath, $fileNameMode = Request::SAVE_TO_DIR_GENERATE) {
 		if(true === $this->_bDownloadsComplete) {
-			return;
+			return true;
 		}
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
@@ -188,22 +188,37 @@ class MultiRequest extends CMessagePoolDecorator {
 				$Request->_disconnectMultiHandler();
 			}
 		}
-		$this->_exec();
+
+		$bTimeOutReached = !$this->_exec();
+		$this->_iRequestsSuccess = 0;
 		foreach($this->_arRequestList as $Request) {
 			try {
 				if( true === $Request->_isMultiHandlerConnected() ) {
 					$Request->_afterDownload(self::_FRIEND_CLASS_LINK);
 				}
-				$Request->saveToDir($relPath, $fileNameMode);
 			}
 			catch(RequestError $e) {
+				if($e->getCode() == CurlError::E_OPERATION_TIMEDOUT) {
+					$bTimeOutReached = true;
+				}
 				$this->getMessagePool()->addErrorException($e);
 			}
 			if($Request->isDownloadSuccess()) {
 				$this->_iRequestsSuccess++;
+				try {
+					$Request->saveToDir($relPath, $fileNameMode);
+				}
+				catch(RequestError $e) {
+					$this->addErrorException($e);
+				}
 			}
 		}
+		if(true === $bTimeOutReached) {
+			throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
+			//return false;
+		}
 		$this->_bDownloadsComplete = true;
+		return true;
 	}
 
 	/**

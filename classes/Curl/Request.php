@@ -47,7 +47,6 @@ class Request {
 
 	protected $_header = null;
 	protected $_body = null;
-	protected $_receivedCode = null;
 	protected $_arHeader = array();
 
 	protected $_dwnDir = null;
@@ -145,9 +144,11 @@ class Request {
 	protected function __clone() {}
 
 	public function getID() {
-		if(true === $this->_bCaching && true === $this->_bEncapsulatedID) {
-			$this->_bEncapsulatedID = false;
-		}
+		$this->_bEncapsulatedID = false;
+		return $this->_ID;
+	}
+	public function _getID($_friendClass = null) {
+		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
 		return $this->_ID;
 	}
 
@@ -422,7 +423,6 @@ class Request {
 		$this->_header = null;
 		$this->_arHeader = array();
 		$this->_body = null;
-		$this->_receivedCode = null;
 		$this->_initCURL();
 		curl_setopt($this->_curlHandler, CURLOPT_FILE, STDOUT);
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
@@ -500,6 +500,10 @@ class Request {
 
 	static public function generateID() {
 		return md5('OBX\Core\Curl\Request_'.time().'_'.rand(0, 9999));
+	}
+
+	public function signUrl() {
+		return md5($this->_url);
 	}
 
 	public function setDownloadFolder($downloadFolder) {
@@ -645,7 +649,6 @@ class Request {
 			else {
 				$this->_bDownloadSuccess = true;
 			}
-
 			$contentType = $this->getContentType();
 			$this->_fillOriginalName($contentType);
 		}
@@ -885,6 +888,16 @@ class Request {
 	public function getStatus() {
 		if( null === $this->_responseStatus ) {
 			$this->_responseStatus = curl_getinfo($this->_curlHandler, CURLINFO_HTTP_CODE);
+			// START: гребаный курл достал своими глюками
+			if($this->_responseStatus == 0) {
+				if(null === $this->_lastCurlErrNo) {
+					$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
+				}
+				if($this->_lastCurlErrNo == CURLE_OK) {
+					$this->_responseStatus = 200;
+				}
+			}
+			// END: гребаный курл достал своими глюками
 		}
 		return $this->_responseStatus;
 	}

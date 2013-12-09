@@ -78,7 +78,7 @@ class TestRequest extends _Request {
 	public function testSaveContentToDir() {
 		$Request = new Request(self::$_urlJSON.'&test=testSaveContentToDir&download=Y');
 		$body = $Request->send();
-		$Request->saveToDir('/upload/obx.core/test/Request/toDir/');
+		$Request->saveToDir('/upload/obx.core/test/Request/toDir/', Request::SAVE_TO_DIR_REPLACE);
 		$this->assertFileExists(self::$_docRoot.'/upload/obx.core/test/Request/toDir/testSaveContentToDir.json');
 		$fileContent = file_get_contents(self::$_docRoot.'/upload/obx.core/test/Request/toDir/testSaveContentToDir.json');
 
@@ -198,16 +198,30 @@ class TestRequest extends _Request {
 	}
 
 	public function testMultiDownload() {
+		$this->cleanPHPBuffer();
 		$sleep = '';
 		//$sleep = '&sleep=5';
 		$MultiRequest = new MultiRequest();
+		$MultiRequest->setCaching(true);
 		for($i=0; $i < 100; $i++) {
-			$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload'.$i.'&download=Y'.$sleep);
+			$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload'.$i.'&download=Y'.$sleep, 'testMultiDownload_'.$i);
 		}
-		$MultiRequest->downloadToDir('/upload/obx.core/test/Request/multi_1/', Request::SAVE_TO_DIR_COUNT);
+		while(true) {
+			try {
+				$MultiRequest->downloadToDir('/upload/obx.core/test/Request/multi_1/', Request::SAVE_TO_DIR_COUNT);
+			}
+			catch(CurlError $e) {
+				if($e->getCode() == CurlError::E_M_TIMEOUT_REACHED) {
+					continue;
+				}
+			}
+			break;
+		}
 		$arRequestList = $MultiRequest->getRequestList();
 		/** @var Request $Request */
 		foreach($arRequestList as $Request) {
+			$mess = print_r($Request, true);
+			$this->assertNotNull($Request->getSavedFilePath(), $mess);
 			$this->assertFileExists($Request->getSavedFilePath());
 		}
 	}
@@ -217,7 +231,7 @@ class TestRequest extends _Request {
 		$sleep = '&sleep=5';
 		$MultiRequest = new MultiRequest();
 		for($i=0; $i < 40; $i++) {
-			$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload'.$i.'&download=Y'.$sleep);
+			$MultiRequest->addUrl(self::$_urlJSON.'&test=testMultiDownload'.$i.'&download=Y'.$sleep, 'testMultiDownload_'.$i);
 		}
 		$MultiRequest->setTimeout(4);
 		$MultiRequest->downloadToDir('/upload/obx.core/test/Request/multi_3/', Request::SAVE_TO_DIR_COUNT);
@@ -358,11 +372,16 @@ class TestRequest extends _Request {
 		$MultiRequest->setTimeout(10);
 		SimpleBenchMark::start('t_download');
 		SimpleBenchMark::start('i_download');
-		while( ! $MultiRequest->download() ) {
-			$timeTotal = SimpleBenchMark::stop('t_download');
-			$timeIteration = SimpleBenchMark::stop('i_download');
-			$debug=1;
-			SimpleBenchMark::start('i_download');
+		while( true ) {
+			try {
+				$MultiRequest->download();
+			}
+			catch(CurlError $e) {
+				if($e->getCode() == CurlError::E_M_TIMEOUT_REACHED) {
+					continue;
+				}
+			}
+			break;
 		}
 		$MultiRequest->setCaching(false);
 		foreach($MultiRequest->getRequestList() as $Request) {
@@ -378,6 +397,7 @@ class TestRequest extends _Request {
 			$this->assertEquals(intval(filesize($Request->getDownloadFilePath(true))), $fileSizeFromState);
 			$Request->__destruct();
 			$this->assertFileNotExists($filePath);
+			$this->assertFileNotExists($stateFilePath);
 		}
 	}
 	public function testDeleteTempData() {
