@@ -356,11 +356,29 @@ class TestRequest extends _Request {
 		$MultiRequest->addUrl(self::$_urlBigFile300, 'testMultiBigFile300');
 		$MultiRequest->setCaching(true);
 		$MultiRequest->setTimeout(10);
-		SimpleBenchMark::start('_download');
+		SimpleBenchMark::start('t_download');
+		SimpleBenchMark::start('i_download');
 		while( ! $MultiRequest->download() ) {
-			$time = SimpleBenchMark::stop('_download');
+			$timeTotal = SimpleBenchMark::stop('t_download');
+			$timeIteration = SimpleBenchMark::stop('i_download');
+			$debug=1;
+			SimpleBenchMark::start('i_download');
 		}
-		$debug=1;
+		$MultiRequest->setCaching(false);
+		foreach($MultiRequest->getRequestList() as $Request) {
+			/** @var Request $Request */
+			$filePath = $Request->getDownloadFilePath(true);
+			$stateFilePath = $Request->getDownloadStateFilePath(true);
+			$this->assertFileExists($filePath);
+			$this->assertFileExists($stateFilePath);
+			$Request->_readStateFile($urlFromState, $contentTypeFromState, $charsetFromState, $fileSizeFromState, $expectedSizeFromState);
+			$this->assertEquals($fileSizeFromState, $expectedSizeFromState);
+			$this->assertEquals($Request->getUrl(), $urlFromState);
+			$this->assertEquals($Request->getContentType(), $contentTypeFromState);
+			$this->assertEquals(intval(filesize($Request->getDownloadFilePath(true))), $fileSizeFromState);
+			$Request->__destruct();
+			$this->assertFileNotExists($filePath);
+		}
 	}
 	public function testDeleteTempData() {
 		DeleteDirFilesEx(self::$_docRoot.'/upload/obx.core/test/Request');

@@ -39,9 +39,11 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected function __clone() {}
 
 	public function __destruct() {
-		foreach($this->_arRequestList as $Request) {
+		foreach($this->_arRequestList as $reqID => &$Request) {
 			/** @var Request $Request */
 			$Request->_disconnectMultiHandler($this->_curlMulti);
+			unset($Request);
+			$this->_arRequestList[$reqID] = null;
 		}
 		$this->_arRequestList = null;
 		curl_multi_close($this->_curlMulti);
@@ -139,26 +141,9 @@ class MultiRequest extends CMessagePoolDecorator {
 				$Request->_disconnectMultiHandler();
 			}
 		}
-		if(true === $this->_bCaching) {
-			try {
-				$this->_exec();
-			}
-			catch(CurlError $e) {
-				$exCode = $e->getCode();
-				if( $exCode == CurlError::E_M_TIMEOUT_REACHED
-					|| $exCode == CurlError::E_OPERATION_TIMEDOUT
-				) {
-					//foreach($this->_arRequestList)
-				}
-				else {
-					throw $e;
-				}
-			}
-		}
-		else {
-			$this->_exec();
-		}
-		$bTimeOutReached = false;
+
+		$bTimeOutReached = !$this->_exec();
+		$this->_iRequestsSuccess = 0;
 		foreach($this->_arRequestList as $Request) {
 			try {
 				if( true === $Request->_isMultiHandlerConnected() ) {
@@ -221,27 +206,28 @@ class MultiRequest extends CMessagePoolDecorator {
 		$this->_bDownloadsComplete = true;
 	}
 
+	/**
+	 * @return bool - true при успешном завершении, false - при таймауте
+	 */
 	protected function _exec() {
-		$countRunning = 0;
-		$endTime = time()+$this->_timeout;
-		$i = 0;
-		curl_multi_exec($this->_curlMulti, $countRunning);
+		$endTime = time() + $this->_timeout;
 		do {
-			$i++;
-			curl_multi_exec($this->_curlMulti, $countRunning);
-			if($i % 50 === 0) {
-				//$i = 0;
-				//$readyCount = curl_multi_select($this->_curlMulti, 0.1);
-				// в выбрасывании исключения нест смысла
-				// один из запросов и так его выбросит
-				//if(time() >= $endTime) {
-				//	throw new CurlError('', CurlError::E_M_TIMEOUT_REACHED);
-				//}
-				$debug=1;
+			$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+		} while ($mrc == CURLM_CALL_MULTI_PERFORM);
+		$i = 0;
+		while ($countRunning>0) {
+			if (curl_multi_select($this->_curlMulti) != -1) {
+				do {
+					$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+				} while ($mrc == CURLM_CALL_MULTI_PERFORM);
+				usleep(10); // малость уменьшим потребление процессора
+				$i++;
+				if($i%50 == 0 && time() >= $endTime) {
+					return false;
+				}
 			}
 		}
-		while ($countRunning>0);
-		$debug=1;
+		return true;
 	}
 
 	/**

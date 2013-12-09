@@ -7,7 +7,7 @@ abstract class _Request extends TestCase {
 	static protected $_urlJSON = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/test.response.php?XDEBUG_SESSION_START=PHPSTORM';
 	static protected $_url404 = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/test.response.php?get_404=Y';
 	static protected $_urlBigFile = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
-	static protected $_urlBigFile300 = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
+	static protected $_urlBigFile300 = 'http://smokeoffice12.loc/bitrix/modules/obx.core/test/data/dwn_files/big_file_300M.zero';
 
 	const _DIR_ = __DIR__;
 

@@ -112,13 +112,12 @@ class CMessagePool implements IMessagePool
 	}
 
 	public function addMessage($text, $code = 0) {
-		$arMessage = array(
+		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
 			"TYPE" => "M"
 		);
-		$this->_arMessages[$this->_countMessages] = $arMessage;
-		$this->_arCommonMessagePool[$this->_countCommonMessages] = $arMessage;
+		$this->_arMessages[$this->_countMessages] = &$this->_arCommonMessagePool[$this->_countCommonMessages];
 		$this->_countMessages++;
 		$this->_countCommonMessages++;
 		if($this->_LogFile) {
@@ -126,13 +125,12 @@ class CMessagePool implements IMessagePool
 		}
 	}
 	public function addWarning($text, $code = 0) {
-		$arMessage = array(
+		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
 			"TYPE" => "W"
 		);
-		$this->_arWarnings[$this->_countWarnings] = $arMessage;
-		$this->_arCommonMessagePool[$this->_countCommonMessages] = $arMessage;
+		$this->_arWarnings[$this->_countWarnings] = &$this->_arCommonMessagePool[$this->_countCommonMessages];
 		$this->_countWarnings++;
 		$this->_countCommonMessages++;
 		if($this->_LogFile) {
@@ -140,13 +138,12 @@ class CMessagePool implements IMessagePool
 		}
 	}
 	public function addError($text, $code = 0) {
-		$arMessage = array(
+		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
 			"TYPE" => "E"
 		);
-		$this->_arErrors[$this->_countErrors] = $arMessage;
-		$this->_arCommonMessagePool[$this->_countCommonMessages] = $arMessage;
+		$this->_arErrors[$this->_countErrors] = &$this->_arCommonMessagePool[$this->_countCommonMessages];
 		$this->_countErrors++;
 		$this->_countCommonMessages++;
 		if($this->_LogFile) {

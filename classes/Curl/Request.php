@@ -151,6 +151,10 @@ class Request {
 		return $this->_ID;
 	}
 
+	public function getUrl() {
+		return $this->_url;
+	}
+
 	protected function _initCURL() {
 		if(null === $this->_curlHandler) {
 			$this->_curlHandler = curl_init();
@@ -397,6 +401,7 @@ class Request {
 	protected function _after_exec() {
 		$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
 		$this->_lastCurlError = curl_error($this->_curlHandler);
+		$this->_reconnectMultiHandler();
 		if($this->_lastCurlErrNo == CURLE_OK) {
 			if( !empty($this->_lastCurlError)
 				&& strpos($this->_lastCurlError, 'timed out')
@@ -539,6 +544,9 @@ class Request {
 		$stateFilePath = $this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT;
 		if( file_exists($filePath) && file_exists($stateFilePath) ) {
 			$this->_readStateFile($urlFromState, $contentType, $charset, $fileSizeFromState, $contentExpectedSizeFromState);
+			if($urlFromState != $this->_url) {
+				return false;
+			}
 			// ф-ия filesize кеширует результат, потому в рамках нескольких итераций в одном
 			// скрипте надо очищать кеш http://www.php.net/manual/ru/function.clearstatcache.php
 			if($this->_bCachingCheckFileSize === true) {
@@ -579,7 +587,7 @@ class Request {
 		if(true === $this->_bDownloadSuccess) {
 			return false;
 		}
-		$this->_dwnIterationSize = 0;
+		$this->_dwnIterationSize = null;
 		$this->_dwnFileSize = 0;
 		$openMode = 'wb';
 		if( true === $this->_bCaching ) {
@@ -629,13 +637,21 @@ class Request {
 			||
 			(true === $this->_bAllowSave404ToFile && $httpStatus == 404)
 		) {
-			$this->_bDownloadSuccess = true;
+			if( $this->_contentExpectedSize > 0 ) {
+				if( $this->_dwnFileSize == $this->_contentExpectedSize ) {
+					$this->_bDownloadSuccess = true;
+				}
+			}
+			else {
+				$this->_bDownloadSuccess = true;
+			}
+
 			$contentType = $this->getContentType();
 			$this->_fillOriginalName($contentType);
 		}
 	}
 
-	protected function _readStateFile(&$url, &$contentType, &$charset, &$fileSize, &$expectedSize) {
+	public function _readStateFile(&$url, &$contentType, &$charset, &$fileSize, &$expectedSize) {
 		$stateContent = file_get_contents($this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT);
 		list($url, $contentTypeNCharset, $sizes) = explode("\n", $stateContent);
 		list($contentType, $charset) = explode('|', $contentTypeNCharset);
@@ -955,9 +971,9 @@ class Request {
 		}
 	}
 
-	public function _connectMultiHandler(&$curlMultiHandler) {
+	public function _connectMultiHandler($curlMultiHandler) {
 		if( null === $this->_curlMultiHandler) {
-			$this->_curlMultiHandler = &$curlMultiHandler;
+			$this->_curlMultiHandler = $curlMultiHandler;
 			curl_multi_add_handle($curlMultiHandler, $this->_curlHandler);
 		}
 	}
@@ -969,13 +985,14 @@ class Request {
 		}
 	}
 
-	public function _isMultiHandlerConnected() {
-		return (null === $this->_curlMultiHandler)?false:true;
+	public function _reconnectMultiHandler() {
+		if( null !== $this->_curlMultiHandler ) {
+			@curl_multi_remove_handle($this->_curlMultiHandler, $this->_curlHandler);
+			curl_multi_add_handle($this->_curlMultiHandler, $this->_curlHandler);
+		}
 	}
 
-	public function _setTimeOutReached($_friendClass = null) {
-		if($_friendClass !== self::_FRIEND_CLASS_LINK) throw new \ErrorException('Method '.__METHOD__.' can be called only from friend class');
-		$this->_lastCurlErrNo = CurlError::E_OPERATION_TIMEDOUT;
-		$this->_lastCurlError = CurlError::getLangMessage(CurlError::E_OPERATION_TIMEDOUT);
+	public function _isMultiHandlerConnected() {
+		return (null === $this->_curlMultiHandler)?false:true;
 	}
 }
