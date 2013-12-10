@@ -191,7 +191,10 @@ class Request {
 	 */
 	public function setTimeout($seconds) {
 		$seconds = intval($seconds);
-		$this->_timeout = $seconds;
+		if($seconds > 0) {
+			$this->_timeout = $seconds;
+			curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
+		}
 	}
 	public function getTimeout() {
 		return $this->_timeout;
@@ -203,7 +206,11 @@ class Request {
 	 */
 	public function setWaiting($seconds) {
 		$seconds = intval($seconds);
-		$this->_waiting = $seconds;
+		if($seconds > 0) {
+			$this->_waiting = $seconds;
+			curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
+		}
+
 	}
 	public function getWaiting() {
 		return $this->_waiting;
@@ -428,8 +435,6 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($this->_curlHandler, CURLOPT_HEADER, true);
 		curl_setopt($this->_curlHandler, CURLOPT_NOBODY, false);
-		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
-		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
 	}
 
 	public function send() {
@@ -610,8 +615,6 @@ class Request {
 		curl_setopt($this->_curlHandler, CURLOPT_RETURNTRANSFER, false);
 		curl_setopt($this->_curlHandler, CURLOPT_HEADER, false);
 		curl_setopt($this->_curlHandler, CURLOPT_FILE, $this->_dwnFileHandler);
-		curl_setopt($this->_curlHandler, CURLOPT_TIMEOUT, $this->_timeout);
-		curl_setopt($this->_curlHandler, CURLOPT_CONNECTTIMEOUT, $this->_waiting);
 		return true;
 	}
 
@@ -667,8 +670,7 @@ class Request {
 		$this->getInfo(null, true);
 		$stateContent = $this->_url."\n";
 		$stateContent .= $this->_contentType.'|'.$this->_contentCharset."\n";
-		$stateContent .= ($this->_dwnFileSize+$this->_dwnIterationSize)
-						.'|'.$this->getContentExpectedSize();
+		$stateContent .= $this->_dwnFileSize.'|'.$this->getContentExpectedSize();
 		$stateContent .= "\n";
 		file_put_contents(
 			$this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT,
@@ -939,6 +941,7 @@ class Request {
 				$info['size_download'] = intval($info['size_download']);
 				if( null === $this->_dwnIterationSize  && $info['size_download']>0 ) {
 					$this->_dwnIterationSize = $info['size_download'];
+					$this->_dwnFileSize += $this->_dwnIterationSize;
 				}
 			}
 		}

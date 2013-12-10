@@ -23,6 +23,7 @@ class MultiRequest extends CMessagePoolDecorator {
 	protected $_iRequest = 0;
 	protected $_iRequestsSuccess = 0;
 	protected $_timeout = 0;
+	protected $_timeoutRequestsMax = 0;
 	protected $_waiting = 0;
 	protected $_bDownloadsComplete = false;
 	protected $_bRequestsComplete = false;
@@ -72,6 +73,15 @@ class MultiRequest extends CMessagePoolDecorator {
 		$this->_arRequestList[$Request->_getID(self::_FRIEND_CLASS_LINK)] = $Request;
 		$Request->_connectMultiHandler($this->_curlMulti);
 		$Request->setCaching($this->_bCaching, $this->_bCachingCheckFileSize);
+		if($this->_timeout > 0) {
+			$Request->setTimeout($this->_timeout);
+		}
+		else {
+			$requestTimeOut = $Request->getTimeout();
+			if($requestTimeOut > $this->_timeoutRequestsMax) {
+				$this->_timeoutRequestsMax = $Request->getTimeout();
+			}
+		}
 		$this->_iRequest++;
 		return true;
 	}
@@ -90,6 +100,7 @@ class MultiRequest extends CMessagePoolDecorator {
 	public function setTimeout($seconds) {
 		/** @var Request $Request */
 		$this->_timeout = intval($seconds);
+		$this->_timeoutRequestsMax = $seconds;
 		foreach($this->_arRequestList as $Request) {
 			$Request->setTimeout($this->_timeout);
 		}
@@ -223,23 +234,72 @@ class MultiRequest extends CMessagePoolDecorator {
 
 	/**
 	 * @return bool - true при успешном завершении, false - при таймауте
+	 * @throws CurlError
 	 */
 	protected function _exec() {
-		$endTime = time() + $this->_timeout;
-		do {
-			$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-		} while ($mrc == CURLM_CALL_MULTI_PERFORM);
-		$i = 0;
-		while ($countRunning>0) {
-			if (curl_multi_select($this->_curlMulti) != -1) {
-				do {
+		if($this->_timeout < 1 && $this->_timeoutRequestsMax > 0) {
+			$this->setTimeout($this->_timeoutRequestsMax);
+		}
+		if($this->_timeout > 0) {
+			$endTime = time() + $this->_timeout;
+			do {
+				$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+			} while ($mrc === CURLM_CALL_MULTI_PERFORM);
+			$i = 0;
+			$maxSelectErrors = 100;
+			$iSelectErrorCount = 0;
+			while ($countRunning>0) {
+				$mrs = curl_multi_select($this->_curlMulti, 0.1);
+				if ($mrs !== -1) {
+					$iSelectErrorCount = 0;
+					do {
+						$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+					} while ($mrc === CURLM_CALL_MULTI_PERFORM);
+				}
+				else {
+					//http://www.php.net/manual/ru/function.curl-multi-select.php
+					//Alex Palmer
+					//On php 5.3.18+ be aware that curl_multi_select() may return -1 forever until you call curl_multi_exec().
+					//See https://bugs.php.net/bug.php?id=63411 for more information.
+					$iSelectErrorCount++;
+					if($iSelectErrorCount >= $maxSelectErrors ) {
+						throw new CurlError('', CurlError::E_M_SELECT_ERROR);
+					}
 					$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-				} while ($mrc == CURLM_CALL_MULTI_PERFORM);
+				}
 				usleep(10); // малость уменьшим потребление процессора
 				$i++;
-				if($i%50 == 0 && time() >= $endTime) {
+				if(false && $i%100 == 0 ) {$i=0; if( time() >= $endTime) {
 					return false;
+				}}
+			}
+		}
+		else {
+			do {
+				$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+			} while ($mrc === CURLM_CALL_MULTI_PERFORM);
+			$maxSelectErrors = 100;
+			$iSelectErrorCount = 0;
+			while ($countRunning>0) {
+				$mrs = curl_multi_select($this->_curlMulti, 0.1);
+				if ($mrs !== -1) {
+					$iSelectErrorCount = 0;
+					do {
+						$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+					} while ($mrc === CURLM_CALL_MULTI_PERFORM);
 				}
+				else {
+					//http://www.php.net/manual/ru/function.curl-multi-select.php
+					//Alex Palmer
+					//On php 5.3.18+ be aware that curl_multi_select() may return -1 forever until you call curl_multi_exec().
+					//See https://bugs.php.net/bug.php?id=63411 for more information.
+					$iSelectErrorCount++;
+					if($iSelectErrorCount >= $maxSelectErrors ) {
+						throw new CurlError('', CurlError::E_M_SELECT_ERROR);
+					}
+					$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+				}
+				usleep(10); // малость уменьшим потребление процессора
 			}
 		}
 		return true;

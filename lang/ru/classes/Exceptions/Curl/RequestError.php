@@ -18,4 +18,3 @@ $MESS[_::LANG_PREFIX._::E_OPEN_DWN_FAILED] = 'Не удалось открыть
 $MESS[_::LANG_PREFIX._::E_FILE_SAVE_NO_RESPONSE] = 'Нельзя сохранить результат в файл. Рзультат из сети не был получен';
 $MESS[_::LANG_PREFIX._::E_BX_FILE_PROP_NOT_FOUND] = 'Не найдено свойство инфоблока для сохранения';
 $MESS[_::LANG_PREFIX._::E_BX_FILE_PROP_WRONG_TYPE] = 'Свойство для сохранения не является свойством типа «файл»';
-$MESS[_::LANG_PREFIX._::E_M_TIMEOUT_REACHED] = 'Достингнуто максимальное время работы мультизагрузки';

@@ -7,7 +7,15 @@
  ** @mailto rootfavell@gmail.com              **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
+
 use OBX\Core\Exceptions\Curl\CurlError as _;
+$MESS[_::LANG_PREFIX._::E_M_TIMEOUT_REACHED] = 'Достингнуто максимальное время работы мультизагрузки';
+$MESS[_::LANG_PREFIX._::E_M_SELECT_ERROR] = 'Мы сделали все возможное что бы обойти этот баг описанный тут https://bugs.php.net/bug.php?id=63411.'
+	.' Если он у вас проявился, значит произошло невероятное.'
+	.' Обязательно напишите об этом мне Максим Макаров <'.'rootfavell@gmail.com>'
+	.' В письме опишиту вашу кофигурацию (версию PHP, Версию ядра ОС)'
+;
+
 $MESS[_::LANG_PREFIX._::E_UNSUPPORTED_PROTOCOL] = 'The URL you passed to libcurl used a protocol that this libcurl does not support. The support might be a compile-time option that you didn\'t use, it can be a misspelled protocol string or just a protocol libcurl has no code for';
 $MESS[_::LANG_PREFIX._::E_FAILED_INIT] = 'Very early initialization code failed. This is likely to be an internal error or problem, or a resource problem where something fundamental couldn\'t get done at init time.';
 $MESS[_::LANG_PREFIX._::E_URL_MALFORMAT] = 'The URL was not properly formatted.';

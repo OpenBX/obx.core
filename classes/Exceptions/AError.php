@@ -53,14 +53,14 @@ abstract class AError extends \ErrorException {
 		$class = get_called_class();
 		self::loadMessages($class);
 		$message = '';
-		$arLangMessages = self::$_arLangMessages[$class];
+		$arLangMessages = &self::$_arLangMessages[$class];
 		$langPrefix = static::LANG_PREFIX;
 		if(array_key_exists($langPrefix.$errorCode, $arLangMessages)) {
-			$message = self::$_arLangMessages[$class][$langPrefix.$errorCode];
+			$message = $arLangMessages[$langPrefix.$errorCode];
 		}
-//		else {
-//			throw new \ErrorException('Lang message for error code '.get_called_class().'::'.$errorCode.' not found');
-//		}
+		else {
+			$message = $langPrefix.intval($errorCode);
+		}
 		if(null !== $arReplace && is_array($arReplace)) {
 			$arReplaceSearch = array_keys($arReplace);
 			$arReplaceTarget = array_values($arReplace);

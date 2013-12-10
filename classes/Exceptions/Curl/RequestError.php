@@ -27,7 +27,8 @@ class RequestError extends AError {
 	const E_BX_FILE_PROP_NOT_FOUND = 1009;
 	const E_BX_FILE_PROP_WRONG_TYPE = 1010;
 	const E_M_TIMEOUT_REACHED = 2001;
-	const E_M_BX_FILE_PROP_NOT_MULTIPLE = 2002;
+	const E_M_SELECT_ERROR = 2002;
+	const E_M_BX_FILE_PROP_NOT_MULTIPLE = 2003;
 
 	static protected $_bCURLChecked = false;
 

@@ -219,14 +219,27 @@ class TestRequest extends _Request {
 		}
 		$arRequestList = $MultiRequest->getRequestList();
 		/** @var Request $Request */
+		$MultiRequest->setCaching(false);
 		foreach($arRequestList as $Request) {
-			$mess = print_r($Request, true);
-			$this->assertNotNull($Request->getSavedFilePath(), $mess);
-			$this->assertFileExists($Request->getSavedFilePath());
+			$savedPath = $Request->getSavedFilePath();
+			$reqID = $Request->_getID(Request::_FRIEND_CLASS_LINK);
+			$this->assertNotNull($savedPath, 'Error on request #'.$reqID);
+			$this->assertFileExists($savedPath);
+			$cacheFile = $Request->getDownloadFilePath(true);
+			$cacheStateFile = $Request->getDownloadStateFilePath(true);
+			$Request->__destruct();
+			$this->assertFileNotExists($cacheFile);
+			$this->assertFileNotExists($cacheStateFile);
 		}
+
 	}
 
+	/**
+	 * @expectedException \OBX\Core\Exceptions\Curl\CurlError
+	 * @expectedExceptionCode \OBX\Core\Exceptions\Curl\CurlError::E_M_TIMEOUT_REACHED
+	 */
 	public function testMultiDownloadTimeout() {
+
 		//$sleep = '';
 		$sleep = '&sleep=5';
 		$MultiRequest = new MultiRequest();
