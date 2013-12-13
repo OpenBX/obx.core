@@ -8,9 +8,13 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-define('OBX_MAGIC_WORD', '__I_KNOW_WHAT_I_DO__');
-define('I_KNOW_WHAT_I_DO', '__I_KNOW_WHAT_I_DO__');
-if(!defined('OBX_DOC_ROOT') && !empty($_SERVER['DOCUMENT_ROOT'])) {
-	define('OBX_DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
-	define('OBX\DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
-}
+namespace OBX\Core\Exceptions;
+
+
+class LessCSSError extends AError {
+	const _FILE_ = __FILE__;
+	const LANG_PREFIX = 'OBX_CORE_LESSCSS_ERROR_';
+
+	const E_TEMPLATE_NOT_FOUND = 1;
+	const E_LESS_JS_FILE_NOT_FOUND = 2;
+} 

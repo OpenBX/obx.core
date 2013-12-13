@@ -3,10 +3,8 @@
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
  **         Maksim S. Makarov aka pr0n1x      **
- **         Artem P. Morozov  aka tashiro     **
  ** @license Affero GPLv3                     **
  ** @mailto rootfavell@gmail.com              **
- ** @mailto tashiro@yandex.ru                 **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
@@ -45,11 +43,13 @@ $arModuleClasses = array(
 	,'OBX\Core\Settings\AdminPage'				=> 'classes/Settings.php'
 	,'OBX\Core\Test\TestCase'					=> 'classes/TestCase.php'
 	,'OBX\Core\SimpleBenchMark'					=> 'classes/SimpleBenchMark.php'
+	,'OBX\Core\LessCSS'							=> 'classes/LessCSS.php'
 	,'OBX\Core\Exceptions\AError'				=> 'classes/Exceptions/AError.php'
 	,'OBX\Core\Exceptions\LogFileError'			=> 'classes/Exceptions/LogFileError.php'
 	,'OBX\Core\Exceptions\Curl\RequestError'	=> 'classes/Exceptions/Curl/RequestError.php'
 	,'OBX\Core\Exceptions\Curl\CurlError'		=> 'classes/Exceptions/Curl/CurlError.php'
 	,'OBX\Core\Exceptions\Http\DownloadError'	=> 'classes/Exceptions/Http/DownloadError.php'
+	,'OBX\Core\Exceptions\LessCSSError'			=> 'classes/Exceptions/LessCSSError'
 
 );
 if($DBType === 'mysql') {

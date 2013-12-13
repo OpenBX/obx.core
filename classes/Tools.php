@@ -886,6 +886,17 @@ namespace OBX\Core {
 			return false;
 		}
 
+		static public function _fixFileName(&$fileName) {
+			$fileName = str_replace(array(
+				'\\', '/', ':', '*', '?', '<', '>', '|', '"', "\n", "\r"
+			), '', $fileName);
+		}
+		static public function fixFileName($fileName) {
+			return str_replace(array(
+				'\\', '/', ':', '*', '?', '<', '>', '|', '"', "\n", "\r"
+			), '', $fileName);
+		}
+
 		/**
 		 * Форматирование даты с особенностями русского языка
 		 * @param string $bxDateString
