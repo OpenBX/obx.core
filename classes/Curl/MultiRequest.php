@@ -246,7 +246,7 @@ class MultiRequest extends CMessagePoolDecorator {
 				$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
 			} while ($mrc === CURLM_CALL_MULTI_PERFORM);
 			$i = 0;
-			$maxSelectErrors = 100;
+			$maxSelectErrors = 1000;
 			$iSelectErrorCount = 0;
 			while ($countRunning>0) {
 				$mrs = curl_multi_select($this->_curlMulti, 0.1);

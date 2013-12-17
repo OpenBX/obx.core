@@ -170,7 +170,7 @@ class Request {
 	 */
 	static protected function _checkDefaultDwnDir() {
 		if( false === static::$_bDefaultDwnDirChecked ) {
-			if( ! ($bSuccess = CheckDirPath(OBX_DOC_ROOT.static::DOWNLOAD_FOLDER)) ) {
+			if( ! ($bSuccess = CheckDirPath(OBX_DOC_ROOT.static::DOWNLOAD_FOLDER.'/')) ) {
 				throw new RequestError('', RequestError::E_NO_ACCESS_DWN_FOLDER);
 			}
 			static::$_bDefaultDwnDirChecked = true;

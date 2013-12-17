@@ -30,9 +30,9 @@ class MultiRequestBXFile extends MultiRequest {
 		return md5(__CLASS__.time().'_'.rand(0, 9999));
 	}
 
-	public function addUrl($url) {
+	public function addUrl($url, $requestID = null) {
 		try {
-			$Request = new RequestBXFile($url);
+			$Request = new RequestBXFile($url, $requestID);
 			$bSuccess = $this->addRequest($Request);
 		}
 		catch(RequestError $e) {
