@@ -21,9 +21,9 @@ class MultiRequestBXFile extends MultiRequest {
 
 	public function __destruct() {
 		parent::__destruct();
-		if($this->_multiDwnName !== null) {
-			DeleteDirFilesEx($this->_multiDwnFolder);
-		}
+//		if($this->_multiDwnName !== null) {
+//			DeleteDirFilesEx($this->_multiDwnFolder);
+//		}
 	}
 
 	static public function generateMultiDownloadName() {
