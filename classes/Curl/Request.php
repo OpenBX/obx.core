@@ -415,12 +415,13 @@ class Request {
 				&& strpos($this->_lastCurlError, 'timed out')
 				&& strpos($this->_lastCurlError, 'millisec')
 			) {
+				// если кривой curl не выдает errno
 				$this->_lastCurlErrNo = CurlError::E_OPERATION_TIMEDOUT;
-				throw new CurlError($this->_lastCurlError, $this->_lastCurlErrNo);
+				throw new CurlError('cURL Error on requestID='.$this->_ID.': '.$this->_lastCurlError, $this->_lastCurlErrNo);
 			}
 		}
 		else {
-			throw new CurlError($this->_lastCurlError, $this->_lastCurlErrNo);
+			throw new CurlError('cURL Error on requestID='.$this->_ID.': '.$this->_lastCurlError, $this->_lastCurlErrNo);
 		}
 	}
 
@@ -659,7 +660,13 @@ class Request {
 
 	public function _readStateFile(&$url, &$contentType, &$charset, &$fileSize, &$expectedSize) {
 		$stateContent = file_get_contents($this->getDownloadFilePath(true).'.'.static::DOWNLOAD_STATE_FILE_EXT);
-		list($url, $contentTypeNCharset, $sizes) = explode("\n", $stateContent);
+		list($url, $originalFileName, $contentTypeNCharset, $sizes) = explode("\n", $stateContent);
+		list($originalName, $originalExt) = explode('|', $originalFileName);
+		if( null === $this->_originalName && !empty($originalFileName)
+		) {
+			$this->_originalName = $originalName;
+			$this->_originalExt = $originalExt;
+		}
 		list($contentType, $charset) = explode('|', $contentTypeNCharset);
 		list($fileSize, $expectedSize) = explode('|', $sizes);
 		$fileSize = intval($fileSize);
@@ -669,6 +676,7 @@ class Request {
 	protected function _saveStateFile() {
 		$this->getInfo(null, true);
 		$stateContent = $this->_url."\n";
+		$stateContent .= $this->_originalName.'|'.$this->_originalExt."\n";
 		$stateContent .= $this->_contentType.'|'.$this->_contentCharset."\n";
 		$stateContent .= $this->_dwnFileSize.'|'.$this->getContentExpectedSize();
 		$stateContent .= "\n";
@@ -942,6 +950,9 @@ class Request {
 				if( null === $this->_dwnIterationSize  && $info['size_download']>0 ) {
 					$this->_dwnIterationSize = $info['size_download'];
 					$this->_dwnFileSize += $this->_dwnIterationSize;
+				}
+				if(null === $this->_originalName) {
+					$this->_fillOriginalName($this->_contentType);
 				}
 			}
 		}

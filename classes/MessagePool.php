@@ -111,7 +111,7 @@ class CMessagePool implements IMessagePool
 		return $this->_LogFile;
 	}
 
-	public function addMessage($text, $code = 0) {
+	public function addMessage($text, $code = 0, $debugLevel=0) {
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
@@ -124,7 +124,7 @@ class CMessagePool implements IMessagePool
 			$this->_LogFile->logMessage($text, LogFile::MSG_TYPE_NOTE);
 		}
 	}
-	public function addWarning($text, $code = 0) {
+	public function addWarning($text, $code = 0, $debugLevel=0) {
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
@@ -137,7 +137,7 @@ class CMessagePool implements IMessagePool
 			$this->_LogFile->logMessage($text.((!empty($code))?'. Warning code: '.$code:''), LogFile::MSG_TYPE_WARNING);
 		}
 	}
-	public function addError($text, $code = 0) {
+	public function addError($text, $code = 0, $debugLevel=0) {
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
@@ -177,7 +177,7 @@ class CMessagePool implements IMessagePool
 			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
 			$this->addError($Exception->getMessage(), $errorCode);
 		}
-		if($Exception instanceof \ErrorException) {
+		elseif($Exception instanceof \ErrorException) {
 			$this->addError($Exception->getMessage(), $Exception->getCode());
 		}
 	}
