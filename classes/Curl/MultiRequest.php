@@ -14,7 +14,7 @@ use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Exceptions\LogFileError;
 use OBX\Core\LogFile;
-use OBX\Core\SimpleBenchMark;
+use OBX\Core\Tools;
 
 class MultiRequest extends CMessagePoolDecorator {
 
@@ -33,8 +33,34 @@ class MultiRequest extends CMessagePoolDecorator {
 								  //DEFAULT
 	const _FRIEND_CLASS_LINK = 521389614;
 							 //FRIENDCLA(SS)
+	const DWN_FOLDER_PREFIX = 'm_';
 
-	public function __construct() {
+	protected $_ID = null;
+	protected $_multiDwnFolder = null;
+	protected $_multiDwnDir = null;
+	protected $_bEncapsulatedID = true;
+
+	public function __construct($multiDownloadID = null, $downloadFolder = null) {
+		$this->_bEncapsulatedID = false;
+		if(null !== $multiDownloadID) {
+			$multiDownloadID = trim($multiDownloadID);
+			if(empty($multiDownloadID)) {
+				$this->_bEncapsulatedID = true;
+			}
+			Tools::_fixFileName($multiDownloadID);
+			$this->_ID = $multiDownloadID;
+		}
+		else {
+			$this->_bEncapsulatedID = true;
+		}
+		if($this->_bEncapsulatedID === true) {
+			$this->_ID = static::generateID();
+		}
+		$this->_multiDwnFolder = Request::DOWNLOAD_FOLDER.'/'.static::DWN_FOLDER_PREFIX.$this->_ID;
+		//if( ! ($bSuccess = CheckDirPath($this->_multiDwnFolder.'/')) ) {
+		//	throw new RequestError('', RequestError::E_NO_ACCESS_DWN_FOLDER);
+		//}
+		$this->_multiDwnDir = OBX_DOC_ROOT.$this->_multiDwnFolder;
 		$this->_curlMulti = curl_multi_init();
 	}
 	protected function __clone() {}
@@ -50,8 +76,16 @@ class MultiRequest extends CMessagePoolDecorator {
 		curl_multi_close($this->_curlMulti);
 	}
 
-	static public function generateMultiDownloadName() {
+	static public function generateID() {
 		return md5(__CLASS__.time().'_'.rand(0, 9999));
+	}
+
+	public function getID() {
+		$this->_bEncapsulatedID = false;
+		return $this->_ID;
+	}
+	public function _getID() {
+		return $this->_ID;
 	}
 
 	public function addUrl($url, $requestID = null) {

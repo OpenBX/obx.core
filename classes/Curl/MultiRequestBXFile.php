@@ -16,9 +16,6 @@ class MultiRequestBXFile extends MultiRequest {
 	const F_IB_IMG_PROP_APPEND = RequestBXFile::F_IB_IMG_PROP_APPEND;
 	const F_IB_IMG_PROP_REPLACE = RequestBXFile::F_IB_IMG_PROP_REPLACE;
 
-	protected $_multiDwnName = null;
-	protected $_multiDwnFolder = null;
-
 	public function __destruct() {
 		parent::__destruct();
 //		if($this->_multiDwnName !== null) {
@@ -26,7 +23,7 @@ class MultiRequestBXFile extends MultiRequest {
 //		}
 	}
 
-	static public function generateMultiDownloadName() {
+	static public function generateID() {
 		return md5(__CLASS__.time().'_'.rand(0, 9999));
 	}
 
@@ -71,26 +68,15 @@ class MultiRequestBXFile extends MultiRequest {
 			return false;
 		}
 
-		$this->_multiDwnName = self::generateMultiDownloadName();
-		$this->_multiDwnFolder = Request::DOWNLOAD_FOLDER;
-		if( !CheckDirPath(OBX_DOC_ROOT.$this->_multiDwnFolder.'/'.$this->_multiDwnName) ) {
-			throw new RequestError('', RequestError::E_PERM_DENIED);
-		}
-		$this->saveToDir(
-			$this->_multiDwnFolder.'/'.$this->_multiDwnName,
-			Request::SAVE_TO_DIR_COUNT
-		);
 		$arFileList = array();
 		/** @var Request $Request */
 		foreach($this->_arRequestList as $Request) {
 			if( $Request->isDownloadSuccess() ) {
-				$relFilePath = $Request->getSavedFilePath(true);
-				if(!empty($relFilePath)) {
-					$arFileList[] = \CFile::MakeFileArray($relFilePath);
+				$downloadFileRelPath = $Request->getDownloadFilePath(false);
+				$arFile = \CFile::MakeFileArray($downloadFileRelPath);
+				if(!empty($arFile)) {
+					$arFileList[] = $arFile;
 				}
-			}
-			else {
-
 			}
 		}
 
