@@ -128,6 +128,9 @@ class CMessagePool implements IMessagePool
 		$this->_logBehaviour = $behaviour;
 		return true;
 	}
+	public function getLogBehaviour() {
+		return $this->_logBehaviour;
+	}
 
 	/**
 	 * @return null|LogFile
@@ -143,6 +146,10 @@ class CMessagePool implements IMessagePool
 		}
 		$this->_debugLevel = $level;
 		return false;
+	}
+
+	public function getDebugLevel() {
+		return $this->_debugLevel;
 	}
 
 	public function addMessage($text, $code = 0, $debugLevel=0) {
@@ -420,8 +427,14 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function setLogBehaviour($behaviour) {
 		return self::getMessagePool()->setLogBehaviour($behaviour);
 	}
+	static public function getLogBehaviour($behaviour) {
+		return self::getMessagePool()->getLogBehaviour($behaviour);
+	}
 	static public function setDebugLevel($level) {
 		return self::getMessagePool()->setDebugLevel($level);
+	}
+	static public function getDebugLevel($level) {
+		return self::getMessagePool()->getDebugLevel($level);
 	}
 	static public function getLogFile() {
 		return self::getMessagePool()->getLogFile();
@@ -538,8 +551,14 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function setLogBehaviour($behaviour) {
 		return $this->getMessagePool()->setLogBehaviour($behaviour);
 	}
+	public function getLogBehaviour($behaviour) {
+		return $this->getMessagePool()->getLogBehaviour($behaviour);
+	}
 	public function setDebugLevel($level) {
 		return $this->getMessagePool()->setDebugLevel($level);
+	}
+	public function getDebugLevel($level) {
+		return $this->getMessagePool()->getDebugLevel($level);
 	}
 	public function addMessage($text, $code = 0, $debugLevel = 0) {
 		$this->getMessagePool()->addMessage($text, $code, $debugLevel);
