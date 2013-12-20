@@ -93,7 +93,6 @@ class Request {
 	const _FRIEND_CLASS_LINK = 521389614;
 							 //FRIENDCLA(SS)
 
-
 	public function __construct($url, $requestID = null) {
 		RequestError::checkCURL();
 		self::_checkDefaultDwnDir();
