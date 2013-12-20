@@ -991,6 +991,10 @@ class Request {
 		$this->_bCachingCheckFileSize = (true === $bCheckFileSize)?true:false;
 	}
 
+	public function isCached() {
+		return $this->_bCaching;
+	}
+
 	public function clearCache() {
 		if(is_file($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT)) {
 			@unlink($this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT);

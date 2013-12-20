@@ -198,8 +198,16 @@ class MultiRequest extends CMessagePoolDecorator {
 			catch(RequestError $e) {
 				if($e->getCode() == CurlError::E_OPERATION_TIMEDOUT) {
 					$bTimeOutReached = true;
+					if($Request->isCached()) {
+						$this->getMessagePool()->addWarningException($e);
+					}
+					else {
+						$this->getMessagePool()->addErrorException($e);
+					}
 				}
-				$this->getMessagePool()->addErrorException($e);
+				else {
+					$this->getMessagePool()->addErrorException($e);
+				}
 			}
 			if($Request->isDownloadSuccess()) {
 				$this->_iRequestsSuccess++;

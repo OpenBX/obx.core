@@ -19,6 +19,7 @@ interface IMessagePool
 	function addError($text, $code = 0);
 	function addErrorException(\ErrorException $Exception);
 	function throwErrorException(\ErrorException $Exception);
+	function addWarningException(\ErrorException $Exception);
 
 	function getLastMessage($return = 'TEXT');
 	function getLastWarning($return = 'TEXT');
@@ -51,6 +52,7 @@ interface IMessagePoolStatic
 	static function addError($text, $code = 0);
 	static function addErrorException(\ErrorException $Exception);
 	static function throwErrorException(\ErrorException $Exception);
+	static function addWarningException(\ErrorException $Exception);
 
 	static function getLastMessage($return = 'TEXT');
 	static function getLastWarning($return = 'TEXT');
@@ -216,13 +218,8 @@ class CMessagePool implements IMessagePool
 
 	/**
 	 * @param \ErrorException $Exception
-	 * @param int $debugLevel
 	 */
-	public function addErrorException(\ErrorException $Exception, $debugLevel = self::MSG_POOL_MAX_DBG_LVL){
-		$debugLevel = intval($debugLevel);
-		if($debugLevel > $this->_debugLevel) {
-			return;
-		}
+	public function addErrorException(\ErrorException $Exception){
 		if($Exception instanceof AError) {
 			$class = get_class($Exception);
 			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
@@ -230,6 +227,25 @@ class CMessagePool implements IMessagePool
 		}
 		elseif($Exception instanceof \ErrorException) {
 			$this->addError($Exception->getMessage(), $Exception->getCode());
+		}
+	}
+
+	/**
+	 * @param \ErrorException $Exception
+	 * @param int $debugLevel
+	 */
+	public function addWarningException(\ErrorException $Exception, $debugLevel = self::MSG_POOL_MAX_DBG_LVL) {
+		$debugLevel = intval($debugLevel);
+		if($debugLevel > $this->_debugLevel) {
+			return;
+		}
+		if($Exception instanceof AError) {
+			$class = get_class($Exception);
+			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
+			$this->addWarning($Exception->getMessage(), $errorCode, $debugLevel);
+		}
+		elseif($Exception instanceof \ErrorException) {
+			$this->addWarning($Exception->getMessage(), $Exception->getCode(), $debugLevel);
 		}
 	}
 
@@ -401,10 +417,10 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function registerLogFile(LogFile $LogFile) {
 		return self::getMessagePool()->registerLogFile($LogFile);
 	}
-	public function setLogBehaviour($behaviour) {
+	static public function setLogBehaviour($behaviour) {
 		return self::getMessagePool()->setLogBehaviour($behaviour);
 	}
-	public function setDebugLevel($level) {
+	static public function setDebugLevel($level) {
 		return self::getMessagePool()->setDebugLevel($level);
 	}
 	static public function getLogFile() {
@@ -429,6 +445,9 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	 */
 	static public function addErrorException(\ErrorException $Exception){
 		self::getMessagePool()->addErrorException($Exception);
+	}
+	static public function addWarningException(\ErrorException $Exception, $debugLevel = CMessagePool::MSG_POOL_MAX_DBG_LVL) {
+		self::getMessagePool()->addWarningException($Exception, $debugLevel);
 	}
 	static public function addWarning($text, $code = 0, $debugLevel = 0) {
 		self::getMessagePool()->addWarning($text, $code, $debugLevel);
@@ -541,6 +560,9 @@ class CMessagePoolDecorator implements IMessagePool {
 	 */
 	public function addErrorException(\ErrorException $Exception){
 		$this->getMessagePool()->addErrorException($Exception);
+	}
+	public function addWarningException(\ErrorException $Exception, $debugLevel = CMessagePool::MSG_POOL_MAX_DBG_LVL) {
+		$this->getMessagePool()->addWarningException($Exception, $debugLevel);
 	}
 	public function addWarning($text, $code = 0, $debugLevel = 0) {
 		$this->getMessagePool()->addWarning($text, $code, $debugLevel);
