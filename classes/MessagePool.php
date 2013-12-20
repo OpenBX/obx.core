@@ -98,15 +98,15 @@ class CMessagePool implements IMessagePool
 	const MSG_POOL_LOG_WARNINGS = 2;
 	const MSG_POOL_LOG_MESSAGES = 4;
 	const MSG_POOL_LOG_ALL = 7;
-	protected $_logBehaviour = self::MSG_POOL_LOG_ERRORS;
+	protected $_logBehaviour = self::MSG_POOL_LOG_ALL;
 
 	protected $_debugLevel = 0;
 	const MSG_POOL_MAX_DBG_LVL = 5;
 
 
-	public function __construct() {
-		$this->_logBehaviour = self::MSG_POOL_LOG_ERRORS | self::MSG_POOL_LOG_WARNINGS;
-	}
+//	public function __construct() {
+//		$this->_logBehaviour = self::MSG_POOL_LOG_ERRORS | self::MSG_POOL_LOG_WARNINGS;
+//	}
 
 	/**
 	 * @param LogFile $LogFile
@@ -145,7 +145,7 @@ class CMessagePool implements IMessagePool
 			return false;
 		}
 		$this->_debugLevel = $level;
-		return false;
+		return true;
 	}
 
 	public function getDebugLevel() {
