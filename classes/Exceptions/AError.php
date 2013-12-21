@@ -16,7 +16,7 @@ abstract class AError extends \ErrorException {
 	const LANG_PREFIX = null;
 
 	/**
-	 * @param string $message [optional] The Exception message to throw.
+	 * @param string|array $message [optional] The Exception message to throw.
 	 * @param int $code [optional] The Exception code.
 	 * @param int $severity [optional] The severity level of the exception.
 	 * @param string $filename [optional] The filename where the exception is thrown.
@@ -26,6 +26,10 @@ abstract class AError extends \ErrorException {
 	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous = null) {
 		if(empty($message)) {
 			$message = static::getLangMessage($code);
+		}
+		elseif(is_array($message)) {
+			$arReplace = $message;
+			$message = static::getLangMessage($code, $arReplace);
 		}
 		parent::__construct($message, $code, $severity, $filename, $lineno, $previous);
 	}
