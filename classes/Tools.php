@@ -460,7 +460,7 @@ namespace OBX\Core {
 		static private $_bViewContentDispatcherActive = false;
 		static private $_arContentViewTargets = array();
 		static public function showViewContent($view) {
-			if(preg_match('~^[a-zA-Z\_\-]{1,30}$~', $view)) {
+			if(preg_match('~^[a-zA-Z0-9\_\-\.]{1,30}$~', $view)) {
 				if( is_dir($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target') ) {
 					$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target/'.$view.'.php';
 					$contentLangFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/lang/'.LANGUAGE_ID.'/view_target/'.$view.'.php';
