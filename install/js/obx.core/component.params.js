@@ -1,3 +1,11 @@
+/*************************************
+ ** @product OBX:Core Bitrix Module **
+ ** @authors                        **
+ **         Maksim S. Makarov       **
+ ** @license Affero GPLv3           **
+ ** @mailto rootfavell@gmail.com    **
+ *************************************/
+
 if( typeof(obx) == 'undefined' ) {
 	var obx = {};
 }
