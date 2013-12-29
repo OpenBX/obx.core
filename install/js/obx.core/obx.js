@@ -7,7 +7,9 @@
  ** @mailto rootfavell@gmail.com    **
  ** @mailto tashiro@yandex.ru       **
  *************************************/
-
+if( typeof(obx) == 'undefined' ) {
+	var obx = {};
+}
 if(typeof(jQuery) == 'undefined') jQuery = false;
 (function($) {
 	if(!$) return false;

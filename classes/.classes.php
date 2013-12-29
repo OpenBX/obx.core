@@ -30,6 +30,7 @@ $arModuleClasses = array(
 	,'OBX\Core\CMessagePool'				=> 'classes/MessagePool.php'
 	,'OBX\Core\CMessagePoolStatic'			=> 'classes/MessagePool.php'
 	,'OBX\Core\CMessagePoolDecorator'		=> 'classes/MessagePool.php'
+	,'OBX\Core\Components\Parameters'		=> 'classes/Components/Parameters.php'
 );
 if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.php';

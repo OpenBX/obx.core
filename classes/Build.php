@@ -1326,7 +1326,7 @@ if(!defined("BX_ROOT")) {
 		}
 	}
 
-	function bxstrrpos($haystack, $needle)
+	static function bxstrrpos($haystack, $needle)
 	{
 		if(defined("BX_UTF"))
 		{
