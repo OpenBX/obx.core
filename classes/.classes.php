@@ -3,8 +3,10 @@
  ** @product OBX:Core Bitrix Module           **
  ** @authors                                  **
  **         Maksim S. Makarov aka pr0n1x      **
+ **         Artem P. Morozov  aka tashiro     **
  ** @license Affero GPLv3                     **
  ** @mailto rootfavell@gmail.com              **
+ ** @mailto tashiro@yandex.ru                 **
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
@@ -18,6 +20,7 @@ $DBType = strtolower($DB->type);
 $arModuleClasses = array(
 	 'OBX\Core\Tools'							=> 'classes/Tools.php'
 	,'OBX_Tools'								=> 'classes/Tools.php'
+	,'OBX\Core\Components\Parameters'			=> 'classes/Components/Parameters.php'
 	,'OBX\Core\EventD'							=> 'classes/EventD.php'
 	,'OBX\Core\JSMessages'						=> 'classes/JSMessages.php'
 	,'OBX\Core\IMessagePool'					=> 'classes/MessagePool.php'
@@ -50,7 +53,6 @@ $arModuleClasses = array(
 	,'OBX\Core\Exceptions\Curl\CurlError'		=> 'classes/Exceptions/Curl/CurlError.php'
 	,'OBX\Core\Exceptions\Http\DownloadError'	=> 'classes/Exceptions/Http/DownloadError.php'
 	,'OBX\Core\Exceptions\LessCSSError'			=> 'classes/Exceptions/LessCSSError'
-
 );
 if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.php';

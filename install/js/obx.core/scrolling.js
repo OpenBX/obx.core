@@ -25,28 +25,33 @@ if (typeof(jQuery) == 'undefined') jQuery = false;
 		// private vars
 		var W = $(window);
 		self.setup = function () {
-			self.limits = [];
+			//self.limits = [];
 			self.jq = {};
 			self.targets = [];
-			self.hrefs = [];
+			self.target_ids = [];
 			// jq sets
-			self.jq.links = self.root.find('a[href*="#' + self.conf.hashvar + '"]');
+			//self.jq.links = self.root.find('a[href*="#' + self.conf.hashvar + '"]');
+			self.jq.links = self.root.find('a[href*="#"]');
 			if (!self.jq.links.length) return false;
 			// targets jq sets
 			self.jq.links.each(function (i) {
-				$this = $(this);
+				var $this = $(this);
 				self.targets[i] = false;
 				var href = $this.attr('href');
-				var explode = href.split('=');
-				if (!explode[1]) return false;
-				self.hrefs[i] = '#' + self.conf.hashvar + '=' + explode[1];
-				var target = $('#' + (explode[1].split('&'))[0]);
-				if (target.length) self.targets[i] = target;
-				if (self.targets[i] != false) {
-					self.limits.push(parseInt((self.targets[i].offset()).top, 10) - parseInt(self.conf.preWatchClass, 10));
+				var hashParams = obx.parseUrlParams(href, true);
+				var typeOfHashParam = typeof(hashParams[self.conf.hashvar]);
+				if( typeOfHashParam != 'string' ) {
+					return false;
 				}
+				self.target_ids[i] = hashParams[self.conf.hashvar];
+				var target = $('#' + hashParams[self.conf.hashvar]);
+				if (target.length) self.targets[i] = target;
+				//if (self.targets[i] != false) {
+					// Незьзя заранее расчитывать координаты, они могу измениться
+					//self.limits.push(parseInt((self.targets[i].offset()).top, 10) - parseInt(self.conf.preWatchClass, 10));
+				//}
 			});
-			self.limits.push(Infinity);
+			//self.limits.push(Infinity);
 			return true;
 		};
 		self.setup();
@@ -64,15 +69,24 @@ if (typeof(jQuery) == 'undefined') jQuery = false;
 				if (scroll == (W.scrollTop() - 0)) return true;
 				// animate
 				$("html,body").animate({"scrollTop": scroll}, self.conf.duration);
+			},
+			getTargetPositions: function() {
+				var positions = [];
+				for(var k in self.targets) {
+					positions.push(parseInt((self.targets[k].offset()).top, 10) - parseInt(self.conf.preWatchClass, 10));
+				}
+				positions.push(Infinity);
+				return positions;
 			}
 		});
 
 		// events handlers
 		var ehandlers = {
 			hashchange: function () {
-				if (location.hash)
-					for (var i in self.hrefs) {
-						if (location.hash == self.hrefs[i]) self.scrollTo(i);
+				var hashParamValue = obx.parseUrlParams(location.hash, true)[self.conf.hashvar];
+				if (hashParamValue)
+					for (var i in self.target_ids) {
+						if (hashParamValue == self.target_ids[i]) self.scrollTo(i);
 					}
 				;
 			}, watcher: function () {
@@ -81,14 +95,13 @@ if (typeof(jQuery) == 'undefined') jQuery = false;
 					self.jq.links.removeClass(self.conf.watchClass);
 					return true;
 				}
-
 				self.jq.links.removeClass(self.conf.watchClass);
-				for (var k in self.limits) {
-					if ((self.limits[k]) >= top) {
+				var positions = self.getTargetPositions();
+				for (var k in positions) {
+					if (positions[k] >= top) {
 						k = k | 0;
 						k > 0 ? k-- : k = 0; // index control
 						self.jq.links.eq(k).addClass(self.conf.watchClass);
-
 						return true;
 					}
 				}
@@ -107,7 +120,8 @@ if (typeof(jQuery) == 'undefined') jQuery = false;
 
 		self.jq.links.each(function (index, value) {
 			$(this).on('click', function () { // if link`s hash already set
-				if (location.hash == self.hrefs[index]) ehandlers.hashchange();
+				var hashParamValue = obx.parseUrlParams(location.hash, true)[self.conf.hashvar];
+				if (hashParamValue == self.target_ids[index]) ehandlers.hashchange();
 			});
 		});
 
