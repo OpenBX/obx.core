@@ -11,9 +11,8 @@
 use OBX\Core\Exceptions\Curl\CurlError as _;
 $MESS[_::LANG_PREFIX._::E_M_TIMEOUT_REACHED] = 'Достингнуто максимальное время работы мультизагрузки';
 $MESS[_::LANG_PREFIX._::E_M_SELECT_ERROR] = 'Мы сделали все возможное что бы обойти этот баг описанный тут https://bugs.php.net/bug.php?id=63411.'
-	.' Если он у вас проявился, значит произошло невероятное.'
-	.' Обязательно напишите об этом мне Максим Макаров <'.'rootfavell@gmail.com>'
-	.' В письме опишиту вашу кофигурацию (версию PHP, Версию ядра ОС)'
+	.' Если он проявился, значит на следующей итерации скорее всего не проявится и файл все таки будет загружен.'
+	.' Если он циклично повторяется, напишите сюда: Максим Макаров <rootfavell@gmail.com>'
 ;
 
 $MESS[_::LANG_PREFIX._::E_UNSUPPORTED_PROTOCOL] = 'The URL you passed to libcurl used a protocol that this libcurl does not support. The support might be a compile-time option that you didn\'t use, it can be a misspelled protocol string or just a protocol libcurl has no code for';

@@ -55,6 +55,8 @@ class CurlError extends RequestError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'CURLE_';
 
+	const E_UNKNOWN_ERROR_CODE = 45000;
+
 	// The URL you passed to libcurl used a protocol that this libcurl does not support.
 	// The support might be a compile-time option that you didn't use,
 	// it can be a misspelled protocol string or just a protocol libcurl has no code for
@@ -307,4 +309,28 @@ class CurlError extends RequestError {
 	//These error codes will never be returned. They were used in an old libcurl version and are currently unused.
 	const E_OBSOLETE = CURLE_OBSOLETE;
 
+
+	final static public function getCurlErrorNumberByText($errorText) {
+		//ф-ия направленая на исправление ситцуации когда текст ошибки есть, а кода нет.
+		// кривой, мать его cURL
+		$errorCode = 0;
+		if( strpos($errorText, 'timed out') !== false
+			&& strpos($errorText, 'millisec') !== false
+		) {
+			$errorCode = CurlError::E_OPERATION_TIMEDOUT;
+		}
+		elseif( strpos($errorText, 'Could not resolve host') !== false ) {
+			$errorCode = CurlError::E_COULDNT_RESOLVE_HOST;
+		}
+		elseif( strpos($errorText, 'Cannot resume') !== false
+				&& strpos($errorText, 'support byte ranges') !== false
+		) {
+			$errorCode = CurlError::E_RANGE_ERROR;
+		}
+		else {
+			// если не нашел, все равно надо давать код исключения
+			$errorCode = CurlError::E_UNKNOWN_ERROR_CODE;
+		}
+		return $errorCode;
+	}
 }

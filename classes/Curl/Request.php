@@ -409,17 +409,11 @@ class Request {
 		$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
 		$this->_lastCurlError = curl_error($this->_curlHandler);
 		$this->_reconnectMultiHandler();
-		if($this->_lastCurlErrNo == CURLE_OK) {
-			if( !empty($this->_lastCurlError)
-				&& strpos($this->_lastCurlError, 'timed out')
-				&& strpos($this->_lastCurlError, 'millisec')
-			) {
-				// если кривой curl не выдает errno
-				$this->_lastCurlErrNo = CurlError::E_OPERATION_TIMEDOUT;
-				throw new CurlError('cURL Error on requestID='.$this->_ID.': '.$this->_lastCurlError, $this->_lastCurlErrNo);
-			}
+		if($this->_lastCurlErrNo == CURLE_OK && !empty($this->_lastCurlError) ) {
+			// если кривой curl не выдает errno
+			$this->_lastCurlErrNo = CurlError::getCurlErrorNumberByText($this->_lastCurlError);
 		}
-		else {
+		if($this->_lastCurlErrNo != CURLE_OK) {
 			throw new CurlError('cURL Error on requestID='.$this->_ID.': '.$this->_lastCurlError, $this->_lastCurlErrNo);
 		}
 	}

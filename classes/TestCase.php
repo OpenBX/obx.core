@@ -77,6 +77,14 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 		while(ob_end_clean() !== false) {};
 	}
 
+	public function resetPHPBuffer() {
+		$content = '';
+		while( ($currentContent = ob_end_clean()) !== false) {
+			$content .= $currentContent;
+		};
+		echo $content;
+	}
+
 	static public function includeLang($file) {
 		$file = str_replace(array('\\', '//'), '/', $file);
 		$fileName = substr($file, strrpos($file, '/'));
