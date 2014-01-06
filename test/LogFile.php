@@ -68,7 +68,7 @@ class TestLogFile extends TestCase {
 		for($i=0; $i <= 20; $i++) {
 			$MPool->addError('test error', 'test_code');
 			$MPool->addWarning('test warning', 'test_code');
-			$MPool->addMessage('test message', 'test_code');
+			$MPool->addNotice('test message', 'test_code');
 		}
 		$this->assertFileExists(self::$_docRoot.'/bitrix/tmp/obx.core/message_pool.log');
 		unlink(self::$_docRoot.'/bitrix/tmp/obx.core/message_pool.log');

@@ -14,32 +14,32 @@ use OBX\Core\Exceptions\AError;
 
 interface IMessagePool
 {
-	function addMessage($text, $code = 0);
+	function addNotice($text, $code = 0);
 	function addWarning($text, $code = 0);
 	function addError($text, $code = 0);
 	function addErrorException(\ErrorException $Exception);
 	function throwErrorException(\ErrorException $Exception);
 	function addWarningException(\ErrorException $Exception);
 
-	function getLastMessage($return = 'TEXT');
+	function getLastNotice($return = 'TEXT');
 	function getLastWarning($return = 'TEXT');
 	function getLastError($return = 'TEXT');
 
-	function popLastMessage($return = 'TEXT');
+	function popLastNotice($return = 'TEXT');
 	function popLastWarning($return = 'TEXT');
 	function popLastError($return = 'TEXT');
 
-	function getMessages();
+	function getNotices();
 	function getWarnings();
 	function getErrors();
 	function getMessagePoolData();
 
-	function countMessages();
+	function countNotices();
 	function countWarnings();
 	function countErrors();
 	function countMessagePoolData();
 
-	function clearMessages();
+	function clearNotices();
 	function clearWarnings();
 	function clearErrors();
 	function clearMessagePool();
@@ -47,14 +47,15 @@ interface IMessagePool
 
 interface IMessagePoolStatic
 {
-	static function addMessage($text, $code = 0);
+	/** @deprecated */
+	static function addNotice($text, $code = 0);
 	static function addWarning($text, $code = 0);
 	static function addError($text, $code = 0);
 	static function addErrorException(\ErrorException $Exception);
 	static function throwErrorException(\ErrorException $Exception);
 	static function addWarningException(\ErrorException $Exception);
 
-	static function getLastMessage($return = 'TEXT');
+	static function getLastNotice($return = 'TEXT');
 	static function getLastWarning($return = 'TEXT');
 	static function getLastError($return = 'TEXT');
 
@@ -62,26 +63,30 @@ interface IMessagePoolStatic
 	static function popLastWarning($return = 'TEXT');
 	static function popLastError($return = 'TEXT');
 
-	static function getMessages();
+	static function getNotices();
 	static function getWarnings();
 	static function getErrors();
 	static function getMessagePoolData();
 
-	static function countMessages();
+	static function countNotices();
 	static function countWarnings();
 	static function countErrors();
 	static function countMessagePoolData();
 
-	static function clearMessages();
+	static function clearNotices();
 	static function clearWarnings();
 	static function clearErrors();
 	static function clearMessagePool();
 }
 
-class CMessagePool implements IMessagePool
+/**
+ * Class MessagePool
+ * @package OBX\Core
+ */
+class MessagePool implements IMessagePool
 {
-	protected $_arMessages = array();
-	protected $_countMessages = 0;
+	protected $_arNotices = array();
+	protected $_countNotices = 0;
 	protected $_arErrors = array();
 	protected $_countErrors = 0;
 	protected $_arWarnings = array();
@@ -152,7 +157,15 @@ class CMessagePool implements IMessagePool
 		return $this->_debugLevel;
 	}
 
+	/**
+	 * Данный метод помечен как устаревший, поскольку верное его название addNotice
+	 * @deprecated
+	 */
 	public function addMessage($text, $code = 0, $debugLevel=0) {
+		$this->addNotice($text, $code, $debugLevel);
+	}
+
+	function addNotice($text, $code = 0, $debugLevel=0) {
 		$debugLevel = intval($debugLevel);
 		if($debugLevel > $this->_debugLevel) {
 			return;
@@ -160,10 +173,10 @@ class CMessagePool implements IMessagePool
 		$this->_arCommonMessagePool[$this->_countCommonMessages] = array(
 			"TEXT" => $text,
 			"CODE" => $code,
-			"TYPE" => "M"
+			"TYPE" => "N"
 		);
-		$this->_arMessages[$this->_countMessages] = &$this->_arCommonMessagePool[$this->_countCommonMessages];
-		$this->_countMessages++;
+		$this->_arNotices[$this->_countNotices] = &$this->_arCommonMessagePool[$this->_countCommonMessages];
+		$this->_countNotices++;
 		$this->_countCommonMessages++;
 		if( $this->_LogFile
 			&& ($this->_logBehaviour & self::MSG_POOL_LOG_MESSAGES) > 0
@@ -171,6 +184,7 @@ class CMessagePool implements IMessagePool
 			$this->_LogFile->logMessage($text, LogFile::MSG_TYPE_NOTE);
 		}
 	}
+
 	public function addWarning($text, $code = 0, $debugLevel=0) {
 		$debugLevel = intval($debugLevel);
 		if($debugLevel > $this->_debugLevel) {
@@ -213,6 +227,7 @@ class CMessagePool implements IMessagePool
 	public function throwErrorException(\ErrorException $Exception) {
 		if($Exception instanceof AError) {
 			$class = get_class($Exception);
+			/** @var AError $class */
 			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
 			$this->addError($Exception->getMessage(), $errorCode);
 			throw $Exception;
@@ -229,6 +244,7 @@ class CMessagePool implements IMessagePool
 	public function addErrorException(\ErrorException $Exception){
 		if($Exception instanceof AError) {
 			$class = get_class($Exception);
+			/** @var AError $class */
 			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
 			$this->addError($Exception->getMessage(), $errorCode);
 		}
@@ -247,6 +263,7 @@ class CMessagePool implements IMessagePool
 			return;
 		}
 		if($Exception instanceof AError) {
+			/** @var AError $class */
 			$class = get_class($Exception);
 			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
 			$this->addWarning($Exception->getMessage(), $errorCode, $debugLevel);
@@ -257,8 +274,18 @@ class CMessagePool implements IMessagePool
 	}
 
 
+	/**
+	 * Данный метод устарел, поскольку правильное его название getLastNotice
+	 * @param string $return
+	 * @return mixed
+	 * @deprecated
+	 */
 	public function getLastMessage($return = 'TEXT') {
-		$arLastMessage = $this->_arMessages[$this->_countMessages-1];
+		return $this->getLastNotice($return);
+	}
+
+	public function getLastNotice($return = 'TEXT'){
+		$arLastNotice = $this->_arNotices[$this->_countNotices-1];
 		switch($return) {
 			case 'TEXT':
 			case 'CODE':
@@ -266,13 +293,13 @@ class CMessagePool implements IMessagePool
 				break;
 			case 'ALL':
 			case 'ARRAY':
-				return $arLastMessage;
+				return $arLastNotice;
 				break;
 			default:
 				$return = 'TEXT';
 				break;
 		}
-		return $arLastMessage[$return];
+		return $arLastNotice[$return];
 	}
 	public function getLastWarning($return = 'TEXT') {
 		$arLastWarning = $this->_arWarnings[$this->_countWarnings-1];
@@ -309,11 +336,21 @@ class CMessagePool implements IMessagePool
 		return $arLastError[$return];
 	}
 
+	/**
+	 * Данный метод устарел. Верное его название popLastNotice
+	 * @param string $return
+	 * @return mixed
+	 * @deprecated
+	 */
 	public function popLastMessage($return = 'TEXT') {
-		$arLastMessage = $this->getLastMessage($return);
-		if($this->_countMessages > 0) {
-			unset($this->_arMessages[$this->_countMessages-1]);
-			$this->_countMessages--;
+		return $this->popLastNotice($return);
+	}
+
+	public function popLastNotice($return = 'TEXT') {
+		$arLastMessage = $this->getLastNotice($return);
+		if($this->_countNotices > 0) {
+			unset($this->_arNotices[$this->_countNotices-1]);
+			$this->_countNotices--;
 		}
 		return $arLastMessage;
 	}
@@ -334,8 +371,16 @@ class CMessagePool implements IMessagePool
 		return $arLastError;
 	}
 
+	/**
+	 * Метод устарел. Правильный метод getNotices
+	 * @deprecated
+	 * @return array
+	 */
 	public function getMessages() {
-		return $this->_arMessages;
+		return $this->_arNotices;
+	}
+	public function getNotices() {
+		return $this->_arNotices;
 	}
 	public function getWarnings() {
 		return $this->_arWarnings;
@@ -347,8 +392,8 @@ class CMessagePool implements IMessagePool
 		return $this->_arCommonMessagePool;
 	}
 
-	public function countMessages() {
-		return $this->_countMessages;
+	public function countNotices() {
+		return $this->_countNotices;
 	}
 	public function countWarnings() {
 		return $this->_countWarnings;
@@ -360,10 +405,19 @@ class CMessagePool implements IMessagePool
 		return $this->_countCommonMessages;
 	}
 
+	/**
+	 * Метод устарел. Правильный метод clearNotices
+	 * @deprecated
+	 */
 	public function clearMessages() {
+		$this->clearNotices();
+	}
+
+
+	public function clearNotices() {
 		$this->_arErrors = array();
 		foreach($this->_arCommonMessagePool as $key => &$arr) {
-			if($arr["TYPE"]=="M") {
+			if($arr["TYPE"]=="N") {
 				unset($this->_arCommonMessagePool[$key]);
 			}
 		}
@@ -391,7 +445,7 @@ class CMessagePool implements IMessagePool
 		//$this->_arCommonMessagePool = array_values($this->_arCommonMessagePool);
 	}
 	public function clearMessagePool() {
-		$this->_arMessages = array();
+		$this->_arNotices = array();
 		$this->_arErrors = array();
 		$this->_arWarnings = array();
 		$this->_arCommonMessagePool = array();
@@ -399,10 +453,11 @@ class CMessagePool implements IMessagePool
 }
 
 
+
 /**
  * @package OBX\Core
  */
-class CMessagePoolStatic implements IMessagePoolStatic {
+class MessagePoolStatic implements IMessagePoolStatic {
 	static protected $MessagePool = array();
 
 	/**
@@ -411,13 +466,13 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	final static public function getMessagePool() {
 		$className = get_called_class();
 		if( !isset(self::$MessagePool[$className]) ) {
-			self::$MessagePool[$className] = new CMessagePool;
+			self::$MessagePool[$className] = new MessagePool;
 		}
 		return self::$MessagePool[$className];
 	}
 	final static public function setMessagePool($MessPool) {
 		$className = get_called_class();
-		if($MessPool instanceof CMessagePool) {
+		if($MessPool instanceof MessagePool) {
 			self::$MessagePool[$className] = $MessPool;
 		}
 	}
@@ -439,8 +494,19 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function getLogFile() {
 		return self::getMessagePool()->getLogFile();
 	}
+
+	/**
+	 * Метод устарел. правильный метод addNotice
+	 * @param $text
+	 * @param int $code
+	 * @param int $debugLevel
+	 * @deprecated
+	 */
 	static public function addMessage($text, $code = 0, $debugLevel = 0) {
-		self::getMessagePool()->addMessage($text, $code, $debugLevel);
+		self::getMessagePool()->addNotice($text, $code, $debugLevel);
+	}
+	static public function addNotice($text, $code = 0, $debugLevel = 0) {
+		self::getMessagePool()->addNotice($text, $code, $debugLevel);
 	}
 	static public function addError($text, $code = 0) {
 		self::getMessagePool()->addError($text, $code);
@@ -459,7 +525,7 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function addErrorException(\ErrorException $Exception){
 		self::getMessagePool()->addErrorException($Exception);
 	}
-	static public function addWarningException(\ErrorException $Exception, $debugLevel = CMessagePool::MSG_POOL_MAX_DBG_LVL) {
+	static public function addWarningException(\ErrorException $Exception, $debugLevel = MessagePool::MSG_POOL_MAX_DBG_LVL) {
 		self::getMessagePool()->addWarningException($Exception, $debugLevel);
 	}
 	static public function addWarning($text, $code = 0, $debugLevel = 0) {
@@ -471,8 +537,18 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function getLastWarning($return = 'TEXT') {
 		return self::getMessagePool()->getLastWarning($return);
 	}
+
+	/**
+	 * Метод устарел. Правильный метод getLastNotice
+	 * @param string $return
+	 * @return mixed
+	 * @deprecated
+	 */
 	static public function getLastMessage($return = 'TEXT') {
-		return self::getMessagePool()->getLastMessage($return);
+		return self::getMessagePool()->getLastNotice($return);
+	}
+	static public function getLastNotice($return = 'TEXT') {
+		return self::getMessagePool()->getLastNotice($return);
 	}
 	static public function popLastError($return = 'TEXT') {
 		return self::getMessagePool()->popLastError($return);
@@ -481,10 +557,19 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 		return self::getMessagePool()->popLastWarning($return);
 	}
 	static public function popLastMessage($return = 'TEXT') {
-		return self::getMessagePool()->popLastMessage($return);
+		return self::getMessagePool()->popLastNotice($return);
 	}
+
+	/**
+	 * Метод устарел. Правильный метод getNotices
+	 * @return array
+	 * @deprecated
+	 */
 	static public function getMessages() {
-		return self::getMessagePool()->getMessages();
+		return self::getMessagePool()->getNotices();
+	}
+	static public function getNotices() {
+		return self::getMessagePool()->getNotices();
 	}
 	static public function getErrors() {
 		return self::getMessagePool()->getErrors();
@@ -495,8 +580,17 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function getMessagePoolData() {
 		return self::getMessagePool()->getMessagePoolData();
 	}
+
+	/**
+	 * Метод устарел. Правильный метод countNotices
+	 * @return int
+	 * @deprecated
+	 */
 	static public function countMessages() {
-		return self::getMessagePool()->countMessages();
+		return self::getMessagePool()->countNotices();
+	}
+	static public function countNotices() {
+		return self::getMessagePool()->countNotices();
 	}
 	static public function countWarnings() {
 		return self::getMessagePool()->countWarnings();
@@ -507,8 +601,15 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	static public function countMessagePoolData() {
 		return self::getMessagePool()->countMessagePoolData();
 	}
+	/**
+	 * Метод устарел. Правильный метод clearNotices
+	 * @deprecated
+	 */
 	static public function clearMessages() {
-		self::getMessagePool()->clearMessages();
+		self::getMessagePool()->clearNotices();
+	}
+	static public function clearNotices() {
+		self::getMessagePool()->clearNotices();
 	}
 	static public function clearErrors() {
 		self::getMessagePool()->clearErrors();
@@ -521,7 +622,7 @@ class CMessagePoolStatic implements IMessagePoolStatic {
 	}
 }
 
-class CMessagePoolDecorator implements IMessagePool {
+class MessagePoolDecorator implements IMessagePool {
 	/**
 	 * @var null|CMessagePool
 	 */
@@ -532,12 +633,12 @@ class CMessagePoolDecorator implements IMessagePool {
 	 */
 	public function getMessagePool() {
 		if($this->MessagePool == null) {
-			$this->MessagePool = new CMessagePool;
+			$this->MessagePool = new MessagePool;
 		}
 		return $this->MessagePool;
 	}
 	public function setMessagePool($MessPool) {
-		if($MessPool instanceof CMessagePool) {
+		if($MessPool instanceof MessagePool) {
 			$this->MessagePool = $MessPool;
 		}
 	}
@@ -560,8 +661,19 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function getDebugLevel($level) {
 		return $this->getMessagePool()->getDebugLevel($level);
 	}
+
+	/**
+	 * Метод устарел. Праивльный метод addNotice
+	 * @param $text
+	 * @param int $code
+	 * @param int $debugLevel
+	 * @deprecated
+	 */
 	public function addMessage($text, $code = 0, $debugLevel = 0) {
-		$this->getMessagePool()->addMessage($text, $code, $debugLevel);
+		$this->getMessagePool()->addNotice($text, $code, $debugLevel);
+	}
+	public function addNotice($text, $code = 0, $debugLevel = 0) {
+		$this->getMessagePool()->addNotice($text, $code, $debugLevel);
 	}
 	public function addError($text, $code = 0) {
 		$this->getMessagePool()->addError($text, $code);
@@ -580,7 +692,7 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function addErrorException(\ErrorException $Exception){
 		$this->getMessagePool()->addErrorException($Exception);
 	}
-	public function addWarningException(\ErrorException $Exception, $debugLevel = CMessagePool::MSG_POOL_MAX_DBG_LVL) {
+	public function addWarningException(\ErrorException $Exception, $debugLevel = MessagePool::MSG_POOL_MAX_DBG_LVL) {
 		$this->getMessagePool()->addWarningException($Exception, $debugLevel);
 	}
 	public function addWarning($text, $code = 0, $debugLevel = 0) {
@@ -592,8 +704,18 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function getLastWarning($return = 'TEXT') {
 		return $this->getMessagePool()->getLastWarning($return);
 	}
+
+	/**
+	 * Метод устарел. Праивльный метод getLastNotice
+	 * @param string $return
+	 * @return mixed
+	 * @deprecated
+	 */
 	public function getLastMessage($return = 'TEXT') {
-		return $this->getMessagePool()->getLastMessage($return);
+		return $this->getMessagePool()->getLastNotice($return);
+	}
+	public function getLastNotice($return = 'TEXT') {
+		return $this->getMessagePool()->getLastNotice($return);
 	}
 	public function popLastError($return = 'TEXT') {
 		return $this->getMessagePool()->popLastError($return);
@@ -601,11 +723,30 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function popLastWarning($return = 'TEXT') {
 		return $this->getMessagePool()->popLastWarning($return);
 	}
+
+	/**
+	 * Метод устарел. Правильный метод popLastNotice
+	 * @param string $return
+	 * @return mixed
+	 * @deprecated
+	 */
 	public function popLastMessage($return = 'TEXT') {
-		return $this->getMessagePool()->popLastMessage($return);
+		return $this->getMessagePool()->popLastNotice($return);
 	}
+	public function popLastNotice($return = 'TEXT') {
+		return $this->getMessagePool()->popLastNotice($return);
+	}
+
+	/**
+	 * Метод устарел. Праивльный метод getNotices
+	 * @return array
+	 * @deprecated
+	 */
 	public function getMessages() {
-		return $this->getMessagePool()->getMessages();
+		return $this->getMessagePool()->getNotices();
+	}
+	public function getNotices() {
+		return $this->getMessagePool()->getNotices();
 	}
 	public function getErrors() {
 		return $this->getMessagePool()->getErrors();
@@ -616,8 +757,17 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function getMessagePoolData() {
 		return $this->getMessagePool()->getMessagePoolData();
 	}
+
+	/**
+	 * Метод устарел. Правильный метод countNotices
+	 * @return int
+	 * @deprecated
+	 */
 	public function countMessages() {
-		return $this->getMessagePool()->countMessages();
+		return $this->getMessagePool()->countNotices();
+	}
+	public function countNotices() {
+		return $this->getMessagePool()->countNotices();
 	}
 	public function countWarnings() {
 		return $this->getMessagePool()->countWarnings();
@@ -628,8 +778,16 @@ class CMessagePoolDecorator implements IMessagePool {
 	public function countMessagePoolData() {
 		return $this->getMessagePool()->countMessagePoolData();
 	}
+
+	/**
+	 * Метод устарел. Праивльный метод clearNotices
+	 * @deprecated
+	 */
 	public function clearMessages() {
-		$this->getMessagePool()->clearMessages();
+		$this->getMessagePool()->clearNotices();
+	}
+	public function clearNotices() {
+		$this->getMessagePool()->clearNotices();
 	}
 	public function clearErrors() {
 		$this->getMessagePool()->clearErrors();

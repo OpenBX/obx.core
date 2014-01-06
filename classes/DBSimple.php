@@ -1707,7 +1707,8 @@ abstract class DBSimple extends CMessagePoolDecorator
 							$this->addWarning($arLangMessage['TEXT'], $arLangMessage['CODE']);
 							break;
 						case 'M':
-							$this->addMessage($arLangMessage['TEXT'], $arLangMessage['CODE']);
+						case 'N':
+							$this->addNotice($arLangMessage['TEXT'], $arLangMessage['CODE']);
 							break;
 					}
 				}

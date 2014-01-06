@@ -55,6 +55,9 @@ class CurlError extends RequestError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'CURLE_';
 
+	const E_M_TIMEOUT_REACHED = 2001;
+	const E_M_SELECT_ERROR = 2002;
+
 	const E_UNKNOWN_ERROR_CODE = 45000;
 
 	// The URL you passed to libcurl used a protocol that this libcurl does not support.

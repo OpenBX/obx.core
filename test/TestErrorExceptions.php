@@ -10,7 +10,6 @@
 
 namespace OBX\Core\Test;
 
-
 class TestErrorExceptions extends TestCase {
 	const _DIR_ = __DIR__;
 
@@ -50,8 +49,9 @@ class TestErrorExceptions extends TestCase {
 			if(substr($constantName, 0, 2) !== 'E_') {
 				continue;
 			}
-			$this->assertArrayHasKey($class::LANG_PREFIX.$constantValue, $arErrMsg);
-			$this->assertEquals($arErrMsg[$class::LANG_PREFIX.$constantValue], $class::getLangMessage($constantValue));
+			$errCode = $class::LANG_PREFIX.$constantValue;
+			$this->assertArrayHasKey($errCode, $arErrMsg);
+			$this->assertEquals($arErrMsg[$errCode], $class::getLangMessage($constantValue));
 		}
 	}
 } 
