@@ -2754,6 +2754,11 @@ HELP;
 				$changeLog .= " * ".str_replace("\n", "\n * ", $arRelease['DESCRIPTION_RAW']);
 			}
 			$versionFileContent = file_get_contents($this->_releaseDir.'/release-'.$this->_version.'/install/version.php');
+			$versionFileContent = preg_replace(
+				'~"VERSION_DATE"\s*?=>\s*?"[\d\-]*?"~',
+				'"VERSION_DATE" => "'.date('Y-m-d').'"',
+				$versionFileContent
+			);
 			if( strpos($versionFileContent, '#CHANGE_LOG#') ) {
 				$versionFileContent = str_replace('#CHANGE_LOG#', $changeLog, $versionFileContent);
 				file_put_contents($this->_releaseDir.'/release-'.$this->_version.'/install/version.php', $versionFileContent);

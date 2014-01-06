@@ -1,10 +1,12 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: maximum
- * Date: 29.12.13
- * Time: 17:43
- */
+/***********************************************
+ ** @product OBX:Core Bitrix Module           **
+ ** @authors                                  **
+ **         Maksim S. Makarov aka pr0n1x      **
+ ** @license Affero GPLv3                     **
+ ** @mailto rootfavell@gmail.com              **
+ ** @copyright 2013 DevTop                    **
+ ***********************************************/
 
 namespace OBX\Core\Components;
 
