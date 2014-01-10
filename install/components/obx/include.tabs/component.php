@@ -12,6 +12,7 @@ for($iTab=1; $iTab <= $arParams['TABS_COUNT']; $iTab++) {
 	}
 	$arResult['TABS'][$arParams['TAB_'.$iTab.'_ID']] = array(
 		'ID' => $arParams['TAB_'.$iTab.'_ID'],
+		'NUMBER' => $iTab,
 		'CAPTION' => $arParams['TAB_'.$iTab.'_CAPTION'],
 		'URL' => str_replace('#TAB_ID#', $arParams['TAB_'.$iTab.'_ID'], $arParams['URL_TEMPLATE']),
 		'SELECTED' => ($arParams['TAB_'.$iTab.'_ID'] == $arParams['SELECTED_TAB'])?'Y':'N',
