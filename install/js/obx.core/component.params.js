@@ -9,7 +9,7 @@
 if( typeof(obx) == 'undefined' ) {
 	var obx = {};
 }
-obx.componentParams = {
+obx.componentParams = obx.componentParams || {
 
 	_fixBitrixBug: function(arParams) {
 		// [fix bitrix bug]
@@ -38,7 +38,11 @@ obx.componentParams = {
 		;
 	}
 
-	,showRadioList: function(arParams) {
+	/**
+	 *
+	 * @param arParams
+	 */
+	,showListChooser: function(arParams) {
 		this._fixBitrixBug(arParams);
 		var data = null;
 		eval('data = ' + arParams.data + ';');
@@ -58,45 +62,89 @@ obx.componentParams = {
 				+'}'
 			+'</style>'
 			+'<ul class="bx-cmp-param-chooser">';
-		var iChkbx = 0;
+		var iCheckBox = 0;
+		var chkBoxHandlers = null;
 		if(data.MULTIPLE == 'Y') {
+			chkBoxHandlers = {};
 			for(var valueID in data.VALUES) {
 				if( !data.VALUES.hasOwnProperty(valueID) ) continue;
-				iChkbx++;
+				iCheckBox++;
+				var checkBoxID = '__cmp_param_'+arParams.propertyID+'_chkbx_'+iCheckBox;
+				var hiddenID = '__cmp_param_'+arParams.propertyID+'_data_'+iCheckBox;
 				inputsHtml += '<li>'
 					+'<input'
-						+' type="checkbox"'
-						+' id="'+arParams.propertyID+'_chkbx_'+iChkbx+'"'
+						+' type="hidden"'
+						+' id="'+hiddenID+'"'
 						+' name="'+arParams.propertyID+'[]"'
+						+' />'
+					+'<input'
+						+' type="checkbox"'
+						+' id="'+checkBoxID+'"'
 						+' value="'+valueID+'"'
 						+' class="adm-designed-checkbox"'
+						+(data.IX_CUR_VALS.hasOwnProperty(valueID)?' checked="checked"':'')
 						+' />'
 					+'<label'
-						+' for="'+arParams.propertyID+'_chkbx_'+iChkbx+'"'
+						+' for="'+checkBoxID+'"'
 						+' class="adm-designed-checkbox-label"'
 						+'></label>'
 					+'<label'
-						+' for="'+arParams.propertyID+'_chkbx_'+iChkbx+'"'
+						+' for="'+checkBoxID+'"'
 						+'>'+data.VALUES[valueID]+'</label>'
 				+'</li>';
+				(function() {
+					var chkbxID = checkBoxID;
+					var hdnID = hiddenID;
+					chkBoxHandlers[iCheckBox] = function() {
+						var checkBox = document.getElementById(chkbxID);
+						var hiddenInput = document.getElementById(hdnID);
+						hiddenInput.value = checkBox.value;
+						if(checkBox.checked) {
+							hiddenInput.disabled = false;
+						}
+						else {
+							hiddenInput.disabled = true;
+						}
+						checkBox.onchange = function() {
+							hiddenInput.checked = this.checked;
+							if(this.checked) {
+								hiddenInput.disabled = false;
+							}
+							else {
+								hiddenInput.disabled = true;
+							}
+							console.log(hiddenInput.value);
+							console.log(hiddenInput.disabled);
+						};
+						console.log(hiddenInput.value);
+						console.log(hiddenInput.disabled);
+					};
+				})();
 			}
+
 		}
 		else {
 			for(var valueID in data.VALUES) {
 				if( !data.VALUES.hasOwnProperty(valueID) ) continue;
-				iChkbx++;
+				iCheckBox++;
 				inputsHtml += '<li>'
 					+'<input'
 						+' type="radio"'
-						+' id="'+arParams.propertyID+'_rdlist_'+iChkbx+'"'
+						+' id="__cmp_param_'+arParams.propertyID+'_rdlist_'+iCheckBox+'"'
 						+' name="'+arParams.propertyID+'"'
 						+' value="'+valueID+'"'
+						+((arParams.oInput.value == valueID)?' checked="checked"':'')
 						+' />'
-					+'<label for="'+arParams.propertyID+'_rdlist_'+iChkbx+'">'+data.VALUES[valueID]+'</label>'
+					+'<label for="__cmp_param_'+arParams.propertyID+'_rdlist_'+iCheckBox+'">'+data.VALUES[valueID]+'</label>'
 				+'</li>';
 			}
 		}
 		inputsHtml += '</ul>';
 		arParams.oCont.innerHTML = inputsHtml;
+		if(null !== chkBoxHandlers) {
+			for(var i in chkBoxHandlers) {
+				(chkBoxHandlers[i])();
+			}
+		}
 	}
 };
