@@ -12,17 +12,17 @@ if( typeof(obx) == 'undefined' ) obx = {};
 		bParseHash = !!bParseHash;
 		var oTmpUrlHash = url.split('#');
 		var paramsString = '';
-		if(bParseHash) {
+		if(bParseHash && oTmpUrlHash[1]) {
 			paramsString = oTmpUrlHash[1];
 		}
-		else {
+		else if(oTmpUrlHash[0]) {
 			paramsString = oTmpUrlHash[0];
 		}
 		paramsString = paramsString.replace(/^\??/, '&');
 		var parser = /(?:^|&|\?)([^&=]+)=?([^&]*)/g;
 		var rawUrlParams = [];
 		paramsString.replace(parser, function($0, $1, $2, $3, $4) {
-			console.log($1, $2);
+			//onsole.log($1, $2);
 			if($1) {
 				rawUrlParams.push({name: $1, value: $2});
 			}

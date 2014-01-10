@@ -14,6 +14,8 @@ namespace OBX\Core\Components;
 class Parameters {
 	static protected $_arInstances = array();
 
+	protected $_customParamsJSLib = '/bitrix/js/obx.core/component.params.js';
+
 	/**
 	 * @return self
 	 */
@@ -28,6 +30,13 @@ class Parameters {
 	protected function __construct() {}
 	final private function __clone() {}
 
+	/**
+	 * @param $name
+	 * @param int $cols
+	 * @param int $rows
+	 * @return array
+	 * @deprecated - есть штатный тип FILE
+	 */
 	public function getTextArea($name, $cols = 32, $rows = 4) {
 		$cols = intval($cols);
 		$rows = intval($rows);
@@ -35,8 +44,20 @@ class Parameters {
 			'NAME' => $name,
 			'TYPE' => 'CUSTOM',
 			'JS_DATA' => $cols.'||'.$rows,
-			'JS_FILE' => '/bitrix/js/obx.core/component.params.js',
+			'JS_FILE' => $this->_customParamsJSLib,
 			'JS_EVENT' => 'obx.componentParams.showTextArea'
 		);
 	}
+
+	public function getListChooser($arParameter) {
+		//TODO: Сделать обработку $arParameter
+		return array(
+			'NAME' => $arParameter['NAME'],
+			'TYPE' => 'CUSTOM',
+			'JS_DATA' => \CUtil::PhpToJSObject($arParameter),
+			'JS_FILE' => $this->_customParamsJSLib,
+			'JS_EVENT' => 'obx.componentParams.showRadioList'
+		);
+	}
+
 }
