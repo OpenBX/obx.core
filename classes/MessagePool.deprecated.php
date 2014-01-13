@@ -24,7 +24,7 @@ class CMessagePool extends MessagePool {}
  * @deprecated
  * @package OBX\Core
  */
-class СMessagePoolStatic extends MessagePoolStatic {}
+class CMessagePoolStatic extends MessagePoolStatic {}
 
 /**
  * Class CMessagePoolDecorator

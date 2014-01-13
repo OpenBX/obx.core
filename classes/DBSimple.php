@@ -38,7 +38,7 @@ interface IDBSimpleStatic
 	static function getLastQueryString();
 }
 
-abstract class DBSimpleStatic extends CMessagePoolStatic implements IDBSimpleStatic {
+abstract class DBSimpleStatic extends MessagePoolStatic implements IDBSimpleStatic {
 	static protected $_arDBSimple = array();
 	final static public function __initDBSimple(DBSimple $DBSimple) {
 		$className = get_called_class();
@@ -52,7 +52,7 @@ abstract class DBSimpleStatic extends CMessagePoolStatic implements IDBSimpleSta
 
 	/**
 	 * @return DBSimple
-	 * @throws Exception
+	 * @throws \ErrorException
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
@@ -63,7 +63,7 @@ abstract class DBSimpleStatic extends CMessagePoolStatic implements IDBSimpleSta
 		if( isset(self::$_arDBSimple[$className]) ) {
 			return self::$_arDBSimple[$className];
 		}
-		throw new Exception("Static Class $className not initialized. May be in static decorator class used non static method. See Call-Stack");
+		throw new \ErrorException("Static Class $className not initialized. May be in static decorator class used non static method. See Call-Stack");
 	}
 	static public function add($arFields) {
 		return self::getInstance()->add($arFields);
@@ -117,7 +117,7 @@ class DBSResult extends \CDBResult {
 	}
 }
 
-abstract class DBSimple extends CMessagePoolDecorator
+abstract class DBSimple extends MessagePoolDecorator
 {
 	protected function __construct() {}
 	final protected function __clone() {}
