@@ -518,9 +518,9 @@ abstract class DBSimple extends MessagePoolDecorator
 	 * Каждое описание содержит следующие ключи
 	 * 		'TYPE' - может принимать значения
 	 * 			Примечение: В зависимости от этого типа будет вызван соответствующий метод объекта CMessagePool
-	 * 			'E' - Error - ошибка - CMessagePool::addError()
-	 * 			'W' - Warning - предупреждение - CMessagePool::addError()
-	 * 			'M' - MessageСообщение - CMessagePool::addMessage()
+	 * 			'E' - Error - ошибка - MessagePool::addError()
+	 * 			'W' - Warning - предупреждение - MessagePool::addError()
+	 * 			'M' - MessageСообщение - MessagePool::addMessage()
 	 * 		'TEXT' - текст события
 	 * 		'CODE' - код события
 	 * 		Как правило применяется 'E'

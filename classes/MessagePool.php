@@ -461,7 +461,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 	static protected $MessagePool = array();
 
 	/**
-	 * @return CMessagePool
+	 * @return MessagePool
 	 */
 	final static public function getMessagePool() {
 		$className = get_called_class();
@@ -624,12 +624,12 @@ class MessagePoolStatic implements IMessagePoolStatic {
 
 class MessagePoolDecorator implements IMessagePool {
 	/**
-	 * @var null|CMessagePool
+	 * @var null|MessagePool
 	 */
 	protected $MessagePool = null;
 
 	/**
-	 * @return CMessagePool
+	 * @return MessagePool
 	 */
 	public function getMessagePool() {
 		if($this->MessagePool == null) {

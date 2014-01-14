@@ -9,7 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Http;
-use OBX\Core\CMessagePoolDecorator;
+use OBX\Core\MessagePoolDecorator;
 use OBX\Core\Exceptions\Http\DownloadError;
 use OBX\Core\Mime;
 
@@ -20,7 +20,7 @@ IncludeModuleLangFile(__FILE__);
  * @package OBX\Core\Http
  * Класс для пошагового скачивания файлов
  */
-class Download extends CMessagePoolDecorator {
+class Download extends MessagePoolDecorator {
 
 	const DEF_TIME_LIMIT = 25;
 	const DEF_TIME_CONN_OUT = 10;

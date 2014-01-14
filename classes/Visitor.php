@@ -17,7 +17,7 @@ IncludeModuleLangFile(__FILE__);
  * Внимание! Необходимо учитывать, что у нескольких посетителей с разным COOKIE_ID может быть одинаковый USER_ID.
  * Это возможно, если пользователь очищал куки и снова зашел на сайт, получив новый COOKIE_ID, а затем авторизовался.
  */
-class Visitor extends CMessagePoolDecorator
+class Visitor extends MessagePoolDecorator
 {
 	const VISITOR_COOKIE_NAME = "OBX_VISITOR_COOKIE_ID";
 

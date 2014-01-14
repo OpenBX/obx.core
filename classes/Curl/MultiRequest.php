@@ -9,14 +9,14 @@
  ***********************************************/
 
 namespace OBX\Core\Curl;
-use OBX\Core\CMessagePoolDecorator;
+use OBX\Core\MessagePoolDecorator;
 use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Exceptions\LogFileError;
 use OBX\Core\LogFile;
 use OBX\Core\Tools;
 
-class MultiRequest extends CMessagePoolDecorator {
+class MultiRequest extends MessagePoolDecorator {
 
 	protected $_curlMulti = null;
 	protected $_arRequestList = array();

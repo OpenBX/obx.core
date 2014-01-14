@@ -9,7 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Settings;
-use OBX\Core\CMessagePoolDecorator;
+use OBX\Core\MessagePoolDecorator;
 use OBX\Core\IMessagePool;
 
 IncludeModuleLangFile(__FILE__);
@@ -31,7 +31,7 @@ interface ISettingsConfig extends ISettings {
 	function readConfig($configRelativePath = null);
 }
 
-class Settings extends CMessagePoolDecorator implements ISettings {
+class Settings extends MessagePoolDecorator implements ISettings {
 	const SETT_INPUT_NAME_CONTAINER = 'obx_settings';
 
 	const E_VALIDATION_FAILED = 1;
@@ -420,7 +420,7 @@ interface ITab {
 	function showErrors($colspan = -1);
 }
 
-abstract class ATab extends CMessagePoolDecorator implements ITab {
+abstract class ATab extends MessagePoolDecorator implements ITab {
 	static protected $_arTabInstances = array();
 	protected $_tabName = '';
 	protected $_tabTitle = '';

@@ -10,7 +10,7 @@
 namespace OBX\Core\Test;
 use OBX\Core\LogFile;
 use OBX\Core\Exceptions\LogFileError;
-use OBX\Core\CMessagePool;
+use OBX\Core\MessagePool;
 
 class TestLogFile extends TestCase {
 	const _DIR_ = __DIR__;
@@ -63,7 +63,7 @@ class TestLogFile extends TestCase {
 	}
 
 	public function testInMessagePool() {
-		$MPool = new CMessagePool();
+		$MPool = new MessagePool();
 		$MPool->registerLogFile(new LogFile(__METHOD__, '/bitrix/tmp/obx.core/message_pool.log', LogFile::F_APPEND));
 		for($i=0; $i <= 20; $i++) {
 			$MPool->addError('test error', 'test_code');
