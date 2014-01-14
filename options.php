@@ -11,6 +11,7 @@
 use OBX\Core\Settings\AdminPage as SettingsAdminPage;
 use OBX\Core\Settings\Tab as SettingsTab;
 
+/** @global \CUser $USER */
 if(!$USER->IsAdmin())return;
 if(!CModule::IncludeModule('obx.core')) return;
 

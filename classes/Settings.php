@@ -167,7 +167,14 @@ class Settings extends MessagePoolDecorator implements ISettings {
 		) {
 			throw new \ErrorException('Option type incorrect');
 		}
-		$defaultValidator = array($this, '__validatorNotEmpty');
+		$defaultValidator = array($this, '__validatorBlank');
+		if( !array_key_exists('REQUIRED', $arOption) ) {
+			$arOption['REQUIRED'] = 'N';
+		}
+		if( 'N' !== $arOption['REQUIRED'] && false !== $arOption['REQUIRED']) {
+			$arOption['REQUIRED'] = 'Y';
+			$defaultValidator = array($this, '__validatorNotEmpty');
+		}
 		if($arOption['TYPE'] == 'CHECKBOX') {
 			$arOption['VALUE'] = strtoupper(substr($arOption['VALUE'], 0, 1));
 			$arOption['VALUE'] = ($arOption['VALUE'] !== 'N')?'Y':'N';
@@ -196,6 +203,7 @@ class Settings extends MessagePoolDecorator implements ISettings {
 			'TYPE' => $arOption['TYPE'],
 			'VALUE' => $arOption['VALUE'],
 			'DEFAULT' => $arOption['DEFAULT'],
+			'REQUIRED' => $arOption['REQUIRED'],
 			'CHECK_FUNC' => $arOption['CHECK_FUNC'],
 			'SORT' => $arOption['SORT']
 		);
@@ -379,13 +387,13 @@ class Settings extends MessagePoolDecorator implements ISettings {
 	 */
 	public function saveSettingsRequestData() {
 		if( !array_key_exists(static::SETT_INPUT_NAME_CONTAINER, $_REQUEST) ) {
-			return ;
+			return false;
 		}
 		if( !array_key_exists($this->getSettingModuleID(), $_REQUEST[static::SETT_INPUT_NAME_CONTAINER]) ) {
-			return ;
+			return false;
 		}
 		if( !array_key_exists($this->getSettingsID(), $_REQUEST[static::SETT_INPUT_NAME_CONTAINER][$this->getSettingModuleID()]) ) {
-			return ;
+			return false;
 		}
 		$arRequestSettings = $_REQUEST[static::SETT_INPUT_NAME_CONTAINER][$this->getSettingModuleID()][$this->getSettingsID()];
 		$arSettings = array();
@@ -427,6 +435,7 @@ abstract class ATab extends MessagePoolDecorator implements ITab {
 	protected $_tabDescription = '';
 	protected $_tabHtmlContainer = '';
 	protected $_tabIconPath = '';
+	protected $_tableLeftColumnWidth = 40;
 
 	public function __construct($arTabConfig = null) {
 		if($arTabConfig !== null) {
@@ -488,6 +497,14 @@ abstract class ATab extends MessagePoolDecorator implements ITab {
 		if( array_key_exists('DIV', $arTabConfig) ) {
 			$this->_tabHtmlContainer = $arTabConfig['DIV'];
 		}
+		if( array_key_exists('LEFT_COLUMN_WIDTH', $arTabConfig) ) {
+			$leftSideWidth = intval($arTabConfig['LEFT_COLUMN_WIDTH']);
+			switch($leftSideWidth){
+				case 10: case 20: case 30: case 40: case 50:
+				case 60: case 70: case 80: case 90:
+					$this->_tableLeftColumnWidth = $leftSideWidth;
+			}
+		}
 		return $this;
 	}
 
@@ -525,7 +542,7 @@ abstract class ATab extends MessagePoolDecorator implements ITab {
 		if ($colspan < 0) {
 			$colspan = 1;
 		}
-		$arMessagesList = $this->getMessages();
+		$arMessagesList = $this->getNotices();
 		if (count($arMessagesList) > 0) {
 			?>
 			<tr>
@@ -658,7 +675,7 @@ class Tab extends ATab implements ISettings {
 			$bWithHint = (strlen(trim($arOption['HINT']))>0)?true:false;
 		?>
 		<tr>
-			<td<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
+			<td width="<?=$this->_tableLeftColumnWidth?>%"<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
 				<label for="<?=$idPrefix.$optionCode?>">
 				<?=$arOption['NAME']?>
 				<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
@@ -718,6 +735,10 @@ class AdminPage {
 		}
 	}
 
+	/**
+	 * @param bool $bReturnArray
+	 * @return array
+	 */
 	public function getTabList($bReturnArray = false){
 		if($bReturnArray === true) {
 			$arTabs = array();
