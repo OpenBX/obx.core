@@ -1810,15 +1810,15 @@ abstract class DBSimple extends MessagePoolDecorator
 		$this->_lastQueryString = $sqlInsert;
 		$DB->Query($sqlInsert, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 
-		$bContinueAfterEvent = ($this->_onAfterAdd($arFields)!==false); if(!$bContinueAfterEvent) return 0;
-
+		$returnValue = true;
 		if($mainTablePrimaryKey !== null) {
 			if($mainTablePrimaryKey == $mainTableAutoIncrement ) {
 				$arFields[$mainTablePrimaryKey] = $DB->LastID();
 			}
-			return $arFields[$mainTablePrimaryKey];
+			$returnValue = $arFields[$mainTablePrimaryKey];
 		}
-		return true;
+		$bContinueAfterEvent = ($this->_onAfterAdd($arFields)!==false); if(!$bContinueAfterEvent) return 0;
+		return $returnValue;
 	}
 
 	protected function _onStartUpdate(&$arFields) {
