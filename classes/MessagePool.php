@@ -18,7 +18,6 @@ interface IMessagePool
 	function addWarning($text, $code = 0);
 	function addError($text, $code = 0);
 	function addErrorException(\ErrorException $Exception);
-	function throwErrorException(\ErrorException $Exception);
 	function addWarningException(\ErrorException $Exception);
 
 	function getLastNotice($return = 'TEXT');
@@ -52,7 +51,6 @@ interface IMessagePoolStatic
 	static function addWarning($text, $code = 0);
 	static function addError($text, $code = 0);
 	static function addErrorException(\ErrorException $Exception);
-	static function throwErrorException(\ErrorException $Exception);
 	static function addWarningException(\ErrorException $Exception);
 
 	static function getLastNotice($return = 'TEXT');
@@ -222,6 +220,7 @@ class MessagePool implements IMessagePool
 
 	/**
 	 * @param \ErrorException $Exception
+	 * @deprecated
 	 * @throws \ErrorException
 	 */
 	public function throwErrorException(\ErrorException $Exception) {
@@ -514,6 +513,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 
 	/**
 	 * @param \ErrorException $Exception
+	 * @deprecated
 	 * @throws \ErrorException
 	 */
 	static public function throwErrorException(\ErrorException $Exception){
@@ -681,6 +681,7 @@ class MessagePoolDecorator implements IMessagePool {
 
 	/**
 	 * @param \ErrorException $Exception
+	 * @deprecated
 	 * @throws \ErrorException
 	 */
 	public function throwErrorException(\ErrorException $Exception){
