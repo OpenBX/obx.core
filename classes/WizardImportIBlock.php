@@ -265,7 +265,7 @@ class ImportIBlock
 			return false;
 		}
 		foreach($arRawConfig['IBLOCK_TYPE'] as $typeID => &$arRawIBType) {
-			$arRawIBType['ID'] = $arRawIBType;
+			$arRawIBType['ID'] = $typeID;
 			if(
 				!array_key_exists('SECTIONS', $arRawIBType)
 				|| (
@@ -466,7 +466,11 @@ class ImportIBlock
 			);
 
 			if ($this->_iblockID < 1) {
-				die('Error importing xml-data');
+				die('Error importing xml-data:'
+					."<br /> \n".'xml file: "'.htmlspecialchars($this->_iblockXMLFile).'"'
+					.",<br /> \n".'iblock code: "'.htmlspecialchars($this->_iblockCode).'"'
+					.",<br /> \n".'iblock type: "'.htmlspecialchars($this->_iblockType).'"'
+				);
 			}
 			$iblock = new \CIBlock;
 			$iblock->Update($this->_iblockID, $arFields);
