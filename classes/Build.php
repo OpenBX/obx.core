@@ -2888,11 +2888,12 @@ HELP;
 					);
 				}
 				$content = iconv($from, $to, $content);
-				if($content === false) {
-					echo 'Ошибка: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
-					return false;
+				if($content !== false) {
+					file_put_contents($path, $content);
 				}
-				file_put_contents($path, $content);
+				else {
+					echo 'Предупреждение: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
+				}
 			}
 			return true;
 		}
