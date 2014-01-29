@@ -152,15 +152,13 @@ class Parser extends ParserDB {
 		}
 
 		fseek($this->_file, $this->_filePosition);
-		$this->_fileCharset = 'windows-1251';
+		//$this->_fileCharset = 'windows-1251';
 		while( $xmlChunk = $this->getChunk() ) {
 			if( true == $this->_breakReading ) {
 				return true;
 			}
-			if( null !== $this->_fileCharset ) {
-				if( $this->_fileCharset ) {
-					$xmlChunk = $APPLICATION->ConvertCharset($xmlChunk, $this->_fileCharset, LANG_CHARSET);
-				}
+			if( null !== $this->_fileCharset && !empty($this->_fileCharset) ) {
+				$xmlChunk = $APPLICATION->ConvertCharset($xmlChunk, $this->_fileCharset, LANG_CHARSET);
 			}
 			if($xmlChunk[0] == "/") {
 				$this->endElement();
