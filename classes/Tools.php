@@ -562,12 +562,15 @@ namespace OBX\Core {
 			}
 			return $returnString;
 		}
+
 		static public function getLessJSHead() {
 			$returnString = '';
-			if( self::$_lessJSPath ) {
-				$returnString .= '<script type="text/javascript"> less = { env: \'development\' }; </script>'."\n";
-				$returnString .= '<script type="text/javascript" src="'.self::$_lessJSPath.'"></script>'."\n";
-				//$returnString .= '<script type="text/javascript">less.watch();</script>'."\n";
+			if (!self::isLessProductionReady()) {
+				if (self::$_lessJSPath) {
+					$returnString .= '<script type="text/javascript"> less = { env: \'development\' }; </script>' . "\n";
+					$returnString .= '<script type="text/javascript" src="' . self::$_lessJSPath . '"></script>' . "\n";
+					//$returnString .= '<script type="text/javascript">less.watch();</script>'."\n";
+				}
 			}
 			return $returnString;
 		}
