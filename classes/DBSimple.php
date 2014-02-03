@@ -311,7 +311,7 @@ abstract class DBSimple extends MessagePoolDecorator
 			)
 				$arResult[$fieldCode] = $this->_arFieldsDescription[$fieldCode];
 		}
-		return $arResult[$fieldCode];
+		return $arResult;
 	}
 
 	/**
