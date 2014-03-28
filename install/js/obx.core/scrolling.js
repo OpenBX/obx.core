@@ -72,8 +72,14 @@ if (typeof(jQuery) == 'undefined') jQuery = false;
 			},
 			getTargetPositions: function() {
 				var positions = [];
+				var offsetTop = 0;
 				for(var k in self.targets) {
-					positions.push(parseInt((self.targets[k].offset()).top, 10) - parseInt(self.conf.preWatchClass, 10));
+					if(!self.targets.hasOwnProperty(k)
+						|| false === self.targets[k]
+						|| self.targets[k].length < 1
+						) continue;
+					offsetTop = parseInt((self.targets[k].offset()).top, 10);
+					positions.push(offsetTop - parseInt(self.conf.preWatchClass, 10));
 				}
 				positions.push(Infinity);
 				return positions;
@@ -138,7 +144,7 @@ if (typeof(jQuery) == 'undefined') jQuery = false;
 			return false;
 		}
 		// jq version
-		if (!$.obx.tools.jqIsGeatThan(1, 7)) {
+		if (!$.obx.tools.jqIsGreatThan(1, 7)) {
 			console.log('JQuery version is not enough (need > 1.7)!');
 			return false;
 		}

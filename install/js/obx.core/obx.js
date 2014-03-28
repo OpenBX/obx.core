@@ -165,22 +165,18 @@ if(typeof(jQuery) == 'undefined') jQuery = false;
 			if(typeof a === typeof b) return a < b ? -1 : 1;
 			return typeof a < typeof b ? -1 : 1;
 		}
-		,jqIsGeatThan : function(major, minor){
+		,jqIsGreatThan : function(major, minor){
 			var explode = $.fn.jquery.split('.');
-			var access = false;
-			if(major<=(explode[0]-0)) access = true;
-			if(access && minor<=(explode[1]-0)) access = true;
-			else access = false;
-			return access;
+			if( major < (explode[0]-0)
+				||
+				(major==(explode[0]-0) && minor<=(explode[1]-0))
+			) {
+				return true;
+			}
+			return false;
 		}
 	};
-
-
-
-	/*** AGENT ***/
-	$.obx.ieVersion = false;
-	if($.browser.msie) $.obx.ieVersion = parseInt($.browser.version, 10);
-
+	$.obx.tools.jqIsGeatThan = $.obx.tools.jqIsGreatThan;
 
 	/*** HTML5 ***/
 	if(typeof(Modernizr) != 'undefined'){

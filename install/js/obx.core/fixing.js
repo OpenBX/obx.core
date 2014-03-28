@@ -68,10 +68,10 @@ if(typeof(jQuery) == 'undefined') jQuery = false;
 	$.fn.OBX_Fixing = function(top, conf, margin){
 		top=parseInt(top);
 		margin = parseInt(margin);
-		if (top|0 == 0){
+		if ((top|0) == 0){
 			top = $(this).offset().top;
 		}
-		if (margin|0 != 0) {
+		if ((margin|0) != 0) {
 			top +=margin;
 		}
 
@@ -81,7 +81,7 @@ if(typeof(jQuery) == 'undefined') jQuery = false;
 			return false;
 		}
 		// jq version
-		if(!$.obx.tools.jqIsGeatThan(1, 7)){
+		if(!$.obx.tools.jqIsGreatThan(1, 7)){
 			console.log('JQuery version is not enough (need > 1.7)!');
 			return false;
 		}
