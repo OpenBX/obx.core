@@ -1871,10 +1871,14 @@ abstract class DBSimple extends MessagePoolDecorator
 	 */
 	public function update($arFields, $bNotUpdateUniqueFields = false) {
 		global $DB;
-		$bContinueAfterEvent = ($this->_onStartUpdate($arFields)!==false); if(!$bContinueAfterEvent) return false;
+		$bContinueAfterEvent = ($this->_onStartUpdate($arFields)!==false);
+		if(!$bContinueAfterEvent) return false;
+
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_UPDATE, $arFields);
 		if($arCheckResult['__BREAK']) return false;
-		$bContinueAfterEvent = ($this->_onBeforeUpdate($arFields, $arCheckResult)!==false); if(!$bContinueAfterEvent) return false;
+
+		$bContinueAfterEvent = ($this->_onBeforeUpdate($arFields, $arCheckResult)!==false);
+		if(!$bContinueAfterEvent) return false;
 
 		$mainTablePrimaryKey = $this->_mainTablePrimaryKey;
 		$arTableList = $this->_arTableList;
@@ -1950,6 +1954,7 @@ abstract class DBSimple extends MessagePoolDecorator
 		if( count($arTableUnique)>0 ) {
 			foreach( $arTableUnique as $udxName => $arUniqueFields ) {
 				if($bNotUpdateUniqueFields) {
+					// Если запрешено обновлять поля входязие в уникальный индекс
 					foreach($arUniqueFields as $inUniqueFieldName) {
 						if( array_key_exists($inUniqueFieldName, $arFields) ) {
 							unset($arFields[$inUniqueFieldName]);
@@ -2002,7 +2007,12 @@ abstract class DBSimple extends MessagePoolDecorator
 				}
 			}
 		}
-		$bContinueAfterEvent = ($this->_onBeforeExecUpdate($arFields, $arCheckResult)!==false); if(!$bContinueAfterEvent) return false;
+
+		$arFields[$mainTablePrimaryKey] = $arThatElement[$mainTablePrimaryKey];
+		$bContinueAfterEvent = ($this->_onBeforeExecUpdate($arFields, $arCheckResult)!==false);
+		if(!$bContinueAfterEvent) return false;
+		unset($arFields[$mainTablePrimaryKey]);
+
 		$strUpdate = $DB->PrepareUpdate($mainEntityTableName, $arFields);
 		$strUpdateSetNullFields = '';
 		$bFirstI = true;
@@ -2024,7 +2034,11 @@ abstract class DBSimple extends MessagePoolDecorator
 			.';';
 		$this->_lastQueryString = $strUpdate;
 		$DB->Query($strUpdate, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		$bContinueAfterEvent = ($this->_onAfterUpdate($arFields)!==false); if(!$bContinueAfterEvent) return false;
+		$arFields[$mainTablePrimaryKey] = $DB->ForSql($arThatElement[$mainTablePrimaryKey]);
+
+		$bContinueAfterEvent = ($this->_onAfterUpdate($arFields)!==false);
+		if(!$bContinueAfterEvent) return false;
+
 		return true;
 	}
 
