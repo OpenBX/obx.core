@@ -680,12 +680,13 @@ class Request {
 	}
 
 	protected function _fillOriginalName(&$contentType) {
+		$Mime = Mime::getInstance();
 		$fileName = static::getFileNameFromUrl($this->_url, $fileExt, $baseName);
 		if( empty($fileName) ) {
 			$baseName = static::generateID();
 		}
 		if(empty($fileExt)) {
-			$fileExt = Mime::getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
+			$fileExt = $Mime->getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
 		}
 		else {
 			switch($fileExt) {
@@ -693,7 +694,7 @@ class Request {
 				case 'asp':
 				case 'aspx':
 				case 'jsp':
-					$fileExt = Mime::getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
+					$fileExt = $Mime->getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
 			}
 		}
 		$this->_originalName = $baseName;

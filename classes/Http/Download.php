@@ -297,6 +297,7 @@ HTML;
 	}
 
 	protected function _readHeaderData(&$header) {
+		$Mime = Mime::getInstance();
 		$this->_header = $header;
 		$this->_arHeader = Request::parseHeader($header);
 		if( array_key_exists('Accept-Ranges', $this->_arHeader)
@@ -306,7 +307,7 @@ HTML;
 		}
 		if( !empty($this->_arHeader['Content-Type']['VALUE_MAIN']) ) {
 			$this->_contentType = $this->_arHeader['Content-Type']['VALUE_MAIN'];
-			$this->_dwnFileExt = Mime::getFileExt($this->_contentType, static::DEF_DWN_EXT);
+			$this->_dwnFileExt = $Mime->getFileExt($this->_contentType, static::DEF_DWN_EXT);
 			if( array_key_exists('CHARSET', $this->_arHeader) && $this->_arHeader['CHARSET'] != null ) {
 				$this->_contentCharset = $this->_arHeader['CHARSET'];
 			}

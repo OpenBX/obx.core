@@ -19,17 +19,20 @@ class Mime {
 	const GRP_DOC = 'document';
 	const GRP_AUDIO = 'audio';
 	const GRP_VIDEO = 'video';
+	const GRP_OTHER = 'other';
 
-	static protected $_arMimeExt = null;
-	static protected $_arMimeGroups = null;
-	static protected $_arMimeText = array(
+	private static $arInstances = array();
+
+	protected $arMimeExt = null;
+	protected $arMimeGroups = null;
+	protected $arMimeText = array(
 		'application/json' => 'json',
 		'text/html' => 'html',
 		'text/plain' => 'txt',
 		'text/xml' => 'xml',
 	);
 
-	static protected $_arMimeImages = array(
+	protected $arMimeImages = array(
 		'image/png' => 'png',
 		'image/jpeg' => 'jpg',
 		'image/gif' => 'gif',
@@ -43,7 +46,7 @@ class Mime {
 		'image/x-ms-bmp' => 'bmp',
 	);
 
-	static protected $_arMimeCompressedTypes = array(
+	protected $arMimeCompressedTypes = array(
 		'application/x-rar-compressed' => 'rar',
 		'application/x-rar' => 'rar',
 		'application/x-tar' => 'tar',
@@ -55,11 +58,12 @@ class Mime {
 		'application/x-gzip' => 'gz',
 		'application/x-gzip-compressed-tar' => 'tar.gz',
 		'application/x-xz' => 'xz',
+		'application/x-iso9660-image' => 'iso'
 	);
 
 
 
-	static protected $_arMimeDocuments = array(
+	protected $arMimeDocuments = array(
 		//doc
 		//open docs
 		'application/vnd.oasis.opendocument.text' => 'odt',
@@ -91,7 +95,7 @@ class Mime {
 		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
 	);
 
-	static protected $_arMimeAudio = array(
+	protected $arMimeAudio = array(
 		'audio/midi' => 'midi',
 		'audio/x-midi' => 'midi',
 		'audio/mod' => 'mod',
@@ -110,7 +114,7 @@ class Mime {
 		'audio/x-ogg' => 'ogg'
 	);
 
-	static protected $_arMimeVideo = array(
+	protected $arMimeVideo = array(
 		'video/mpeg' => 'mpg',
 		'video/x-mpeg' => 'mpg',
 		'video/sgi-movie' => 'movi',
@@ -127,46 +131,59 @@ class Mime {
 	);
 
 
-	static public function _init() {
-		if( null === static::$_arMimeExt ) {
-			static::$_arMimeExt = array_merge(
-				static::$_arMimeText,
-				static::$_arMimeImages,
-				static::$_arMimeCompressedTypes,
-				static::$_arMimeDocuments,
-				static::$_arMimeAudio,
-				static::$_arMimeVideo
+	protected function __construct() {
+		if( null === $this->arMimeExt ) {
+			$this->arMimeExt = array_merge(
+				$this->arMimeText,
+				$this->arMimeImages,
+				$this->arMimeCompressedTypes,
+				$this->arMimeDocuments,
+				$this->arMimeAudio,
+				$this->arMimeVideo
 			);
 		}
-		if( null === static::$_arMimeGroups ) {
-			static::$_arMimeGroups = array();
-			foreach(static::$_arMimeText as $type => $ext) {
-				static::$_arMimeGroups[$type] = static::GRP_TEXT;
+		if( null === $this->arMimeGroups ) {
+			$this->arMimeGroups = array();
+			foreach($this->arMimeText as $type => $ext) {
+				$this->arMimeGroups[$type] = static::GRP_TEXT;
 			}
-			foreach(static::$_arMimeImages as $type => $ext) {
-				static::$_arMimeGroups[$type] = static::GRP_IMAGE;
+			foreach($this->arMimeImages as $type => $ext) {
+				$this->arMimeGroups[$type] = static::GRP_IMAGE;
 			}
-			foreach(static::$_arMimeCompressedTypes as $type => $ext) {
-				static::$_arMimeGroups[$type] = static::GRP_ARCH;
+			foreach($this->arMimeCompressedTypes as $type => $ext) {
+				$this->arMimeGroups[$type] = static::GRP_ARCH;
 			}
-			foreach(static::$_arMimeDocuments as $type => $ext) {
-				static::$_arMimeGroups[$type] = static::GRP_DOC;
+			foreach($this->arMimeDocuments as $type => $ext) {
+				$this->arMimeGroups[$type] = static::GRP_DOC;
 			}
-			foreach(static::$_arMimeAudio as $type => $ext) {
-				static::$_arMimeGroups[$type] = static::GRP_AUDIO;
+			foreach($this->arMimeAudio as $type => $ext) {
+				$this->arMimeGroups[$type] = static::GRP_AUDIO;
 			}
-			foreach(static::$_arMimeVideo as $type => $ext) {
-				static::$_arMimeGroups[$type] = static::GRP_VIDEO;
+			foreach($this->arMimeVideo as $type => $ext) {
+				$this->arMimeGroups[$type] = static::GRP_VIDEO;
 			}
 		}
 	}
 
-	static public function & _refMimeData() {
-		return static::$_arMimeExt;
+	/**
+	 * @return self
+	 */
+	final public static function getInstance() {
+		$class = get_called_class();
+		if( !array_key_exists($class, self::$arInstances)
+			|| !(self::$arInstances[$class] instanceof self)
+		) {
+			self::$arInstances[$class] = new $class;
+		}
+		return self::$arInstances[$class];
 	}
 
-	static public function getMimeData() {
-		return static::$_arMimeExt;
+	public function & _refMimeData() {
+		return $this->arMimeExt;
+	}
+
+	public function getMimeData() {
+		return $this->arMimeExt;
 	}
 
 	/**
@@ -175,11 +192,11 @@ class Mime {
 	 * @param int|null $group
 	 * @return bool
 	 */
-	static public function addType($type, $fileExt, $group = null) {
-		if( array_key_exists($type, static::$_arMimeExt) ) {
+	public function addType($type, $fileExt, $group = null) {
+		if( array_key_exists($type, $this->arMimeExt) ) {
 			return false;
 		}
-		static::$_arMimeExt[$type] = $fileExt;
+		$this->arMimeExt[$type] = $fileExt;
 		if(null !== $group) {
 			switch($group) {
 				case static::GRP_TEXT:
@@ -188,7 +205,7 @@ class Mime {
 				case static::GRP_DOC:
 				case static::GRP_AUDIO:
 				case static::GRP_VIDEO:
-				static::$_arMimeGroups[$type] = $group;
+				$this->arMimeGroups[$type] = $group;
 			}
 		}
 		return true;
@@ -199,18 +216,17 @@ class Mime {
 	 * @param null|string $defaultExt
 	 * @return null|string
 	 */
-	static public function getFileExt($mimeType, $defaultExt = null) {
-		if(array_key_exists($mimeType, static::$_arMimeExt)) {
-			return static::$_arMimeExt[$mimeType];
+	public function getFileExt($mimeType, $defaultExt = null) {
+		if(array_key_exists($mimeType, $this->arMimeExt)) {
+			return $this->arMimeExt[$mimeType];
 		}
 		return $defaultExt;
 	}
 
-	static public function getContentGroup($mimeType) {
-		if(array_key_exists($mimeType, static::$_arMimeGroups)) {
-			return static::$_arMimeGroups[$mimeType];
+	public function getContentGroup($mimeType) {
+		if(array_key_exists($mimeType, $this->arMimeGroups)) {
+			return $this->arMimeGroups[$mimeType];
 		}
 		return static::GRP_UNKNOWN;
 	}
 }
-Mime::_init();
