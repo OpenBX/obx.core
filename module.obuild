@@ -25,6 +25,9 @@
 		path: %SELF_FOLDER%/admin/
 	[options]
 		path: %SELF_FOLDER%/options.php
+	[include]
+		path: %SELF_FOLDER%/include.php
+
 	[admin.ajax]
 		path: %SELF_FOLDER%/admin/ajax/
 	[component.layout]

@@ -283,7 +283,7 @@ class Settings extends MessagePoolDecorator implements ISettings {
 				\COption::SetOptionString(
 					$this->getSettingModuleID(),
 					$this->getSettingsID().'_'.$optionCode,
-					$optionValue,
+					$arOption['VALUE'],
 					$this->_arSettings['DESCRIPTION']
 				);
 				$this->_arSettings[$optionCode]['VALUE'] = $optionValue;
@@ -730,7 +730,7 @@ class AdminPage {
 
 	public function addTabList($arTabs) {
 		foreach($arTabs as $Tab) {
-			/** @var Tab $Tab */
+			/** @var ITab $Tab */
 			$this->addTab($Tab);
 		}
 	}
@@ -742,7 +742,7 @@ class AdminPage {
 	public function getTabList($bReturnArray = false){
 		if($bReturnArray === true) {
 			$arTabs = array();
-			/** @var Tab $Tab */
+			/** @var ATab $Tab */
 			foreach($this->_arTabs as $Tab) {
 				$arTab = $Tab->getTabConfig();
 				$arTab['CONTROLLER'] = $Tab;
@@ -835,8 +835,10 @@ class AdminPage {
 	public function save($bRedirectAfterSave = true) {
 		$bAllSuccess = true;
 		foreach($this->_arTabs as $Tab) {
-			/** @var Tab $Tab */
-			$bAllSuccess = $Tab->saveSettingsRequestData() && $bAllSuccess;
+			/** @var ATab|ISettings $Tab */
+			if($Tab instanceof ISettings) {
+				$bAllSuccess = $Tab->saveSettingsRequestData() && $bAllSuccess;
+			}
 		}
 		if( true === ($bRedirectAfterSave&&$bAllSuccess) ) {
 			$this->redirectAfterSave();
@@ -855,8 +857,10 @@ class AdminPage {
 
 	public function restoreDefaults($bResirectAfterSave = true){
 		foreach($this->_arTabs as $Tab) {
-			/** @var Tab $Tab */
-			$Tab->restoreDefaults();
+			/** @var ATab|ISettings $Tab */
+			if($Tab instanceof ISettings) {
+				$Tab->restoreDefaults();
+			}
 		}
 		if( true === $bResirectAfterSave) {
 			$this->redirectAfterSave();
