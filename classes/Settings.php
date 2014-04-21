@@ -144,7 +144,7 @@ class Settings extends MessagePoolDecorator implements ISettings {
 	public function __validatorBlank($optionCode, &$arOption, Settings $Settings) {
 		return true;
 	}
-	static protected function __sortSettings(array &$A, array &$B) {
+	static public function __sortSettings(array &$A, array &$B) {
 		if ($A['SORT'] == $B['SORT']) {
 			return 0;
 		}
@@ -597,9 +597,26 @@ abstract class ATab extends MessagePoolDecorator implements ITab {
 class Tab extends ATab implements ISettings {
 	/** @var Settings */
 	protected $_Settings = null;
+	protected $_tabOptionGroups = array(
+		'__DEFAULT__' => array(
+			'NAME' => '',
+			'CODE' => '__DEFAULT__',
+			'SORT' => 10000,
+			'ITEMS' => array()
+		)
+	);
+	const DEF_OPTION_GROUP_SORT = 100;
 
+	/**
+	* @param string $moduleID
+	* @param string $settingsID
+	* @param array $arTabConfig
+	* @param array|Settings $Settings
+	 */
 	public function __construct($moduleID, $settingsID, $arTabConfig, $Settings) {
-		if( is_array($Settings) ) {
+		$arSettings = null;
+		if( is_array($Settings) && !empty($Settings)) {
+			$arSettings = $Settings;
 			$Settings = new Settings($moduleID, $settingsID, $Settings);
 		}
 		$this->initSettings($Settings);
@@ -608,7 +625,79 @@ class Tab extends ATab implements ISettings {
 			$arTabConfig['DIV'] = strtoupper('sett_'.str_replace('.', '_', $moduleID).'_'.$settingsID);
 		}
 		$this->setTabConfig($arTabConfig);
+
+		if(null !== $arSettings) {
+			foreach($arSettings as $optionCode => &$arOption) {
+				if( array_key_exists('GROUP', $arOption)
+					&& array_key_exists($arOption['GROUP'], $this->_tabOptionGroups)
+				) {
+					$this->_tabOptionGroups[$arOption['GROUP']]['ITEMS'][$optionCode] =
+						(array_key_exists('SORT', $arOption)?intval($arOption['SORT']):self::DEF_OPTION_GROUP_SORT);
+					uasort($this->_tabOptionGroups[$arOption['GROUP']]['ITEMS'], array(__CLASS__, '__sortOptionInGroup'));
+				}
+				else {
+					$this->_tabOptionGroups['__DEFAULT__']['ITEMS'][$optionCode] =
+						(array_key_exists('SORT', $arOption)?intval($arOption['SORT']):self::DEF_OPTION_GROUP_SORT);
+					uasort($this->_tabOptionGroups['__DEFAULT__']['ITEMS'], array(__CLASS__, '__sortOptionInGroup'));
+				}
+			}
+		}
 	}
+
+	public function setTabConfig(array $arTabConfig) {
+		if( !is_array($arTabConfig) ) {
+			return $this;
+		}
+		parent::setTabConfig($arTabConfig);
+		if( array_key_exists('GROUPS', $arTabConfig) ) {
+			foreach($arTabConfig['GROUPS'] as $groupCode => &$arGroup) {
+				if(is_string($arGroup)) {
+					$arGroup = array('NAME' => $arGroup);
+				}
+				if(!array_key_exists('NAME', $arGroup)) {
+					continue;
+				}
+				if($arGroup['NAME'] == '__DEFAULT__') {
+					continue;
+				}
+				if(array_key_exists('SORT', $arGroup)) {
+					$arGroup['SORT'] = intval($arGroup['SORT']);
+				}
+				else {
+					$arGroup['SORT'] = self::DEF_OPTION_GROUP_SORT;
+				}
+				$this->_tabOptionGroups[$groupCode] = array(
+					'NAME' => $arGroup['NAME'],
+					'CODE' => $groupCode,
+					'SORT' => $arGroup['SORT'],
+					'ITEMS' => array()
+				);
+			}
+			if(!empty($this->_tabOptionGroups)) {
+				uasort($this->_tabOptionGroups, array(__CLASS__, '__sort'));
+			}
+		}
+		return $this;
+	}
+
+	public function addOptionsGroup($groupCode, $groupName, $groupSort = self::DEF_OPTION_GROUP_SORT) {
+		if (!preg_match('~^[a-zA-Z0-9\_]*$~', $groupCode)) {
+			throw new \ErrorException('Wrong group code');
+		}
+		$groupSort = intval($groupSort);
+		if(empty($groupName)) {
+			throw new \ErrorException('Group name is empty');
+		}
+		$this->_tabOptionGroups[$groupCode] = array(
+			'NAME' => $groupName,
+			'CODE' => $groupCode,
+			'SORT' => $groupSort,
+			'ITEMS' => array()
+		);
+		uasort($this->_tabOptionGroups, array(__CLASS__, '__sort'));
+		return $this;
+	}
+
 	public function initSettings(Settings $Settings) {
 		if( $Settings instanceof Settings ) {
 			$this->_Settings = $Settings;
@@ -617,6 +706,13 @@ class Tab extends ATab implements ISettings {
 		else {
 			throw new \ErrorException('Settings initialization failed');
 		}
+	}
+
+	static public function __sort(array &$A, array &$B) {
+		if ($A['SORT'] == $B['SORT']) {
+			return 0;
+		}
+		return ($A['SORT'] < $B['SORT']) ? -1 : 1;
 	}
 
 	// +++ ISettings implementation
@@ -644,7 +740,26 @@ class Tab extends ATab implements ISettings {
 	 */
 	public function addOption($optionCode, $arOption) {
 		$this->_Settings->addOption($optionCode, $arOption);
+		if( array_key_exists('GROUP', $arOption)
+			&& array_key_exists($arOption['GROUP'], $this->_tabOptionGroups)
+		) {
+			$this->_tabOptionGroups[$arOption['GROUP']]['ITEMS'][$optionCode] =
+				(array_key_exists('SORT', $arOption)?intval($arOption['SORT']):self::DEF_OPTION_GROUP_SORT);
+			uasort($this->_tabOptionGroups[$arOption['GROUP']]['ITEMS'], array(__CLASS__, '__sortOptionInGroup'));
+		}
+		else {
+			$this->_tabOptionGroups['__DEFAULT__']['ITEMS'][$optionCode] =
+				(array_key_exists('SORT', $arOption)?intval($arOption['SORT']):self::DEF_OPTION_GROUP_SORT);
+			uasort($this->_tabOptionGroups['__DEFAULT__']['ITEMS'], array(__CLASS__, '__sortOptionInGroup'));
+		}
 		return $this;
+	}
+
+	static public function __sortOptionInGroup(&$A, &$B) {
+		if ($A == $B) {
+			return 0;
+		}
+		return ($A < $B) ? -1 : 1;
 	}
 	public function getOption($optionCode, $bReturnOptionArray = false) {
 		return $this->_Settings->getOption($optionCode, $bReturnOptionArray);
@@ -670,27 +785,35 @@ class Tab extends ATab implements ISettings {
 	public function showTabContent() {
 		$arSettings = $this->_Settings->getSettings();
 		$idPrefix = 'sett_'.str_replace('.', '_', $this->getSettingModuleID()).'_';
-		foreach($arSettings as $optionCode => &$arOption):
-			$bWithDescription = (strlen(trim($arOption['DESCRIPTION']))>0)?true:false;
-			$bWithHint = (strlen(trim($arOption['HINT']))>0)?true:false;
-		?>
-		<tr>
-			<td width="<?=$this->_tableLeftColumnWidth?>%"<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
-				<label for="<?=$idPrefix.$optionCode?>">
-				<?=$arOption['NAME']?>
-				<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
-					<br /><small><?=$arOption['DESCRIPTION']?></small>
-				<?endif?>
-				</label>
-			</td>
-			<td<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
-				<?=$this->_Settings->getOptionInput($optionCode, array('id' => $idPrefix.$optionCode))?>
-				<?if($bWithHint):?>
-				<img src="/bitrix/js/main/core/images/hint.gif" onmouseover="BX.hint(this, '<?=$arOption['HINT']?>')" />
-				<?endif?>
-			</td>
-		</tr>
-		<?endforeach;
+		foreach($this->_tabOptionGroups as $arGroup):?>
+			<?if(!empty($arGroup['NAME']) && !empty($arGroup['ITEMS'])):?>
+				<tr class="heading">
+					<td colspan="2"><b><?=$arGroup['NAME']?></b></td>
+				</tr>
+			<?endif?>
+			<?foreach($arGroup['ITEMS'] as $optionCode => $optionSort):
+				$arOption = &$arSettings[$optionCode];
+				$bWithDescription = (strlen(trim($arOption['DESCRIPTION']))>0)?true:false;
+				$bWithHint = (strlen(trim($arOption['HINT']))>0)?true:false;
+				?>
+				<tr>
+					<td width="<?=$this->_tableLeftColumnWidth?>%"<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
+						<label for="<?=$idPrefix.$optionCode?>">
+							<?=$arOption['NAME']?>
+							<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
+								<br /><small><?=$arOption['DESCRIPTION']?></small>
+							<?endif?>
+						</label>
+					</td>
+					<td<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
+						<?=$this->_Settings->getOptionInput($optionCode, array('id' => $idPrefix.$optionCode))?>
+						<?if($bWithHint):?>
+							<img src="/bitrix/js/main/core/images/hint.gif" onmouseover="BX.hint(this, '<?=$arOption['HINT']?>')" />
+						<?endif?>
+					</td>
+				</tr>
+			<?endforeach;
+		endforeach;
 	}
 	public function showTabScripts() {
 		return '';
