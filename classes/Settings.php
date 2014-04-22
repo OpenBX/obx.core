@@ -798,12 +798,10 @@ class Tab extends ATab implements ISettings {
 				?>
 				<tr>
 					<td width="<?=$this->_tableLeftColumnWidth?>%"<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
-						<label for="<?=$idPrefix.$optionCode?>">
-							<?=$arOption['NAME']?>
-							<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
-								<br /><small><?=$arOption['DESCRIPTION']?></small>
-							<?endif?>
-						</label>
+						<label for="<?=$idPrefix.$optionCode?>"><?=$arOption['NAME']?></label>
+						<?if( strlen($arOption['DESCRIPTION'])>0 ):?>
+							<br /><small><?=$arOption['DESCRIPTION']?></small>
+						<?endif?>
 					</td>
 					<td<?if($bWithDescription):?> style="vertical-align: top;"<?endif?>>
 						<?=$this->_Settings->getOptionInput($optionCode, array('id' => $idPrefix.$optionCode))?>
