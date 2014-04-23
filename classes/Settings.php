@@ -620,6 +620,9 @@ class Tab extends ATab implements ISettings {
 			$arSettings = $Settings;
 			$Settings = new Settings($moduleID, $settingsID, $Settings);
 		}
+		elseif($Settings instanceof Settings) {
+			$arSettings = $Settings->getSettings();
+		}
 		$this->initSettings($Settings);
 
 		if( is_array($arTabConfig) && !array_key_exists('DIV', $arTabConfig) ) {
