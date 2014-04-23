@@ -275,6 +275,7 @@ class Settings extends MessagePoolDecorator implements ISettings {
 				if($funcValidator !== null) {
 					$arOption['CHECK_FUNC'] = $funcValidator;
 				}
+				$arOption['OLD_VALUE'] = $arOption['VALUE'];
 				$arOption['VALUE'] = $optionValue;
 				if( false === call_user_func_array($arOption['CHECK_FUNC'], array($optionCode, &$arOption, $this)) ) {
 					$bAllSuccess = false;
