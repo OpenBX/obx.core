@@ -147,32 +147,49 @@ class OBX_Build {
 		return false;
 	}
 
+	public function readVersionInterval($moduleVersion) {
+		$arVersion = array(
+			'MODULE_ID' => null,
+			'MIN_VERSION' => null,
+			'MAX_VERSION' => null,
+		);
+		if(strpos($moduleVersion, '+')) {
+			list($moduleMinVersion, $moduleMaxVersion) = explode('+', $moduleVersion);
+			$arVersion['MIN_VERSION'] = self::readVersion($moduleMinVersion);
+			$arVersion['MODULE_ID'] = $arVersion['MIN_VERSION']['MODULE_ID'];
+			$arVersion['MAX_VERSION'] = self::readVersion($arVersion['MIN_VERSION']['MODULE_ID'].'-'.$moduleMaxVersion);
+		}
+		else {
+			$arVersion['MAX_VERSION'] = self::readVersion($moduleVersion);
+			$arVersion['MODULE_ID'] = $arVersion['MAX_VERSION']['MODULE_ID'];
+			$arVersion['MIN_VERSION'] = $arVersion['MAX_VERSION'];
+		}
+		if(empty($arVersion['MIN_VERSION']) || empty($arVersion['MAX_VERSION']) || empty($arVersion['MODULE_ID'])) {
+			echo 'Не удалось прочитать интервал версий: "'.$moduleVersion.'"'.PHP_EOL;
+		}
+		return $arVersion;
+	}
+
 	/**
 	 * @param $moduleVersion
 	 * @return null|OBX_Build
 	 */
 	protected function & addDependency($moduleVersion) {
-		if(strpos($moduleVersion, '+')) {
-			list($moduleMinVersion, $moduleMaxVersion) = explode('+', $moduleVersion);
-			$arModuleMinVersion = self::readVersion($moduleMinVersion);
-			$arModuleMaxVersion = self::readVersion($arModuleMinVersion['MODULE_ID'].'-'.$moduleMaxVersion);
-		}
-		else {
-			$arModuleMaxVersion = self::readVersion($moduleVersion);
-			$arModuleMinVersion = $arModuleMaxVersion;
-		}
-		if(empty($arModuleMaxVersion)) {
+		$arVersion = self::readVersionInterval($moduleVersion);
+		if(empty($arVersion['MAX_VERSION'])) {
 			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указана версия или идентификатор модуля."'."\n";
 			return null;
 		}
-		if( $arModuleMaxVersion['RAW_VERSION'] < $arModuleMinVersion['RAW_VERSION'] ) {
+		if( $arVersion['MAX_VERSION']['RAW_VERSION'] < $arVersion['MIN_VERSION']['RAW_VERSION'] ) {
 			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указан интервал версий зависимости (мин.версия < макс.версия)'."\n";
 			return null;
 		}
-		if( !is_dir($this->_modulesDir.'/'.$arModuleMaxVersion['MODULE_ID']) ) {
-			echo 'Ошибка: Модуль "'.$arModuleMaxVersion['MODULE_ID'].'" не найден';
+		if( !is_dir($this->_modulesDir.'/'.$arVersion['MAX_VERSION']['MODULE_ID']) ) {
+			echo 'Ошибка: Модуль "'.$arVersion['MAX_VERSION']['MODULE_ID'].'" не найден';
 			return null;
 		}
+
+		$Dependency = null;
 		if($this->_ParentModule instanceof self) {
 			$Dependency = $this->_ParentModule->addDependency($moduleVersion);
 //			if( self::compareVersions($arModuleVersion['VERSION'], $Dependency->_version) !== 0) {
@@ -189,43 +206,43 @@ class OBX_Build {
 		}
 		else {
 			$bNewDependency = true;
-			if( array_key_exists($arModuleMaxVersion['MODULE_ID'], $this->_arDepModules) ) {
+			if( array_key_exists($arVersion['MAX_VERSION']['MODULE_ID'], $this->_arDepModules) ) {
 				/** @var OBX_Build $DependencyExists */
-				$DependencyExists = &$this->_arDepModules[$arModuleMaxVersion['MODULE_ID']];
+				$DependencyExists = &$this->_arDepModules[$arVersion['MAX_VERSION']['MODULE_ID']];
 				if(
 					$DependencyExists->_dependencyVersion != null
-					&& self::compareVersions($DependencyExists->_dependencyVersion, $arModuleMaxVersion['VERSION'])>=0
+					&& self::compareVersions($DependencyExists->_dependencyVersion, $arVersion['MAX_VERSION']['VERSION'])>=0
 				) {
 					$Dependency = &$DependencyExists;
 					$bNewDependency = false;
 				}
 			}
 			if($bNewDependency) {
-				$Dependency = new self($arModuleMaxVersion['MODULE_ID'], $this);
-				if($arModuleMaxVersion['VERSION'] == 'stable') {
+				$Dependency = new self($arVersion['MAX_VERSION']['MODULE_ID'], $this);
+				if($arVersion['MAX_VERSION']['VERSION'] == 'stable') {
 					$Dependency->_dependencyVersion = $Dependency->_lastPubReleaseVersion;
 				}
-				elseif($arModuleMaxVersion['VERSION'] == 'last') {
+				elseif($arVersion['MAX_VERSION']['VERSION'] == 'last') {
 					$Dependency->_dependencyVersion = $Dependency->_lastDevReleaseVersion;
 				}
 				else {
-					$Dependency->_dependencyVersion = $arModuleMaxVersion['VERSION'];
+					$Dependency->_dependencyVersion = $arVersion['MAX_VERSION']['VERSION'];
 				}
 
-				if($arModuleMinVersion['VERSION'] == 'stable') {
+				if($arVersion['MIN_VERSION']['VERSION'] == 'stable') {
 					$Dependency->_dependencyMinVersion = $Dependency->_lastPubReleaseVersion;
 				}
-				elseif($arModuleMinVersion['VERSION'] == 'last') {
+				elseif($arVersion['MIN_VERSION']['VERSION'] == 'last') {
 					$Dependency->_dependencyMinVersion = $Dependency->_version;
 				}
 				else {
-					$Dependency->_dependencyMinVersion = $arModuleMinVersion['VERSION'];
+					$Dependency->_dependencyMinVersion = $arVersion['MIN_VERSION']['VERSION'];
 				}
 			}
 		}
 
-		if($Dependency!==null) {
-			$this->_arDepModules[$arModuleMaxVersion['MODULE_ID']] = &$Dependency;
+		if(null !== $Dependency) {
+			$this->_arDepModules[$arVersion['MAX_VERSION']['MODULE_ID']] = &$Dependency;
 		}
 		return $Dependency;
 	}
@@ -543,6 +560,7 @@ class OBX_Build {
 							'EXCLUDE_PATH' => array(),
 							'DESCRIPTION' =>'',
 							'DESCRIPTION_RAW' =>'',
+							'DEPENDENCIES' => array()
 						);
 					}
 					$arResourceLineByColon = explode(':', $strResourceLine);
@@ -598,6 +616,10 @@ class OBX_Build {
 					}
 					elseif($releaseOpt == 'exclude_path') {
 						$arReleasesList['RELEASES_LIST'][$blockSection]['EXCLUDE_PATH'][] = $this->replacePathMacros($releaseOptValue);
+					}
+					if( $releaseOpt == 'dep' || $releaseOpt == 'dependency' ) {
+						$arDepVersion = self::readVersionInterval($releaseOptValue);
+						$arReleasesList['RELEASES_LIST'][$blockSection]['DEPENDENCIES'][$arDepVersion['MODULE_ID']] = $arDepVersion;
 					}
 				}
 			}
@@ -2675,6 +2697,7 @@ HELP;
 		$this->_addChangeLogToReleaseVersionFile();
 
 		// Копируем подмодули внутрь супер модуля
+		$arReleaseDeps = &$this->_arReleases[$this->_version]['DEPENDENCIES'];
 		foreach($this->_arDepModules as $Dependency) {
 			/** @var OBX_Build $Dependency */
 			$arDepVersion = self::readVersion($Dependency->_dependencyVersion);
@@ -2682,23 +2705,42 @@ HELP;
 				echo 'Ошибка: '.$this->_moduleName.': версия подмодуля "'.$Dependency->_moduleName.'" не определелна'."\n";
 				continue;
 			}
-			if( !is_dir($Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion) ) {
+			$dependencyVersion = $Dependency->_dependencyVersion;
+			$dependencyMinVersion = $Dependency->_dependencyMinVersion;
+			if(
+				array_key_exists($Dependency->_moduleName, $arReleaseDeps)
+				&& !empty($arReleaseDeps[$Dependency->_moduleName]['MAX_VERSION'])
+				&& !empty($arReleaseDeps[$Dependency->_moduleName]['MIN_VERSION'])
+			) {
+				$dependencyVersion = $arReleaseDeps[$Dependency->_moduleName]['MAX_VERSION']['VERSION'];
+				$dependencyMinVersion = $arReleaseDeps[$Dependency->_moduleName]['MIN_VERSION']['VERSION'];
+			}
+			else {
+				echo 'Предупреждение: Для в описании релиза '.$this->_version.' не задана версия подмодуля '.$Dependency->_moduleName.'.'
+					.' Будет использована версия указанная в разделе [DEPENDENCIES]:'
+					.' '.$Dependency->_moduleName.'-'.$dependencyMinVersion.'+'.$dependencyVersion
+					.PHP_EOL;
+			}
+
+			echo '  Сборка подмодуля '.$Dependency->_moduleName.'-'.$dependencyMinVersion.'+'.$dependencyVersion.'...';
+
+			if( !is_dir($Dependency->_releaseDir.'/release-'.$dependencyVersion) ) {
 				echo 'Ошибка: Папка содержащая выпуск подмодуля '
 					.$Dependency->_moduleName
-					.' ('.$Dependency->_releaseDir.'/release-'.$Dependency->_version.') не найдена'."\n";
+					.' ('.$Dependency->_releaseDir.'/release-'.$dependencyVersion.') не найдена'."\n";
 				continue;
 			}
 			// Удаляем старую папку релиза подмодуля
 			self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName);
 			// Копируем новые файлы релиза подмодуля
 			self::CopyDirFilesEx(
-				$Dependency->_releaseDir.'/release-'.$Dependency->_dependencyVersion
+				$Dependency->_releaseDir.'/release-'.$dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'
 				,true, true, FALSE, array('.git', 'modules')
 			);
 			// Даём папке с релизом подмодуля правильное имя
 			rename(
-				 $this->_releaseDir.'/release-'.$this->_version.'/install/modules/release-'.$Dependency->_dependencyVersion
+				 $this->_releaseDir.'/release-'.$this->_version.'/install/modules/release-'.$dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName
 			);
 			// копируем в релиз все обновления подмодулей
@@ -2712,8 +2754,8 @@ HELP;
 					$arUpdateVersion = self::readVersion($depReleaseFSEntry);
 					if(
 						!empty($arUpdateVersion)
-						&& self::compareVersions($arUpdateVersion['VERSION'], $Dependency->_dependencyVersion)<=0
-						&& self::compareVersions($arUpdateVersion['VERSION'], $Dependency->_dependencyMinVersion)>=0
+						&& self::compareVersions($arUpdateVersion['VERSION'], $dependencyVersion)<=0
+						&& self::compareVersions($arUpdateVersion['VERSION'], $dependencyMinVersion)>=0
 					) {
 
 						$releaseSubModUpdPath = $releaseSubModInsPath.'/'.$depReleaseFSEntry;
@@ -2739,6 +2781,7 @@ HELP;
 				}
 			}
 			closedir($depReleaseDir);
+			echo 'OK'.PHP_EOL;
 		}
 	}
 
