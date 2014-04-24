@@ -2716,8 +2716,8 @@ HELP;
 				$dependencyMinVersion = $arReleaseDeps[$Dependency->_moduleName]['MIN_VERSION']['VERSION'];
 			}
 			else {
-				echo 'Предупреждение: Для в описании релиза '.$this->_version.' не задана версия подмодуля '.$Dependency->_moduleName.'.'
-					.' Будет использована версия указанная в разделе [DEPENDENCIES]:'
+				echo '  Предупреждение: В описании выпуска '.$this->_version.' не задана версия подмодуля '.$Dependency->_moduleName.'.'
+					.' Будет использован интервал версий указанныйв разделе [DEPENDENCIES]:'
 					.' '.$Dependency->_moduleName.'-'.$dependencyMinVersion.'+'.$dependencyVersion
 					.PHP_EOL;
 			}
