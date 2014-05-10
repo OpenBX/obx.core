@@ -960,12 +960,15 @@ class AdminPage {
 	public function save($bRedirectAfterSave = true) {
 		$bAllSuccess = true;
 		foreach($this->_arTabs as $Tab) {
-			/** @var ATab|ISettings $Tab */
-			if($Tab instanceof ISettings) {
+			/** @var ITab|ISettings $Tab */
+			if($Tab instanceof ITab) {
+				$bAllSuccess = $Tab->saveTabData() && $bAllSuccess;
+			}
+			elseif($Tab instanceof ISettings) {
 				$bAllSuccess = $Tab->saveSettingsRequestData() && $bAllSuccess;
 			}
 		}
-		if( true === ($bRedirectAfterSave&&$bAllSuccess) ) {
+		if( true === ($bRedirectAfterSave && $bAllSuccess) ) {
 			$this->redirectAfterSave();
 		}
 	}
