@@ -3099,6 +3099,33 @@ HELP;
 		uksort($arUpdateDescriptions, 'OBX_Build::compareVersionsDesc');
 		file_put_contents($updateDir.'/description.ru', implode("\n", $arUpdateDescriptions));
 
+		// Ресурсы инсталлируемые в /bitrix
+		$filenamePattern = '(?:[a-z-A-Z0-9\._\-]+)';
+		$arResourcesPathPatterns = array(
+			'\./install/admin/'.$filenamePattern.'\.php',
+			'\./install/admin/ajax/'.$filenamePattern.'\.php',
+			'\./install/components/'.$filenamePattern.'/'.$filenamePattern.'/',
+			'\./install/wizards/'.$filenamePattern.'/'.$filenamePattern.'/',
+			'\./install/js/'.$filenamePattern.'/'.'(?:/|'.$filenamePattern.'\.js)?',
+			'\./install/images/'.$filenamePattern.'/'.$filenamePattern.'(?:/|\.(?:jpg|jpeg|png|gif))?',
+			'\./install/tools/'.$filenamePattern.'/'.$filenamePattern.'\.php',
+			'\./install/themes/\.default/icons/'.$filenamePattern.'(?:/|\.(?:jpg|jpeg|png|gif))',
+			'\./install/themes/\.default/'.$filenamePattern.'(?:/|\.css)?',
+			'\./install/php_interface/'.$filenamePattern.'/'.$filenamePattern.'\.php',
+		);
+		$bFirst = true;
+		$resourcesPathPattern = '~(?:';
+		foreach($arResourcesPathPatterns as $patterChunk) {
+			$resourcesPathPattern .= ($bFirst?'':'|').$patterChunk;
+			$bFirst = false;
+		}
+		$resourcesPathPattern .= ')~';
+		unset($bFirst, $patterChunk);
+
+		$arNewResources = array();
+		$arModifiedResources = array();
+		$arDeleteResources = array();
+
 		$genPhpFileHead = '<'."?php\n"
 			."// Файл сгенерирован. Не редактируйте! \n"
 			."// Используйте updater.custom.(after|before).php \n"
@@ -3110,6 +3137,10 @@ HELP;
 			$updateFilesCode .= $genUtilGenPhpFileHead;
 			$updateFilesCode .= '$errorMessage = "";'."\n";
 			$updateFilesAsDepCode = $updateFilesCode;
+			if(!empty($arChanges['NEW'])) {
+				$updateFilesCode .= 'CUpdateClientPartner::AddMessage2Log("Processing NEW files");'."\n";
+				$updateFilesAsDepCode .= 'CUpdateClientPartner::AddMessage2Log("Processing NEW files");'."\n";
+			}
 			foreach($arChanges['NEW'] as $newFSEntry) {
 				if( substr($newFSEntry, 0, 10) == './updater.' ) {
 					continue;
@@ -3153,11 +3184,18 @@ HELP;
 					// ^^^
 					continue;
 				}
+				elseif(preg_match($resourcesPathPattern, $newFSEntry)) {
+					$arNewResources[] = $newFSEntry;
+				}
 				$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$newFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$newFSEntry).'", '
 					.'$errorMessage'
 				.');'."\n";
+			}
+			if(!empty($arChanges['MODIFIED'])) {
+				$updateFilesCode .= 'CUpdateClientPartner::AddMessage2Log("Processing MODIFIED files");'."\n";
+				$updateFilesAsDepCode .= 'CUpdateClientPartner::AddMessage2Log("Processing MODIFIED files");'."\n";
 			}
 			foreach($arChanges['MODIFIED'] as $modFSEntry) {
 				if( substr($modFSEntry, 0, 10) == './updater.' ) {
@@ -3190,12 +3228,53 @@ HELP;
 				if( strpos($modFSEntry, './install/modules/') === 0 ) {
 					continue;
 				}
+				elseif(preg_match($resourcesPathPattern, $modFSEntry)) {
+					$arModifiedResources[] = $modFSEntry;
+				}
 				$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
 					.'dirname(__FILE__)."'.str_replace(array('/./', '//'. '\\'), '/', '/'.$modFSEntry).'", '
 					.'$_SERVER["DOCUMENT_ROOT"]."'.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$modFSEntry).'", '
 					.'$errorMessage'
 				.');'."\n";
 			}
+
+			if(!empty($arNewResources)) {
+				$updateFilesCode .= 'CUpdateClientPartner::AddMessage2Log("Installing NEW /bitrix resources");'."\n";
+				$updateFilesAsDepCode .= 'CUpdateClientPartner::AddMessage2Log("Installing NEW /bitrix resources");'."\n";
+				foreach($arNewResources as $newBitrixResource) {
+					$newBitrixResource = str_replace(array('/./', '//'. '\\'), '/', '/'.$newBitrixResource);
+					$newBitrixResource = substr($newBitrixResource, strlen('./install'));
+					$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
+						.'dirname(__FILE__)."/install/'.$newBitrixResource.'", '
+						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$newBitrixResource.'", '
+						.'$errorMessage'
+					.');'."\n";
+					$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
+						.'dirname(__FILE__)."/install/'.$newBitrixResource.'", '
+						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$newBitrixResource.'", '
+						.'$errorMessage'
+					.');'."\n";
+				}
+			}
+			if(!empty($arModifiedResources)) {
+				$updateFilesCode .= 'CUpdateClientPartner::AddMessage2Log("Installing MODIFIED /bitrix resources");'."\n";
+				$updateFilesAsDepCode .= 'CUpdateClientPartner::AddMessage2Log("Installing MODIFIED /bitrix resources");'."\n";
+				foreach($arModifiedResources as $updBitrixResource) {
+					$updBitrixResource = str_replace(array('/./', '//'. '\\'), '/', '/'.$updBitrixResource);
+					$updBitrixResource = substr($updBitrixResource, strlen('./install'));
+					$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
+						.'dirname(__FILE__)."/install/'.$updBitrixResource.'", '
+						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$updBitrixResource.'", '
+						.'$errorMessage'
+						.');'."\n";
+					$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
+						.'dirname(__FILE__)."/install/'.$updBitrixResource.'", '
+						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$updBitrixResource.'", '
+						.'$errorMessage'
+						.');'."\n";
+				}
+			}
+
 			$updateFilesCode .= "\n".'return $errorMessage;?'.'>';
 			$updateFilesAsDepCode .= "\n".'return $errorMessage;?'.'>';
 			file_put_contents($updateDir.'/updater.mod.files.php', $updateFilesCode);
@@ -3220,11 +3299,15 @@ HELP;
 					}
 					continue;
 				}
+				elseif(preg_match($resourcesPathPattern, $delFSEntry)) {
+					$arDeleteResources[] = $delFSEntry;
+				}
 				$updateDelFilesAsDepCode .= 'CUpdateClientPartner::__DeleteDirFilesEx($_SERVER["DOCUMENT_ROOT"]."'
 					.str_replace(array('/./', '//'. '\\'), '/', $this->_selfFolder.'/'.$delFSEntry)
 				.'");'."\n";
 				$updateDelListAsDepCode .= "\t\"".trim(str_replace(array('/./', '//'. '\\'), '/', '/'.$delFSEntry), '/')."\",\n";
 			}
+
 			$updateDelFilesCode .= "\n?".'>';
 			$updateDelFilesAsDepCode .= "\n?".'>';
 			$updateDelListCode .= ");?".">";
