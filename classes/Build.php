@@ -3238,42 +3238,40 @@ HELP;
 				.');'."\n";
 			}
 
+			$strNewResources = '';
 			if(!empty($arNewResources)) {
-				$updateFilesCode .= 'CUpdateClientPartner::AddMessage2Log("Installing NEW /bitrix resources");'."\n";
-				$updateFilesAsDepCode .= 'CUpdateClientPartner::AddMessage2Log("Installing NEW /bitrix resources");'."\n";
+				$strNewResources .= 'if( IsModuleInstalled("'.$this->_moduleName.'") ) {'."\n";
+				$strNewResources .= "\t".'CUpdateClientPartner::AddMessage2Log("Installing NEW /bitrix resources");'."\n";
 				foreach($arNewResources as $newBitrixResource) {
 					$newBitrixResource = str_replace(array('/./', '//'. '\\'), '/', '/'.$newBitrixResource);
 					$newBitrixResource = substr($newBitrixResource, strlen('./install'));
-					$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
-						.'dirname(__FILE__)."/install/'.$newBitrixResource.'", '
-						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$newBitrixResource.'", '
-						.'$errorMessage'
-					.');'."\n";
-					$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
+					$strNewResources .= "\t".'CUpdateClientPartner::__CopyDirFiles('
 						.'dirname(__FILE__)."/install/'.$newBitrixResource.'", '
 						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$newBitrixResource.'", '
 						.'$errorMessage'
 					.');'."\n";
 				}
+				$strNewResources .= "}\n";
 			}
+			$strModifiedResourcesCode = '';
 			if(!empty($arModifiedResources)) {
-				$updateFilesCode .= 'CUpdateClientPartner::AddMessage2Log("Installing MODIFIED /bitrix resources");'."\n";
-				$updateFilesAsDepCode .= 'CUpdateClientPartner::AddMessage2Log("Installing MODIFIED /bitrix resources");'."\n";
+				$strModifiedResourcesCode .= 'if( IsModuleInstalled("'.$this->_moduleName.'") ) {'."\n";
+				$strModifiedResourcesCode .= "\t".'CUpdateClientPartner::AddMessage2Log("Installing MODIFIED /bitrix resources");'."\n";
 				foreach($arModifiedResources as $updBitrixResource) {
 					$updBitrixResource = str_replace(array('/./', '//'. '\\'), '/', '/'.$updBitrixResource);
 					$updBitrixResource = substr($updBitrixResource, strlen('./install'));
-					$updateFilesCode .= 'CUpdateClientPartner::__CopyDirFiles('
-						.'dirname(__FILE__)."/install/'.$updBitrixResource.'", '
-						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$updBitrixResource.'", '
-						.'$errorMessage'
-						.');'."\n";
-					$updateFilesAsDepCode .= 'CUpdateClientPartner::__CopyDirFiles('
+					$strModifiedResourcesCode .= "\t".'CUpdateClientPartner::__CopyDirFiles('
 						.'dirname(__FILE__)."/install/'.$updBitrixResource.'", '
 						.'$_SERVER["DOCUMENT_ROOT"]."/bitrix/'.$updBitrixResource.'", '
 						.'$errorMessage'
 						.');'."\n";
 				}
+				$strModifiedResourcesCode .= "}\n";
 			}
+			$updateFilesCode .= $strNewResources;
+			$updateFilesAsDepCode .= $strNewResources;
+			$updateFilesCode .= $strModifiedResourcesCode;
+			$updateFilesAsDepCode .= $strModifiedResourcesCode;
 
 			$updateFilesCode .= "\n".'return $errorMessage;?'.'>';
 			$updateFilesAsDepCode .= "\n".'return $errorMessage;?'.'>';
