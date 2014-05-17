@@ -67,6 +67,29 @@ for($iTab=1; $iTab <= $countTabs; $iTab++ ) {
 		'DEFAULT' => '.default',
 		'PARENT' => 'TAB_'.$iTab
 	);
+    $PARAMS['TAB_'.$iTab.'_CAT_COUNT'] = array(
+        'NAME' => 'Количество подразделов',
+        'TYPE' => 'STRING',
+        'DEFAULT' => '0',
+        'PARENT' => 'TAB_'.$iTab,
+        'REFRESH' => 'Y'
+    );
+    if ( intval($arCurrentValues['TAB_'.$iTab.'_CAT_COUNT']) > 0) {
+        for ($i=0;$i++ < intval($arCurrentValues['TAB_'.$iTab.'_CAT_COUNT']);){
+            $PARAMS['TAB_'.$iTab.'_CAT_ID_'.$i] = array(
+                'NAME' => 'ID вкладки',
+                'TYPE' => 'STRING',
+                'DEFAULT' => $arCurrentValues['TAB_'.$iTab.'_ID']."_".$i,
+                'PARENT' => 'TAB_'.$iTab
+            );
+            $PARAMS['TAB_'.$iTab.'_CAT_'.$i] = array(
+                'NAME' => 'Название подраздела №'.$i,
+                'TYPE' => 'STRING',
+                'DEFAULT' => 'Подраздел №'.$i,
+                'PARENT' => 'TAB_'.$iTab,
+            );
+        }
+    }
 	$PARAMS['TAB_'.$iTab.'_RCV'] = array(
 		'NAME' => 'Рекурсивное подключение включаемых областей раздела',
 		'TYPE' => 'CHECKBOX',
