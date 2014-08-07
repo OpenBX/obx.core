@@ -11,7 +11,7 @@
 namespace OBX\Core\Exceptions;
 
 
-class LessCSSError extends AError {
+class LessCssError extends AError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'OBX_CORE_LESSCSS_ERROR_';
 

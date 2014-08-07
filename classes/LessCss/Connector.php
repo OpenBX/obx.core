@@ -8,22 +8,26 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core;
+namespace OBX\Core\LessCss;
 
-use OBX\Core\Exceptions\LessCSSError;
+use OBX\Core\Tools;
+use OBX\Core\Exceptions\LessCssError;
 
-class LessCSS {
-	static protected $_arInstances = array();
-	public function getInstance($templateName) {
-		if( array_key_exists($templateName, static::$_arInstances) ) {
-			return static::$_arInstances[$templateName];
+class Connector
+{
+
+	static protected $instances = array();
+
+	final static public function getInstance($templateName) {
+		if( array_key_exists($templateName, static::$instances) ) {
+			return static::$instances[$templateName];
 		}
 		$class = get_called_class();
 		/**
 		 * @var self $LessConnector
 		 */
 		$LessConnector = new $class($templateName);
-		static::$_arInstances[$templateName] = $LessConnector;
+		static::$instances[$templateName] = $LessConnector;
 		return $LessConnector;
 	}
 
@@ -43,11 +47,11 @@ class LessCSS {
 		if( !is_dir(OBX_DOC_ROOT.BX_ROOT.'/templates/'.$templateID)
 			|| !is_file(OBX_DOC_ROOT.BX_ROOT.'/templates/'.$templateID.'header.php')
 		) {
-			throw new LessCSSError('', LessCSSError::E_TEMPLATE_NOT_FOUND);
+			throw new LessCssError('', LessCssError::E_TEMPLATE_NOT_FOUND);
 		}
 	}
 
-	public function isLessProductionReady() {
+	public function isProductionReady() {
 		if($this->_bLessProduction === null) {
 			$optLessProduction = \COption::GetOptionString('obx.core', 'LESSCSS_PROD_READY_'.$this->_lessTemplateID, 'N');
 			if($optLessProduction == 'Y') {
@@ -60,12 +64,12 @@ class LessCSS {
 		return $this->_bLessProduction;
 	}
 
-	public function getLessHead() {
+	public function getHead() {
 		$returnString = '';
-		uksort($this->_arLessFiles, '\OBX\Core\Tools::__sortLessFiles');
+		uksort($this->_arLessFiles, array($this, '__sortLessFiles'));
 		foreach($this->_arLessFiles as $lessFilePath) {
 			$compiledLessFilePath = substr($lessFilePath, 0, -5).$this->_lessCompiledExt;
-			if(!self::isLessProductionReady()) {
+			if(!self::isProductionReady()) {
 				$returnString .= '<link rel="stylesheet/less" type="text/css" href="'.$lessFilePath.'">'."\n";
 			}
 			else {
@@ -74,7 +78,7 @@ class LessCSS {
 		}
 		return $returnString;
 	}
-	public function getLessJSHead() {
+	public function getJSHead() {
 		$returnString = '';
 		if( $this->_lessJSPath ) {
 			$returnString .= '<script type="text/javascript"> less = { env: \'development\' }; </script>'."\n";
@@ -83,23 +87,23 @@ class LessCSS {
 		}
 		return $returnString;
 	}
-	public function showLessHead() {
+	public function showHead() {
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent('OBX\Core\Tools::getLessHead');
+		$APPLICATION->AddBufferContent(array($this, 'getHead'));
 		$this->_bLessFilesConnected = true;
 		if( $this->_bConnectLessJSFileAfterLessFiles ) {
-			$APPLICATION->AddBufferContent('OBX\Core\Tools::getLessJSHead');
+			$APPLICATION->AddBufferContent(array($this, 'getJSHead'));
 			$this->_bConnectLessJSFileAfterLessFiles = false;
 			$this->_bLessJSHeadConnected = true;
 		}
 	}
-	public function showLessJSHead($bWaitWhileLessFilesConnected = true) {
+	public function showJSHead($bWaitWhileLessFilesConnected = true) {
 		if( $bWaitWhileLessFilesConnected && !$this->_bLessFilesConnected ) {
 			$this->_bConnectLessJSFileAfterLessFiles = true;
 			return;
 		}
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent('OBX\Core\Tools::getLessJSHead');
+		$APPLICATION->AddBufferContent(array($this, 'getJSHead'));
 		$this->_bLessJSHeadConnected = true;
 	}
 	public function setLessJSPath($lessJSPath, $bShowLessHead = true) {
@@ -121,18 +125,18 @@ class LessCSS {
 		if( $bShowLessHead ) {
 			if( !$this->_bLessFilesConnected ) {
 				$this->_bConnectLessJSFileAfterLessFiles = false;
-				self::showLessHead();
+				$this->showHead();
 			}
 			if( !$this->_bLessJSHeadConnected ) {
-				self::showLessJSHead();
+				$this->showJSHead();
 			}
 		}
 		return true;
 	}
-	public function getLessJSPath() {
+	public function getJSPath() {
 		return $this->_lessJSPath;
 	}
-	public function setLessCompiledExt($ext) {
+	public function setCompiledExt($ext) {
 		if( preg_match('~^\.[a-zA-Z0-9\_\-]*\.css$~', $ext)) {
 			$this->_lessCompiledExt = $ext;
 		}
@@ -142,7 +146,7 @@ class LessCSS {
 	 * @param int $sort
 	 * @return bool
 	 */
-	public function addLess($lessFilePath, $sort = 500) {
+	public function addFile($lessFilePath, $sort = 500) {
 		if( !in_array($lessFilePath, $this->_arLessFiles) ) {
 			if( substr($lessFilePath, -5) == '.less' ) {
 				$compiledLessFilePath = substr($lessFilePath, 0, -5).$this->_lessCompiledExt;
@@ -150,7 +154,7 @@ class LessCSS {
 				if( is_file(OBX_DOC_ROOT.$lessFilePath)
 					|| (
 						is_file(OBX_DOC_ROOT.$compiledLessFilePath)
-						&& self::isLessProductionReady())
+						&& $this->isProductionReady())
 				) {
 					$this->_arLessFiles[$this->_lessFilesCounter] = $lessFilePath;
 					$this->_arLessFilesSort[$this->_lessFilesCounter] = $sort;
@@ -179,9 +183,9 @@ class LessCSS {
 		}
 		return false;
 	}
-	public function getLessFilesList($lessCompiledFileExt = null) {
+	public function getFilesList($lessCompiledFileExt = null) {
 		if($lessCompiledFileExt === null) {
-			$this->setLessCompiledExt($lessCompiledFileExt);
+			$this->setCompiledExt($lessCompiledFileExt);
 		}
 		return $this->_arLessFiles;
 	}
@@ -192,7 +196,7 @@ class LessCSS {
 	 * @param $sort
 	 * @return bool
 	 */
-	public function addComponentLess($component, $lessFilePath = null, $sort = 500) {
+	public function addComponentFile($component, $lessFilePath = null, $sort = 500) {
 		/**
 		 * @global \CMain $APPLICATION
 		 */
@@ -232,7 +236,7 @@ class LessCSS {
 		if( $lessFilePath == null ) {
 			if( is_file(OBX_DOC_ROOT.$templateFolder.'/style.less')
 				|| (is_file(OBX_DOC_ROOT.$templateFolder.'/style.less.css')
-					&& $this->isLessProductionReady())
+					&& $this->isProductionReady())
 			) {
 				$lessFilePath = str_replace(
 					array('//', '///'), array('/', '/'),
@@ -249,7 +253,7 @@ class LessCSS {
 		}
 		elseif( is_file(OBX_DOC_ROOT.$templateFolder.'/'.$lessFilePath)
 			|| (is_file(OBX_DOC_ROOT.$templateFolder.'/'.$lessFilePath.'.css')
-				&& $this->isLessProductionReady() )
+				&& $this->isProductionReady() )
 		) {
 			$lessFilePath = str_replace(
 				array('//', '///'), array('/', '/'),
@@ -266,10 +270,10 @@ class LessCSS {
 		}
 		return false;
 	}
-	public function setLessProductionReady($bCompiled = true) {
+	public function setProductionReady($bCompiled = true) {
 		$this->_bLessProduction = ($bCompiled)?true:false;
 	}
-	
+
 	public function __sortLessFiles($fileIndexA, $fileIndexB) {
 		$sortA = intval($this->_arLessFilesSort[$fileIndexA] * 100 + $fileIndexA);
 		$sortB = intval($this->_arLessFilesSort[$fileIndexB] * 100 + $fileIndexB);
@@ -277,7 +281,7 @@ class LessCSS {
 		return ($sortA < $sortB)? -1 : 1;
 	}
 
-	static public function showLessBufferContentHead($templateID){
-		
+	static public function showBufferContentHead($templateID){
+
 	}
 }
