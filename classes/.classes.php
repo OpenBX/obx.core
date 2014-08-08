@@ -49,13 +49,13 @@ $arModuleClasses = array(
 	,'OBX\Core\Settings\AdminPage'				=> 'classes/Settings.php'
 	,'OBX\Core\Test\TestCase'					=> 'classes/TestCase.php'
 	,'OBX\Core\SimpleBenchMark'					=> 'classes/SimpleBenchMark.php'
-	,'OBX\Core\LessCSS'							=> 'classes/LessCSS.php'
+	,'OBX\Core\LessCss\Connector'				=> 'classes/LessCss/Connector.php'
 	,'OBX\Core\Exceptions\AError'				=> 'classes/Exceptions/AError.php'
 	,'OBX\Core\Exceptions\LogFileError'			=> 'classes/Exceptions/LogFileError.php'
 	,'OBX\Core\Exceptions\Curl\RequestError'	=> 'classes/Exceptions/Curl/RequestError.php'
 	,'OBX\Core\Exceptions\Curl\CurlError'		=> 'classes/Exceptions/Curl/CurlError.php'
 	,'OBX\Core\Exceptions\Http\DownloadError'	=> 'classes/Exceptions/Http/DownloadError.php'
-	,'OBX\Core\Exceptions\LessCSSError'			=> 'classes/Exceptions/LessCSSError'
+	,'OBX\Core\Exceptions\LessCss\LessCssError'	=> 'classes/Exceptions/LessCss/LessCssError.php'
 );
 if($DBType === 'mysql') {
 	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.php';

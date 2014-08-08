@@ -10,66 +10,82 @@
 
 namespace OBX\Core\LessCss;
 
-use OBX\Core\Tools;
-use OBX\Core\Exceptions\LessCssError;
+use OBX\Core\Exceptions\LessCss\LessCssError;
 
 class Connector
 {
 
-	static protected $instances = array();
+	const DEF_LESSJS_PATH = '/bitrix/js/obx.core/less-1.7.3.min.js';
 
-	final static public function getInstance($templateName) {
-		if( array_key_exists($templateName, static::$instances) ) {
-			return static::$instances[$templateName];
+	static protected $instances = array();
+	static protected $cacheSitesIDList = null;
+
+	final static public function getInstance($siteID = SITE_ID) {
+		if(empty($siteID) && !defined(SITE_ID)) {
+			throw new LessCssError('SITE_ID wasn\'t defined');
+		}
+		if( array_key_exists($siteID, static::$instances) ) {
+			return static::$instances[$siteID];
 		}
 		$class = get_called_class();
 		/**
 		 * @var self $LessConnector
 		 */
-		$LessConnector = new $class($templateName);
-		static::$instances[$templateName] = $LessConnector;
+		$LessConnector = new $class($siteID);
+		static::$instances[$siteID] = $LessConnector;
 		return $LessConnector;
 	}
 
-	protected $_lessTemplateID = null;
-	protected $_arLessFiles = array();
-	protected $_arLessFilesSort = array();
-	protected $_lessFilesCounter = 0;
-	protected $_bLessProduction = null;
+	final static public function getSitesIDList() {
+		if(null === self::$cacheSitesIDList) {
+			self::$cacheSitesIDList = array();
+			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+			$rsSiteList = \CSite::GetList($by='SORT', $order='ASC');
+			while($arSite = $rsSiteList->Fetch()) {
+				self::$cacheSitesIDList[] = $arSite['ID'];
+			}
+		}
+		return self::$cacheSitesIDList;
+	}
+
+	protected $_siteID = null;
+	protected $_arFiles = array();
+	protected $_arFilesSort = array();
+	protected $_FilesCounter = 0;
+	protected $_bProduction = null;
 	protected $_lessCompiledExt = '.css';
 	protected $_lessJSPath = null;
-	protected $_bLessFilesConnected = false;
-	protected $_bLessJSHeadConnected = false;
-	protected $_bConnectLessJSFileAfterLessFiles = false;
+	protected $_bFilesConnected = false;
+	protected $_bJSHeadConnected = false;
+	protected $_bConnectJSFileAfterLessFiles = false;
 
-	public function __construct($templateID) {
-		Tools::_fixFileName($templateID);
-		if( !is_dir(OBX_DOC_ROOT.BX_ROOT.'/templates/'.$templateID)
-			|| !is_file(OBX_DOC_ROOT.BX_ROOT.'/templates/'.$templateID.'header.php')
-		) {
-			throw new LessCssError('', LessCssError::E_TEMPLATE_NOT_FOUND);
+	protected function __construct($siteID) {
+		$arSiteIDList = self::getSitesIDList();
+		if( !in_array($siteID, $arSiteIDList) ) {
+			throw new LessCssError('', LessCssError::E_SITE_NOT_FOUND);
 		}
+		$this->_siteID = $siteID;
 	}
 
 	public function isProductionReady() {
-		if($this->_bLessProduction === null) {
-			$optLessProduction = \COption::GetOptionString('obx.core', 'LESSCSS_PROD_READY_'.$this->_lessTemplateID, 'N');
+		if($this->_bProduction === null) {
+			$optLessProduction = \COption::GetOptionString('obx.core', 'LESSCSS_PROD_READY_'.$this->_siteID, 'N');
 			if($optLessProduction == 'Y') {
-				$this->_bLessProduction = true;
+				$this->_bProduction = true;
 			}
 			else {
-				$this->_bLessProduction = false;
+				$this->_bProduction = false;
 			}
 		}
-		return $this->_bLessProduction;
+		return $this->_bProduction;
 	}
 
 	public function getHead() {
 		$returnString = '';
-		uksort($this->_arLessFiles, array($this, '__sortLessFiles'));
-		foreach($this->_arLessFiles as $lessFilePath) {
+		uksort($this->_arFiles, array($this, '__sortLessFiles'));
+		foreach($this->_arFiles as $lessFilePath) {
 			$compiledLessFilePath = substr($lessFilePath, 0, -5).$this->_lessCompiledExt;
-			if(!self::isProductionReady()) {
+			if(!$this->isProductionReady()) {
 				$returnString .= '<link rel="stylesheet/less" type="text/css" href="'.$lessFilePath.'">'."\n";
 			}
 			else {
@@ -80,31 +96,32 @@ class Connector
 	}
 	public function getJSHead() {
 		$returnString = '';
-		if( $this->_lessJSPath ) {
-			$returnString .= '<script type="text/javascript"> less = { env: \'development\' }; </script>'."\n";
-			$returnString .= '<script type="text/javascript" src="'.$this->_lessJSPath.'"></script>'."\n";
-			//$returnString .= '<script type="text/javascript">less.watch();</script>'."\n";
+		if( null === $this->_lessJSPath ) {
+			$this->_lessJSPath = self::DEF_LESSJS_PATH;
 		}
+		$returnString .= '<script type="text/javascript"> less = { env: \'development\' }; </script>'."\n";
+		$returnString .= '<script type="text/javascript" src="'.$this->_lessJSPath.'"></script>'."\n";
+		//$returnString .= '<script type="text/javascript">less.watch();</script>'."\n";
 		return $returnString;
 	}
 	public function showHead() {
 		global $APPLICATION;
 		$APPLICATION->AddBufferContent(array($this, 'getHead'));
-		$this->_bLessFilesConnected = true;
-		if( $this->_bConnectLessJSFileAfterLessFiles ) {
+		$this->_bFilesConnected = true;
+		if( $this->_bConnectJSFileAfterLessFiles ) {
 			$APPLICATION->AddBufferContent(array($this, 'getJSHead'));
-			$this->_bConnectLessJSFileAfterLessFiles = false;
-			$this->_bLessJSHeadConnected = true;
+			$this->_bConnectJSFileAfterLessFiles = false;
+			$this->_bJSHeadConnected = true;
 		}
 	}
 	public function showJSHead($bWaitWhileLessFilesConnected = true) {
-		if( $bWaitWhileLessFilesConnected && !$this->_bLessFilesConnected ) {
-			$this->_bConnectLessJSFileAfterLessFiles = true;
+		if( $bWaitWhileLessFilesConnected && !$this->_bFilesConnected ) {
+			$this->_bConnectJSFileAfterLessFiles = true;
 			return;
 		}
 		global $APPLICATION;
 		$APPLICATION->AddBufferContent(array($this, 'getJSHead'));
-		$this->_bLessJSHeadConnected = true;
+		$this->_bJSHeadConnected = true;
 	}
 	public function setLessJSPath($lessJSPath, $bShowLessHead = true) {
 		if( strpos($lessJSPath, 'less')===false || substr($lessJSPath, -3)!='.js' ) {
@@ -123,17 +140,17 @@ class Connector
 			throw new LessCSSError('', LessCSSError::E_LESS_JS_FILE_NOT_FOUND);
 		}
 		if( $bShowLessHead ) {
-			if( !$this->_bLessFilesConnected ) {
-				$this->_bConnectLessJSFileAfterLessFiles = false;
+			if( !$this->_bFilesConnected ) {
+				$this->_bConnectJSFileAfterLessFiles = false;
 				$this->showHead();
 			}
-			if( !$this->_bLessJSHeadConnected ) {
+			if( !$this->_bJSHeadConnected ) {
 				$this->showJSHead();
 			}
 		}
 		return true;
 	}
-	public function getJSPath() {
+	public function getLessJSPath() {
 		return $this->_lessJSPath;
 	}
 	public function setCompiledExt($ext) {
@@ -147,7 +164,7 @@ class Connector
 	 * @return bool
 	 */
 	public function addFile($lessFilePath, $sort = 500) {
-		if( !in_array($lessFilePath, $this->_arLessFiles) ) {
+		if( !in_array($lessFilePath, $this->_arFiles) ) {
 			if( substr($lessFilePath, -5) == '.less' ) {
 				$compiledLessFilePath = substr($lessFilePath, 0, -5).$this->_lessCompiledExt;
 				$sort = intval($sort);
@@ -156,9 +173,9 @@ class Connector
 						is_file(OBX_DOC_ROOT.$compiledLessFilePath)
 						&& $this->isProductionReady())
 				) {
-					$this->_arLessFiles[$this->_lessFilesCounter] = $lessFilePath;
-					$this->_arLessFilesSort[$this->_lessFilesCounter] = $sort;
-					$this->_lessFilesCounter++;
+					$this->_arFiles[$this->_FilesCounter] = $lessFilePath;
+					$this->_arFilesSort[$this->_FilesCounter] = $sort;
+					$this->_FilesCounter++;
 					return true;
 				}
 				elseif(
@@ -174,9 +191,9 @@ class Connector
 					//						&& is_file(OBX_DOC_ROOT.SITE_TEMPLATE_PATH.'/css/'.substr($compiledLessFilePath, 5))
 					//					)
 				) {
-					$this->_arLessFiles[$this->_lessFilesCounter] = SITE_TEMPLATE_PATH.'/'.$lessFilePath;
-					$this->_arLessFilesSort[$this->_lessFilesCounter] = $sort;
-					$this->_lessFilesCounter++;
+					$this->_arFiles[$this->_FilesCounter] = SITE_TEMPLATE_PATH.'/'.$lessFilePath;
+					$this->_arFilesSort[$this->_FilesCounter] = $sort;
+					$this->_FilesCounter++;
 					return true;
 				}
 			}
@@ -187,7 +204,7 @@ class Connector
 		if($lessCompiledFileExt === null) {
 			$this->setCompiledExt($lessCompiledFileExt);
 		}
-		return $this->_arLessFiles;
+		return $this->_arFiles;
 	}
 	/**
 	 * @static
@@ -242,10 +259,10 @@ class Connector
 					array('//', '///'), array('/', '/'),
 					$templateFolder.'/style.less'
 				);
-				if( !in_array($lessFilePath, $this->_arLessFiles) ) {
-					$this->_arLessFiles[$this->_lessFilesCounter] = $lessFilePath;
-					$this->_arLessFilesSort[$this->_lessFilesCounter] = $sort;
-					$this->_lessFilesCounter++;
+				if( !in_array($lessFilePath, $this->_arFiles) ) {
+					$this->_arFiles[$this->_FilesCounter] = $lessFilePath;
+					$this->_arFilesSort[$this->_FilesCounter] = $sort;
+					$this->_FilesCounter++;
 					return true;
 				}
 				return true;
@@ -260,10 +277,10 @@ class Connector
 				$templateFolder.'/'.$lessFilePath
 			);
 			if( substr($lessFilePath, -5) == '.less' ) {
-				if( !in_array($lessFilePath, $this->_arLessFiles) ) {
-					$this->_arLessFiles[$this->_lessFilesCounter] = $lessFilePath;
-					$this->_arLessFilesSort[$this->_lessFilesCounter] = $sort;
-					$this->_lessFilesCounter++;
+				if( !in_array($lessFilePath, $this->_arFiles) ) {
+					$this->_arFiles[$this->_FilesCounter] = $lessFilePath;
+					$this->_arFilesSort[$this->_FilesCounter] = $sort;
+					$this->_FilesCounter++;
 					return true;
 				}
 			}
@@ -271,12 +288,12 @@ class Connector
 		return false;
 	}
 	public function setProductionReady($bCompiled = true) {
-		$this->_bLessProduction = ($bCompiled)?true:false;
+		$this->_bProduction = ($bCompiled)?true:false;
 	}
 
 	public function __sortLessFiles($fileIndexA, $fileIndexB) {
-		$sortA = intval($this->_arLessFilesSort[$fileIndexA] * 100 + $fileIndexA);
-		$sortB = intval($this->_arLessFilesSort[$fileIndexB] * 100 + $fileIndexB);
+		$sortA = intval($this->_arFilesSort[$fileIndexA] * 100 + $fileIndexA);
+		$sortB = intval($this->_arFilesSort[$fileIndexB] * 100 + $fileIndexB);
 		if($sortA == $sortB) return 0;
 		return ($sortA < $sortB)? -1 : 1;
 	}

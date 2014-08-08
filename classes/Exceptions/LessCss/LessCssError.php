@@ -8,13 +8,14 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Exceptions;
+namespace OBX\Core\Exceptions\LessCss;
 
+use OBX\Core\Exceptions\AError;
 
 class LessCssError extends AError {
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'OBX_CORE_LESSCSS_ERROR_';
 
-	const E_TEMPLATE_NOT_FOUND = 1;
+	const E_SITE_NOT_FOUND = 1;
 	const E_LESS_JS_FILE_NOT_FOUND = 2;
 } 
