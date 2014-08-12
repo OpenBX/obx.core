@@ -125,6 +125,11 @@ class OBX_Build {
 
 	protected function _includeProlog() {
 		if( !$this->_bPrologBXIncluded ) {
+			define('BX_CHECK_SHORT_URI', false);
+			define('BX_SKIP_SESSION_EXPAND', true);
+			define('NO_KEEP_STATISTIC', 'Y');
+			define('NO_AGENT_CHECK', true);
+			define('BX_SKIP_TIMEZONE_COOKIE', true);
 			require($this->_modulesDir.'/main/include/prolog_before.php');
 			global $DB, $DBType;
 			$DBType = strtolower($DB->type);
