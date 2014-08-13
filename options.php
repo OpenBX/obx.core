@@ -27,23 +27,14 @@ IncludeModuleLangFile(__FILE__);
 
 $ModuleSettings = new SettingsAdminPage('OpenBXCoreModuleOptions');
 
-$arOptions = array(
-	'PRODUCTION_READY' => array(
-		'NAME' => GetMessage('OBX_CORE_SETTINGS_LESSCSS_PROD_READY'),
-		'TYPE' => 'CHECKBOX',
-		'VALUE' => 'N',
-		'INPUT_ATTR' => array(),
-		'SORT' => 100,
-		'GROUP' => 'OLD_API'
-	)
-);
+$arOptions = array();
 
 /** @noinspection PhpDynamicAsStaticMethodCallInspection */
 $rsSiteList = CSite::GetList($by='SORT', $order='ASC');
 $iLessCssSitesSort = 110;
 while($arSite = $rsSiteList->Fetch()) {
 	$arOptions['PROD_READY_'.$arSite['ID']] = array(
-		'NAME' => GetMessage('OBX_CORE_SETTINGS_LESSCSS__FOR_').' "'.$arSite['NAME'].'['.$arSite['ID'].']"',
+		'NAME' => GetMessage('OBX_CORE_SETTINGS_LESSCSS__FOR_').' "'.$arSite['NAME'].'" ['.$arSite['ID'].']',
 		'TYPE' => 'CHECKBOX',
 		'VALUE' => 'N',
 		'INPUT_ATTR' => array(),
@@ -61,7 +52,6 @@ $ModuleSettings->addTab(new SettingsTab(
 		'ICON' => 'settings_currency',
 		'TITLE' => GetMessage('OBX_MARKET_SETTINGS_TITLE_LESSCSS'),
 		'GROUPS' => array(
-			'OLD_API' => GetMessage('OBX_CORE_SETTINGS_LESSCSS_PROD_READY_OLD_API'),
 			'LESS_CSS_4_SITES' => GetMessage('OBX_CORE_SETTINGS_LESSCSS_PROD_READY'),
 		),
 	),
