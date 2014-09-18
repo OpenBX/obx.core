@@ -216,16 +216,16 @@ namespace OBX\Core {
 		}
 
 		// making parent-child relation table
-		static function getRelationTableFromFlatTree(&$arFlatTree, $DEPTH_KEY = 'DEPTH_LEVEL', $CHILDS_KEY = 'CHILDS', $PARENT_KEY = 'PARENT', $bModifySrcArray = false) {
+		static function getRelationTableFromFlatTree(&$arFlatTree, $DEPTH_KEY = 'DEPTH_LEVEL', $CHILDREN_KEY = 'CHILDREN', $PARENT_KEY = 'PARENT', $bModifySrcArray = false) {
 			$iItems = 0;
 			$itemsCount = count($arFlatTree);
 			$curPointer = &$arTree;
 			$curDepth = 1;
 			$prevKey = 0;
-			$parentKey = 0;
+			$parentKey = 'root';
 			$arLastKeyInDepth = array();
 			$arParents = array();
-			$arChilds = array();
+			$arChildren = array();
 			foreach($arFlatTree as $key => &$item) {
 				$iItems++;
 				if($item[$DEPTH_KEY] > $curDepth) {
@@ -234,30 +234,30 @@ namespace OBX\Core {
 				}
 				elseif($item[$DEPTH_KEY] < $curDepth) {
 					$curDepth = $item[$DEPTH_KEY];
-					$parentKey = $arLastKeyInDepth[$curDepth-1];
+					$parentKey = ($curDepth > 1)?$arLastKeyInDepth[$curDepth-1]:null;
 				}
-				$arChilds[$key][$DEPTH_KEY] = $curDepth;
-				$arChilds[$key][$PARENT_KEY] = $parentKey;
-
-				if(!$parentKey) $parentKey = 0;
-				$arParents[$parentKey][$CHILDS_KEY][] = $key;
+				if(null !== $parentKey) {
+					$arParents[$parentKey][$CHILDREN_KEY][] = $key;
+				}
+				$arChildren[$key][$PARENT_KEY] = $parentKey;
+				$arChildren[$key][$DEPTH_KEY] = $curDepth;
 				$prevKey = $key;
 				$arLastKeyInDepth[$item[$DEPTH_KEY]] = $prevKey;
 			}
 			//d($arParents, '$arParents');
-			//d($arChilds, '$arChilds');
+			//d($arChildren, '$arChildren');
 
 			$arRelations = array();
 			$arRelations[0] = $arParents[0];
-			foreach($arChilds as $childKey => $arChild) {
+			foreach($arChildren as $childKey => $arChild) {
 				$arRelations[$childKey] = $arChild;
-				$arRelations[$childKey][$CHILDS_KEY] = array();
-				$arRelations[$childKey][$CHILDS_KEY] = $arParents[$childKey][$CHILDS_KEY];
+				$arRelations[$childKey][$CHILDREN_KEY] = array();
+				$arRelations[$childKey][$CHILDREN_KEY] = $arParents[$childKey][$CHILDREN_KEY];
 
 				if($bModifySrcArray) {
 					$arFlatTree[$childKey][$PARENT_KEY] = $arChild[$PARENT_KEY];
-					$arFlatTree[$childKey][$CHILDS_KEY] = array();
-					$arFlatTree[$childKey][$CHILDS_KEY] = $arParents[$childKey][$CHILDS_KEY];
+					$arFlatTree[$childKey][$CHILDREN_KEY] = array();
+					$arFlatTree[$childKey][$CHILDREN_KEY] = $arParents[$childKey][$CHILDREN_KEY];
 				}
 			}
 			//d($arRelations, '$arRelations');

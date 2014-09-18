@@ -50,6 +50,7 @@ $arModuleClasses = array(
 	,'OBX\Core\Test\TestCase'					=> 'classes/TestCase.php'
 	,'OBX\Core\SimpleBenchMark'					=> 'classes/SimpleBenchMark.php'
 	,'OBX\Core\LessCss\Connector'				=> 'classes/LessCss/Connector.php'
+	,'OBX\Core\FlatTreeObject'					=> 'classes/FlatTreeObject.php'
 	,'OBX\Core\Exceptions\AError'				=> 'classes/Exceptions/AError.php'
 	,'OBX\Core\Exceptions\LogFileError'			=> 'classes/Exceptions/LogFileError.php'
 	,'OBX\Core\Exceptions\Curl\RequestError'	=> 'classes/Exceptions/Curl/RequestError.php'
