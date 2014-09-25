@@ -115,6 +115,17 @@ class DBSResult extends \CDBResult {
 	public function getAbstractionName() {
 		return $this->_obxAbstractionName;
 	}
+
+	/**
+	 * @return ActiveRecord
+	 */
+	public function fetchRecord() {
+
+	}
+}
+
+class ActiveRecord {
+
 }
 
 abstract class DBSimple extends MessagePoolDecorator
