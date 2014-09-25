@@ -125,7 +125,49 @@ class DBSResult extends \CDBResult {
 }
 
 class ActiveRecord {
+	protected $bNewRecord = true;
+	/** @var DBSimple */
+	protected $entity = null;
+	protected $fields = array();
+	protected $messPool = null;
 
+	public function __construct(DBSimple $entity, $ID, $fieldsList) {
+		if( !($this->entity instanceof DBSimple) ) {
+			throw new \Exception('DBSimple entity not set.');
+		}
+		$this->messPool = $this->entity->getMessagePool();
+		if(null !== $ID) {
+			$this->fields = $this->entity->getByID($ID);
+		}
+	}
+
+	public function getEntity() {
+		return $this->entity;
+	}
+
+	public function save() {
+		if( true === $this->bNewRecord ) {
+			return $this->entity->add($this->fields);
+		}
+		return $this->entity->update($this->fields);
+	}
+
+	public function read() {
+
+	}
+
+
+	/**
+	 * @param array $fields
+	 * @param bool $bAutoSave
+	 */
+	public function setField($fields, $bAutoSave = false) {
+
+	}
+
+	public function getField() {
+
+	}
 }
 
 abstract class DBSimple extends MessagePoolDecorator
