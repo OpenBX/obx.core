@@ -59,12 +59,12 @@ $arModuleClasses = array(
 	,'OBX\Core\Exceptions\LessCss\LessCssError'	=> 'classes/Exceptions/LessCss/LessCssError.php'
 );
 if($DBType === 'mysql') {
-	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.php';
 	$arModuleClasses['OBX\Core\IDBSimple']					= 'classes/DBSimple.php';
-	$arModuleClasses['OBX\Core\IDBSimpleStatic']			= 'classes/DBSimple.php';
 	$arModuleClasses['OBX\Core\DBSimple']					= 'classes/DBSimple.php';
-	$arModuleClasses['OBX\Core\DBSimpleStatic']				= 'classes/DBSimple.php';
-	//$arModuleClasses['OBX\Core\ModuleDependencies']		= 'classes/ModuleDependencies.php';
+	$arModuleClasses['OBX\Core\IDBSimpleStatic']			= 'classes/DBSimpleStatic.php';
+	$arModuleClasses['OBX\Core\DBSimpleStatic']				= 'classes/DBSimpleStatic.php';
+	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSResult.php';
+	$arModuleClasses['OBX\Core\ActiveRecord']				= 'classes/ActiveRecord.php';
 	$arModuleClasses['OBX\Core\Xml\ParserDB']				= 'classes/Xml/ParserDB.'.$DBType.'.php';
 	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';
 	$arModuleClasses['OBX\Core\Exceptions\Xml\ParserError']	= 'classes/Exceptions/Xml/ParserError.php';
