@@ -231,11 +231,15 @@ class Request {
 		return $this->_maxRedirects;
 	}
 
-	public function setPost($arPOST) {
+	public function setPost($post) {
 		curl_setopt($this->_curlHandler, CURLOPT_POST, true);
-		//$postQuery = self::arrayToCurlPost($arPOST);
-		$postQuery = http_build_query($arPOST);
-		curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $postQuery);
+		if (is_array($post)) {
+			//$post = self::arrayToCurlPost($post);
+			$post = http_build_query($post);
+		} else {
+			$post = trim($post);
+		}
+		curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $post);
 	}
 
 	/**
