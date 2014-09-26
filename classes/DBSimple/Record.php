@@ -8,17 +8,19 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core;
+namespace OBX\Core\DBSimple;
+
+use OBX\Core\Exceptions\DBSimple\RecordError;
 
 IncludeModuleLangFile(__FILE__);
 
 
 class ActiveRecord {
 	protected $bNewRecord = true;
-	/** @var DBSimple */
+	/** @var Entity */
 	protected $entity = null;
 	protected $entityFields = array();
-	protected $messPool = null;
+	protected $messagePool = null;
 
 	protected $primaryKey = null;
 	protected $primaryKeyAutoIncrement = true;
@@ -30,26 +32,23 @@ class ActiveRecord {
 	protected $result = null;
 
 	/**
-	 * @param DBSimple $entity
-	 * @param int|string|null|DBSResult $id
+	 * @param Entity $entity
+	 * @param int|string|null|Entity $id
 	 * @param null $select
 	 * @throws \ErrorException
 	 */
-	public function __construct(DBSimple $entity, $id = null, $select = null) {
-		if( !($entity instanceof DBSimple) ) {
-			throw new \ErrorException('DBSimple entity not set.');
+	public function __construct(Entity $entity, $id = null, $select = null) {
+		if( !($entity instanceof Entity) ) {
+			throw new RecordError('', RecordError::E_RECORD_ENTITY_NOT_SET);
 		}
 		$this->entity = $entity;
 		$this->primaryKey = $this->entity->getMainTablePrimaryKey();
 		$this->primaryKeyAutoIncrement = $this->entity->getMainTableAutoIncrement();
 		$this->entityFields = array_keys($this->entity->getTableFieldsCheck());
-		$this->messPool = $this->entity->getMessagePool();
+		$this->messagePool = $this->entity->getMessagePool();
 		if(null !== $id) {
-			if($id instanceof DBSResult) {
-				if($this->entity === $id->getDBSimpleEntity()) {
-					throw new \ErrorException('ActiveRecord: can\'t read DBSResult. Wrong DBSimple entity');
-				}
-				$this->_read($id);
+			if($id instanceof DBResult) {
+				$this->readFromDBResult($id);
 			}
 			elseif(null !== $this->primaryKey) {
 				$this->read($id, $select);
@@ -57,17 +56,24 @@ class ActiveRecord {
 		}
 	}
 
-
-
 	public function getEntity() {
 		return $this->entity;
 	}
 
 	public function save() {
 		if( true === $this->bNewRecord ) {
-			return $this->entity->add($this->fieldsValues);
+			$success = (true == $this->entity->add($this->fieldsValues));
 		}
-		return $this->entity->update($this->fieldsValues);
+		else {
+			$success = (true == $this->entity->update($this->fieldsValues));
+		}
+
+		if(false === $success) {
+			throw new RecordError(
+				array('#ERROR#' => $this->entity->getLastError()),
+				RecordError::E_SAVE_FAILED
+			);
+		}
 	}
 
 	public function read($id, $select = null) {
@@ -75,33 +81,58 @@ class ActiveRecord {
 			$select = $this->entityFields;
 		}
 		if(null !== $id) {
-			$this->fieldsValues = $this->_fetchResult($this->entity->getByID($id, $select, true));
+			$this->readFromDBResult($this->entity->getByID($id, $select, true));
 		}
 	}
 
-	protected function _fetchResult(DBSResult $result) {
-		$this->result = $result;
-		return $this->result->Fetch();
+	public function readFromDBResult(DBResult $result) {
+		if( !($result instanceof DBResult) ) {
+			$e = new RecordError('', RecordError::E_CANT_READ_FROM_DB_RESULT);
+			$this->messagePool->addErrorException($e);
+			throw $e;
+		}
+		if($this->entity !== $result->getDBSimpleEntity()) {
+			$e = new RecordError('', RecordError::E_WRONG_DB_RESULT_ENTITY);
+			$this->messagePool->addErrorException($e);
+			throw $e;
+		}
+		if( !($arResult = $result->Fetch()) ) {
+			
+		}
 	}
 
-	protected function _getNextResult(DBSResult $result) {
+	public function __set($field, $value) {
+		if($this->primaryKey == $field) {
+			$e = new RecordError('', RecordError::E_CANT_SET_PRIMARY_KEY_VALUE);
+			$this->messagePool->addErrorException($e);
+			throw $e;
+		}
+	}
 
+	public function __get($field) {
+
+	}
+
+	public function __isset($field) {
+		return array_key_exists($field, $this->fieldsValues)?true:false;
 	}
 
 	/**
-	 * @param string $field
-	 * @param $value
+	 * @param array $fieldsValues
 	 * @param bool $bAutoSave
 	 */
-	public function setField($field, $value, $bAutoSave = false) {
-
+	public function setFields($fieldsValues, $bAutoSave = false) {
+		foreach($fieldsValues as $field => &$value) {
+			if(array_key_exists($field, $this->entityFields) && $this->primaryKey != $field) {
+				$this->fieldsValues[$field] = $value;
+			}
+		}
+		if(true === $bAutoSave) {
+			$this->save();
+		}
 	}
 
-	public function getField($field) {
-
-	}
-
-	public function getFields($fieldName) {
+	public function getFields() {
 		return $this->fieldsValues;
 	}
 }

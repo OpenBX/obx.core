@@ -9,7 +9,7 @@
  ***********************************************/
 
 $arModuleVersion = array(
-	"VERSION" => "1.2.5",
+	"VERSION" => "1.3.0",
 	"VERSION_DATE" => "2072-02-28",
 );
 return $arModuleVersion;

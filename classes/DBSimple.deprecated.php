@@ -4,7 +4,7 @@ use OBX\Core\DBSimple\IEntity;
 use OBX\Core\DBSimple\Entity;
 use OBX\Core\DBSimple\IEntityStatic;
 use OBX\Core\DBSimple\EntityStatic;
-use OBX\Core\DBSimple\Result;
+use OBX\Core\DBSimple\DBResult;
 
 
 /**
@@ -25,7 +25,7 @@ class DBSimple extends Entity {}
  * @package OBX\Core
  * @deprecated moved to OBX\Core\DBSimple\Result
  */
-class DBSResult extends Result {}
+class DBSResult extends DBResult {}
 
 /**
  * Interface IDBSimple

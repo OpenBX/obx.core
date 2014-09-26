@@ -220,7 +220,7 @@ class MessagePool implements IMessagePool
 
 	/**
 	 * @param \Exception $Exception
-	 * @deprecated
+	 * @deprecated не желательно пользоваться этим способом. line_no будет всегда указывать в этот метод
 	 * @throws \Exception
 	 */
 	public function throwErrorException(\Exception $Exception) {

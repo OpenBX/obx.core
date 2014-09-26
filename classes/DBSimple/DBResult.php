@@ -13,7 +13,7 @@ namespace OBX\Core\DBSimple;
 //IncludeModuleLangFile(__FILE__);
 
 
-class Result extends \CDBResult {
+class DBResult extends \CDBResult {
 	protected $_obxDBSimpleEntity = null;
 	protected $_obxActiveRecord = null;
 	function __construct($DBResult = null) {

@@ -22,7 +22,7 @@ interface IEntity
 	function deleteByFilter($arFields);
 	function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
 	function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
-	function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false);
+	function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnDBResult = false);
 	function getLastQueryString();
 }
 
@@ -114,12 +114,12 @@ abstract class Entity extends MessagePoolDecorator
 	const FLD_ATTR_ALL = 8355840;		// все FIELD ATTRs вместе
 
 
-	const ERR_NOTHING_TO_DELETE = 1024;		// невозможно удалить. заись не найдена
-	const ERR_DUP_PK = 2048;				// Запись с таким PRIMARY_KEY уже есть
-	const ERR_DUP_UNIQUE = 4096;			// дублирование значения уникального индекса
-	const ERR_MISS_REQUIRED = 8192;			// Не заполнено обязательное поле
-	const ERR_NOTHING_TU_UPDATE = 16384;	// невозможно обновить. запись не найдена
-	const ERR_CANT_DEL_WITHOUT_PK = 32768;  // невозсожно использовать метод delete без использования PrimaryKey
+	const E_NOTHING_TO_DELETE = 101;		// невозможно удалить. заись не найдена
+	const E_DUP_PK = 102;					// Запись с таким PRIMARY_KEY уже есть
+	const E_DUP_UNIQUE = 103;				// дублирование значения уникального индекса
+	const E_MISS_REQUIRED = 104;			// Не заполнено обязательное поле
+	const E_NOTHING_TO_UPDATE = 105;		// невозможно обновить. запись не найдена
+	const E_CANT_DEL_WITHOUT_PK = 106;		// невозсожно использовать метод delete без использования PrimaryKey
 	//const WRN_
 	//const MSG_
 	
@@ -1299,14 +1299,14 @@ abstract class Entity extends MessagePoolDecorator
 						.'FROM ('.$sqlList.') as SELECTION';
 			$res_cnt = $DB->Query($sqlCount);
 			$res_cnt = $res_cnt->Fetch();
-			$res = new Result();
+			$res = new DBResult();
 
 			$res->NavQuery($sqlList, $res_cnt["C"], $arPagination);
 		}
 		else {
 			$sqlList = 'SELECT '.$strDistinct.$sqlList;
 			$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-			$res = new Result($res);
+			$res = new DBResult($res);
 		}
 		$this->_lastQueryString = $sqlList;
 		//$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
@@ -1351,7 +1351,7 @@ abstract class Entity extends MessagePoolDecorator
 	 * @param string |int | float $PRIMARY_KEY_VALUE
 	 * @param array | null $arSelect
 	 * @param bool $bReturnDBSResult
-	 * @return array | Result
+	 * @return array | DBResult
 	 */
 	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnDBSResult = false) {
 		global $DB;
@@ -1466,7 +1466,7 @@ abstract class Entity extends MessagePoolDecorator
 			}
 			return array();
 		}
-		$rsList = new Result($rsList);
+		$rsList = new DBResult($rsList);
 		$rsList->setDBSimpleEntity($this);
 		return $rsList;
 	}
@@ -1625,7 +1625,7 @@ abstract class Entity extends MessagePoolDecorator
 				else {
 					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_ADD_MISS_FIELD', array(
 						'#FIELD#' => $fieldName
-					)), self::ERR_MISS_REQUIRED);
+					)), self::E_MISS_REQUIRED);
 					$bBreakOnMissField = true;
 				}
 			}
@@ -1651,7 +1651,7 @@ abstract class Entity extends MessagePoolDecorator
 					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_ADD_DUP_PK', array(
 						'#PK_NAME#' => $mainTablePrimaryKey,
 						'#PK_VALUE#' => $arFields[$mainTablePrimaryKey]
-					)), self::ERR_DUP_PK);
+					)), self::E_DUP_PK);
 				}
 				return 0;
 			}
@@ -1706,7 +1706,7 @@ abstract class Entity extends MessagePoolDecorator
 							$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_ADD_DUP_UNIQUE', array(
 								'#FLD_LIST#' => $strUniqueFieldsList,
 								'#FLD_VALUES#' => $strUniqueFieldsValues
-							)), self::ERR_DUP_UNIQUE);
+							)), self::E_DUP_UNIQUE);
 						}
 						return 0;
 					}
@@ -1838,7 +1838,7 @@ abstract class Entity extends MessagePoolDecorator
 				$this->addError($arLangMessages['NOTHING_TO_UPDATE']['TEXT'], $arLangMessages['NOTHING_TO_UPDATE']['CODE']);
 			}
 			else {
-				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE'), self::ERR_NOTHING_TU_UPDATE);
+				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE'), self::E_NOTHING_TO_UPDATE);
 			}
 			return false;
 		}
@@ -1851,7 +1851,7 @@ abstract class Entity extends MessagePoolDecorator
 					$this->addError($arLangMessages['NOTHING_TO_UPDATE']['TEXT'], $arLangMessages['NOTHING_TO_UPDATE']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE'), self::ERR_NOTHING_TU_UPDATE);
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_NOTHING_TO_UPDATE'), self::E_NOTHING_TO_UPDATE);
 				}
 				return false;
 			}
@@ -1909,7 +1909,7 @@ abstract class Entity extends MessagePoolDecorator
 								$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_UPD_DUP_UNIQUE', array(
 									'#FLD_LIST#' => $strUniqueFieldsList,
 									'#FLD_VALUES#' => $strUniqueFieldsValues
-								)), self::ERR_DUP_UNIQUE);
+								)), self::E_DUP_UNIQUE);
 							}
 							return false;
 						}
@@ -1996,7 +1996,7 @@ abstract class Entity extends MessagePoolDecorator
 		if($mainTablePrimaryKey == null) {
 			$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_CANT_DEL_WITHOUT_PK', array(
 				'#TABLE#' => $arTableList[$mainTableAlias]
-			)), self::ERR_CANT_DEL_WITHOUT_PK);
+			)), self::E_CANT_DEL_WITHOUT_PK);
 			return false;
 		}
 		$bContinueAfterEvent = ($this->_onStartDelete($PRIMARY_KEY_VALUE)!==false); if(!$bContinueAfterEvent) return false;
@@ -2012,7 +2012,7 @@ abstract class Entity extends MessagePoolDecorator
 				$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 			}
 			else {
-				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
+				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::E_NOTHING_TO_DELETE);
 			}
 			return false;
 		}
@@ -2023,7 +2023,7 @@ abstract class Entity extends MessagePoolDecorator
 					$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::E_NOTHING_TO_DELETE);
 				}
 				return false;
 			}
@@ -2193,7 +2193,7 @@ abstract class Entity extends MessagePoolDecorator
 				$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 			}
 			else {
-				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
+				$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::E_NOTHING_TO_DELETE);
 			}
 			return false;
 		}
@@ -2206,7 +2206,7 @@ abstract class Entity extends MessagePoolDecorator
 					$this->addError($arLangMessages['NOTHING_TO_DELETE']['TEXT'], $arLangMessages['NOTHING_TO_DELETE']['CODE']);
 				}
 				else {
-					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::ERR_NOTHING_TO_DELETE);
+					$this->addError(GetMessage('OBX_DB_SIMPLE_ERR_NOTHING_TO_DELETE'), self::E_NOTHING_TO_DELETE);
 				}
 				return false;
 			}
@@ -2222,15 +2222,18 @@ abstract class Entity extends MessagePoolDecorator
 	}
 
 	/**
-	 * @param Result $rs
+	 * @param DBResult $rs
 	 * @param array $arErrors
 	 * @return bool
 	 */
-	public function deleteByDBResult(Result $rs, Array &$arErrors = null) {
+	public function deleteByDBResult(DBResult $rs, Array &$arErrors = null) {
 		$bResult = false;
 		$bSuccess = false;
 		$iCount = 0;
-		if( $rs->getDBSimpleEntity() === $this ) {
+		if(
+			$rs instanceof DBResult
+			&& $rs->getDBSimpleEntity() === $this
+		) {
 			if($this->_mainTablePrimaryKey !== null) {
 				while($arRow = $rs->Fetch()) {
 					$iCount++;
