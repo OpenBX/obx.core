@@ -15,7 +15,7 @@ use OBX\Core\Exceptions\DBSimple\RecordError;
 IncludeModuleLangFile(__FILE__);
 
 
-class ActiveRecord {
+class Record {
 	protected $bNewRecord = true;
 	/** @var Entity */
 	protected $entity = null;
@@ -35,7 +35,7 @@ class ActiveRecord {
 	 * @param Entity $entity
 	 * @param int|string|null|Entity $id
 	 * @param null $select
-	 * @throws \ErrorException
+	 * @throws RecordError
 	 */
 	public function __construct(Entity $entity, $id = null, $select = null) {
 		if( !($entity instanceof Entity) ) {
@@ -97,7 +97,11 @@ class ActiveRecord {
 			throw $e;
 		}
 		if( !($arResult = $result->Fetch()) ) {
-			
+			foreach($arResult as $field => &$value) {
+				if(array_key_exists($field, $this->entityFields)) {
+					$this->fieldsValues[$field] = $value;
+				}
+			}
 		}
 	}
 
@@ -107,10 +111,21 @@ class ActiveRecord {
 			$this->messagePool->addErrorException($e);
 			throw $e;
 		}
+		if(!array_key_exists($field, $this->fieldsValues)) {
+			$e = new RecordError('', RecordError::E_SET_WRONG_FIELD);
+			$this->messagePool->addErrorException($e);
+			throw $e;
+		}
+		$this->fieldsValues[$field] = $value;
 	}
 
 	public function __get($field) {
-
+		if(!array_key_exists($field, $this->fieldsValues)) {
+			$e = new RecordError('', RecordError::E_GET_WRONG_FIELD);
+			$this->messagePool->addErrorException($e);
+			throw $e;
+		}
+		return $this->fieldsValues[$field];
 	}
 
 	public function __isset($field) {

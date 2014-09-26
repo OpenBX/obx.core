@@ -12,10 +12,8 @@ namespace OBX\Core\DBSimple;
 
 //IncludeModuleLangFile(__FILE__);
 
-
 class DBResult extends \CDBResult {
 	protected $_obxDBSimpleEntity = null;
-	protected $_obxActiveRecord = null;
 	function __construct($DBResult = null) {
 		parent::__construct($DBResult);
 	}
@@ -33,11 +31,9 @@ class DBResult extends \CDBResult {
 	}
 
 	/**
-	 * @return Result
+	 * @return Record
 	 */
-	public function fetchRecord() {
-		if(null === $this->_obxActiveRecord) {
-			//$this->_obxActiveRecord
-		}
+	public function fetchDBSimpleRecord() {
+		return new Record($this->_obxDBSimpleEntity, $this);
 	}
 }
