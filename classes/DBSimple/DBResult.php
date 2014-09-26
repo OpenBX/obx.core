@@ -12,6 +12,8 @@ namespace OBX\Core\DBSimple;
 
 //IncludeModuleLangFile(__FILE__);
 
+use OBX\Core\Exceptions\DBSimple\RecordError;
+
 class DBResult extends \CDBResult {
 	protected $_obxDBSimpleEntity = null;
 	function __construct($DBResult = null) {
@@ -33,7 +35,7 @@ class DBResult extends \CDBResult {
 	/**
 	 * @return Record
 	 */
-	public function fetchDBSimpleRecord() {
+	public function fetchRecord() {
 		return new Record($this->_obxDBSimpleEntity, $this);
 	}
 }
