@@ -28,7 +28,7 @@ interface IEntityStatic
 }
 
 abstract class EntityStatic extends MessagePoolStatic implements IEntityStatic {
-	static protected $_arDBSimple = array();
+	static protected $_arDBSimpleEntities = array();
 
 	/**
 	 * @param Entity $Entity
@@ -39,9 +39,9 @@ abstract class EntityStatic extends MessagePoolStatic implements IEntityStatic {
 	}
 	final static public function __initEntity(Entity $Entity) {
 		$className = get_called_class();
-		if( !isset(self::$_arDBSimple[$className]) ) {
+		if( !isset(self::$_arDBSimpleEntities[$className]) ) {
 			if($Entity instanceof Entity) {
-				self::$_arDBSimple[$className] = $Entity;
+				self::$_arDBSimpleEntities[$className] = $Entity;
 				self::setMessagePool($Entity->getMessagePool());
 			}
 		}
@@ -53,12 +53,12 @@ abstract class EntityStatic extends MessagePoolStatic implements IEntityStatic {
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
-		if( isset(self::$_arDBSimple[$className]) ) {
-			return self::$_arDBSimple[$className];
+		if( isset(self::$_arDBSimpleEntities[$className]) ) {
+			return self::$_arDBSimpleEntities[$className];
 		}
 		$className = str_replace('OBX_', 'OBX\\', $className);
-		if( isset(self::$_arDBSimple[$className]) ) {
-			return self::$_arDBSimple[$className];
+		if( isset(self::$_arDBSimpleEntities[$className]) ) {
+			return self::$_arDBSimpleEntities[$className];
 		}
 		throw new \ErrorException("Static Class $className not initialized. May be in static decorator class used non static method. See Call-Stack");
 	}

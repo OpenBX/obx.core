@@ -1,7 +1,10 @@
 <?php
 namespace OBX\Core;
-use OBX\Core\DBSimple\Entity;
 use OBX\Core\DBSimple\IEntity;
+use OBX\Core\DBSimple\Entity;
+use OBX\Core\DBSimple\IEntityStatic;
+use OBX\Core\DBSimple\EntityStatic;
+use OBX\Core\DBSimple\Result;
 
 
 /**

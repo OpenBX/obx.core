@@ -32,7 +32,7 @@ abstract class Entity extends MessagePoolDecorator
 	protected function __construct() {}
 	final protected function __clone() {}
 
-	static protected $_arDBSimple = array();
+	static protected $_arDBSimpleEntities = array();
 
 	/**
 	 * @final
@@ -41,10 +41,10 @@ abstract class Entity extends MessagePoolDecorator
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
-		if( !isset(self::$_arDBSimple[$className]) ) {
-			self::$_arDBSimple[$className] = new $className;
+		if( !isset(self::$_arDBSimpleEntities[$className]) ) {
+			self::$_arDBSimpleEntities[$className] = new $className;
 		}
-		return self::$_arDBSimple[$className];
+		return self::$_arDBSimpleEntities[$className];
 	}
 
 
