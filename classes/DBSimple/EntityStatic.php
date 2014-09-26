@@ -8,12 +8,13 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core;
+namespace OBX\Core\DBSimple;
+use OBX\Core\MessagePoolStatic;
 
 IncludeModuleLangFile(__FILE__);
 
 
-interface IDBSimpleStatic
+interface IEntityStatic
 {
 	//static function getInstance();
 	static function add($arFields);
@@ -26,20 +27,28 @@ interface IDBSimpleStatic
 	static function getLastQueryString();
 }
 
-abstract class DBSimpleStatic extends MessagePoolStatic implements IDBSimpleStatic {
+abstract class EntityStatic extends MessagePoolStatic implements IEntityStatic {
 	static protected $_arDBSimple = array();
-	final static public function __initDBSimple(DBSimple $DBSimple) {
+
+	/**
+	 * @param Entity $Entity
+	 * @deprecated moved to __initEntity
+	 */
+	final static public function __initDBSimple(Entity $Entity) {
+		self::__initEntity($Entity);
+	}
+	final static public function __initEntity(Entity $Entity) {
 		$className = get_called_class();
 		if( !isset(self::$_arDBSimple[$className]) ) {
-			if($DBSimple instanceof DBSimple) {
-				self::$_arDBSimple[$className] = $DBSimple;
-				self::setMessagePool($DBSimple->getMessagePool());
+			if($Entity instanceof Entity) {
+				self::$_arDBSimple[$className] = $Entity;
+				self::setMessagePool($Entity->getMessagePool());
 			}
 		}
 	}
 
 	/**
-	 * @return DBSimple
+	 * @return Entity
 	 * @throws \ErrorException
 	 */
 	final static public function getInstance() {
