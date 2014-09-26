@@ -24,4 +24,5 @@ class ParserError extends AError {
 	const E_WRONG_ATTR_NAME = 7;
 	const E_ATTR_EXISTS = 8;
 	const E_XML_FILE_EXT_NOT_ALLOWED = 9;
+	const E_WRONG_PHP_MB_STR_FUNC_OVERLOAD = 10;
 }

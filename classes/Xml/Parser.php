@@ -73,6 +73,9 @@ class Parser extends ParserDB {
 			throw new ParserError('', ParserError::E_XML_FILE_NOT_FOUND);
 		}
 		if( defined('BX_UTF') ) {
+			if(intval(ini_get('mbstring.func_overload')) < 2 ) {
+				throw new ParserError('', ParserError::E_WRONG_PHP_MB_STR_FUNC_OVERLOAD);
+			}
 			$this->_bUTF = true;
 			if( function_exists('mb_orig_strpos')
 				&& function_exists('mb_orig_strlen')
