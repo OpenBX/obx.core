@@ -8,11 +8,12 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core;
+namespace OBX\Core\DBSimple;
+use OBX\Core\MessagePoolDecorator;
 
 IncludeModuleLangFile(__FILE__);
 
-interface IDBSimple
+interface IEntity
 {
 	//static function getInstance();
 	function add($arFields);
@@ -26,24 +27,24 @@ interface IDBSimple
 }
 
 
-abstract class DBSimple extends MessagePoolDecorator
+abstract class Entity extends MessagePoolDecorator
 {
 	protected function __construct() {}
 	final protected function __clone() {}
 
-	static protected $_arDBSimple = array();
+	static protected $_arDBSimpleEntities = array();
 
 	/**
 	 * @final
 	 * @static
-	 * @return DBSimple
+	 * @return Entity
 	 */
 	final static public function getInstance() {
 		$className = get_called_class();
-		if( !isset(self::$_arDBSimple[$className]) ) {
-			self::$_arDBSimple[$className] = new $className;
+		if( !isset(self::$_arDBSimpleEntities[$className]) ) {
+			self::$_arDBSimpleEntities[$className] = new $className;
 		}
-		return self::$_arDBSimple[$className];
+		return self::$_arDBSimpleEntities[$className];
 	}
 
 
@@ -163,7 +164,7 @@ abstract class DBSimple extends MessagePoolDecorator
 
 	/**
 	 * Массив с описанием полей сущнсти
-	 * Данные поля будут использоваться а аргументе метода DBSimple::getList() в качестве $arSelect
+	 * Данные поля будут использоваться а аргументе метода Entity::getList() в качестве $arSelect
 	 * Имена не обязательно совпадает с именами полей таблиц
 	 * Как видно из примера в каждм ключе содержится массив описывающий поле сущности
 	 * Массив поля сущности содержит вложенный массив ключем которого является ALIAS таблицы,
@@ -345,7 +346,7 @@ abstract class DBSimple extends MessagePoolDecorator
 	 * Значение указанных полей данного массива будут автоматически вставлены в arFilter метода GetList,
 	 * если не будут указаны там явно.
 	 * Важно понимать, что _arFilterDefault как правило заполняется в контрукторе
-	 * и знаения этих будет актуальным в момент содания объекта DBSimple
+	 * и знаения этих будет актуальным в момент содания объекта Entity
 	 * @var array
 	 * @access protected
 	 */
@@ -1109,7 +1110,7 @@ abstract class DBSimple extends MessagePoolDecorator
 	 * @param null | array $arPagination - массив для формирования постраничной навигации
 	 * @param null | array $arSelect - выбираемые поля
 	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
-	 * @return bool | DBSResult
+	 * @return bool | Result
 	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		global $DB;
@@ -1298,19 +1299,19 @@ abstract class DBSimple extends MessagePoolDecorator
 						.'FROM ('.$sqlList.') as SELECTION';
 			$res_cnt = $DB->Query($sqlCount);
 			$res_cnt = $res_cnt->Fetch();
-			$res = new DBSResult();
+			$res = new Result();
 
 			$res->NavQuery($sqlList, $res_cnt["C"], $arPagination);
 		}
 		else {
 			$sqlList = 'SELECT '.$strDistinct.$sqlList;
 			$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-			$res = new DBSResult($res);
+			$res = new Result($res);
 		}
 		$this->_lastQueryString = $sqlList;
 		//$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 
-		$res->setAbstractionName(get_called_class());
+		$res->setDBSimpleEntity($this);
 		return $res;
 	}
 
@@ -1349,10 +1350,10 @@ abstract class DBSimple extends MessagePoolDecorator
 	 * Поля-подзапросы в $arSelect так же будут проигнорированы
 	 * @param string |int | float $PRIMARY_KEY_VALUE
 	 * @param array | null $arSelect
-	 * @param bool $bReturnCDBResult
-	 * @return array | DBSResult
+	 * @param bool $bReturnDBSResult
+	 * @return array | Result
 	 */
-	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false) {
+	public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnDBSResult = false) {
 		global $DB;
 
 		$arTableList = $this->_arTableList;
@@ -1459,14 +1460,14 @@ abstract class DBSimple extends MessagePoolDecorator
 		$sqlByPrimaryKey = 'SELECT '.$sFields."\nFROM ".$sSelectFrom.$sWhere;
 		$this->_lastQueryString = $sqlByPrimaryKey;
 		$rsList = $DB->Query($sqlByPrimaryKey, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-		if(!$bReturnCDBResult) {
+		if(!$bReturnDBSResult) {
 			if( ($arElement = $rsList->Fetch()) ) {
 				return $arElement;
 			}
 			return array();
 		}
-		$rsList = new DBSResult($rsList);
-		$rsList->setAbstractionName(get_called_class());
+		$rsList = new Result($rsList);
+		$rsList->setDBSimpleEntity($this);
 		return $rsList;
 	}
 
@@ -2221,15 +2222,15 @@ abstract class DBSimple extends MessagePoolDecorator
 	}
 
 	/**
-	 * @param DBSResult $rs
+	 * @param Result $rs
 	 * @param array $arErrors
 	 * @return bool
 	 */
-	public function deleteByDBResult(DBSResult $rs, Array &$arErrors = null) {
+	public function deleteByDBResult(Result $rs, Array &$arErrors = null) {
 		$bResult = false;
 		$bSuccess = false;
 		$iCount = 0;
-		if( get_called_class() == $rs->getAbstractionName() ) {
+		if( $rs->getDBSimpleEntity() === $this ) {
 			if($this->_mainTablePrimaryKey !== null) {
 				while($arRow = $rs->Fetch()) {
 					$iCount++;
