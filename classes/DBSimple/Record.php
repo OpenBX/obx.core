@@ -11,16 +11,16 @@
 namespace OBX\Core\DBSimple;
 
 use OBX\Core\Exceptions\DBSimple\RecordError;
+use OBX\Core\MessagePoolDecorator;
 
 IncludeModuleLangFile(__FILE__);
 
 
-class Record {
+class Record extends MessagePoolDecorator {
 	protected $bNewRecord = true;
 	/** @var Entity */
 	protected $entity = null;
 	protected $entityFields = array();
-	protected $messagePool = null;
 
 	protected $primaryKey = null;
 	protected $primaryKeyAutoIncrement = true;
@@ -45,14 +45,9 @@ class Record {
 		$this->primaryKey = $this->entity->getMainTablePrimaryKey();
 		$this->primaryKeyAutoIncrement = $this->entity->getMainTableAutoIncrement();
 		$this->entityFields = array_keys($this->entity->getTableFieldsCheck());
-		$this->messagePool = $this->entity->getMessagePool();
+		$this->MessagePool = $this->entity->getMessagePool();
 		if(null !== $id) {
-			if($id instanceof DBResult) {
-				$this->readFromDBResult($id);
-			}
-			elseif(null !== $this->primaryKey) {
-				$this->read($id, $select);
-			}
+			$this->read($id, $select);
 		}
 	}
 
@@ -62,17 +57,12 @@ class Record {
 
 	public function save() {
 		if( true === $this->bNewRecord ) {
-			$success = (true == $this->entity->add($this->fieldsValues));
+			$this->bNewRecord = false;
+			return $this->entity->add($this->fieldsValues);
 		}
 		else {
-			$success = (true == $this->entity->update($this->fieldsValues));
-		}
-
-		if(false === $success) {
-			throw new RecordError(
-				array('#ERROR#' => $this->entity->getLastError()),
-				RecordError::E_SAVE_FAILED
-			);
+			$this->bNewRecord = false;
+			return $this->entity->update($this->fieldsValues);
 		}
 	}
 
@@ -88,41 +78,56 @@ class Record {
 	public function readFromDBResult(DBResult $result) {
 		if( !($result instanceof DBResult) ) {
 			$e = new RecordError('', RecordError::E_CANT_READ_FROM_DB_RESULT);
-			$this->messagePool->addErrorException($e);
+			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
 		if($this->entity !== $result->getDBSimpleEntity()) {
 			$e = new RecordError('', RecordError::E_WRONG_DB_RESULT_ENTITY);
-			$this->messagePool->addErrorException($e);
+			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
-		if( !($arResult = $result->Fetch()) ) {
+		if( $arResult = $result->Fetch() ) {
 			foreach($arResult as $field => &$value) {
-				if(array_key_exists($field, $this->entityFields)) {
+				if(in_array($field, $this->entityFields)) {
 					$this->fieldsValues[$field] = $value;
 				}
 			}
 		}
+		else {
+			$this->MessagePool->addErrorException(new RecordError('', RecordError::E_CANT_FIND_RECORD));
+			return false;
+		}
+		$this->bNewRecord = false;
+		return true;
 	}
 
 	public function __set($field, $value) {
 		if($this->primaryKey == $field) {
 			$e = new RecordError('', RecordError::E_CANT_SET_PRIMARY_KEY_VALUE);
-			$this->messagePool->addErrorException($e);
+			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
-		if(!array_key_exists($field, $this->fieldsValues)) {
-			$e = new RecordError('', RecordError::E_SET_WRONG_FIELD);
-			$this->messagePool->addErrorException($e);
+
+		if( true === $this->bNewRecord ) {
+			if(!in_array($field, $this->entityFields)) {
+				$e = new RecordError('', RecordError::E_SET_WRONG_FIELD);
+				$this->MessagePool->addErrorException($e);
+				throw $e;
+			}
+		}
+		elseif(!array_key_exists($field, $this->fieldsValues)) {
+			$e = new RecordError(array('#FIELD#' => $field), RecordError::E_SET_WRONG_FIELD);
+			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
+
 		$this->fieldsValues[$field] = $value;
 	}
 
 	public function __get($field) {
 		if(!array_key_exists($field, $this->fieldsValues)) {
-			$e = new RecordError('', RecordError::E_GET_WRONG_FIELD);
-			$this->messagePool->addErrorException($e);
+			$e = new RecordError(array('#FIELD#' => $field), RecordError::E_GET_WRONG_FIELD);
+			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
 		return $this->fieldsValues[$field];
@@ -149,5 +154,20 @@ class Record {
 
 	public function getFields() {
 		return $this->fieldsValues;
+	}
+
+	/**
+	 * TODO: Написать этот метод
+	 * @param $fields
+	 * @param null $indexName
+	 * @throws \Bitrix\Main\NotImplementedException
+	 */
+	public function readByUniqueIndex($fields, $indexName = null) {
+		throw new \Bitrix\Main\NotImplementedException('Method '.__METHOD__.' not implemented yet');
+//		$unixIndexList = $this->entity->getTableUnique();
+//		$indexFields = null;
+//		if(null !== $indexName && array_key_exists($indexName, $unixIndexList)) {
+//			$indexFields = $unixIndexList[$indexName];
+//		}
 	}
 }

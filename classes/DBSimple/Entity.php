@@ -59,14 +59,15 @@ abstract class Entity extends MessagePoolDecorator
 	const FLD_T_BCHAR = 32;					// битриксовский булев символ:) : 'Y' || 'N'
 	const FLD_T_FLOAT = 64;					// десятичный
 	const FLD_T_IDENT = 128;				// любой идентификатор ~^[a-z0-9A-Z\_]{1,254}$~
+	const FLD_T_DATETIME = 256;				// Дата и время
 
-	const FLD_T_BX_LANG_ID = 256;			// Битриксовский LID два символа
-	const FLD_T_IBLOCK_ID = 512;			// ID Инфоблока. Проверяет наличие
-	const FLD_T_IBLOCK_PROP_ID = 1024;		// ID свойства элемента ИБ. Проверяет наличие
-	const FLD_T_IBLOCK_ELEMENT_ID = 2048;	// ID элемента инфоблока. Проверяет наличие
-	const FLD_T_IBLOCK_SECTION_ID = 4096;	// ID секции инфблока. Проверяет наличие
-	const FLD_T_USER_ID = 8192;			// ID пользвоателя битрикс
-	const FLD_T_GROUP_ID = 16384;			// ID группы пользователей битрикс
+	const FLD_T_BX_LANG_ID = 512;			// Битриксовский LID два символа
+	const FLD_T_IBLOCK_ID = 1024;			// ID Инфоблока. Проверяет наличие
+	const FLD_T_IBLOCK_PROP_ID = 2048;		// ID свойства элемента ИБ. Проверяет наличие
+	const FLD_T_IBLOCK_ELEMENT_ID = 4096;	// ID элемента инфоблока. Проверяет наличие
+	const FLD_T_IBLOCK_SECTION_ID = 8192;	// ID секции инфблока. Проверяет наличие
+	const FLD_T_USER_ID = 16384;			// ID пользвоателя битрикс
+	const FLD_T_GROUP_ID = 32768;			// ID группы пользователей битрикс
 
 	/*
 	 * FIELD ATTR
@@ -80,26 +81,17 @@ abstract class Entity extends MessagePoolDecorator
 	 * FLD_T_BCHAR - в этом случае пройдет только 'Y' все что не равно 'Y' будет отброшено
 	 * @const
 	 */
-	const FLD_UNSIGNED = 32768;
+//32768
+	const FLD_UNSIGNED = 65536;
 
-	const FLD_NOT_ZERO = 65536;			// Не нуль для int и float и не пустая длина для string
-	const FLD_NOT_NULL = 131072;		// Не NULL - именно NULL как тип данных СУБД
-	const FLD_DEFAULT = 262144;			// задать значение по дефолту если нуль - зн-я по умолч. в массиве $this->_arTableFieldsDefault
-	const FLD_REQUIRED = 524288;		// значение поля является обязательным при добавлении новой строки
-	const FLD_CUSTOM_CK = 1048576;		// своя ф-ия проверки значения
-	const FLD_UNSET = 2097152;			// выкинуть значение из arFields!
+	const FLD_NOT_ZERO = 131072;			// Не нуль для int и float и не пустая длина для string
+	const FLD_NOT_NULL = 262144;		// Не NULL - именно NULL как тип данных СУБД
+	const FLD_DEFAULT = 524288;			// задать значение по дефолту если нуль - зн-я по умолч. в массиве $this->_arTableFieldsDefault
+	const FLD_REQUIRED = 1048576;		// значение поля является обязательным при добавлении новой строки
+	const FLD_CUSTOM_CK = 2097152;		// своя ф-ия проверки значения
+	const FLD_UNSET = 4194304;			// выкинуть значение из arFields!
 
-	/**
-	 * Комплексный тип сочетающий тип int c аттрибутами типичнвми для первичного ключа ID
-	 * self::FLD_T_INT
-	 * | self::FLD_NOT_NULL
-	 * | self::FLD_NOT_ZERO
-	 * | self::FLD_UNSIGNED,
-	 *
-	 * 2 + 32768 + 65536 + 131072
-	 * @const
-	 */
-	const FLD_T_PK_ID = 229378;
+
 
 
 	/**
@@ -109,10 +101,24 @@ abstract class Entity extends MessagePoolDecorator
 	 * при этом сообщение об ошибке должен добавить программист в методе __check_FIELD_NAME()
 	 * @const
 	 */
-	const FLD_BRK_INCORR = 4194304;		// прервать выполнение ф-ии, если значение неверно
 
-	const FLD_ATTR_ALL = 8355840;		// все FIELD ATTRs вместе
+	const FLD_BRK_INCORR = 8388608;		// прервать выполнение ф-ии, если значение неверно
 
+	const FLD_ATTR_ALL = 16711680;		// все FIELD ATTRs вместе
+
+
+	/**
+	 * Комплексный тип сочетающий тип int c аттрибутами типичнвми для первичного ключа ID
+	 * self::FLD_T_INT
+	 * | self::FLD_NOT_NULL
+	 * | self::FLD_NOT_ZERO
+	 * | self::FLD_UNSIGNED,
+	 *
+	 * //2 + 32768 + 65536 + 131072
+	 * 2 + 262144 + 131072 + 65536
+	 * @const
+	 */
+	const FLD_T_PK_ID = 458754;
 
 	const E_NOTHING_TO_DELETE = 101;		// невозможно удалить. заись не найдена
 	const E_DUP_PK = 102;					// Запись с таким PRIMARY_KEY уже есть
@@ -1110,7 +1116,7 @@ abstract class Entity extends MessagePoolDecorator
 	 * @param null | array $arPagination - массив для формирования постраничной навигации
 	 * @param null | array $arSelect - выбираемые поля
 	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
-	 * @return bool | Result
+	 * @return bool | DBResult
 	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		global $DB;

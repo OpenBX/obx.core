@@ -32,6 +32,10 @@ class DBResult extends \CDBResult {
 	 * @return Record
 	 */
 	public function fetchRecord() {
-		return new Record($this->_obxDBSimpleEntity, $this);
+		$record = new Record($this->_obxDBSimpleEntity);
+		if(true !== $record->readFromDBResult($this)) {
+			$record = null;
+		}
+		return $record;
 	}
 }

@@ -11,6 +11,11 @@ list($_SERVER['DOCUMENT_ROOT']) = explode('/bitrix/modules', dirname(__FILE__));
  * Потому делаем ф-ию, а её уже вызываем в интерактивном режиме и далее работаем с битриксом
  */
 function _bx() {
+	define("BX_SKIP_SESSION_EXPAND", true);
+	define("NO_KEEP_STATISTIC", "Y");
+	define("NO_AGENT_STATISTIC","Y");
+	define("NO_AGENT_CHECK", true);
+	define("DisableEventsCheck", true);
 	require $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php';
 	global $DB, $DBType;
 	$DBType = strtolower($DB->type);
