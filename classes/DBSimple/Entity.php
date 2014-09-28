@@ -1299,19 +1299,18 @@ abstract class Entity extends MessagePoolDecorator
 						.'FROM ('.$sqlList.') as SELECTION';
 			$res_cnt = $DB->Query($sqlCount);
 			$res_cnt = $res_cnt->Fetch();
-			$res = new DBResult();
+			$res = new DBResult($this);
 
 			$res->NavQuery($sqlList, $res_cnt["C"], $arPagination);
 		}
 		else {
 			$sqlList = 'SELECT '.$strDistinct.$sqlList;
 			$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
-			$res = new DBResult($res);
+			$res = new DBResult($this, $res);
 		}
 		$this->_lastQueryString = $sqlList;
 		//$res = $DB->Query($sqlList, false, 'File: '.__FILE__."<br />\nLine: ".__LINE__);
 
-		$res->setDBSimpleEntity($this);
 		return $res;
 	}
 
@@ -1466,8 +1465,7 @@ abstract class Entity extends MessagePoolDecorator
 			}
 			return array();
 		}
-		$rsList = new DBResult($rsList);
-		$rsList->setDBSimpleEntity($this);
+		$rsList = new DBResult($this, $rsList);
 		return $rsList;
 	}
 

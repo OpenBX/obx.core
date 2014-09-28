@@ -12,20 +12,16 @@ namespace OBX\Core\DBSimple;
 
 //IncludeModuleLangFile(__FILE__);
 
-use OBX\Core\Exceptions\DBSimple\RecordError;
-
 class DBResult extends \CDBResult {
 	protected $_obxDBSimpleEntity = null;
-	function __construct($DBResult = null) {
-		parent::__construct($DBResult);
-	}
-
-	public function setDBSimpleEntity(Entity $entity) {
+	function __construct(Entity $entity, \CDBResult $DBResult = null) {
 		if( $entity instanceof Entity ) {
 			$this->_obxDBSimpleEntity = $entity;
-			return true;
 		}
-		return false;
+		else {
+			throw new \ErrorException(__CLASS__.': entity object not set');
+		}
+		parent::CDBResult($DBResult);
 	}
 
 	public function getDBSimpleEntity() {

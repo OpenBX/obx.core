@@ -23,7 +23,7 @@ interface IEntityStatic
 	static function deleteByFilter($arFields);
 	static function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
 	static function getListArray($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
-	static function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false);
+	static function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnDBResult = false);
 	static function getLastQueryString();
 }
 
@@ -74,8 +74,8 @@ abstract class EntityStatic extends MessagePoolStatic implements IEntityStatic {
 	static public function deleteByFilter($arFilter, $bCheckExistence = true) {
 		return self::getInstance()->deleteByFilter($arFilter, $bCheckExistence);
 	}
-	static public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnCDBResult = false) {
-		return self::getInstance()->getByID($PRIMARY_KEY_VALUE, $arSelect, $bReturnCDBResult);
+	static public function getByID($PRIMARY_KEY_VALUE, $arSelect = null, $bReturnDBResult = false) {
+		return self::getInstance()->getByID($PRIMARY_KEY_VALUE, $arSelect, $bReturnDBResult);
 	}
 	static public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
 		return self::getInstance()->getList($arSort, $arFilter, $arGroupBy, $arPagination, $arSelect, $bShowNullFields);
