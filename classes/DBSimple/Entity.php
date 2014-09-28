@@ -220,6 +220,7 @@ abstract class Entity extends MessagePoolDecorator
 	protected $_arFieldsDescription = array();
 	public function getFieldsDescription() {
 		$arResult = array();
+		/** @noinspection PhpUnusedLocalVariableInspection */
 		foreach($this->_arTableFields as $fieldCode => &$arTblFieldName) {
 			if(
 				isset($this->_arFieldsDescription[$fieldCode])
@@ -538,10 +539,11 @@ abstract class Entity extends MessagePoolDecorator
 	 * Получить в сущности объект списка событий
 	 * Для автоматической генерации стандартного списка собйтий
 	 * данный метод должен быть выполнен в конструкторе сущности
+	 * @return void
 	 */
 	protected function _getEntityEvents() {
 		if($this->_entityModuleID === null || $this->_entityEventsID === null) {
-			return false;
+			return;
 		}
 		////////////////////////////////////////////////////////////////////
 		$this->_arEntityEvents['onStartAdd'] = GetModuleEvents(
@@ -821,6 +823,7 @@ abstract class Entity extends MessagePoolDecorator
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_IBLOCK_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_IBLOCK_ID;
 							$fieldValue = intval($fieldValue);
+							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 							$rs = \CIBlock::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
@@ -857,6 +860,7 @@ abstract class Entity extends MessagePoolDecorator
 						case self::FLD_T_USER_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_USER_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_USER_ID;
+							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 							$rs = \CUser::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
@@ -866,6 +870,8 @@ abstract class Entity extends MessagePoolDecorator
 						case self::FLD_T_GROUP_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_GROUP_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_GROUP_ID;
+
+							/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 							$rs = \CGroup::GetByID($fieldValue);
 							if( ($arData = $rs->GetNext()) ) {
 								$arCheckResult[$fieldName]['CHECK_DATA'] = $arData;
@@ -1027,6 +1033,7 @@ abstract class Entity extends MessagePoolDecorator
 					$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 					list($asName, $tblFieldName) = each($arTblField);
 					$isSubQuery = (strpos($tblFieldName,'(')!==false);
+					/** @noinspection PhpUnusedLocalVariableInspection */
 					$sqlField = $asName.'.'.$tblFieldName;
 					// Нельзя сделать фильтр по полю, которое является подзапросом
 					if($isSubQuery) {
@@ -1052,6 +1059,7 @@ abstract class Entity extends MessagePoolDecorator
 
 					if( !is_array($filterFieldValue) ) {
 						$bFieldValueNullCheck = false;
+						$strNot = '';
 						if( $filterFieldValue === null || $filterFieldValue == '__null__' ) {
 							$bFieldValueNullCheck = true;
 							$strNot = ($EQ=='<>')?' NOT':'';
@@ -1070,6 +1078,7 @@ abstract class Entity extends MessagePoolDecorator
 						$bFirstFilterFieldPart = true;
 						foreach($filterFieldValue as &$filterFieldValuePart) {
 							$bFieldValueNullCheck = false;
+							$strNot = '';
 							if( $filterFieldValuePart === null || $filterFieldValuePart == '__null__' ) {
 								$bFieldValueNullCheck = true;
 								$strNot = ($EQ=='<>')?' NOT':'';
@@ -1262,10 +1271,12 @@ abstract class Entity extends MessagePoolDecorator
 		unset($asTblName, $linkKey, $arTblLink);
 
 		$arTableLeftJoinTables = $arTableLeftJoin;
+		/** @noinspection PhpUnusedLocalVariableInspection */
 		foreach($arTableLeftJoinTables as $sdTblName => &$bJoinThisTable) {
 			$bJoinThisTable = false;
 		}
 		$arTableRightJoinTables = $arTableRightJoin;
+		/** @noinspection PhpUnusedLocalVariableInspection */
 		foreach($arTableRightJoinTables as $sdTblName => &$bJoinThisTable) {
 			$bJoinThisTable = false;
 		}

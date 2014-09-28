@@ -17,4 +17,5 @@ $MESS[_::LANG_PREFIX._::E_CANT_FIND_RECORD] = 'Не удалось найти з
 $MESS[_::LANG_PREFIX._::E_SAVE_FAILED] = 'Не удалось сохранить запись: #ERROR#';
 $MESS[_::LANG_PREFIX._::E_GET_WRONG_FIELD] = 'Обращение к несуществующему полю «#FIELD#»';
 $MESS[_::LANG_PREFIX._::E_SET_WRONG_FIELD] = 'Запись несуществущего поля «#FIELD#»';
+$MESS[_::LANG_PREFIX._::E_CANT_RD_BY_UQ_NOT_ALL_FLD] = 'Невозможно прочитать запись по значениям полей уникального ключа. Не все поля заполнены';
 //$MESS[_::LANG_PREFIX._::E_] = '';

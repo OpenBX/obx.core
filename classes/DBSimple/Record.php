@@ -156,18 +156,58 @@ class Record extends MessagePoolDecorator {
 		return $this->fieldsValues;
 	}
 
+
+	public function readByUniqueIndex(array $fields, $indexName = null) {
+		$unixIndexList = $this->entity->getTableUnique();
+		if(null !== $indexName && array_key_exists($indexName, $unixIndexList)) {
+			if( !$this->_checkUniqueIndex($fields, $unixIndexList[$indexName]) ) {
+				$e = new RecordError('', RecordError::E_CANT_RD_BY_UQ_NOT_ALL_FLD);
+				$this->addErrorException($e);
+				// Здесь обязательно кидаем исключение,
+				// поскольку задача программиста проследить за тем, что бы были заполнены все поля unique-индекса
+				throw $e;
+			}
+			return $this->_readByUniqueIndex($fields, $unixIndexList[$indexName]);
+		}
+		// Ищем уникальный индекс, поля которого переданы в аргумент $fields
+		$foundUniqueIndex = null;
+		foreach($unixIndexList as $indexName => &$indexFields) {
+			if($this->_checkUniqueIndex($fields, $indexFields, true)) {
+				$foundUniqueIndex = $indexName;
+			}
+		}
+		if(null === $foundUniqueIndex) {
+			$e = new RecordError('', RecordError::E_CANT_RD_BY_UQ_NOT_ALL_FLD);
+			$this->addErrorException($e);
+			// Здесь обязательно кидаем исключение,
+			// поскольку задача программиста проследить за тем, что бы были заполнены все поля unique-индекса
+			throw $e;
+		}
+		return $this->_readByUniqueIndex($fields, $unixIndexList[$foundUniqueIndex]);
+	}
+
+	private function _readByUniqueIndex($fields) {
+		$dbResult = $this->entity->getList(null, $fields);
+		if( !($result = $dbResult->Fetch()) ) {
+			$this->addErrorException(new RecordError('', RecordError::E_CANT_FIND_RECORD));
+			return false;
+		}
+		$this->fieldsValues = $result;
+		$this->bNewRecord = false;
+		return true;
+	}
 	/**
-	 * TODO: Написать этот метод
-	 * @param $fields
-	 * @param null $indexName
-	 * @throws \Bitrix\Main\NotImplementedException
+	 * Проверяет заполнены ли все поля указанного unique-индекса
+	 * @param array &$fields
+	 * @param array &$indexFields
+	 * @return bool
 	 */
-	public function readByUniqueIndex($fields, $indexName = null) {
-		throw new \Bitrix\Main\NotImplementedException('Method '.__METHOD__.' not implemented yet');
-//		$unixIndexList = $this->entity->getTableUnique();
-//		$indexFields = null;
-//		if(null !== $indexName && array_key_exists($indexName, $unixIndexList)) {
-//			$indexFields = $unixIndexList[$indexName];
-//		}
+	private function _checkUniqueIndex(&$fields, &$indexFields) {
+		foreach($indexFields as &$indexField) {
+			if(!array_key_exists($indexField, $fields)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

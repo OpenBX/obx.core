@@ -24,4 +24,6 @@ class RecordError extends AError
 	const E_SAVE_FAILED = 6;
 	const E_GET_WRONG_FIELD = 7;
 	const E_SET_WRONG_FIELD = 8;
+	const E_CANT_RD_BY_UQ_NOT_ALL_FLD = 9;
+
 }
