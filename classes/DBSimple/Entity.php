@@ -811,6 +811,12 @@ abstract class Entity extends MessagePoolDecorator
 								$bValueIsCorrect = true;
 							}
 							break;
+						case self::FLD_T_DATETIME:
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_DATETIME';
+							$arCheckResult[$fieldName]['FIELD_TYPE'] = self::FLD_T_DATETIME;
+							$fieldValue = trim($fieldValue);
+							// TODO: Тут надо дописать обработку дат и времени
+							break;
 						case self::FLD_T_BX_LANG_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BX_LANG_ID';
 							$arCheckResult[$fieldName]['FIELD_TYPE_MASK'] = self::FLD_T_BX_LANG_ID;
