@@ -192,6 +192,13 @@ abstract class Entity extends MessagePoolDecorator
 	 * 	?>
 	 * </code>
 	 *
+	 *
+	 * Отдельного вринимания заслуживают поля типа DATETIME
+	 * Для них в конструкторе сущности необходимо определить следующий код
+	 * <code>
+	 * $this->_arTableFields['START_DATE'] = array('E' => '('.$DB->DateToCharFunction('E.START_DATE').')');
+	 * </code>
+	 *
 	 * @var array
 	 * @access protected
 	 * @example bitrix/modules/obx.market/classes/OrdersList.php
@@ -815,6 +822,7 @@ abstract class Entity extends MessagePoolDecorator
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_DATETIME';
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = self::FLD_T_DATETIME;
 							$fieldValue = trim($fieldValue);
+							$bValueIsCorrect = true;
 							// TODO: Тут надо дописать обработку дат и времени
 							break;
 						case self::FLD_T_BX_LANG_ID:
