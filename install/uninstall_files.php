@@ -8,7 +8,6 @@ if(!defined("BX_ROOT")) {
 }
 
 DeleteDirFilesEx("/bitrix/php_interface/event.d/obx.core.debug.php");
-DeleteDirFilesEx("/bitrix/php_interface/event.d/obx.core.parse_ini_string.php");
 DeleteDirFilesEx("/bitrix/js/obx.core");
 DeleteDirFilesEx("/bitrix/components/obx/layout");
 DeleteDirFilesEx("/bitrix/components/obx/breadcrumb.get");

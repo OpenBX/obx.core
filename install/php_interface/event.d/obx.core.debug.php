@@ -26,4 +26,3 @@ if( !function_exists('dd') ) {
 		return Tools::debug($mixed, $collapse, $bPrint);
 	}
 }
-?>

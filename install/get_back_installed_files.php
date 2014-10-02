@@ -26,7 +26,6 @@ if(!function_exists("OBX_CopyDirFilesEx")) {
 	}
 }
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/php_interface/event.d/obx.core.debug.php");
-DeleteDirFilesEx("/bitrix/modules/obx.core/install/php_interface/event.d/obx.core.parse_ini_string.php");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/js/obx.core");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/layout");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/breadcrumb.get");
@@ -37,7 +36,6 @@ if( ! is_dir($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_int
 	@mkdir($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d", BX_DIR_PERMISSIONS, true);
 }
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/event.d/obx.core.debug.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d/", true, true);
-OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/event.d/obx.core.parse_ini_string.php", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d/", true, true);
 if( ! is_dir($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/js") ) {
 	@mkdir($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/js", BX_DIR_PERMISSIONS, true);
 }
