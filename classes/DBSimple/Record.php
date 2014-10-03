@@ -70,9 +70,7 @@ class Record extends MessagePoolDecorator {
 		if(null === $select || !is_array($select)) {
 			$select = $this->entityFields;
 		}
-		if(null !== $id) {
-			$this->readFromDBResult($this->entity->getByID($id, $select, true));
-		}
+		return $this->readFromDBResult($this->entity->getByID($id, $select, true));
 	}
 
 	public function readFromDBResult(DBResult $result) {
