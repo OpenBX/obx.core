@@ -770,62 +770,62 @@ namespace OBX\Core {
 
 			switch($itemDate['Month']) {
 				case 1:
-					$itemDate['MonthEn'] = 'January';
+					$itemDate['MonthEn'] = 'january';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('January');
 					$itemDate['MonthRuG'] = GetMessage('JanuaryG');
 					break;
 				case 2:
-					$itemDate['MonthEn'] = 'February';
+					$itemDate['MonthEn'] = 'february';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('February');
 					$itemDate['MonthRuG'] = GetMessage('FebruaryG');
 					break;
 				case 3:
-					$itemDate['MonthEn'] = 'March';
+					$itemDate['MonthEn'] = 'march';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('March');
 					$itemDate['MonthRuG'] = GetMessage('MarchG');
 					break;
 				case 4:
-					$itemDate['MonthEn'] = 'April';
+					$itemDate['MonthEn'] = 'april';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('April');
 					$itemDate['MonthRuG'] = GetMessage('AprilG');
 					break;
 				case 5:
-					$itemDate['MonthEn'] = 'May';
+					$itemDate['MonthEn'] = 'may';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('May');
 					$itemDate['MonthRuG'] = GetMessage('MayG');
 					break;
 				case 6:
-					$itemDate['MonthEn'] = 'June';
+					$itemDate['MonthEn'] = 'june';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('June');
 					$itemDate['MonthRuG'] = GetMessage('JuneG');
 					break;
 				case 7:
-					$itemDate['MonthEn'] = 'July';
+					$itemDate['MonthEn'] = 'july';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('July');
 					$itemDate['MonthRuG'] = GetMessage('JulyG');
 					break;
 				case 8:
-					$itemDate['MonthEn'] = 'August';
+					$itemDate['MonthEn'] = 'august';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('August');
 					$itemDate['MonthRuG'] = GetMessage('AugustG');
 					break;
 				case 9:
-					$itemDate['MonthEn'] = 'September';
+					$itemDate['MonthEn'] = 'september';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('September');
 					$itemDate['MonthRuG'] = GetMessage('SeptemberG');
 					break;
 				case 10:
-					$itemDate['MonthEn'] = 'October';
+					$itemDate['MonthEn'] = 'october';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('October');
 					$itemDate['MonthRuG'] = GetMessage('OctoberG');
 					break;
 				case 11:
-					$itemDate['MonthEn'] = 'November';
+					$itemDate['MonthEn'] = 'november';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('November');
 					$itemDate['MonthRuG'] = GetMessage('NovemberG');
 					break;
 				case 12:
-					$itemDate['MonthEn'] = 'December';
+					$itemDate['MonthEn'] = 'december';
 					$itemDate['MonthRu'] = $itemDate['MonthRuN'] = GetMessage('December');
 					$itemDate['MonthRuG'] = GetMessage('DecemberG');
 					break;
