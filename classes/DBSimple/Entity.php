@@ -1184,6 +1184,12 @@ abstract class Entity extends MessagePoolDecorator
 				$arTblField = $arTableFields[$fieldCode];
 				$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 				list($tblAlias, $tblFieldName) = each($arTblField);
+				$isDatetime = false;
+				if( array_key_exists($fieldCode, $this->_arTableFieldsCheck)
+					&& self::FLD_T_DATETIME === ($this->_arTableFieldsCheck[$fieldCode] & ~self::FLD_ATTR_ALL)
+				) {
+					$isDatetime = true;
+				}
 				$isSubQuery = (strpos($tblFieldName,'(')!==false);
 				if(!$isSubQuery){
 					$sqlField = $tblAlias.'.'.$tblFieldName;
@@ -1191,7 +1197,9 @@ abstract class Entity extends MessagePoolDecorator
 				else{
 					$sqlField = $tblFieldName;
 				}
-
+				if(true === $isDatetime) {
+					$sqlField = '('.$DB->DateToCharFunction($tblAlias.'.'.$tblFieldName).')';
+				}
 				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
 				$bFirst = false;
 				$arSelectFromTables[$tblAlias] = true;
@@ -1438,8 +1446,14 @@ abstract class Entity extends MessagePoolDecorator
 				list($asName, $tblFieldName) = each($arTblField);
 				// TODO: это может сломаться в любой момент. Разобраться Очень спорный момент. Нужно аккуратно проектировать подзапросы
 				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
-				if($isSubQuery){
+				if($isSubQuery) {
 					continue;
+				}
+				$isDatetime = false;
+				if( array_key_exists($fieldCode, $this->_arTableFieldsCheck)
+					&& self::FLD_T_DATETIME === ($this->_arTableFieldsCheck[$fieldCode] & ~self::FLD_ATTR_ALL)
+				) {
+					$isDatetime = true;
 				}
 				if($asName != $mainTable) {
 					if( !array_key_exists($asName.'.'.$tblFieldName, $arMainTableLinkStrings) ) {
@@ -1451,8 +1465,11 @@ abstract class Entity extends MessagePoolDecorator
 				}
 				$sqlField = $asName.'.'.$tblFieldName;
 				if( array_key_exists($sqlField, $arAlreadySelected) ) continue;
-				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
 				$arAlreadySelected[$sqlField] = true;
+				if(true === $isDatetime) {
+					$sqlField = '('.$DB->DateToCharFunction($asName.'.'.$tblFieldName).')';
+				}
+				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
 				$bFirst = false;
 				$arSelectFromTables[$asName] = true;
 			}
