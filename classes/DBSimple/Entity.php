@@ -1184,12 +1184,24 @@ abstract class Entity extends MessagePoolDecorator
 				$arTblField = $arTableFields[$fieldCode];
 				$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 				list($tblAlias, $tblFieldName) = each($arTblField);
-				$isDatetime = false;
-				if( array_key_exists($fieldCode, $this->_arTableFieldsCheck)
+				$arDateFormat = null;
+				if(array_key_exists('FORMAT_DATE', $arTblField)) {
+					$arDateFormat = array(
+						'TYPE' => (array_key_exists('TYPE', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['TYPE']:'FULL'),
+						'SITE_ID' => (array_key_exists('SITE_ID', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['SITE_ID']:SITE_ID),
+						'ONLY_SITE_LANG' => (array_key_exists('ONLY_SITE_LANG', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['ONLY_SITE_LANG']:false),
+					);
+				}
+				elseif( array_key_exists($fieldCode, $this->_arTableFieldsCheck)
 					&& self::FLD_T_DATETIME === ($this->_arTableFieldsCheck[$fieldCode] & ~self::FLD_ATTR_ALL)
 				) {
-					$isDatetime = true;
+					$arDateFormat = array(
+						'TYPE' => 'FULL',
+						'SITE_ID' => SITE_ID,
+						'ONLY_SITE_LANG' => false
+					);
 				}
+
 				$isSubQuery = (strpos($tblFieldName,'(')!==false);
 				if(!$isSubQuery){
 					$sqlField = $tblAlias.'.'.$tblFieldName;
@@ -1197,7 +1209,7 @@ abstract class Entity extends MessagePoolDecorator
 				else{
 					$sqlField = $tblFieldName;
 				}
-				if(true === $isDatetime) {
+				if(null !== $arDateFormat) {
 					$sqlField = '('.$DB->DateToCharFunction($tblAlias.'.'.$tblFieldName).')';
 				}
 				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
@@ -1449,12 +1461,24 @@ abstract class Entity extends MessagePoolDecorator
 				if($isSubQuery) {
 					continue;
 				}
-				$isDatetime = false;
-				if( array_key_exists($fieldCode, $this->_arTableFieldsCheck)
+				$arDateFormat = null;
+				if(array_key_exists('FORMAT_DATE', $arTblField)) {
+					$arDateFormat = array(
+						'TYPE' => (array_key_exists('TYPE', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['TYPE']:'FULL'),
+						'SITE_ID' => (array_key_exists('SITE_ID', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['SITE_ID']:SITE_ID),
+						'ONLY_SITE_LANG' => (array_key_exists('ONLY_SITE_LANG', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['ONLY_SITE_LANG']:false),
+					);
+				}
+				elseif( array_key_exists($fieldCode, $this->_arTableFieldsCheck)
 					&& self::FLD_T_DATETIME === ($this->_arTableFieldsCheck[$fieldCode] & ~self::FLD_ATTR_ALL)
 				) {
-					$isDatetime = true;
+					$arDateFormat = array(
+						'TYPE' => 'FULL',
+						'SITE_ID' => SITE_ID,
+						'ONLY_SITE_LANG' => false
+					);
 				}
+
 				if($asName != $mainTable) {
 					if( !array_key_exists($asName.'.'.$tblFieldName, $arMainTableLinkStrings) ) {
 						continue;
@@ -1466,8 +1490,13 @@ abstract class Entity extends MessagePoolDecorator
 				$sqlField = $asName.'.'.$tblFieldName;
 				if( array_key_exists($sqlField, $arAlreadySelected) ) continue;
 				$arAlreadySelected[$sqlField] = true;
-				if(true === $isDatetime) {
-					$sqlField = '('.$DB->DateToCharFunction($asName.'.'.$tblFieldName).')';
+				if(null !== $arDateFormat) {
+					$sqlField = '('.$DB->DateToCharFunction(
+							$asName.'.'.$tblFieldName,
+							$arDateFormat['TYPE'],
+							$arDateFormat['SITE_ID'],
+							$arDateFormat['ONLY_SITE_LANG']
+					).')';
 				}
 				$sFields .= (($bFirst)?"\n\t":", \n\t").$sqlField.' AS '.$fieldCode;
 				$bFirst = false;
