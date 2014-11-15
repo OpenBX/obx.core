@@ -108,7 +108,7 @@ class Record extends MessagePoolDecorator {
 
 		if( true === $this->bNewRecord ) {
 			if(!in_array($field, $this->entityFields)) {
-				$e = new RecordError('', RecordError::E_SET_WRONG_FIELD);
+				$e = new RecordError(array('#FIELD#' => $field), RecordError::E_SET_WRONG_FIELD);
 				$this->MessagePool->addErrorException($e);
 				throw $e;
 			}
