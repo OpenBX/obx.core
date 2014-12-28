@@ -70,9 +70,7 @@ class Record extends MessagePoolDecorator {
 		if(null === $select || !is_array($select)) {
 			$select = $this->entityFields;
 		}
-		if(null !== $id) {
-			$this->readFromDBResult($this->entity->getByID($id, $select, true));
-		}
+		return $this->readFromDBResult($this->entity->getByID($id, $select, true));
 	}
 
 	public function readFromDBResult(DBResult $result) {
@@ -110,7 +108,7 @@ class Record extends MessagePoolDecorator {
 
 		if( true === $this->bNewRecord ) {
 			if(!in_array($field, $this->entityFields)) {
-				$e = new RecordError('', RecordError::E_SET_WRONG_FIELD);
+				$e = new RecordError(array('#FIELD#' => $field), RecordError::E_SET_WRONG_FIELD);
 				$this->MessagePool->addErrorException($e);
 				throw $e;
 			}
