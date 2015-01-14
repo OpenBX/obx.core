@@ -57,6 +57,8 @@ $arModuleClasses = array(
 	,'OBX\Core\Exceptions\Curl\CurlError'		=> 'classes/Exceptions/Curl/CurlError.php'
 	,'OBX\Core\Exceptions\Http\DownloadError'	=> 'classes/Exceptions/Http/DownloadError.php'
 	,'OBX\Core\Exceptions\LessCss\LessCssError'	=> 'classes/Exceptions/LessCss/LessCssError.php'
+	,'OBX\Core\Assistants\BasicAssistant'		=> 'classes/Assistants/BasicAssistant.php'
+	,'OBX\Core\Assistants\IBlockAssistant'		=> 'classes/Assistants/IBlockAssistant.php'
 );
 if($DBType === 'mysql') {
 
