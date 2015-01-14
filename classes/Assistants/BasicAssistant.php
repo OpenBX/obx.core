@@ -8,7 +8,7 @@
  ** @copyright 2015 Salerman                  **
  ***********************************************/
 
-namespace OBX\Core\Assistants;
+namespace OBX\Core\Assistants_Alpha;
 
 
 abstract class BasicAssistant {
