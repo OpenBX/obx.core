@@ -62,21 +62,21 @@ $arModuleClasses = array(
 );
 if($DBType === 'mysql') {
 
-	$arModuleClasses['OBX\Core\DBSimple\IEntity']				= 'classes/DBSimple/Entity.php';
-	$arModuleClasses['OBX\Core\DBSimple\Entity']				= 'classes/DBSimple/Entity.php';
-	$arModuleClasses['OBX\Core\DBSimple\IEntityStatic']			= 'classes/DBSimple/EntityStatic.php';
-	$arModuleClasses['OBX\Core\DBSimple\EntityStatic']			= 'classes/DBSimple/EntityStatic.php';
-	$arModuleClasses['OBX\Core\DBSimple\DBResult']				= 'classes/DBSimple/DBResult.php';
-	$arModuleClasses['OBX\Core\DBSimple\Record']				= 'classes/DBSimple/Record.php';
-	$arModuleClasses['OBX\Core\Exceptions\DBSimple\RecordError']= 'classes/Exceptions/DBSimple/RecordError.php';
-
+	$arModuleClasses['OBX\Core\DBSimple\IEntity']					= 'classes/DBSimple/Entity.php';
+	$arModuleClasses['OBX\Core\DBSimple\Entity']					= 'classes/DBSimple/Entity.php';
+	$arModuleClasses['OBX\Core\DBSimple\IEntityStatic']				= 'classes/DBSimple/EntityStatic.php';
+	$arModuleClasses['OBX\Core\DBSimple\EntityStatic']				= 'classes/DBSimple/EntityStatic.php';
+	$arModuleClasses['OBX\Core\DBSimple\DBResult']					= 'classes/DBSimple/DBResult.php';
+	$arModuleClasses['OBX\Core\DBSimple\Record']					= 'classes/DBSimple/Record.php';
+	$arModuleClasses['OBX\Core\DBSimple\EntityGenerator']			= 'classes/DBSimple/EntityGenerator.php';
+	$arModuleClasses['OBX\Core\Exceptions\DBSimple\RecordError']	= 'classes/Exceptions/DBSimple/RecordError.php';
+	$arModuleClasses['OBX\Core\Exceptions\DBSimple\EntityGeneratorError']= 'classes/Exceptions/DBSimple/EntityGeneratorError.php';
 
 	$arModuleClasses['OBX\Core\IDBSimple']					= 'classes/DBSimple.deprecated.php';
 	$arModuleClasses['OBX\Core\DBSimple']					= 'classes/DBSimple.deprecated.php';
 	$arModuleClasses['OBX\Core\IDBSimpleStatic']			= 'classes/DBSimple.deprecated.php';
 	$arModuleClasses['OBX\Core\DBSimpleStatic']				= 'classes/DBSimple.deprecated.php';
 	$arModuleClasses['OBX\Core\DBSResult']					= 'classes/DBSimple.deprecated.php';
-
 
 	$arModuleClasses['OBX\Core\Xml\ParserDB']				= 'classes/Xml/ParserDB.'.$DBType.'.php';
 	$arModuleClasses['OBX\Core\Xml\Parser']					= 'classes/Xml/Parser.php';

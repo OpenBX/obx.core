@@ -2,41 +2,55 @@
 	"module": "obx.core",
 	"namespace": "OBX\\Core\\DBSEntities",
 	"class": "TestEntity",
-	"class_path": "classes/DBSEntities/TestEntity",
+	"class_path": "dbs_entity/DBSEntities/TestEntity.php",
 	"name": {"ru": "Тестовая сущность", "en": "Entity for testing"},
 	"version": "0.1.0",
-	"main_table_alias": "E",
-	"field_flag": [
-		{"field": "ID", "flag": ["type_pk_id"]},
-		{"field": "NAME", "flag": ["type_string", "not_null", "required"]},
-		{"field": "CODE", "flag": ["type_ident", "not_null", "required"]},
-		{"field": "SOME_BCHAR", "flag": ["type_bchar", "not_null", "default_value"]},
-		{"field": "TIMESTAMP_X", "flag": ["type_datetime", "not_null"]},
-		{"field": "SOME_TEXT", "flag": ["type_string"]}
-	],
-	"select_field": [
-		{"table": "E", "name": "ID", "field": "ID"},
-		{"table": "E", "name": "CODE", "field": "CODE"},
-		{"table": "E", "name": "NAME", "field": "NAME"},
-		{"table": "E", "name": "SOME_BCHAR", "field": "SOME_BCHAR"},
-		{"table": "E", "name": "TIMESTAMP_X", "field": "TIMESTAMP_X"},
-		{"table": "E", "name": "SOME_TEXT", "field": "SOME_TEXT"}
+	"main_table": "E",
+	"field": [
+		{"name": "ID",			"table": "E", "field": "ID"},
+		{"name": "CODE",		"table": "E", "field": "CODE"},
+		{"name": "NAME",		"table": "E", "field": "NAME"},
+		{"name": "SOME_BCHAR",	"table": "E", "field": "SOME_BCHAR"},
+		{"name": "TIMESTAMP_X",	"table": "E", "field": "TIMESTAMP_X"},
+		{"name": "SOME_TEXT",	"table": "E", "field": "SOME_TEXT"},
+		{"name": "IBLOCK_ID",	"table": "IB", "field": "ID"},
+		{"name": "IBLOCK_CODE",	"table": "IB", "field": "CODE"},
+		{"name": "IBLOCK_NAME",	"table": "IB", "field": "NAME"}
 	],
 	"table": [
 		{
 			"name": "obx_core_test_entity",
 			"alias": "E",
 			"fields": [
-				{"name": "ID", "type": "int(11)", "length": 11, "primary_key": true, "auto_increment": true},
-				{"name": "CODE", "type": "varchar", "length": 255},
-				{"name": "NAME", "type": "varchar", "length": 255},
-				{"name": "SOME_BCHAR", "type": "char", "length": 1},
+				{"name": "ID", "type": "int", "length": 11,
+					"primary_key": true, "auto_increment": true,
+					"null": false
+				},
+				{"name": "CODE", "type": "ident"},
+				{"name": "NAME", "type": "string", "length": 255,
+					"null": false, "required": true
+				},
+				{"name": "SOME_BCHAR", "type": "bchar",
+					"null": false, "required": true, "default": "Y"
+				},
 				{"name": "TIMESTAMP_X", "type": "datetime"},
-				{"name": "SOME_TEXT", "type": "text"}
-			]
+				{"name": "SOME_TEXT", "type": "text"},
+				{"name": "IBLOCK_ID", "type": "int", "length": 11}
+			],
+			"create_table": true
 		},
 		{
-			"entity": "./SecondEntity.xml"
+			"name": "b_iblock",
+			"alias": "IB",
+			"create_table": false,
+			"join": "link",
+			"join_on": "E.IBLOCK_ID = IB.ID"
+		},
+		{
+			"entity": "./SecondEntity.json",
+			"alias": "S",
+			"join": "left",
+			"join_on": "E.ID = S.TEST_ENTITY_ID"
 		}
 	],
 	"unique": [
