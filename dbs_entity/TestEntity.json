@@ -6,6 +6,7 @@
 	"name": {"ru": "Тестовая сущность", "en": "Entity for testing"},
 	"version": "0.1.0",
 	"main_table": "E",
+	"events_id": "TestEntityRow",
 	"field": [
 		{"name": "ID",			"table": "E", "field": "ID"},
 		{"name": "CODE",		"table": "E", "field": "CODE"},
