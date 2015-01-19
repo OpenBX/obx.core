@@ -5,14 +5,13 @@
 	"class_path": "dbs_entity/DBSEntities/TestEntity.php",
 	"name": {"ru": "Тестовая сущность", "en": "Entity for testing"},
 	"version": "0.1.0",
-	"main_table": "E",
 	"events_id": "TestEntityRow",
 	"get_list_fields": [
 		{"name": "ID",			"table": "E", "field": "ID"},
 		{"name": "CODE",		"table": "E", "field": "CODE"},
 		{"name": "NAME",		"table": "E", "field": "NAME"},
 		{"name": "SOME_BCHAR",	"table": "E", "field": "SOME_BCHAR"},
-		{"name": "TIMESTAMP_X",	"table": "E", "field": "TIMESTAMP_X", "datetime"},
+		{"name": "TIMESTAMP_X",	"table": "E", "field": "TIMESTAMP_X", "datetime":true},
 		{"name": "SOME_TEXT",	"table": "E", "field": "SOME_TEXT"},
 		{"name": "IBLOCK_ID",	"table": "IB", "field": "ID"},
 		{"name": "IBLOCK_CODE",	"table": "IB", "field": "CODE"},
@@ -36,6 +35,7 @@
 	"group_by_default": ["E.ID"],
 	"tables": [
 		{
+			"main_table": true,
 			"name": "obx_core_test_entity",
 			"alias": "E",
 			"fields": [
@@ -54,7 +54,13 @@
 				{"name": "SOME_TEXT", "type": "text"},
 				{"name": "IBLOCK_ID", "type": "int", "length": 11}
 			],
-			"create_table": true
+			"create_table": true,
+			"unique": [
+				{"name": "obx_core_test_entity_code_bchar", "fields": ["CODE", "SOME_BCHAR"]}
+			],
+			"index": [
+				{"name": "obx_core_test_entity_code", "fields": ["CODE"]}
+			]
 		},
 		{
 			"name": "b_iblock",
@@ -69,11 +75,5 @@
 			"join": "left",
 			"join_on": "E.ID = S.TEST_ENTITY_ID"
 		}
-	],
-	"unique": [
-		{"name": "obx_core_test_entity_code_bchar", "fields": ["CODE", "SOME_BCHAR"]}
-	],
-	"index": [
-		{"name": "obx_core_test_entity_code", "fields": ["CODE"]}
 	]
 }
