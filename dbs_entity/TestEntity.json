@@ -12,7 +12,7 @@
 		{"name": "CODE",		"table": "E", "field": "CODE"},
 		{"name": "NAME",		"table": "E", "field": "NAME"},
 		{"name": "SOME_BCHAR",	"table": "E", "field": "SOME_BCHAR"},
-		{"name": "TIMESTAMP_X",	"table": "E", "field": "TIMESTAMP_X"},
+		{"name": "TIMESTAMP_X",	"table": "E", "field": "TIMESTAMP_X", "datetime"},
 		{"name": "SOME_TEXT",	"table": "E", "field": "SOME_TEXT"},
 		{"name": "IBLOCK_ID",	"table": "IB", "field": "ID"},
 		{"name": "IBLOCK_CODE",	"table": "IB", "field": "CODE"},
@@ -22,7 +22,7 @@
 					'\"',S.ID, '\":', '\"',S.NAME, '\"'\
 				),']')",
 			"required_tables": ["S"],
-			"required_group_by": ["S.ID"]
+			"required_group_by": ["E.ID"]
 		},
 		{"name": "SEC_ENT_CNT", "table": "S",
 			"sub_query": "count(S.ID)",
@@ -33,6 +33,7 @@
 
 		}
 	],
+	"group_by_default": ["E.ID"],
 	"tables": [
 		{
 			"name": "obx_core_test_entity",

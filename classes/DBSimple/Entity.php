@@ -1178,6 +1178,7 @@ abstract class Entity extends MessagePoolDecorator
 			}
 		}
 		$bFirst = true;
+		$arSubQueryFields = array();
 		foreach($arSelect as $fieldCode) {
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
@@ -1201,8 +1202,8 @@ abstract class Entity extends MessagePoolDecorator
 					);
 				}
 
-				$isSubQuery = (strpos($tblFieldName,'(')!==false);
-				if(!$isSubQuery){
+				$arSubQueryFields[$fieldCode] = (strpos($tblFieldName,'(')!==false);
+				if(!$arSubQueryFields[$fieldCode]){
 					$sqlField = $tblAlias.'.'.$tblFieldName;
 				}
 				else{
@@ -1247,8 +1248,10 @@ abstract class Entity extends MessagePoolDecorator
 					$arTblField = $arTableFields[$fieldCode];
 					$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 					list($tblAlias, $tblFieldName) = each($arTblField);
-					$isSubQuery = (strpos($tblFieldName,'(')!==false);
-					if (!$isSubQuery){
+					if(!isset($arSubQueryFields[$fieldCode])) {
+						$arSubQueryFields[$fieldCode] = (strpos($tblFieldName,'(')!==false);
+					}
+					if (!$arSubQueryFields[$fieldCode]){
 						$sqlField = $tblAlias.'.'.$tblFieldName;
 					}else{
 						$sqlField = $fieldCode;
@@ -1263,23 +1266,26 @@ abstract class Entity extends MessagePoolDecorator
 		// Группируем
 		$arGroupByFields = $this->_arGroupByFields;
 		if( !empty($arGroupBy) && is_array($arGroupBy) ) {
-			foreach ($arGroupBy as $groupField){
-				if( isset($arTableFields[$fieldCode]) ) {
+			foreach ($arGroupBy as $fieldCode){
+				if( array_key_exists($fieldCode, $arTableFields) ) {
 					$arTblField = $arTableFields[$fieldCode];
+					$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 					list($tblAlias, $tblFieldName) = each($arTblField);
-					if( !isset($arGroupByFields[$tblAlias]) ) {
-						$arGroupByFields[$tblAlias] = $tblFieldName;
+					if(!isset($arSubQueryFields[$fieldCode])) {
+						$arSubQueryFields[$fieldCode] = (strpos($tblFieldName,'(')!==false);
+					}
+					if($arSubQueryFields[$fieldCode]) {
+						continue;
+					}
+					if( !in_array($tblAlias.'.'.$tblFieldName, $arGroupByFields) ) {
+						$arGroupByFields[] = $tblAlias.'.'.$tblFieldName;
 					}
 				}
 			}
 		}
 		$sGroupBy = '';
-		$arSqlGroupedByField = array();
-		foreach($arGroupByFields as $tblAlias => $tblFieldName) {
-			$arSqlGroupedByField[] = $tblAlias.'.'.$tblFieldName;
-		}
-		if( count($arSqlGroupedByField) > 0 ) {
-			$sGroupBy = "\nGROUP BY ( ".implode(", ",$arSqlGroupedByField)." )";
+		if( !empty($arGroupByFields) > 0 ) {
+			$sGroupBy = "\nGROUP BY ( ".implode(", ",$arGroupByFields)." )";
 		}
 
 		// Часть WHERE в которой связываем таблицы
