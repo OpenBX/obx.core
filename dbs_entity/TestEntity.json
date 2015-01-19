@@ -7,7 +7,7 @@
 	"version": "0.1.0",
 	"main_table": "E",
 	"events_id": "TestEntityRow",
-	"field": [
+	"get_list_fields": [
 		{"name": "ID",			"table": "E", "field": "ID"},
 		{"name": "CODE",		"table": "E", "field": "CODE"},
 		{"name": "NAME",		"table": "E", "field": "NAME"},
@@ -16,9 +16,24 @@
 		{"name": "SOME_TEXT",	"table": "E", "field": "SOME_TEXT"},
 		{"name": "IBLOCK_ID",	"table": "IB", "field": "ID"},
 		{"name": "IBLOCK_CODE",	"table": "IB", "field": "CODE"},
-		{"name": "IBLOCK_NAME",	"table": "IB", "field": "NAME"}
+		{"name": "IBLOCK_NAME",	"table": "IB", "field": "NAME"},
+		{"name": "SEC_ENT_JSON","table": "S",
+			"sub_query": "concat('[',group_concat(\
+					'\"',S.ID, '\":', '\"',S.NAME, '\"'\
+				),']')",
+			"required_tables": ["S"],
+			"required_group_by": ["S.ID"]
+		},
+		{"name": "SEC_ENT_CNT", "table": "S",
+			"sub_query": "count(S.ID)",
+			"sub_query_4_filter": "SELECT count(SE.ID)\
+				FROM obx_core_test_sec_entity as SE\
+				WHERE SE.TEST_ENTITY_ID = E.ID",
+			"required_tables": ["S"]
+
+		}
 	],
-	"table": [
+	"tables": [
 		{
 			"name": "obx_core_test_entity",
 			"alias": "E",

@@ -74,28 +74,36 @@ class EntityGenerator
 		if(empty($configData['table']) || !is_array($configData['table'])) {
 			throw new Err('', Err::E_CFG_TBL_LIST_EMPTY);
 		}
-		$bMainTableSet = false;
 		if(empty($configData['main_table'])) {
 			throw new Err('', Err::E_CFG_MAIN_TBL_NOT_SET);
 		}
 		$aliasesExist = array();
-		foreach($configData['table'] as &$table) {
-			if(empty($table['alias'])) {
+		$mainTable = null;
+		foreach($configData['table'] as &$tableRaw) {
+			$table = array(
+				'name' => null,
+				'alias' => null,
+				'fields' => array(),
+			);
+			if(empty($tableRaw['alias'])) {
 				throw new Err('', Err::E_CFG_TBL_NO_ALIAS);
 			}
-			if(isset($aliasesExist[$table['alias']])) {
+			if(isset($aliasesExist[$tableRaw['alias']])) {
 				throw new Err('', Err::E_CFG_TBL_ALIAS_NOT_UQ);
 			}
-			$aliasesExist[$table['alias']] = true;
+			$aliasesExist[$tableRaw['alias']] = true;
 
 
-			if($table['alias'] === $configData['main_table']) {
-				$bMainTableSet = true;
+			if($tableRaw['alias'] === $configData['main_table']) {
+				$this->_mainTable = $configData['main_table'];
 			}
 		}
-		if(true !== $bMainTableSet) {
+		if(null === $this->_mainTable) {
 			throw new Err('', Err::E_CFG_MAIN_TBL_NOT_SET);
 		}
+
+		$this->_mainTablePrimaryKey = $mainTable['primary_key'];
+		$this->_mainTableAutoIncrement = $mainTable['auto_increment'];
 	}
 
 	public function getCreateTablesCode() {

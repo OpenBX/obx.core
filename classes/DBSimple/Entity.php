@@ -480,7 +480,6 @@ abstract class Entity extends MessagePoolDecorator
 
 	/**
 	 * Группировка по умолчанию
-	 * Пока не используется
 	 * @var array
 	 * @access protected
 	 */
@@ -1185,7 +1184,7 @@ abstract class Entity extends MessagePoolDecorator
 				$this->_checkRequiredTablesByField($arSelectFromTables, $arTableFields, $fieldCode);
 				list($tblAlias, $tblFieldName) = each($arTblField);
 				$arDateFormat = null;
-				if(array_key_exists('FORMAT_DATE', $arTblField)) {
+				if(!empty($arTblField['FORMAT_DATE'])) {
 					$arDateFormat = array(
 						'TYPE' => (array_key_exists('TYPE', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['TYPE']:'FULL'),
 						'SITE_ID' => (array_key_exists('SITE_ID', $arTblField['FORMAT_DATE'])?$arTblField['FORMAT_DATE']['SITE_ID']:SITE_ID),
@@ -1263,12 +1262,12 @@ abstract class Entity extends MessagePoolDecorator
 
 		// Группируем
 		$arGroupByFields = $this->_arGroupByFields;
-		if( is_array($arGroupBy) && count($arGroupBy) > 0 ) {
-			foreach ($arGroupBy as $fieldCode){
+		if( !empty($arGroupBy) && is_array($arGroupBy) ) {
+			foreach ($arGroupBy as $groupField){
 				if( isset($arTableFields[$fieldCode]) ) {
 					$arTblField = $arTableFields[$fieldCode];
 					list($tblAlias, $tblFieldName) = each($arTblField);
-					if( !array_key_exists($tblAlias, $arGroupByFields) ) {
+					if( !isset($arGroupByFields[$tblAlias]) ) {
 						$arGroupByFields[$tblAlias] = $tblFieldName;
 					}
 				}
