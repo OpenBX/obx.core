@@ -23,4 +23,6 @@ class EntityGeneratorError extends AError {
 	const E_CFG_NO_CLASS_PATH = 6;
 	const E_CFG_TBL_LIST_EMPTY = 7;
 	const E_CFG_MAIN_TBL_NOT_SET = 8;
-} 
+	const E_CFG_TBL_NO_ALIAS = 9;
+	const E_CFG_TBL_ALIAS_NOT_UQ = 10;
+}

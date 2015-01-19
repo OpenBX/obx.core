@@ -11,7 +11,7 @@
 namespace OBX\Core\DBSimple;
 
 
-use OBX\Core\Exceptions\DBSimple\EntityGeneratorError;
+use OBX\Core\Exceptions\DBSimple\EntityGeneratorError as Err;
 
 class EntityGenerator
 {
@@ -38,7 +38,7 @@ class EntityGenerator
 
 	public function __construct($entityConfigFile) {
 		if( !is_file(OBX_DOC_ROOT.$entityConfigFile) ) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_OPEN_CFG_FAILED);
+			throw new Err('', Err::E_OPEN_CFG_FAILED);
 		}
 		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$entityConfigFile);
 		$configData = json_decode($jsonConfig, true);
@@ -51,41 +51,50 @@ class EntityGenerator
 			&& !is_file(OBX_DOC_ROOT.$configData['module'].'/include.php')
 			&& !is_file(OBX_DOC_ROOT.$configData['module'].'/install/index.php')
 		) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_NO_MOD);
+			throw new Err('', Err::E_CFG_NO_MOD);
 		}
 		$this->_entityModuleID = $configData['module'];
 		if( empty($configData['events_id']) ) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_NO_EVT_ID);
+			throw new Err('', Err::E_CFG_NO_EVT_ID);
 		}
 		$this->_entityEventsID = $configData['events_id'];
 		if( empty($configData['namespace']) ) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_NO_NS);
+			throw new Err('', Err::E_CFG_NO_NS);
 		}
 		$this->_namespace = $configData['namespace'];
 		if( empty($configData['class_name']) ) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_NO_CLASS_NAME);
+			throw new Err('', Err::E_CFG_NO_CLASS_NAME);
 		}
 		$this->_className = $configData['class_name'];
 		if( empty($configData['class_path']) ) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_NO_CLASS_PATH);
+			throw new Err('', Err::E_CFG_NO_CLASS_PATH);
 		}
 		$this->_classPath = $configData['class_path'];
 
 		if(empty($configData['table']) || !is_array($configData['table'])) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_TBL_LIST_EMPTY);
+			throw new Err('', Err::E_CFG_TBL_LIST_EMPTY);
 		}
 		$bMainTableSet = false;
 		if(empty($configData['main_table'])) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_MAIN_TBL_NOT_SET);
+			throw new Err('', Err::E_CFG_MAIN_TBL_NOT_SET);
 		}
+		$aliasesExist = array();
 		foreach($configData['table'] as &$table) {
-			//тут заполняем
+			if(empty($table['alias'])) {
+				throw new Err('', Err::E_CFG_TBL_NO_ALIAS);
+			}
+			if(isset($aliasesExist[$table['alias']])) {
+				throw new Err('', Err::E_CFG_TBL_ALIAS_NOT_UQ);
+			}
+			$aliasesExist[$table['alias']] = true;
+
+
 			if($table['alias'] === $configData['main_table']) {
 				$bMainTableSet = true;
 			}
 		}
 		if(true !== $bMainTableSet) {
-			throw new EntityGeneratorError('', EntityGeneratorError::E_CFG_MAIN_TBL_NOT_SET)
+			throw new Err('', Err::E_CFG_MAIN_TBL_NOT_SET);
 		}
 	}
 
