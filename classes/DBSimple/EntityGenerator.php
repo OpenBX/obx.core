@@ -87,7 +87,7 @@ class EntityGenerator
 				'PRIMARY_KEY' => null,
 				'UNIQUE' => null,
 				'INDEX' => null,
-				'CREATE_TABLE' =>
+				'CREATE_TABLE' => true
 			);
 			if(empty($tableRaw['NAME']) ) {
 				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
