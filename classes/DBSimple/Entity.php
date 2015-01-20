@@ -661,7 +661,7 @@ abstract class Entity extends MessagePoolDecorator
 	 * Метод подготовки данных
 	 * Применяется в $this->add() и $this->update()
 	 * Использует атрибуты полей из массива $this->_arTableFieldsCheck для проверки входных параметров метода
-	 * @param int $prepareType - может принимать для зачения self::PREPARE_ADD или self::PREPARE_ADD
+	 * @param int $prepareType - может принимать для зачения self::PREPARE_ADD или self::PREPARE_UPDATE
 	 * @param array $arFields - значения полей основной таблицы сущности
 	 * @param null|array $arTableFieldsCheck - если задан, то переопределяет штатный $this->_arTableFieldsCheck
 	 * @param null|array $arTableFieldsDefault - если задан, то переопределяет штатный $this->_arTableFieldsDefault
@@ -1295,10 +1295,10 @@ abstract class Entity extends MessagePoolDecorator
 			list($asLeftTblName, $leftFieldName) = each($arLeftField);
 			list($asRightTblName, $rightFieldName) = each($arRightField);
 			if( $bShowNullFields
-				&& ( array_key_exists($asLeftTblName, $arTableLeftJoin)
-					|| array_key_exists($asLeftTblName, $arTableRightJoin)
-					|| array_key_exists($asRightTblName, $arTableLeftJoin)
-					|| array_key_exists($asRightTblName, $arTableRightJoin))
+				&& (   isset($arTableLeftJoin[$asLeftTblName])
+					|| isset($arTableLeftJoin[$asRightTblName])
+					|| isset($arTableRightJoin[$asLeftTblName])
+					|| isset($arTableRightJoin[$asRightTblName]))
 			) {
 				continue;
 			}
@@ -1944,7 +1944,7 @@ abstract class Entity extends MessagePoolDecorator
 		if( count($arTableUnique)>0 ) {
 			foreach( $arTableUnique as $udxName => $arUniqueFields ) {
 				if($bNotUpdateUniqueFields) {
-					// Если запрешено обновлять поля входязие в уникальный индекс
+					// Если запрешено обновлять поля входящие в уникальный индекс
 					foreach($arUniqueFields as $inUniqueFieldName) {
 						if( array_key_exists($inUniqueFieldName, $arFields) ) {
 							unset($arFields[$inUniqueFieldName]);

@@ -3,77 +3,150 @@
 	"namespace": "OBX\\Core\\DBSEntities",
 	"class": "TestEntity",
 	"class_path": "dbs_entity/DBSEntities/TestEntity.php",
-	"name": {"ru": "Тестовая сущность", "en": "Entity for testing"},
+	"create_table_path": "install/db/test_entity.sql",
 	"version": "0.1.0",
 	"events_id": "TestEntityRow",
-	"get_list_fields": [
-		{"name": "ID",			"table": "E", "field": "ID"},
-		{"name": "CODE",		"table": "E", "field": "CODE"},
-		{"name": "NAME",		"table": "E", "field": "NAME"},
-		{"name": "SOME_BCHAR",	"table": "E", "field": "SOME_BCHAR"},
-		{"name": "TIMESTAMP_X",	"table": "E", "field": "TIMESTAMP_X", "datetime":true},
-		{"name": "SOME_TEXT",	"table": "E", "field": "SOME_TEXT"},
-		{"name": "IBLOCK_ID",	"table": "IB", "field": "ID"},
-		{"name": "IBLOCK_CODE",	"table": "IB", "field": "CODE"},
-		{"name": "IBLOCK_NAME",	"table": "IB", "field": "NAME"},
-		{"name": "SEC_ENT_JSON","table": "S",
-			"sub_query": "concat('[',group_concat(\
+
+	"lang_encoding": "UTF-8",
+	"lang_prefix": "OBX_DBS_TEST_ENTITY",
+	"title": {"lang": "%_NAME", "ru": "Тестовая сущность", "en": "Entity for testing"},
+
+	"table_name": "obx_core_test_entity",
+	"table_alias": "E",
+	"fields": [
+		{"code": "ID",
+			"type": "pk_id", "primary_key": true, "auto_increment": true, "allow_null": false,
+			"title": {"lang": "%_FLD_TITLE_ID", "ru": "Ид", "en": "Id"},
+			"description": {"lang": "%_FLD_DSCR_ID", "ru": "Идентификатор записи", "en": "Identifier of row"}
+		},
+		{"code": "CODE",
+			"type": "ident", "allow_null": false,
+			"required": true, "required_error": {"lang": "%_CODE_IS_EMPTY","ru": "Поле \"Код\" не заполнено"},
+			"title": {"lang": "%_FLD_TITLE_CODE", "ru": "Код", "en": "Code"},
+			"description": {"lang": "%_FLD_DSCR_CODE", "ru": "Символьный код", "en": "Symbolic code"}
+		},
+		{"code": "NAME",
+			"type": "string", "length": 255, "allow_null": false,
+			"required": true, "required_error": {"lang": "%_NAME_IS_EMPTY","ru": "Поле \"Имя\" не заполнено"},
+			"selected_by_default": true,
+			"title": {"lang": "%_FLD_TITLE_NAME", "ru": "Имя", "en": "Name"},
+			"description": {"lang": "%_FLD_DSCR_NAME", "ru": "Имя", "en": "Name"}
+		},
+		{"code": "SOME_BCHAR",
+			"allow_null": false, "required": true, "default": "Y",
+			"selected_by_default": true,
+			"get": {"if_null_return": "N"},
+			"title": {"lang": "%_FLD_TITLE_SOME_BCHAR", "ru": "Да/Нет", "en": "Yes/No"},
+			"description": {"lang": "%_FLD_DSCR_SOME_BCHAR", "ru": "Чекбокс Да/Нет", "en": "Checkbox Yes/No"}
+		},
+		{"code": "CREATE_TIME",
+			"type": "datetime",
+			"selected_by_default": true,
+			"get": {"format_date":true},
+			"title": {"lang": "%_FLD_TITLE_CREATE_TIME", "ru": "Да/Нет", "en": "Yes/No"},
+			"description": {"lang": "%_FLD_DSCR_CREATE_TIME", "ru": "Чекбокс Да/Нет", "en": "Checkbox Yes/No"}
+		},
+		{"code": "TIMESTAMP_X",
+			"type": "datetime",
+			"selected_by_default": true,
+			"get": {"format_date":true},
+			"title": {"lang": "%_FLD_TITLE_TIMESTAMP_X", "ru": "Да/Нет", "en": "Yes/No"},
+			"description": {"lang": "%_FLD_DSCR_TIMESTAMP_X", "ru": "Чекбокс Да/Нет", "en": "Checkbox Yes/No"}
+		},
+		{"code": "SOME_TEXT",
+			"type": "text",
+			"title": {"lang": "%_FLD_TITLE_SOME_TEXT", "ru": "Текст", "en": "Text"},
+			"description": {"lang": "%_FLD_DSCR_SOME_TEXT", "ru": "Немного текста", "en": "Some text"}
+		},
+		{"code": "IBLOCK_ID",
+			"type": "iblock_id",
+			"title": {"lang": "%_FLD_TITLE_IBLOCK_ID", "ru": "Ид Иноблока", "en": "Infoblock Id"},
+			"description": {"lang": "%_FLD_DSCR_IBLOCK_ID", "ru": "Идентификатор инфоблока", "en": "Infoblock identifier"}
+		},
+		{"code": "IBLOCK_CODE",
+			"get": {"ref": "IB.CODE"},
+			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Код Иноблока", "en": "Infoblock code"},
+			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Символьный код инфоблока", "en": "Symbolic Infoblock code"}
+		},
+		{"code": "IBLOCK_NAME",
+			"get": {"ref": "IB.NAME"},
+			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Имя иноблока", "en": "Infoblock name"},
+			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Имя инфоблока", "en": "Infoblock name"}
+		},
+		{"code": "USER_ID",
+			"type": "user_id", "allow_null": true,
+			"get": {"ref": "U.ID"},
+			"title": {"lang": "%_FLD_TITLE_USER", "ru": "Ид пользователя", "en": "User Id"},
+			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Идентификатор пользователь", "en": "User identifier"}
+		},
+		{"code": "USER",
+			"get": {
+				"sub_query": "concat(U.NAME, ' ', U.LAST_NAME)",
+				"sub_query_4_filter": "E.USER_ID",
+				"required_tables": ["U", "E"]
+			},
+			"title": {"lang": "%_FLD_TITLE_USER", "ru": "Пользователь", "en": "User"},
+			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Пользователь", "en": "User"}
+		},
+		{"code": "SEC_ENT_JSON",
+			"get": {
+				"sub_query": "concat('[',group_concat(\
 					'\"',S.ID, '\":', '\"',S.NAME, '\"'\
 				),']')",
-			"required_tables": ["S"],
-			"required_group_by": ["E.ID"]
+				"required_tables": ["S"],
+				"required_group_by": ["E.ID"]
+			},
+			"title": {"lang": "%_FLD_TITLE_SEC_ENT_JSON", "ru": "Список2", "en": "List2"},
+			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Список элементов 2-й сущности в Json", "en": "Elements list of 2nd entity"}
 		},
-		{"name": "SEC_ENT_CNT", "table": "S",
-			"sub_query": "count(S.ID)",
-			"sub_query_4_filter": "SELECT count(SE.ID)\
-				FROM obx_core_test_sec_entity as SE\
-				WHERE SE.TEST_ENTITY_ID = E.ID",
-			"required_tables": ["S"]
+		{"code": "SEC_ENT_CNT",
+			"get": {
+				"sub_query": "count(S.ID)",
+				"sub_query_4_filter": "SELECT count(SE.ID)\
+					FROM obx_core_test_sec_entity as SE\
+					WHERE SE.TEST_ENTITY_ID = E.ID",
+				"required_tables": ["S"]
+			},
+			"title": {"lang": "%_FLD_TITLE_SEC_ENT_JSON", "ru": "количество2", "en": "Count2"},
+			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Количество элементов 2-й сущности", "en": "Elements count of 2nd entity"}
 
 		}
 	],
-	"group_by_default": ["E.ID"],
-	"tables": [
+	"unique": [
 		{
-			"main_table": true,
-			"name": "obx_core_test_entity",
-			"alias": "E",
-			"fields": [
-				{"name": "ID", "type": "int", "length": 11,
-					"primary_key": true, "auto_increment": true,
-					"null": false
-				},
-				{"name": "CODE", "type": "ident"},
-				{"name": "NAME", "type": "string", "length": 255,
-					"null": false, "required": true
-				},
-				{"name": "SOME_BCHAR", "type": "bchar",
-					"null": false, "required": true, "default": "Y"
-				},
-				{"name": "TIMESTAMP_X", "type": "datetime"},
-				{"name": "SOME_TEXT", "type": "text"},
-				{"name": "IBLOCK_ID", "type": "int", "length": 11}
-			],
-			"create_table": true,
-			"unique": [
-				{"name": "obx_core_test_entity_code_bchar", "fields": ["CODE", "SOME_BCHAR"]}
-			],
-			"index": [
-				{"name": "obx_core_test_entity_code", "fields": ["CODE"]}
-			]
-		},
+			"name": "obx_core_test_entity_code_bchar",
+			"fields": ["CODE", "SOME_BCHAR"],
+			"duplicate_error": {
+				"lang": "%_E_DUP_UQ_CODE_BCHAR",
+				"ru": "Запись с сочетанием CODE + BCHAR уже существует"
+			}
+		}
+	],
+	"index": [
+		{"name": "obx_core_test_entity_code", "fields": ["CODE"]}
+	],
+	"error_nothing_to_delete": {"lang": "%_E_NOTHING_TO_DELETE", "ru": "Ошибка удаления: запись не найдена"},
+	"error_nothing_to_update": {"lang": "%_E_NOTHING_TO_UPDATE", "ru": "Ошибка обновления: запись не найдена"},
+	"group_by_default": ["E.ID"],
+
+	"reference": [
 		{
 			"name": "b_iblock",
 			"alias": "IB",
-			"create_table": false,
-			"join": "link",
-			"join_on": "E.IBLOCK_ID = IB.ID"
+			"type": "left_join",
+			"on": "E.IBLOCK_ID = IB.ID"
+		},
+		{
+			"name": "b_user",
+			"alias": "U",
+			"type": "left_join",
+			"on": "E.USER_ID = U.ID"
 		},
 		{
 			"entity": "./SecondEntity.json",
 			"alias": "S",
-			"join": "left",
-			"join_on": "E.ID = S.TEST_ENTITY_ID"
+			"type": "left_join",
+			"link_on": "E.ID = S.TEST_ENTITY_ID"
 		}
 	]
 }

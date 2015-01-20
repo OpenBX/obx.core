@@ -15,7 +15,6 @@ use OBX\Core\Exceptions\DBSimple\EntityGeneratorError as Err;
 
 class EntityGenerator
 {
-
 	protected $_entityModuleID = null;
 	protected $_entityEventsID = null;
 	protected $_configPath = null;
@@ -45,6 +44,18 @@ class EntityGenerator
 		$this->readEntityConfig($configData);
 	}
 
+	/**
+	 * @param $configData
+	 * @throws \OBX\Core\Exceptions\DBSimple\EntityGeneratorError
+	 *
+	 * = Важно =
+	 * - Если коды полей сущности (entity_fields) и коды полей главной таблицы будут отличаться, DBSimple\Entity
+	 *   имена полей для методов getList будут отдичны от add и update.
+	 *   Такую ситуацию надо пресечь в коде генератора, т.е. тут :)
+	 *   Особенно это отразиться на работе класса Record, оторые начнет страшно глючить
+	 *   Альтернативно можно дописать
+	 *
+	 */
 	protected function readEntityConfig(&$configData) {
 		if( empty($configData['module'])
 			&& !is_dir(OBX_DOC_ROOT.$configData['module'])
@@ -79,7 +90,7 @@ class EntityGenerator
 		}
 		$aliasesExist = array();
 		$mainTable = null;
-		foreach($configData['table'] as &$tableRaw) {
+		foreach($configData['table'] as &$rawTable) {
 			$table = array(
 				'NAME' => null,
 				'ALIAS' => null,
@@ -89,17 +100,17 @@ class EntityGenerator
 				'INDEX' => null,
 				'CREATE_TABLE' => true
 			);
-			if(empty($tableRaw['NAME']) ) {
+			if(empty($rawTable['name']) ) {
 				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
 			}
-			$table['NAME'] = trim($tableRaw['name']);
+			$table['NAME'] = trim($rawTable['name']);
 			if( preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $table['NAME']) ) {
 				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
 			}
-			if(empty($tableRaw['alias'])) {
+			if(empty($rawTable['alias'])) {
 				throw new Err('', Err::E_CFG_TBL_WRG_ALIAS);
 			}
-			$table['ALIAS'] = trim($tableRaw['alias']);
+			$table['ALIAS'] = trim($rawTable['alias']);
 			if( preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,254}~', $table['ALIAS']) ) {
 				throw new Err('', Err::E_CFG_TBL_WRG_ALIAS);
 			}
@@ -107,7 +118,12 @@ class EntityGenerator
 				throw new Err('', Err::E_CFG_TBL_ALIAS_NOT_UQ);
 			}
 			$aliasesExist[$table['ALIAS']] = true;
-			if(!empty($tableRaw['main_table'])) {
+
+			foreach($rawTable['fields'] as &$rawTblField) {
+
+			}
+
+			if(!empty($rawTable['main_table'])) {
 				$this->_mainTable = $table['ALIAS'];
 			}
 		}
