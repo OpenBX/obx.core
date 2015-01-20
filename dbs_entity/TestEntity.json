@@ -64,13 +64,13 @@
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_ID", "ru": "Идентификатор инфоблока", "en": "Infoblock identifier"}
 		},
 		{"code": "IBLOCK_CODE",
-			"type": "get_only",
+			"type": "ext",
 			"get": {"ref": "IB.CODE"},
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Код Иноблока", "en": "Infoblock code"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Символьный код инфоблока", "en": "Symbolic Infoblock code"}
 		},
 		{"code": "IBLOCK_NAME",
-			"type": "get_only",
+			"type": "ext",
 			"get": {"ref": "IB.NAME"},
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Имя иноблока", "en": "Infoblock name"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Имя инфоблока", "en": "Infoblock name"}
@@ -82,7 +82,7 @@
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Идентификатор пользователь", "en": "User identifier"}
 		},
 		{"code": "USER",
-			"type": "get_only",
+			"type": "ext",
 			"get": {
 				"sub_query": "concat(U.NAME, ' ', U.LAST_NAME)",
 				"sub_query_4_filter": "E.USER_ID",
@@ -92,7 +92,7 @@
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Пользователь", "en": "User"}
 		},
 		{"code": "SEC_ENT_JSON",
-			"type": "get_only",
+			"type": "ext",
 			"get": {
 				"sub_query": "concat('[',group_concat(\
 					'\"',S.ID, '\":', '\"',S.NAME, '\"'\
@@ -132,6 +132,7 @@
 	"error_nothing_to_delete": {"lang": "%_E_NOTHING_TO_DELETE", "ru": "Ошибка удаления: запись не найдена"},
 	"error_nothing_to_update": {"lang": "%_E_NOTHING_TO_UPDATE", "ru": "Ошибка обновления: запись не найдена"},
 	"group_by_default": ["E.ID"],
+	"sort_by_default":[{"E.ID": "ASC"}],
 
 	"reference": [
 		{

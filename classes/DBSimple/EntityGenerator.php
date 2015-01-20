@@ -90,7 +90,7 @@ class EntityGenerator
 		}
 		$aliasesExist = array();
 		$mainTable = null;
-		foreach($configData['table'] as &$rawTable) {
+		foreach($configData['fields'] as &$field) {
 
 		}
 		if(null === $this->_mainTable) {
