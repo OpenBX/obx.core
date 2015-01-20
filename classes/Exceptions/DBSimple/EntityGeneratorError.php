@@ -14,16 +14,24 @@ use OBX\Core\Exceptions\AError;
 class EntityGeneratorError extends AError {
 	const _DIR_ = __DIR__;
 	const _FILE_ = __FILE__;
+	const LANG_PREFIX = 'OBX_DBSIMPLE_ENTITY_GEN_';
 
 	const E_OPEN_CFG_FAILED = 1;
-	const E_CFG_NO_MOD = 2;
-	const E_CFG_NO_EVT_ID = 3;
-	const E_CFG_NO_NS = 4;
-	const E_CFG_NO_CLASS_NAME = 5;
-	const E_CFG_NO_CLASS_PATH = 6;
-	const E_CFG_TBL_LIST_EMPTY = 7;
-	const E_CFG_MAIN_TBL_NOT_SET = 8;
+	const E_PARSE_CFG_FAILED = 2;
+	const E_CFG_NO_MOD = 3;
+	const E_CFG_NO_EVT_ID = 4;
+	const E_CFG_NO_NS = 5;
+	const E_CFG_NO_CLASS_NAME = 6;
+	const E_CFG_NO_CLASS_PATH = 7;
+
+	const E_CFG_FLD_LIST_IS_EMPTY = 8;
+
 	const E_CFG_TBL_WRG_NAME = 9;
 	const E_CFG_TBL_WRG_ALIAS = 10;
 	const E_CFG_TBL_ALIAS_NOT_UQ = 11;
+
+	const E_CFG_FLD_WRG_NAME = 12;
+	const E_CFG_FLD_WRG_TYPE = 13;
+
+	//const E_CFG_
 }

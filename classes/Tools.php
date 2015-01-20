@@ -999,5 +999,23 @@ namespace OBX\Core {
 				</div>
 			<?php endif;
 		}
+
+
+		public static function getJsonErrorMsg() {
+			switch(json_last_error()) {
+				case JSON_ERROR_NONE:
+					return GetMessage('OBX_TOOLS_JSON_ERROR_NONE');
+				case JSON_ERROR_DEPTH:
+					return GetMessage('OBX_TOOLS_JSON_ERROR_DEPTH');
+				case JSON_ERROR_STATE_MISMATCH:
+					return GetMessage('OBX_TOOLS_JSON_ERROR_STATE_MISMATCH');
+				case JSON_ERROR_CTRL_HAR:
+					return GetMessage('OBX_TOOLS_JSON_ERROR_CTRL_CHAR');
+				case JSON_ERROR_SYNTAX:
+					return GetMessage('OBX_TOOLS_JSON_ERROR_SYNTAX');
+				case JSON_ERROR_UTF8:
+					return GetMessage('OBX_TOOLS_JSON_ERROR_UTF8');
+			}
+		}
 	}
 }

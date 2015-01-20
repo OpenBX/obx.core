@@ -12,6 +12,8 @@ namespace OBX\Core\Test;
 
 use Bitrix\Main\Loader;
 use OBX\Core\DBSimple as DBS;
+use OBX\Core\SimpleBenchMark;
+
 Loader::includeModule('obx.core');
 
 class TestEntityGenerator extends TestCase {

@@ -79,3 +79,10 @@ $MESS['SaturdayA'] = 'субботу';
 
 $MESS['Sunday'] = 'воскресенье';
 $MESS['SundayA'] = 'воскресенье';
+
+$MESS['OBX_TOOLS_JSON_ERROR_NONE'] = 'Без ошибок';
+$MESS['OBX_TOOLS_JSON_ERROR_DEPTH'] = 'Достигнута максимальная длина стека';
+$MESS['OBX_TOOLS_JSON_ERROR_STATE_MISMATCH'] = 'Несоответствие режима';
+$MESS['OBX_TOOLS_JSON_ERROR_CTRL_CHAR'] = 'Неожиданный управлябщий символ';
+$MESS['OBX_TOOLS_JSON_ERROR_SYNTAX'] = 'Синтаксическая ошибка json';
+$MESS['OBX_TOOLS_JSON_ERROR_UTF8'] = 'Вероятная ошибка кодировки';
