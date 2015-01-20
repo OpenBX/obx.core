@@ -91,41 +91,7 @@ class EntityGenerator
 		$aliasesExist = array();
 		$mainTable = null;
 		foreach($configData['table'] as &$rawTable) {
-			$table = array(
-				'NAME' => null,
-				'ALIAS' => null,
-				'FIELDS' => array(),
-				'PRIMARY_KEY' => null,
-				'UNIQUE' => null,
-				'INDEX' => null,
-				'CREATE_TABLE' => true
-			);
-			if(empty($rawTable['name']) ) {
-				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
-			}
-			$table['NAME'] = trim($rawTable['name']);
-			if( preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $table['NAME']) ) {
-				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
-			}
-			if(empty($rawTable['alias'])) {
-				throw new Err('', Err::E_CFG_TBL_WRG_ALIAS);
-			}
-			$table['ALIAS'] = trim($rawTable['alias']);
-			if( preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,254}~', $table['ALIAS']) ) {
-				throw new Err('', Err::E_CFG_TBL_WRG_ALIAS);
-			}
-			if(isset($aliasesExist[$table['ALIAS']])) {
-				throw new Err('', Err::E_CFG_TBL_ALIAS_NOT_UQ);
-			}
-			$aliasesExist[$table['ALIAS']] = true;
 
-			foreach($rawTable['fields'] as &$rawTblField) {
-
-			}
-
-			if(!empty($rawTable['main_table'])) {
-				$this->_mainTable = $table['ALIAS'];
-			}
 		}
 		if(null === $this->_mainTable) {
 			throw new Err('', Err::E_CFG_MAIN_TBL_NOT_SET);

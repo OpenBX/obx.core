@@ -64,11 +64,13 @@
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_ID", "ru": "Идентификатор инфоблока", "en": "Infoblock identifier"}
 		},
 		{"code": "IBLOCK_CODE",
+			"type": "get_only",
 			"get": {"ref": "IB.CODE"},
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Код Иноблока", "en": "Infoblock code"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Символьный код инфоблока", "en": "Symbolic Infoblock code"}
 		},
 		{"code": "IBLOCK_NAME",
+			"type": "get_only",
 			"get": {"ref": "IB.NAME"},
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Имя иноблока", "en": "Infoblock name"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Имя инфоблока", "en": "Infoblock name"}
@@ -80,6 +82,7 @@
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Идентификатор пользователь", "en": "User identifier"}
 		},
 		{"code": "USER",
+			"type": "get_only",
 			"get": {
 				"sub_query": "concat(U.NAME, ' ', U.LAST_NAME)",
 				"sub_query_4_filter": "E.USER_ID",
@@ -89,6 +92,7 @@
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Пользователь", "en": "User"}
 		},
 		{"code": "SEC_ENT_JSON",
+			"type": "get_only",
 			"get": {
 				"sub_query": "concat('[',group_concat(\
 					'\"',S.ID, '\":', '\"',S.NAME, '\"'\
@@ -100,6 +104,7 @@
 			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Список элементов 2-й сущности в Json", "en": "Elements list of 2nd entity"}
 		},
 		{"code": "SEC_ENT_CNT",
+			"type": "get_only",
 			"get": {
 				"sub_query": "count(S.ID)",
 				"sub_query_4_filter": "SELECT count(SE.ID)\
@@ -109,16 +114,15 @@
 			},
 			"title": {"lang": "%_FLD_TITLE_SEC_ENT_JSON", "ru": "количество2", "en": "Count2"},
 			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Количество элементов 2-й сущности", "en": "Elements count of 2nd entity"}
-
 		}
 	],
 	"unique": [
 		{
 			"name": "obx_core_test_entity_code_bchar",
-			"fields": ["CODE", "SOME_BCHAR"],
+			"fields": ["CODE"],
 			"duplicate_error": {
 				"lang": "%_E_DUP_UQ_CODE_BCHAR",
-				"ru": "Запись с сочетанием CODE + BCHAR уже существует"
+				"ru": "Запись с таким CODE уже существует"
 			}
 		}
 	],
