@@ -98,7 +98,10 @@
 			"description": {"lang": "%_FLD_DSCR_CUSTOM_CK","ru": "Поле с пороизволной проеркой", "en": "Field with custom check"}
 		},
 		{"code": "VALIDATION",
-			"type": "string", "validator": "OBX\\Core\\Validator\\DBSimpleTestValidator", "break_invalid": false,
+			"type": "string",
+			"validator": "OBX\\Core\\Validator\\DBSimpleTestValidator", "break_invalid": false,
+			"title": {"lang": "%_FLD_TITLE_VALIDATION", "ru": "По валидатору", "en": "By valid"},
+			"description": {"lang": "%_FLD_DSCR_VALIDATION","ru": "Поле с проверкой валидатором", "en": "Field with validator check"}
 		},
 		{"code": "SEC_ENT_JSON",
 			"type": "ex",
