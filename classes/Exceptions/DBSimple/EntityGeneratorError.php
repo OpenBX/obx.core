@@ -20,8 +20,8 @@ class EntityGeneratorError extends AError {
 	const E_PARSE_CFG_FAILED = 2;
 	const E_CFG_NO_MOD = 3;
 	const E_CFG_NO_EVT_ID = 4;
-	const E_CFG_NO_NS = 5;
-	const E_CFG_NO_CLASS_NAME = 6;
+	const E_CFG_WRG_NAMESPACE = 5;
+	const E_CFG_WRG_CLASS_NAME = 6;
 	const E_CFG_NO_CLASS_PATH = 7;
 
 	const E_CFG_FLD_LIST_IS_EMPTY = 8;

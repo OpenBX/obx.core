@@ -718,6 +718,19 @@ namespace OBX\Core {
 				'\\', '/', ':', '*', '?', '<', '>', '|', '"', "\n", "\r"
 			), '', $fileName);
 		}
+		static public function _fixFilePath(&$filePath) {
+			$filePath = str_replace(array(
+				':', '*', '?', '<', '>', '|', '"', "\n", "\r"
+			), '', $filePath);
+			$filePath = str_replace(array('\\\\', '\\', '//'), '/', $filePath);
+		}
+		static public function fixFilePath($filePath) {
+			$filePath = str_replace(array(
+				':', '*', '?', '<', '>', '|', '"', "\n", "\r"
+			), '', $filePath);
+			$filePath = str_replace(array('\\\\', '\\', '//'), '/', $filePath);
+			return $filePath;
+		}
 
 		/**
 		 * Форматирование даты с особенностями русского языка
@@ -1000,8 +1013,7 @@ namespace OBX\Core {
 			<?php endif;
 		}
 
-
-		public static function getJsonErrorMsg() {
+		static public function getJsonErrorMsg() {
 			switch(json_last_error()) {
 				case JSON_ERROR_NONE:
 					return GetMessage('OBX_TOOLS_JSON_ERROR_NONE');
@@ -1009,7 +1021,7 @@ namespace OBX\Core {
 					return GetMessage('OBX_TOOLS_JSON_ERROR_DEPTH');
 				case JSON_ERROR_STATE_MISMATCH:
 					return GetMessage('OBX_TOOLS_JSON_ERROR_STATE_MISMATCH');
-				case JSON_ERROR_CTRL_HAR:
+				case JSON_ERROR_CTRL_CHAR:
 					return GetMessage('OBX_TOOLS_JSON_ERROR_CTRL_CHAR');
 				case JSON_ERROR_SYNTAX:
 					return GetMessage('OBX_TOOLS_JSON_ERROR_SYNTAX');

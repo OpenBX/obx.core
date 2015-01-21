@@ -125,7 +125,7 @@ abstract class Entity extends MessagePoolDecorator
 	const E_DUP_UNIQUE = 103;				// дублирование значения уникального индекса
 	const E_MISS_REQUIRED = 104;			// Не заполнено обязательное поле
 	const E_NOTHING_TO_UPDATE = 105;		// невозможно обновить. запись не найдена
-	const E_CANT_DEL_WITHOUT_PK = 106;		// невозсожно использовать метод delete без использования PrimaryKey
+	const E_CANT_DEL_WITHOUT_PK = 106;		// невозможно использовать метод delete без использования PrimaryKey
 	//const WRN_
 	//const MSG_
 	
