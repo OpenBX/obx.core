@@ -22,7 +22,6 @@ class EntityGenerator
 	protected $_namespace = null;
 	protected $_class = null;
 	protected $_classPath = null;
-	protected $_createTablePath = null;
 	protected $_version = null;
 	protected $_langPrefix = null;
 	protected $_title = null;
@@ -65,6 +64,7 @@ class EntityGenerator
 				Err::E_PARSE_CFG_FAILED
 			);
 		}
+		$this->_configPath = $entityConfigFile;
 		if( empty($configData['module'])
 			&& !is_dir(OBX_DOC_ROOT.$configData['module'])
 			&& !is_file(OBX_DOC_ROOT.$configData['module'].'/include.php')
@@ -77,6 +77,18 @@ class EntityGenerator
 			throw new Err('', Err::E_CFG_NO_EVT_ID);
 		}
 		$this->_entityEventsID = $configData['events_id'];
+		/** @noinspection PhpUndefinedMethodInspection */
+		//$this->_version = \CUpdateClient::GetModuleVersion($this->_entityModuleID);
+		if(!empty($configData['version']) && strpos($configData['version'], '.') !== false) {
+			$arVersion = explode('.', $configData['version']);
+			if(count($arVersion) >= 3
+				&& is_numeric($arVersion[0])
+				&& is_numeric($arVersion[1])
+				&& is_numeric($arVersion[2])
+			) {
+				$this->_version = $arVersion[0].'.'.$arVersion[1].'.'.$arVersion[2];
+			}
+		}
 
 		$configData['namespace'] = ''.trim($configData['namespace'], ' \\');
 		//$configData['namespace'] = str_replace('\\\\', '\\', $configData['namespace']);
@@ -139,16 +151,19 @@ class EntityGenerator
 		if(empty($configData['fields']) || !is_array($configData['fields'])) {
 			throw new Err('', Err::E_CFG_FLD_LIST_IS_EMPTY);
 		}
-		foreach($configData['fields'] as &$rawField) {
-			$rawField['code'] = trim($rawField['code']);
-			if(empty($rawField['code'])
-				|| !preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $rawField['code'])
-			) {
+		foreach($configData['fields'] as $fieldCode => &$rawField) {
+			$fieldCode = trim($fieldCode);
+			if( !preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $fieldCode) ) {
 				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
 			}
+			$fieldType = ''.trim($rawField['type']);
+			if( !$this->checkExistsType($fieldType) ) {
+				throw new Err('', Err::E_CFG_FLD_WRG_TYPE);
+			}
+			$codeStrUpper = strtoupper($rawField['code']);
 			$field = array(
-				'code' => null,
-				'type' => null,
+				'code' => $fieldCode,
+				'type' => $fieldType,
 				'unsigned' => false,
 				'auto_increment' => false,
 				'primary_key' => false,
@@ -156,7 +171,11 @@ class EntityGenerator
 				'deny_zero' => false,
 				'no_check' => false,
 				'required' => false,
-				'required_error' => array('lang' => null, 'ru' => null, 'en' => null),
+				'required_error' => array(
+					'lang' => '%_ERR_REQUIRED_'.$codeStrUpper,
+					'ru' => 'REQUIRED__'.$codeStrUpper.'__FIELD',
+					'en' => 'REQUIRED__'.$codeStrUpper.'__FIELD'
+				),
 				'default' => null,
 				'validator' => null,
 				'break_invalid' => false,
@@ -168,53 +187,63 @@ class EntityGenerator
 					'required_tables' => null,
 					'required_group_by' => null
 				),
-				'selected_by_default' => false,
-				'title' => array('lang' => null, 'ru' => null, 'en' => null),
-				'description' => array('lang' => null, 'ru' => null, 'en' => null),
+				'selected_by_default' => true,
+				'title' => array(
+					'lang' => '%_FLD_TITLE_OF_'.$codeStrUpper,
+					'ru' => 'TITLE_OF__'.$codeStrUpper.'__FIELD',
+					'en' => 'TITLE_OF__'.$codeStrUpper.'__FIELD'
+				),
+				'description' => array(
+					'lang' => '%_FLD_DSCR_OF_'.$codeStrUpper,
+					'ru' => 'DESCRIPTION_OF__'.$codeStrUpper.'__FIELD',
+					'en' => 'DESCRIPTION_OF__'.$codeStrUpper.'__FIELD'
+				),
 			);
-			$rawField['type'] = ''.trim($rawField['type']);
-			if( !$this->checkExistsType($rawField['type']) ) {
-				throw new Err('', Err::E_CFG_FLD_WRG_TYPE);
-			}
-			$field['type'] = $rawField['type'];
 			if('ex' !== $field['type']) {
 				$field['selected_by_default'] = true;
 			}
-			if(array_key_exists('selected_by_default', $rawField)) {
-				if(true === $rawField['selected_by_default']) {
-					$field['selected_by_default'] = true;
+			foreach($field as $fldAttrName => &$fldAttrDefaultValue) {
+				if(is_bool($fldAttrDefaultValue)) {
+					if(isset($rawField[$fldAttrName]) ) {
+						if( $rawField[$fldAttrName] === !$fldAttrDefaultValue) {
+							$field[$fldAttrName] = !$fldAttrDefaultValue;
+						}
+					}
 				}
-				if(false === $rawField['selected_by_default']) {
-					$field['selected_by_default'] = false;
+				if(null === $fldAttrDefaultValue && isset($rawField[$fldAttrName])) {
+					$field[$fldAttrName] = ''.$rawField[$fldAttrName];
+				}
+				if(is_array($fldAttrDefaultValue)
+					&& is_array($rawField[$fldAttrName])
+					&& !empty($rawField[$fldAttrName])
+				) {
+					if(array_key_exists('lang', $fldAttrDefaultValue)) {
+						if(!empty($rawField[$fldAttrName]['lang'])) $field[$fldAttrName]['lang'] = $rawField[$fldAttrName]['lang'];
+						if(!empty($rawField[$fldAttrName]['ru'])) $field[$fldAttrName]['ru'] = $rawField[$fldAttrName]['ru'];
+						if(!empty($rawField[$fldAttrName]['en'])) $field[$fldAttrName]['en'] = $rawField[$fldAttrName]['en'];
+					}
+					else {
+						foreach($fldAttrDefaultValue as $fldSubAttrName => &$fldSubAttrDefVal) {
+							if(is_bool($fldSubAttrDefVal)) {
+								if(isset($rawField[$fldAttrName][$fldSubAttrName]) ) {
+									if( $rawField[$fldAttrName][$fldSubAttrName] === !$fldSubAttrDefVal) {
+										$field[$fldAttrName][$fldSubAttrName] = !$fldSubAttrDefVal;
+									}
+								}
+							}
+							if(null === $fldSubAttrDefVal && isset($rawField[$fldAttrName][$fldSubAttrName])) {
+								$field[$fldAttrName][$fldSubAttrName] = ''.$rawField[$fldAttrName][$fldSubAttrName];
+							}
+						}
+					}
 				}
 			}
-			$field['code'] = $rawField['code'];
-
-			if(!empty($rawField['default'])) {
-				$field['default'] = $DB->ForSql(''.$rawField['default']);
-			}
-
-			$codeStrUpper = strtoupper($field['code']);
-			$field['title']['lang'] = '%_FLD_TITLE_OF_'.$codeStrUpper;
-			$field['title']['ru'] = 'TITLE_OF__'.$codeStrUpper.'__FIELD';
-			$field['title']['en'] = 'TITLE_OF__'.$codeStrUpper.'__FIELD';
-			$field['description']['lang'] = '%_FLD_DSCR_OF_'.$codeStrUpper;
-			$field['description']['ru'] = 'DESCRIPTION_OF__'.$codeStrUpper.'__FIELD';
-			$field['description']['en'] = 'DESCRIPTION_OF__'.$codeStrUpper.'__FIELD';
-
-			if(!empty($rawField['title']) && is_array($rawField['title'])) {
-				if(!empty($rawField['title']['lang'])) $field['title']['lang'] = $rawField['title']['lang'];
-				if(!empty($rawField['title']['ru'])) $field['title']['ru'] = $rawField['title']['ru'];
-				if(!empty($rawField['title']['en'])) $field['title']['en'] = $rawField['title']['en'];
-			}
-			if(!empty($rawField['description']) && is_array($rawField['description'])) {
-				if(!empty($rawField['description']['lang'])) $field['description']['lang'] = $rawField['description']['lang'];
-				if(!empty($rawField['description']['ru'])) $field['description']['ru'] = $rawField['description']['ru'];
-				if(!empty($rawField['description']['en'])) $field['description']['en'] = $rawField['description']['en'];
+			if(!empty($field['default'])) {
+				$field['default'] = $DB->ForSql($field['default']);
 			}
 
 
-			$this->_fields[] = $field;
+			$this->_fields[$fieldCode] = $field;
 		} unset($field, $rawField);
 
 
@@ -240,9 +269,6 @@ class EntityGenerator
 					$this->_arTableFieldsDefault[$field['code']] = $field['default'];
 					$this->_createTable[$field['code']]['default'] = $this->_arTableFieldsDefault[$field['code']];
 				}
-			}
-			if(isset($configData['required']) && true === $configData['required']) {
-
 			}
 		}
 		$debug=1;

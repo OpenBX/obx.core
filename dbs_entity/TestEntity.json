@@ -3,7 +3,6 @@
 	"namespace": "OBX\\Core\\DBSEntities",
 	"class": "TestEntity",
 	"class_path": "dbs_entity/DBSEntities/TestEntity.php",
-	"create_table_path": "install/db/test_entity.sql",
 	"version": "0.1.0",
 	"events_id": "TestEntityRow",
 
@@ -13,26 +12,26 @@
 
 	"table_name": "obx_core_test_entity",
 	"table_alias": "E",
-	"fields": [
-		{"code": "ID",
+	"fields": {
+		"ID": {
 			"type": "pk_id", "primary_key": true, "auto_increment": true, "deny_null": true,
 			"title": {"lang": "%_FLD_TITLE_ID", "ru": "Ид", "en": "Id"},
 			"description": {"lang": "%_FLD_DSCR_ID", "ru": "Идентификатор записи", "en": "Identifier of row"}
 		},
-		{"code": "CODE",
+		"CODE": {
 			"type": "code", "deny_null": true,
 			"required": true, "required_error": {"lang": "%_CODE_IS_EMPTY","ru": "Поле \"Код\" не заполнено"},
 			"title": {"lang": "%_FLD_TITLE_CODE", "ru": "Код", "en": "Code"},
 			"description": {"lang": "%_FLD_DSCR_CODE", "ru": "Символьный код", "en": "Symbolic code"}
 		},
-		{"code": "NAME",
+		"NAME": {
 			"type": "string", "length": 255, "deny_null": true,
 			"required": true,
 			"required_error": {"lang": "%_NAME_IS_EMPTY","ru": "Поле \"Имя\" не заполнено"},
 			"title": {"lang": "%_FLD_TITLE_NAME", "ru": "Имя", "en": "Name"},
 			"description": {"lang": "%_FLD_DSCR_NAME", "ru": "Имя", "en": "Name"}
 		},
-		{"code": "SOME_BCHAR",
+		"SOME_BCHAR": {
 			"type": "bool_char",
 			"deny_null": true, "required": true, "default": "Y",
 			"get": {"if_null_return": "Y"},
@@ -40,48 +39,48 @@
 			"description": {"lang": "%_FLD_DSCR_SOME_BCHAR",
 				"ru": "Чекбокс Да/Нет", "en": "Checkbox Yes/No"}
 		},
-		{"code": "CREATE_TIME",
+		"CREATE_TIME": {
 			"type": "datetime",
 			"get": {"format_date":true},
 			"title": {"lang": "%_FLD_TITLE_CREATE_TIME", "ru": "Да/Нет", "en": "Yes/No"},
 			"description": {"lang": "%_FLD_DSCR_CREATE_TIME", "ru": "Чекбокс Да/Нет", "en": "Checkbox Yes/No"}
 		},
-		{"code": "TIMESTAMP_X",
+		"TIMESTAMP_X": {
 			"type": "datetime",
 			"get": {"format_date":true},
 			"title": {"lang": "%_FLD_TITLE_TIMESTAMP_X", "ru": "Да/Нет", "en": "Yes/No"},
 			"description": {"lang": "%_FLD_DSCR_TIMESTAMP_X", "ru": "Чекбокс Да/Нет", "en": "Checkbox Yes/No"}
 		},
-		{"code": "SOME_TEXT",
+		"SOME_TEXT": {
 			"type": "text",
 			"title": {"lang": "%_FLD_TITLE_SOME_TEXT", "ru": "Текст", "en": "Text"},
 			"description": {"lang": "%_FLD_DSCR_SOME_TEXT", "ru": "Немного текста", "en": "Some text"}
 		},
-		{"code": "IBLOCK_ID",
+		"IBLOCK_ID": {
 			"type": "iblock_id", "deny_zero": true, "deny_null": true,
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_ID", "ru": "Ид Иноблока", "en": "Infoblock Id"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_ID", "ru": "Идентификатор инфоблока", "en": "Infoblock identifier"}
 		},
-		{"code": "IBLOCK_CODE",
+		"IBLOCK_CODE": {
 			"type": "ex",
 			"get": {"ref": "IB.CODE"},
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Код Иноблока", "en": "Infoblock code"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Символьный код инфоблока", "en": "Symbolic Infoblock code"}
 		},
-		{"code": "IBLOCK_NAME",
+		"IBLOCK_NAME": {
 			"type": "ex",
 			"get": {"ref": "IB.NAME"},
 			"title": {"lang": "%_FLD_TITLE_IBLOCK_CODE", "ru": "Имя иноблока", "en": "Infoblock name"},
 			"description": {"lang": "%_FLD_DSCR_IBLOCK_CODE", "ru": "Имя инфоблока", "en": "Infoblock name"}
 		},
-		{"code": "USER_ID",
+		"USER_ID": {
 			"type": "user_id", "deny_null": false,
 			"selected_by_default": false,
 			"get": {"ref": "U.ID"},
 			"title": {"lang": "%_FLD_TITLE_USER", "ru": "Ид пользователя", "en": "User Id"},
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Идентификатор пользователь", "en": "User identifier"}
 		},
-		{"code": "USER",
+		"USER": {
 			"type": "ex",
 			"selected_by_default": true,
 			"get": {
@@ -92,18 +91,18 @@
 			"title": {"lang": "%_FLD_TITLE_USER", "ru": "Пользователь", "en": "User"},
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Пользователь", "en": "User"}
 		},
-		{"code": "CUSTOM_CK",
+		"CUSTOM_CK": {
 			"type": "string", "validator": "__custom__", "break_invalid": true,
 			"title": {"lang": "%_FLD_TITLE_CUSTOM_CK", "ru": "КастОм", "en": "Custom"},
 			"description": {"lang": "%_FLD_DSCR_CUSTOM_CK","ru": "Поле с пороизволной проеркой", "en": "Field with custom check"}
 		},
-		{"code": "VALIDATION",
+		"VALIDATION": {
 			"type": "string",
 			"validator": "OBX\\Core\\Validator\\DBSimpleTestValidator", "break_invalid": false,
 			"title": {"lang": "%_FLD_TITLE_VALIDATION", "ru": "По валидатору", "en": "By valid"},
 			"description": {"lang": "%_FLD_DSCR_VALIDATION","ru": "Поле с проверкой валидатором", "en": "Field with validator check"}
 		},
-		{"code": "SEC_ENT_JSON",
+		"SEC_ENT_JSON": {
 			"type": "ex",
 			"get": {
 				"sub_query": "concat('[',group_concat('\"',S.ID, '\":', '\"',S.NAME, '\"'),']')",
@@ -113,7 +112,7 @@
 			"title": {"lang": "%_FLD_TITLE_SEC_ENT_JSON", "ru": "Список2", "en": "List2"},
 			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Список элементов 2-й сущности в Json", "en": "Elements list of 2nd entity"}
 		},
-		{"code": "SEC_ENT_CNT",
+		"SEC_ENT_CNT": {
 			"type": "ex",
 			"selected_by_default": true,
 			"get": {
@@ -124,20 +123,19 @@
 			"title": {"lang": "%_FLD_TITLE_SEC_ENT_JSON", "ru": "количество2", "en": "Count2"},
 			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Количество элементов 2-й сущности", "en": "Elements count of 2nd entity"}
 		}
-	],
-	"unique": [
-		{
-			"name": "obx_core_test_entity_code_bchar",
+	},
+	"unique": {
+		"obx_core_test_entity_code_bchar": {
 			"fields": ["CODE"],
 			"duplicate_error": {
 				"lang": "%_E_DUP_UQ_CODE_BCHAR",
 				"ru": "Запись с таким CODE уже существует"
 			}
 		}
-	],
-	"index": [
-		{"name": "obx_core_test_entity_code", "fields": ["CODE"]}
-	],
+	},
+	"index": {
+		"obx_core_test_entity_code": ["CODE"]
+	},
 	"error_nothing_to_delete": {"lang": "%_E_NOTHING_TO_DELETE", "ru": "Ошибка удаления: запись не найдена"},
 	"error_nothing_to_update": {"lang": "%_E_NOTHING_TO_UPDATE", "ru": "Ошибка обновления: запись не найдена"},
 	"group_by_default": ["E.ID"],
