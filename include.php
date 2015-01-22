@@ -5,15 +5,13 @@
  **         Maksim S. Makarov aka pr0n1x      **
  ** @license Affero GPLv3                     **
  ** @mailto rootfavell@gmail.com              **
- ** @copyright 2013 DevTop                    **
+ ** @copyright 2015 DevTop                    **
  ***********************************************/
 
-
-define('OBX_MAGIC_WORD', '__I_KNOW_WHAT_I_DO__');
-define('I_KNOW_WHAT_I_DO', '__I_KNOW_WHAT_I_DO__');
-if(!defined('OBX_DOC_ROOT') && !empty($_SERVER['DOCUMENT_ROOT'])) {
-	define('OBX_DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
-	define('OBX\DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
-}
-
+use Bitrix\Main\Loader;
+Loader::registerAutoLoadClasses('obx.core', array(
+	'OBX_Build' => 'lib/build.php',
+	'OBX_Tools' => 'lib/tools.php',
+	'OBX\\Core\\Tools' => 'lib/tools.php',
+));
 

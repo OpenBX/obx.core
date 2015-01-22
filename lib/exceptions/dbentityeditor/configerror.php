@@ -8,10 +8,10 @@
  ** @copyright 2015 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Exceptions\DBSimple;
+namespace OBX\Core\Exceptions\DBEntityEditor;
 use OBX\Core\Exceptions\AError;
 
-class EntityGeneratorError extends AError {
+class ConfigError extends AError {
 	const _DIR_ = __DIR__;
 	const _FILE_ = __FILE__;
 	const LANG_PREFIX = 'OBX_DBSIMPLE_ENTITY_GEN_';

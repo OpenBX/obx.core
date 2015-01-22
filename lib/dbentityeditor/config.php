@@ -10,7 +10,7 @@
 
 namespace OBX\Core\DBEntityEditor;
 
-use OBX\Core\Exceptions\DBSimple\EntityGeneratorError as Err;
+use OBX\Core\Exceptions\DBEntityEditor\ConfigError as Err;
 use OBX\Core\MessagePool;
 use OBX\Core\Tools;
 
@@ -18,6 +18,8 @@ class Config
 {
 	protected $_entityModuleID = null;
 	protected $_entityEventsID = null;
+
+	protected $MessagePool = null;
 
 	protected $_configPath = null;
 	protected $_namespace = null;
@@ -34,11 +36,12 @@ class Config
 
 	/**
 	 * @param $entityConfigFile
-	 * @throws \OBX\Core\Exceptions\DBSimple\EntityGeneratorError
+	 * @throws Err
 	 */
 	public function __construct($entityConfigFile) {
 		/** @global \CDatabase $DB */
 		global $DB;
+		$this->MessagePool = new MessagePool();
 		if( !is_file(OBX_DOC_ROOT.$entityConfigFile) ) {
 			throw new Err('', Err::E_OPEN_CFG_FAILED);
 		}

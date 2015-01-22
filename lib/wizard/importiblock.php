@@ -9,7 +9,9 @@
  ***********************************************/
 
 namespace OBX\Core\Wizard;
+
 use \OBX\Core\Tools;
+
 class ImportIBlock
 {
 	protected $_bIBlockSelected = false;
