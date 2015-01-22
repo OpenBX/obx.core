@@ -8,20 +8,12 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-//// [pronix:2013=06-24]
-//// Без этого фикса не будет корректно подключено в режиме cli (соответственно не будут работать phpunit-тесты)
-//global $DBType;
-//$DBType = strtolower($DB->type);
 
-//// [pronix:2013-06-24]
-//// Если мы подключаем другой модуль тут, нужно помнить, что obx.core будет подключен в событии OnPageStart,
-//// т.е. будет отрабатывать каждый хит. Вместо этого имеет отключить тут лишние моодули, а
-//// позаботиться о подключении инфоблоков в тез ф-иях и методах, которые будут обращаться к CIBlock*
-//if(!CModule::IncludeModule('iblock')){
-//	return false;
-//}
+define('OBX_MAGIC_WORD', '__I_KNOW_WHAT_I_DO__');
+define('I_KNOW_WHAT_I_DO', '__I_KNOW_WHAT_I_DO__');
+if(!defined('OBX_DOC_ROOT') && !empty($_SERVER['DOCUMENT_ROOT'])) {
+	define('OBX_DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
+	define('OBX\DOC_ROOT', $_SERVER['DOCUMENT_ROOT']);
+}
 
-require __DIR__.'/classes/.constants.php';
-$arModuleClasses = require __DIR__.'/classes/.classes.php';
-CModule::AddAutoloadClasses('obx.core', $arModuleClasses);
-?>
+

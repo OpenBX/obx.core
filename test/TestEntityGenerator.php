@@ -11,7 +11,7 @@
 namespace OBX\Core\Test;
 
 use Bitrix\Main\Loader;
-use OBX\Core\DBSimple as DBS;
+use OBX\Core\DBEntityEditor as Editor;
 use OBX\Core\SimpleBenchMark;
 
 Loader::includeModule('obx.core');
@@ -20,6 +20,6 @@ class TestEntityGenerator extends TestCase {
 	const _DIR_ = __DIR__;
 
 	public function test() {
-		$generator = new DBS\EntityGenerator('/bitrix/modules/obx.core/dbs_entity/TestEntity.json');
+		$generator = new Editor\Config('/bitrix/modules/obx.core/dbs_entity/TestEntity.json');
 	}
 } 

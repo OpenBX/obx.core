@@ -5,8 +5,12 @@
  **         Maksim S. Makarov aka pr0n1x      **
  ** @license Affero GPLv3                     **
  ** @mailto rootfavell@gmail.com              **
- ** @copyright 2013 DevTop                    **
+ ** @copyright 2015 DevTop                    **
  ***********************************************/
 
-require __DIR__.'/includes/constants.php';
+namespace OBX\Core\DBEntityEditor;
 
+
+class GeneratorBitrixDataManager {
+
+} 
