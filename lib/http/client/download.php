@@ -8,7 +8,7 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Http;
+namespace OBX\Core\Http\Client;
 use OBX\Core\MessagePoolDecorator;
 use OBX\Core\Exceptions\Http\DownloadError;
 use OBX\Core\Mime;

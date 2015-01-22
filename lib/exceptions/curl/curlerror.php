@@ -11,7 +11,11 @@
 namespace OBX\Core\Exceptions\Curl;
 
 if(!defined('CURLE_NOT_BUILT_IN')) define('CURLE_NOT_BUILT_IN', 4);
-if(!defined('CURLE_REMOTE_ACCESS_DENIED')) define('CURLE_REMOTE_ACCESS_DENIED', 9);
+if(!defined('CURLE_COULDNT_RESOLVE_PROXY')) define('CURLE_COULDNT_RESOLVE_PROXY', 5);
+if(!defined('CURLE_COULDNT_RESOLVE_HOST')) define('CURLE_COULDNT_RESOLVE_HOST', 6);
+if(!defined('CURLE_COULDNT_CONNECT')) define('CURLE_COULDNT_CONNECT', 7);
+if(!defined('CURLE_FTP_WEIRD_SERVER_REPLY')) define('CURLE_FTP_WEIRD_SERVER_REPLY', 7);
+if(!defined('CURLE_FTP_ACCESS_DENIED')) define('CURLE_FTP_ACCESS_DENIED', 9);
 if(!defined('CURLE_FTP_ACCEPT_FAILED')) define('CURLE_FTP_ACCEPT_FAILED', 10);
 if(!defined('CURLE_FTP_ACCEPT_TIMEOUT')) define('CURLE_FTP_ACCEPT_TIMEOUT', 12);
 if(!defined('CURLE_FTP_COULDNT_SET_TYPE')) define('CURLE_FTP_COULDNT_SET_TYPE', 17);
@@ -94,7 +98,7 @@ class CurlError extends RequestError {
 
 	// We were denied access to the resource given in the URL. For FTP,
 	// this occurs while trying to change to the remote directory.
-	const E_REMOTE_ACCESS_DENIED = CURLE_REMOTE_ACCESS_DENIED;
+	const E_FTP_ACCESS_DENIED = CURLE_FTP_ACCESS_DENIED;
 
 	// While waiting for the server to connect back when an active FTP session is used,
 	// an error code was sent over the control connection or similar.

@@ -9,12 +9,12 @@
  ***********************************************/
 
 namespace OBX\Core\Test;
-use OBX\Core\Http\Download;
+use OBX\Core\Http\Client\Download;
 
 class TestDownloadBigFile extends TestCase {
 
-	static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
-	//static protected $_urlBigFile = 'http://smokeoffice12.loc:80/bitrix/modules/obx.core/test/data/dwn_files/big_file_300M.zero';
+	static protected $_urlBigFile = 'http://bx-modules.loc:80/bitrix/modules/obx.core/test/data/dwn_files/Pirates.Of.Silicon.Valley.rus.Lostfilm.TV.avi';
+	//static protected $_urlBigFile = 'http://bx-modules.loc:80/bitrix/modules/obx.core/test/data/dwn_files/big_file_300M.zero';
 
 	const _DIR_ = __DIR__;
 

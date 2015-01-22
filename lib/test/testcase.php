@@ -52,7 +52,7 @@ abstract class TestCase extends \PHPUnit_Framework_TestCase {
 			);
 		}
 		if(true !== self::$_bPathVarInit) {
-			self::$_docRoot = str_replace('/bitrix/modules/obx.core/classes', '', __DIR__);
+			self::$_docRoot = str_replace('/bitrix/modules/obx.core/lib/test', '', __DIR__);
 			//$_SERVER['DOCUMENT_ROOT'] = self::$_docRoot;
 			self::$_modulesDir = self::$_docRoot.'/bitrix/modules';
 			self::$_bPathVarInit = true;

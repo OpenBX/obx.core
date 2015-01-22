@@ -17,19 +17,19 @@ class TestErrorExceptions extends TestCase {
 		return array(
 			array(
 				'\OBX\Core\Exceptions\Xml\ParserError',
-				'/obx.core/classes/Exceptions/Xml/ParserError.php'
+				'/obx.core/lib/exceptions/xml/parsererror.php'
 			),
 			array(
-				'\OBX\Core\Exceptions\Http\DownloadError',
-				'/obx.core/classes/Exceptions/Http/DownloadError.php'
+				'\OBX\Core\Exceptions\Http\Downloaderror',
+				'/obx.core/lib/exceptions/http/downloaderror.php'
 			),
 			array(
 				'\OBX\Core\Exceptions\LogFileError',
-				'/obx.core/classes/Exceptions/LogFileError.php'
+				'/obx.core/lib/exceptions/logfileerror.php'
 			),
 			array(
 				'\OBX\Core\Exceptions\Curl\RequestError',
-				'/obx.core/classes/Exceptions/Curl/RequestError.php'
+				'/obx.core/lib/exceptions/curl/requesterror.php'
 			),
 		);
 	}
@@ -51,6 +51,7 @@ class TestErrorExceptions extends TestCase {
 			}
 			$errCode = $class::LANG_PREFIX.$constantValue;
 			$this->assertArrayHasKey($errCode, $arErrMsg);
+			/** @noinspection PhpUndefinedMethodInspection */
 			$this->assertEquals($arErrMsg[$errCode], $class::getLangMessage($constantValue));
 		}
 	}

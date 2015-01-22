@@ -8,13 +8,17 @@
  ** @copyright 2015 DevTop                    **
  ***********************************************/
 
-use Bitrix\Main\Loader;
+namespace OBX\Core\Settings;
 
-require_once __DIR__.'/includes/constants.php';
-
-Loader::registerAutoLoadClasses('obx.core', array(
-	'OBX_Build' => 'lib/build.php',
-	'OBX_Tools' => 'lib/tools.php',
-	'OBX\\Core\\Tools' => 'lib/tools.php',
-));
-
+interface ITab {
+	function getTabTitle();
+	function getTabDescription();
+	function getTabIcon();
+	function getTabHtmlContainer();
+	function showTabContent();
+	function showTabScripts();
+	function saveTabData();
+	function showMessages($colspan = -1);
+	function showWarnings($colspan = -1);
+	function showErrors($colspan = -1);
+}

@@ -9,9 +9,8 @@
  ***********************************************/
 
 namespace OBX\Core\Test;
-use OBX\Core\JSMessages;
 
-require_once dirname(__FILE__).'/../classes/TestCase.php';
+use OBX\Core\JSMessages;
 
 class JSMessagesTest extends TestCase
 {
