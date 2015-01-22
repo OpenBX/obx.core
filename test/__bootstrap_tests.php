@@ -43,4 +43,4 @@ if( !CModule::IncludeModule('iblock') ) {
 if( !CModule::IncludeModule('obx.core') ) {
 	die('Module OBX:Core not installed');
 }
-require_once dirname(__FILE__).'/../classes/TestCase.php';
+//require_once __DIR__.'/../lib/test/testcase.php';
