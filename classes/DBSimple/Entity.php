@@ -954,17 +954,17 @@ abstract class Entity extends MessagePoolDecorator
 			$arTableFieldsCheck = array_merge($this->_arTableFieldsCheck, $arTableFieldsCheck);
 		}
 		$arMessedFields = array();
-		foreach($arTableFieldsCheck as $asFieldName => &$fieldAttr) {
+		foreach($arTableFieldsCheck as $fldAlias => &$fieldAttr) {
 			$bRequired = ($fieldAttr & self::FLD_REQUIRED)?true:false;
-			if( $bRequired && !array_key_exists($asFieldName, $arFields) ) {
+			if( $bRequired && !array_key_exists($fldAlias, $arFields) ) {
 				if( ($fieldAttr & self::FLD_DEFAULT)
-					&& ( !isset($arFields[$asFieldName]) || $arCheckResult[$asFieldName]['IS_EMPTY'] )
-					&& array_key_exists($asFieldName, $arTableFieldsDefault)
+					&& ( !isset($arFields[$fldAlias]) || $arCheckResult[$fldAlias]['IS_EMPTY'] )
+					&& array_key_exists($fldAlias, $arTableFieldsDefault)
 				) {
-					$arFields[$asFieldName] = $arTableFieldsDefault[$asFieldName];
+					$arFields[$fldAlias] = $arTableFieldsDefault[$fldAlias];
 				}
 				else {
-					$arMessedFields[] = $asFieldName;
+					$arMessedFields[] = $fldAlias;
 				}
 			}
 		}

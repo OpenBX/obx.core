@@ -148,6 +148,7 @@ class EntityGenerator
 		}
 
 
+		// Обработка данных полей
 		if(empty($configData['fields']) || !is_array($configData['fields'])) {
 			throw new Err('', Err::E_CFG_FLD_LIST_IS_EMPTY);
 		}
@@ -161,9 +162,12 @@ class EntityGenerator
 				throw new Err('', Err::E_CFG_FLD_WRG_TYPE);
 			}
 			$codeStrUpper = strtoupper($rawField['code']);
+			// Задаем набор возможных опций поля
 			$field = array(
 				'code' => $fieldCode,
 				'type' => $fieldType,
+				'user_type' => null,
+				'length' => null,
 				'unsigned' => false,
 				'auto_increment' => false,
 				'primary_key' => false,
@@ -202,61 +206,62 @@ class EntityGenerator
 			if('ex' !== $field['type']) {
 				$field['selected_by_default'] = true;
 			}
-			foreach($field as $fldAttrName => &$fldAttrDefaultValue) {
-				if(is_bool($fldAttrDefaultValue)) {
+			// Заменяем дефолтные параметры поля, на те, что указаны в конфиге
+			foreach($field as $fldAttrName => &$fldAttrValue) {
+				if(is_bool($fldAttrValue)) {
 					if(isset($rawField[$fldAttrName]) ) {
-						if( $rawField[$fldAttrName] === !$fldAttrDefaultValue) {
-							$field[$fldAttrName] = !$fldAttrDefaultValue;
+						if( $rawField[$fldAttrName] === !$fldAttrValue) {
+							$fldAttrValue = !$fldAttrValue;
 						}
 					}
 				}
-				if(null === $fldAttrDefaultValue && isset($rawField[$fldAttrName])) {
-					$field[$fldAttrName] = ''.$rawField[$fldAttrName];
+				if(null === $fldAttrValue && isset($rawField[$fldAttrName])) {
+					$fldAttrValue = ''.$rawField[$fldAttrName];
 				}
-				if(is_array($fldAttrDefaultValue)
+				if(is_array($fldAttrValue)
 					&& is_array($rawField[$fldAttrName])
 					&& !empty($rawField[$fldAttrName])
 				) {
-					if(array_key_exists('lang', $fldAttrDefaultValue)) {
-						if(!empty($rawField[$fldAttrName]['lang'])) $field[$fldAttrName]['lang'] = $rawField[$fldAttrName]['lang'];
-						if(!empty($rawField[$fldAttrName]['ru'])) $field[$fldAttrName]['ru'] = $rawField[$fldAttrName]['ru'];
-						if(!empty($rawField[$fldAttrName]['en'])) $field[$fldAttrName]['en'] = $rawField[$fldAttrName]['en'];
+					if(array_key_exists('lang', $fldAttrValue)) {
+						if(!empty($rawField[$fldAttrName]['lang'])) $fldAttrValue['lang'] = $rawField[$fldAttrName]['lang'];
+						if(!empty($rawField[$fldAttrName]['ru'])) $fldAttrValue['ru'] = $rawField[$fldAttrName]['ru'];
+						if(!empty($rawField[$fldAttrName]['en'])) $fldAttrValue['en'] = $rawField[$fldAttrName]['en'];
 					}
 					else {
-						foreach($fldAttrDefaultValue as $fldSubAttrName => &$fldSubAttrDefVal) {
-							if(is_bool($fldSubAttrDefVal)) {
+						foreach($fldAttrValue as $fldSubAttrName => &$fldSubAttrValue) {
+							if(is_bool($fldSubAttrValue)) {
 								if(isset($rawField[$fldAttrName][$fldSubAttrName]) ) {
-									if( $rawField[$fldAttrName][$fldSubAttrName] === !$fldSubAttrDefVal) {
-										$field[$fldAttrName][$fldSubAttrName] = !$fldSubAttrDefVal;
+									if( $rawField[$fldAttrName][$fldSubAttrName] === !$fldSubAttrValue) {
+										$fldSubAttrValue = !$fldSubAttrValue;
 									}
 								}
 							}
-							if(null === $fldSubAttrDefVal && isset($rawField[$fldAttrName][$fldSubAttrName])) {
-								$field[$fldAttrName][$fldSubAttrName] = ''.$rawField[$fldAttrName][$fldSubAttrName];
+							if(null === $fldSubAttrValue && isset($rawField[$fldAttrName][$fldSubAttrName])) {
+								$fldSubAttrValue = ''.$rawField[$fldAttrName][$fldSubAttrName];
 							}
-						}
+						} unset($fldSubAttrName, $fldSubAttrValue);
 					}
 				}
-			}
+			} unset($fldAttrName, $fldAttrValue);
 			if(!empty($field['default'])) {
 				$field['default'] = $DB->ForSql($field['default']);
 			}
 
-
 			$this->_fields[$fieldCode] = $field;
 		} unset($field, $rawField);
 
+		// Получаем данные одополнительных таблицах
 
 		// DBSimple Data
-		$this->_classPath = $configData['class_path'];
-		$this->_mainTable = $configData['table_alias'];
+		$this->_classPath = $this->_class;
+		$this->_mainTable = $this->_tableAlias;
 		$this->_arTableList = array(
 			$this->_tableAlias => $this->_tableName
 		);
-		foreach($this->_fields as &$field) {
+		foreach($this->_fields as $fieldCode => &$field) {
 			$fieldCheckType = $this->cfgField2DBSimpleFieldCheck($field);
 			if(null !== $fieldCheckType) {
-				$this->_arTableFieldsCheck[$field['code']] = array($fieldCheckType);
+				$this->_arTableFieldsCheck[$field['code']] = $fieldCheckType;
 				$this->_createTable[$field['code']] = array(
 					'data_type' => $this->cfgFieldType2MySQL($field),
 					'deny_null' => ' not null',
@@ -268,6 +273,10 @@ class EntityGenerator
 				if(!empty($field['default'])) {
 					$this->_arTableFieldsDefault[$field['code']] = $field['default'];
 					$this->_createTable[$field['code']]['default'] = $this->_arTableFieldsDefault[$field['code']];
+				}
+				if(true === $field['selected_by_default']) {
+					if(null === $this->_arSelectDefault) $this->_arSelectDefault = array();
+					$this->_arSelectDefault[] = $field['code'];
 				}
 			}
 		}
@@ -380,7 +389,8 @@ class EntityGenerator
 		if(true === $field['deny_zero']) $flags[] = 'FLD_NOT_ZERO';
 		if(true === $field['required']) $flags[] = 'FLD_REQUIRED';
 		if(!empty($field['default'])) $flags[] = 'FLD_DEFAULT';
-		if(!empty($field['break_invalid'])) $flags[] = 'FLD_BRK_INCORR';
+		if(!empty($field['validator'])) $flags[] = 'FLD_T_CUSTOM_CK';
+		if(true === $field['break_invalid']) $flags[] = 'FLD_BRK_INCORR';
 		return $flags;
 	}
 
