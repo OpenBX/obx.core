@@ -10,6 +10,8 @@
 
 namespace OBX\Core\Settings;
 
+IncludeModuleLangFile(__FILE__);
+
 class AdminPage {
 	protected $_tabControlName = null;
 	protected $_arTabs = array();
