@@ -14,7 +14,7 @@ use Bitrix\Main\Loader;
 use OBX\Core\DBEntityEditor as Editor;
 use OBX\Core\SimpleBenchMark;
 
-Loader::includeModule('obx.core');
+
 
 class TestEntityGenerator extends TestCase {
 	const _DIR_ = __DIR__;

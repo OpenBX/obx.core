@@ -11,6 +11,6 @@
 namespace OBX\Core\DBEntityEditor;
 
 
-class GeneratorBitrixDataManager {
+abstract class Generator implements IGenerator {
 
 } 

@@ -11,9 +11,11 @@
 namespace OBX\Core\DBEntityEditor;
 
 
-interface IGenerator {
-	function __construct(IConfig $config);
+/**
+ * Class GeneratorBXDBr
+ * @package OBX\Core\DBEntityEditor
+ * Генератор сущности Bitrix\DataManager
+ */
+class GeneratorBXDBr {
 
-	function generateEntityClass($dbsOnly = false);
-	function saveEntityClass($path, $dbsOnly = false);
-}
+} 

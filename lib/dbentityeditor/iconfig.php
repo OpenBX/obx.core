@@ -11,9 +11,15 @@
 namespace OBX\Core\DBEntityEditor;
 
 
-interface IGenerator {
-	function __construct(IConfig $config);
-
-	function generateEntityClass($dbsOnly = false);
-	function saveEntityClass($path, $dbsOnly = false);
+interface IConfig {
+	function getModuleID();
+	function getEventsID();
+	function getNamespace();
+	function getClass();
+	function getAlias();
+	function getTableName();
+	function getFieldsList();
+	function getField($fieldCode);
+	function isReadSuccess();
+	function getCreateTableCode();
 }
