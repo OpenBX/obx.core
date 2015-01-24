@@ -13,7 +13,7 @@ use OBX\Core\MessagePoolDecorator;
 
 IncludeModuleLangFile(__FILE__);
 
-abstract class Entity extends MessagePoolDecorator
+abstract class Entity extends MessagePoolDecorator implements IEntity
 {
 	protected function __construct() {}
 	final protected function __clone() {}
@@ -1842,13 +1842,17 @@ abstract class Entity extends MessagePoolDecorator
 
 	/**
 	 * @param array $arFields
-	 * @param bool $bNotUpdateUniqueFields
 	 * @return bool
 	 */
-	public function update($arFields, $bNotUpdateUniqueFields = false) {
+	public function update($arFields) {
 		global $DB;
 		$bContinueAfterEvent = ($this->_onStartUpdate($arFields)!==false);
 		if(!$bContinueAfterEvent) return false;
+		$bNotUpdateUniqueFields = false;
+		if(!empty($arFields['__NOT_UPDATE_UNIQUE_FIELDS'])) {
+			$bNotUpdateUniqueFields = true;
+			unset($arFields['__NOT_UPDATE_UNIQUE_FIELDS']);
+		}
 
 		$arCheckResult = $this->prepareFieldsData(self::PREPARE_UPDATE, $arFields);
 		if($arCheckResult['__BREAK']) return false;

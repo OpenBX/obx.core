@@ -14,7 +14,7 @@ interface IEntity
 {
 	//static function getInstance();
 	function add($arFields);
-	function update($arFields, $bNotUpdateUniqueFields = false);
+	function update($arFields);
 	function delete($PRIMARY_KEY_VALUE);
 	function deleteByFilter($arFields);
 	function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true);
