@@ -2,7 +2,7 @@
 	"module": "obx.core",
 	"namespace": "OBX\\Core\\DBSEntities",
 	"class": "TestEntity",
-	"class_path": "dbs_entity/DBSEntities/TestEntity.php",
+	"class_path": "data_entity/DBSEntities",
 	"version": "0.1.0",
 	"events_id": "TestEntityRow",
 

@@ -14,6 +14,8 @@ use OBX\Core\Exceptions\DBEntityEditor\ConfigError as Err;
 use OBX\Core\MessagePool;
 use OBX\Core\Tools;
 
+IncludeModuleLangFile(__FILE__);
+
 class Config implements IConfig
 {
 	protected $_moduleID = null;
@@ -52,7 +54,7 @@ class Config implements IConfig
 		if( !is_file(OBX_DOC_ROOT.$entityConfigFile) ) {
 			throw new Err('', Err::E_OPEN_CFG_FAILED);
 		}
-		$entityConfigFile = self::normalizeConfigPath($entityConfigFile);
+		$entityConfigFile = self::normalizePath($entityConfigFile);
 		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$entityConfigFile);
 		$configData = json_decode($jsonConfig, true);
 		if(null === $configData) {
@@ -104,10 +106,10 @@ class Config implements IConfig
 			.strtolower(str_replace('\\', '/', $this->_namespace))
 			.'/'.$this->_class.'.php'
 		;
-		if( empty($configData['class_path']) ) {
-			throw new Err('', Err::E_CFG_NO_CLASS_PATH);
+		if( !empty($configData['class_path']) ) {
+			//throw new Err('', Err::E_CFG_NO_CLASS_PATH);
+			$this->_classPath = self::normalizePath($configData['class_path']);
 		}
-		// TODO: Сделать проверку class_path
 
 		$configData['table_alias'] = trim($configData['table_alias']);
 		$configData['table_name'] = trim($configData['table_name']);
@@ -168,6 +170,8 @@ class Config implements IConfig
 					"alias" => null,
 					"type" => null,
 					"condition" => null,
+					"reference_field" => null,
+					"self_field" => null
 				);
 				foreach($reference as $refParam => &$refParamValue) {
 					if(!empty($rawReference[$refParam]) && is_string($rawReference[$refParam]) ) {
@@ -293,7 +297,7 @@ class Config implements IConfig
 					try {
 						$curConfigDir = dirname($this->_configPath);
 						$referenceConfigPath = $curConfigDir.'/'.$reference['entity'];
-						$referenceConfigPath = self::normalizeConfigPath($referenceConfigPath);
+						$referenceConfigPath = self::normalizePath($referenceConfigPath);
 						if(null !== $this->_parentRefConfig
 							&& $this->_parentRefConfig->getConfigPath() == $referenceConfigPath
 						) {
@@ -312,6 +316,7 @@ class Config implements IConfig
 						) {
 							$reference['alias'] = $refEntity->getAlias();
 						}
+						$reference['table'] = $refEntity->getTableName();
 					}
 					catch(Err $e) {
 						throw new Err(array(
@@ -323,6 +328,17 @@ class Config implements IConfig
 					if(!empty($reference['table']) && !self::validateTblName($reference['table'])) {
 						throw new Err('', Err::E_CFG_REF_WRG_NAME);
 					}
+					$rsColumns = $DB->Query('SHOW COLUMNS FROM '.$reference['table']);
+					$refColumnsList = array();
+					while( $column = $rsColumns->Fetch() ) {
+						$refColumnsList[] = $column['Field'];
+					}
+					if(empty($refColumnsList)) {
+						throw new Err(array(
+							'#REASON#' => 'OBX_CORE_DBENTITY_EDITOR_E_FETCH_TABLE_COLUMNS_FAILED'
+						), Err::E_CFG_REF_READ_ENTITY_FAIL);
+					}
+					$reference['fields'] = $refColumnsList;
 				}
 				if( empty($reference['alias']) || !self::validateTblAlias($reference['alias']) ) {
 					throw new Err('', Err::E_CFG_REF_WRG_ALIAS);
@@ -341,6 +357,31 @@ class Config implements IConfig
 					default:
 						throw new Err('', Err::E_CFG_REF_WRG_JOIN_TYPE);
 				}
+
+				$refCondition = self::parseReferenceCondition($reference['condition']);
+				if(null === $refCondition) {
+					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
+				}
+				if($refCondition['left']['table'] == $this->_tableAlias
+					&& $refCondition['right']['table'] == $reference['alias']
+				) {
+					$reference['self_field'] = $refCondition['left']['field'];
+					$reference['reference_field'] = $refCondition['right']['field'];
+				}
+				elseif($refCondition['right']['table'] == $this->_tableAlias
+					&& $refCondition['left']['table'] == $reference['alias']
+				) {
+					$reference['self_field'] = $refCondition['right']['field'];
+					$reference['reference_field'] = $refCondition['left']['field'];
+				}
+				else {
+					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
+				}
+				if(!in_array($reference['reference_field'], $reference['fields'])
+					|| empty($this->_fields[$reference['self_field']])
+				) {
+					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
+				}
 				$this->_reference[$reference['alias']] = $reference;
 			}
 		}
@@ -353,7 +394,7 @@ class Config implements IConfig
 		$debug=1;
 	}
 
-	static protected function normalizeConfigPath($path) {
+	static protected function normalizePath($path) {
 		Tools::_fixFilePath($path);
 		return $path;
 	}
@@ -384,6 +425,34 @@ class Config implements IConfig
 			return false;
 		}
 		return true;
+	}
+
+	static protected function parseReferenceCondition($condition) {
+		$condition = trim(strtoupper($condition));
+		if( strpos($condition, '=') === false ) {
+			return null;
+		}
+		list($leftField, $rightField) = explode('=', $condition);
+		$leftField = trim($leftField);
+		$rightField = trim($rightField);
+		if(empty($leftField) || empty($rightField)) {
+			return null;
+		}
+		list($leftTableAlias, $leftFieldName) = explode('.', $leftField);
+		list($rightTableAlias, $rightFieldName) = explode('.', $rightField);
+		$leftTableAlias = trim($leftTableAlias);
+		$leftFieldName = trim($leftFieldName);
+		$rightTableAlias = trim($rightTableAlias);
+		$rightFieldName = trim($rightFieldName);
+		if( empty($leftTableAlias) || empty($leftFieldName)
+			|| empty($rightTableAlias) || empty($rightFieldName)
+		) {
+			return null;
+		}
+		return array(
+			'left'  => array('table' => $leftTableAlias,  'field' => $leftFieldName),
+			'right' => array('table' => $rightTableAlias, 'field' => $rightFieldName)
+		);
 	}
 
 	// Interface
