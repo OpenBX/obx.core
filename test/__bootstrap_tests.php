@@ -8,6 +8,8 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
+use Bitrix\Main\Loader;
+
 define("BX_SKIP_SESSION_EXPAND", true);
 //define("PUBLIC_AJAX_MODE", true);
 define("NO_KEEP_STATISTIC", "Y");
@@ -36,11 +38,10 @@ global $DBType;
 $DBType = strtolower($DB->type);
 
 $USER->Authorize(1);
-if( !CModule::IncludeModule('iblock') ) {
+if( !Loader::includeModule('iblock') ) {
 	die('Module iblock not installed');
 }
 
-if( !CModule::IncludeModule('obx.core') ) {
+if( !Loader::includeModule('obx.core') ) {
 	die('Module OBX:Core not installed');
 }
-//require_once __DIR__.'/../lib/test/testcase.php';

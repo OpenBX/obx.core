@@ -14,10 +14,10 @@ use OBX\Core\Exceptions\DBEntityEditor\ConfigError as Err;
 use OBX\Core\MessagePool;
 use OBX\Core\Tools;
 
-class Config
+class Config implements IConfig
 {
-	protected $_entityModuleID = null;
-	protected $_entityEventsID = null;
+	protected $_moduleID = null;
+	protected $_eventsID = null;
 
 	protected $MessagePool = null;
 
@@ -31,6 +31,7 @@ class Config
 	protected $_tableName = null;
 	protected $_tableAlias = null;
 	protected $_fields = array();
+	protected $_readSuccess = false;
 
 	protected $_createTable = array();
 
@@ -61,11 +62,11 @@ class Config
 		) {
 			throw new Err('', Err::E_CFG_NO_MOD);
 		}
-		$this->_entityModuleID = $configData['module'];
+		$this->_moduleID = $configData['module'];
 		if( empty($configData['events_id']) ) {
 			throw new Err('', Err::E_CFG_NO_EVT_ID);
 		}
-		$this->_entityEventsID = $configData['events_id'];
+		$this->_eventsID = $configData['events_id'];
 		/** @noinspection PhpUndefinedMethodInspection */
 		//$this->_version = \CUpdateClient::GetModuleVersion($this->_entityModuleID);
 		if(!empty($configData['version']) && strpos($configData['version'], '.') !== false) {
@@ -131,9 +132,9 @@ class Config
 		);
 
 		if(!empty($configData['title']) && is_array($configData['title'])) {
-			if(!empty($configData['title']['lang'])) $this->_title = $configData['title']['lang'];
-			if(!empty($configData['title']['ru'])) $this->_title = $configData['title']['lang'];
-			if(!empty($configData['title']['en'])) $this->_title = $configData['title']['lang'];
+			if(!empty($configData['title']['lang'])) $this->_title['lang'] = $configData['title']['lang'];
+			if(!empty($configData['title']['ru'])) $this->_title['ru'] = $configData['title']['ru'];
+			if(!empty($configData['title']['en'])) $this->_title['en'] = $configData['title']['en'];
 		}
 
 
@@ -239,14 +240,12 @@ class Config
 			$this->_fields[$fieldCode] = $field;
 		} unset($field, $rawField);
 
-		// Получаем данные одополнительных таблицах
+		// TODO: Получаем данные одополнительных таблицах
+
+		$this->_readSuccess = true;
 
 		// DBSimple Data
-//		$this->_classPath = $this->_class;
-//		$this->_mainTable = $this->_tableAlias;
-//		$this->_arTableList = array(
-//			$this->_tableAlias => $this->_tableName
-//		);
+
 //		foreach($this->_fields as $fieldCode => &$field) {
 //			$fieldCheckType = $this->cfgField2DBSimpleFieldCheck($field);
 //			if(null !== $fieldCheckType) {
@@ -307,83 +306,9 @@ class Config
 		}
 	}
 
-	protected function cfgField2DBSimpleFieldCheck(&$field) {
-		$flags = array();
-		switch($field['type']) {
-			case '':
-			case 'ex':
-				return null;
-			case 'pk_id':
-				$flags[] = 'FLD_T_PK_ID';
-				break;
-			case 'int':
-			case 'integer':
-				$flags[] = 'FLD_T_INT';
-				break;
-			case 'char':
-				$flags[] = 'FLD_T_CHAR';
-				break;
-			case 'text':
-			case 'string':
-				$flags[] = 'FLD_T_STRING';
-				break;
-			case 'code':
-				$flags[] = 'FLD_T_CODE';
-				break;
-			case 'bool_char':
-			case 'bchar':
-				$flags[] = 'FLD_T_BCHAR';
-				break;
-			case 'real':
-			case 'float':
-				$flags[] = 'FLD_T_FLOAT';
-				break;
-			case 'ident':
-				$flags[] = 'FLD_T_IDENT';
-				break;
-			case 'datetime':
-				$flags[] = 'FLD_T_DATETIME';
-				break;
-			case 'bx_lang_id':
-				$flags[] = 'FLD_T_BX_LANG_ID';
-				break;
-			case 'iblock_id':
-				$flags[] = 'FLD_T_IBLOCK_ID';
-				break;
-			case 'iblock_prop_id':
-			case 'ib_prop_id':
-				$flags[] = 'FLD_T_IBLOCK_PROP_ID';
-				break;
-			case 'iblock_element_id':
-			case 'ib_element_id':
-				$flags[] = 'FLD_T_IBLOCK_ELEMENT_ID';
-				break;
-			case 'iblock_section_id':
-			case 'ib_section_id':
-				$flags[] = 'FLD_T_IBLOCK_SECTION_ID';
-				break;
-			case 'user_id':
-				$flags[] = 'FLD_T_USER_ID';
-				break;
-			case 'group_id':
-			case 'user_group_id':
-				$flags[] = 'FLD_T_GROUP_ID';
-				break;
-			default:
-				throw new Err('', Err::E_CFG_FLD_WRG_TYPE);
-		}
-		if(true === $this->checkUnsignedField($field)) $flags[] = 'FLD_UNSIGNED';
-		if(true === $field['no_check']) $flags[] = 'FLD_T_NO_CHECK';
-		if(true === $field['deny_null']) $flags[] = 'FLD_NOT_NULL';
-		if(true === $field['deny_zero']) $flags[] = 'FLD_NOT_ZERO';
-		if(true === $field['required']) $flags[] = 'FLD_REQUIRED';
-		if(!empty($field['default'])) $flags[] = 'FLD_DEFAULT';
-		if(!empty($field['validator'])) $flags[] = 'FLD_T_CUSTOM_CK';
-		if(true === $field['break_invalid']) $flags[] = 'FLD_BRK_INCORR';
-		return $flags;
-	}
 
-	protected function cfgFieldType2MySQL(&$field) {
+
+	public function cfgFieldType2MySQL(&$field) {
 		$type = null;
 		switch($field['type']) {
 			case '':
@@ -499,22 +424,42 @@ class Config
 	}
 
 	public function getCreateTableCode() {
-
+		/** \CDatabase $DB */
+		global $DB;
+		$createCode = 'create table if exists '.$this->_tableName."\n";
+		$fieldCount = count($this->_fields);
+		$iField = 0;
+		$primaryKey = null;
+		foreach($this->_fields as &$field) {
+			$iField++;
+			$dataType = $this->cfgFieldType2MySQL($field);
+			$deny_null = ' null';
+			$default = '';
+			$ai = '';
+			if(true === $field['deny_null']) {
+				$deny_null = ' not null';
+			}
+			if(!empty($field['default'])) {
+				$default = $DB->ForSql($field['default']);
+			}
+			if(true === $field['auto_increment']) {
+				$ai = ' auto_increment';
+			}
+			$comma = ($fieldCount > $iField)?',':'';
+			$createCode .= "\t".$field['code'].' '.$dataType.$deny_null.$ai.$default.$comma."\n";
+			if(null === $primaryKey && true === $field['primary_key']) {
+				$primaryKey = 'primary key('.$field['code'].')';
+			}
+		}
+		if(null !== $primaryKey) {
+			$createCode .= "\t".$primaryKey."\n";
+		}
+		// TODO: тут надо сгенерировать код создания индексов
 	}
 
-	public function generateEntityClass() {
 
-	}
-
-	public function saveEntityClass() {
-
-	}
 
 	public function saveConfig() {
-
-	}
-
-	public function addTable() {
 
 	}
 } 
