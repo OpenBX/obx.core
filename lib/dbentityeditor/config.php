@@ -331,9 +331,16 @@ class Config implements IConfig
 					throw new Err('', Err::E_CFG_REF_ALIAS_NOT_UQ);
 				}
 				if(empty($reference['type'])) {
-					throw new Err('', Err::REF)
+					throw new Err('', Err::E_CFG_REF_WRG_JOIN_TYPE);
 				}
-				switch()
+				switch($reference['type']) {
+					case 'left_join':
+					case 'right_join':
+					case 'cross':
+						break;
+					default:
+						throw new Err('', Err::E_CFG_REF_WRG_JOIN_TYPE);
+				}
 				$this->_reference[$reference['alias']] = $reference;
 			}
 		}

@@ -36,8 +36,7 @@ class ConfigError extends AError {
 	const E_CFG_REF_WRG_ALIAS = 14;
 	const E_CFG_REF_ALIAS_NOT_UQ = 15;
 	const E_CFG_REF_READ_ENTITY_FAIL = 16;
-	const E_CFG_REF_
-		';asfh ;8owrvtyq 80-\i'
+	const E_CFG_REF_WRG_JOIN_TYPE = 17;
 
 	const E_GET_FLD_NOT_FOUND = 51;
 
