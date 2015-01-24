@@ -47,6 +47,31 @@ class GeneratorDBS implements IGenerator {
 		$this->_arTableList = array(
 			$this->_mainTable => $this->_config->getTableName()
 		);
+
+		// DBSimple Data
+
+//		foreach($this->_fields as $fieldCode => &$field) {
+//			$fieldCheckType = $this->cfgField2DBSimpleFieldCheck($field);
+//			if(null !== $fieldCheckType) {
+//				$this->_arTableFieldsCheck[$field['code']] = $fieldCheckType;
+//				$this->_createTable[$field['code']] = array(
+//					'data_type' => $this->cfgFieldType2MySQL($field),
+//					'deny_null' => ' not null',
+//					'default' => ''
+//				);
+//				if(true === $field['deny_null']) {
+//					$this->_createTable[$field['code']]['deny_null'] = ' null';
+//				}
+//				if(!empty($field['default'])) {
+//					$this->_arTableFieldsDefault[$field['code']] = $field['default'];
+//					$this->_createTable[$field['code']]['default'] = $this->_arTableFieldsDefault[$field['code']];
+//				}
+//				if(true === $field['selected_by_default']) {
+//					if(null === $this->_arSelectDefault) $this->_arSelectDefault = array();
+//					$this->_arSelectDefault[] = $field['code'];
+//				}
+//			}
+//		}
 	}
 
 	protected function cfgField2DBSimpleFieldCheck(&$field) {

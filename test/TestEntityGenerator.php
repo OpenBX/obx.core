@@ -20,6 +20,6 @@ class TestEntityGenerator extends TestCase {
 	const _DIR_ = __DIR__;
 
 	public function test() {
-		$generator = new Editor\Config('/bitrix/modules/obx.core/dbs_entity/TestEntity.json');
+		$generator = new Editor\Config('/bitrix/modules/obx.core/data_entity/TestEntity.json');
 	}
 } 

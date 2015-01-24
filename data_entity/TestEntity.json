@@ -125,10 +125,10 @@
 	},
 	"unique": {
 		"obx_core_test_entity_code_bchar": {
-			"fields": ["CODE"],
+			"fields": ["CODE", ""],
 			"duplicate_error": {
-				"lang": "%_E_DUP_UQ_CODE_BCHAR",
-				"ru": "Запись с таким CODE уже существует"
+				"lang": "%_E_DUP_UQ_CODE",
+				"ru": "может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR"
 			}
 		}
 	},
@@ -142,22 +142,22 @@
 
 	"reference": [
 		{
-			"name": "b_iblock",
+			"table": "b_iblock",
 			"alias": "IB",
 			"type": "left_join",
-			"on": "E.IBLOCK_ID = IB.ID"
+			"condition": "E.IBLOCK_ID = IB.ID"
 		},
 		{
-			"name": "b_user",
+			"table": "b_user",
 			"alias": "U",
 			"type": "left_join",
-			"on": "E.USER_ID = U.ID"
+			"condition": "E.USER_ID = U.ID"
 		},
 		{
-			"entity": "./SecondEntity.json",
+			"entity": "TestSecondEntity.json",
 			"alias": "S",
 			"type": "left_join",
-			"link_on": "E.ID = S.TEST_ENTITY_ID"
+			"condition": "E.ID = S.TEST_ENTITY_ID"
 		}
 	]
 }

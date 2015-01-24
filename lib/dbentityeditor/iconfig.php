@@ -18,8 +18,11 @@ interface IConfig {
 	function getClass();
 	function getAlias();
 	function getTableName();
-	function getFieldsList();
+	function getFieldsList($bOWnFields = false);
 	function getField($fieldCode);
 	function isReadSuccess();
 	function getCreateTableCode();
+	function getConfigContent();
+	function getConfigPath();
+	function saveConfigFile();
 }

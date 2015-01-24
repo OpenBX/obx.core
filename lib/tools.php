@@ -722,7 +722,7 @@ namespace OBX\Core {
 			$filePath = str_replace(array(
 				':', '*', '?', '<', '>', '|', '"', "\n", "\r"
 			), '', $filePath);
-			$filePath = str_replace(array('\\\\', '\\', '//'), '/', $filePath);
+			$filePath = str_replace(array('\\\\', '\\', '//', '/./'), '/', $filePath);
 		}
 		static public function fixFilePath($filePath) {
 			$filePath = str_replace(array(

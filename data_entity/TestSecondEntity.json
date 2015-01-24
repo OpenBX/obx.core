@@ -1,0 +1,61 @@
+{
+	"module": "obx.core",
+	"namespace": "OBX\\Core\\DBSEntities",
+	"class": "TestEntity",
+	"class_path": "data_entity/DBSEntities/TestEntity.php",
+	"version": "0.1.0",
+	"events_id": "TestEntityRow",
+
+	"lang_prefix": "OBX_DBS_SECOND_ENTITY",
+	"title": {"lang": "%_ENTITY_TITLE", "ru": "Тестовая сущность", "en": "Entity for testing"},
+
+	"table_name": "obx_core_second_entity",
+	"table_alias": "S",
+	"fields": {
+		"ID": {
+			"type": "pk_id", "primary_key": true, "auto_increment": true, "deny_null": true,
+			"title": {"lang": "%_FLD_TITLE_ID", "ru": "Ид", "en": "Id"},
+			"description": {"lang": "%_FLD_DSCR_ID", "ru": "Идентификатор записи", "en": "Identifier of row"}
+		},
+		"CODE": {
+			"type": "code", "deny_null": true,
+			"required": true, "required_error": {"lang": "%_CODE_IS_EMPTY","ru": "Поле \"Код\" не заполнено"},
+			"title": {"lang": "%_FLD_TITLE_CODE", "ru": "Код", "en": "Code"},
+			"description": {"lang": "%_FLD_DSCR_CODE", "ru": "Символьный код", "en": "Symbolic code"}
+		},
+		"NAME": {
+			"type": "string", "length": 255, "deny_null": true,
+			"required": true,
+			"required_error": {"lang": "%_NAME_IS_EMPTY","ru": "Поле \"Имя\" не заполнено"},
+			"title": {"lang": "%_FLD_TITLE_NAME", "ru": "Имя", "en": "Name"},
+			"description": {"lang": "%_FLD_DSCR_NAME", "ru": "Имя", "en": "Name"}
+		},
+		"TEST_ENTITY_ID": {
+			"type": "int", "length": 11, "deny_null": false,
+			"required": true,
+			"required_error": {
+				"lang": "%_FLD_REQUIRED_TEST_ENTITY_ID",
+				"ru": "Не заполнена привязка к тестовой сущности"
+			}
+		}
+	},
+	"unique": {
+		"obx_core_sec_entity_code": {
+			"fields": ["CODE"],
+			"duplicate_error": {
+				"lang": "%_E_DUP_UQ_CODE",
+				"ru": "Запись с таким Кодом уже существует"
+			}
+		}
+	},
+	"error_nothing_to_delete": {"lang": "%_E_NOTHING_TO_DELETE", "ru": "Ошибка удаления: запись не найдена"},
+	"error_nothing_to_update": {"lang": "%_E_NOTHING_TO_UPDATE", "ru": "Ошибка обновления: запись не найдена"},
+	"reference": [
+		{
+			"entity": "TestEntity.json",
+			"alias": "E",
+			"type": "left_join",
+			"condition": "S.TEST_ENTITY_ID = E.ID"
+		}
+	]
+}

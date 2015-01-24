@@ -28,10 +28,18 @@ class ConfigError extends AError {
 
 	const E_CFG_TBL_WRG_NAME = 9;
 	const E_CFG_TBL_WRG_ALIAS = 10;
-	const E_CFG_TBL_ALIAS_NOT_UQ = 11;
 
-	const E_CFG_FLD_WRG_NAME = 12;
-	const E_CFG_FLD_WRG_TYPE = 13;
+	const E_CFG_FLD_WRG_NAME = 11;
+	const E_CFG_FLD_WRG_TYPE = 12;
+
+	const E_CFG_REF_WRG_NAME = 13;
+	const E_CFG_REF_WRG_ALIAS = 14;
+	const E_CFG_REF_ALIAS_NOT_UQ = 15;
+	const E_CFG_REF_READ_ENTITY_FAIL = 16;
+	const E_CFG_REF_
+		';asfh ;8owrvtyq 80-\i'
+
+	const E_GET_FLD_NOT_FOUND = 51;
 
 	//const E_CFG_
 }

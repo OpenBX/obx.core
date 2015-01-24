@@ -28,24 +28,31 @@ class Config implements IConfig
 	protected $_version = null;
 	protected $_langPrefix = null;
 	protected $_title = null;
+	protected $_errorNothingToUpdate = null;
+	protected $_errorNothingToDelete = null;
 	protected $_tableName = null;
 	protected $_tableAlias = null;
 	protected $_fields = array();
+	protected $_reference = array();
+	protected $_parentRefConfig = null;
 	protected $_readSuccess = false;
 
 	protected $_createTable = array();
 
 	/**
-	 * @param $entityConfigFile
+	 * @param string $entityConfigFile
+	 * @param self $referencedConfig
 	 * @throws Err
 	 */
-	public function __construct($entityConfigFile) {
+	public function __construct($entityConfigFile, self $referencedConfig = null) {
 		/** @global \CDatabase $DB */
 		global $DB;
+		$this->_parentRefConfig = $referencedConfig;
 		$this->MessagePool = new MessagePool();
 		if( !is_file(OBX_DOC_ROOT.$entityConfigFile) ) {
 			throw new Err('', Err::E_OPEN_CFG_FAILED);
 		}
+		$entityConfigFile = self::normalizeConfigPath($entityConfigFile);
 		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$entityConfigFile);
 		$configData = json_decode($jsonConfig, true);
 		if(null === $configData) {
@@ -82,16 +89,13 @@ class Config implements IConfig
 
 		$configData['namespace'] = ''.trim($configData['namespace'], ' \\');
 		//$configData['namespace'] = str_replace('\\\\', '\\', $configData['namespace']);
-		if( strlen($configData['namespace']) > 254
-			//SomeVeryIncredibleNameOfNamespaceOrFuckingClass - 48 symbols
-			|| !preg_match('~(?:[a-zA-Z][a-zA-Z0-9\_]{0,50}(?:\\\\?))+~', $configData['namespace'], $matches)
-		) {
+		if( !self::validateNamespace($configData['namespace']) ) {
 			throw new Err('', Err::E_CFG_WRG_NAMESPACE);
 		}
 		$this->_namespace = $configData['namespace'];
 
 		$configData['class'] = ''.trim($configData['class'], ' \\');
-		if( !preg_match('~(?:[a-zA-Z][a-zA-Z0-9\_]{0,50})+~', $configData['class']) ) {
+		if( !self::validateClassName($configData['class']) ) {
 			throw new Err('', Err::E_CFG_WRG_CLASS_NAME);
 		}
 		$this->_class = $configData['class'];
@@ -103,17 +107,14 @@ class Config implements IConfig
 		if( empty($configData['class_path']) ) {
 			throw new Err('', Err::E_CFG_NO_CLASS_PATH);
 		}
+		// TODO: Сделать проверку class_path
 
 		$configData['table_alias'] = trim($configData['table_alias']);
 		$configData['table_name'] = trim($configData['table_name']);
-		if(empty($configData['table_alias'])
-			|| !preg_match('~[a-zA-Z][a-zA-Z0-9\_]{0,254}~', $configData['table_alias'])
-		) {
+		if( !self::validateTblAlias($configData['table_alias']) ) {
 			throw new Err('', Err::E_CFG_TBL_WRG_ALIAS);
 		}
-		if(empty($configData['table_name'])
-			|| !preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $configData['table_name'])
-		) {
+		if( !self::validateTblName($configData['table_name']) ) {
 			throw new Err('', Err::E_CFG_TBL_WRG_NAME);
 		}
 		$this->_tableName = $configData['table_name'];
@@ -130,21 +131,60 @@ class Config implements IConfig
 			'ru' => $this->_langPrefix.'_ENTITY_TITLE',
 			'en' => $this->_langPrefix.'_ENTITY_TITLE'
 		);
+		$this->_errorNothingToUpdate = array(
+			'lang' => '%_E_NOTHING_TO_UPDATE',
+			'ru' => $this->_langPrefix.'_E_NOTHING_TO_UPDATE',
+			'en' => $this->_langPrefix.'_E_NOTHING_TO_UPDATE'
+		);
+		$this->_errorNothingToDelete = array(
+			'lang' => '%_E_NOTHING_TO_DELETE',
+			'ru' => $this->_langPrefix.'_E_NOTHING_TO_DELETE',
+			'en' => $this->_langPrefix.'_E_NOTHING_TO_DELETE'
+		);
 
 		if(!empty($configData['title']) && is_array($configData['title'])) {
 			if(!empty($configData['title']['lang'])) $this->_title['lang'] = $configData['title']['lang'];
 			if(!empty($configData['title']['ru'])) $this->_title['ru'] = $configData['title']['ru'];
 			if(!empty($configData['title']['en'])) $this->_title['en'] = $configData['title']['en'];
 		}
+		if(!empty($configData['error_nothing_to_delete']) && is_array($configData['error_nothing_to_delete'])) {
+			if(!empty($configData['error_nothing_to_delete']['lang'])) $this->_errorNothingToDelete['lang'] = $configData['error_nothing_to_delete']['lang'];
+			if(!empty($configData['error_nothing_to_delete']['ru']))   $this->_errorNothingToDelete['ru'] = $configData['error_nothing_to_delete']['ru'];
+			if(!empty($configData['error_nothing_to_delete']['en']))   $this->_errorNothingToDelete['en'] = $configData['error_nothing_to_delete']['en'];
+		}
+		if(!empty($configData['error_nothing_to_update']) && is_array($configData['error_nothing_to_update'])) {
+			if(!empty($configData['error_nothing_to_update']['lang'])) $this->_errorNothingToUpdate['lang'] = $configData['error_nothing_to_update']['lang'];
+			if(!empty($configData['error_nothing_to_update']['ru']))   $this->_errorNothingToUpdate['ru'] = $configData['error_nothing_to_update']['ru'];
+			if(!empty($configData['error_nothing_to_update']['en']))   $this->_errorNothingToUpdate['en'] = $configData['error_nothing_to_update']['en'];
+		}
 
+		// Наполнение ссылок на другие таблицы или сущности
+		$rawReferenceList = array();
+		if(!empty($configData['reference']) && is_array($configData['reference'])) {
+			foreach($configData['reference'] as $rawReference) {
+				$reference = array(
+					"table" => null,
+					"entity" => null,
+					"alias" => null,
+					"type" => null,
+					"condition" => null,
+				);
+				foreach($reference as $refParam => &$refParamValue) {
+					if(!empty($rawReference[$refParam]) && is_string($rawReference[$refParam]) ) {
+						$refParamValue = $rawReference[$refParam];
+					}
+				}
+				$rawReferenceList[] = $reference;
+			} unset($rawReference);
+		}
 
 		// Обработка данных полей
 		if(empty($configData['fields']) || !is_array($configData['fields'])) {
 			throw new Err('', Err::E_CFG_FLD_LIST_IS_EMPTY);
 		}
-		foreach($configData['fields'] as $fieldCode => &$rawField) {
-			$fieldCode = trim($fieldCode);
-			if( !preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $fieldCode) ) {
+		foreach($configData['fields'] as $fieldAlias => &$rawField) {
+			$fieldAlias = trim($fieldAlias);
+			if( !self::validateTblAlias($fieldAlias) ) {
 				throw new Err('', Err::E_CFG_TBL_WRG_NAME);
 			}
 			$fieldType = ''.trim($rawField['type']);
@@ -154,7 +194,7 @@ class Config implements IConfig
 			$codeStrUpper = strtoupper($rawField['code']);
 			// Задаем набор возможных опций поля
 			$field = array(
-				'code' => $fieldCode,
+				'code' => $fieldAlias,
 				'type' => $fieldType,
 				'user_type' => null,
 				'length' => null,
@@ -237,38 +277,191 @@ class Config implements IConfig
 				$field['default'] = $DB->ForSql($field['default']);
 			}
 
-			$this->_fields[$fieldCode] = $field;
+			$this->_fields[$fieldAlias] = $field;
 		} unset($field, $rawField);
 
-		// TODO: Получаем данные одополнительных таблицах
+		// TODO: Заполнить unique
+		// TODO: Заполнить index
+		// TODO: Заполнить group_by_default
+		// TODO: Заполнить sort_by_default
 
+		// TODO: Обраотка ссылок на другие таблицы или сущности
+		if(!empty($rawReferenceList)) {
+			foreach($rawReferenceList as &$reference) {
+				$reference['fields'] = null;
+				if(!empty($reference['entity'])) {
+					try {
+						$curConfigDir = dirname($this->_configPath);
+						$referenceConfigPath = $curConfigDir.'/'.$reference['entity'];
+						$referenceConfigPath = self::normalizeConfigPath($referenceConfigPath);
+						if(null !== $this->_parentRefConfig
+							&& $this->_parentRefConfig->getConfigPath() == $referenceConfigPath
+						) {
+							$refEntity = $this->_parentRefConfig;
+						}
+						else {
+							$refEntity = new self($referenceConfigPath, $this);
+						}
+						$reference['fields'] = $refEntity->getFieldsList(true);
+						// Если алиас связанной таблицы случайно не заполнен, то надо попробовать
+						// взять алиас из объекта связанной сущности + проверить не использовали ли мы его уже
+						// (т.е. не занят ли другой связанной таблицей относительно текущей сущносии)
+						// и только если алиас из объекта не подошел, только тогда выбрасываем исключение на неправильный алиас
+						if( (empty($reference['alias']) || !self::validateTblAlias($reference['alias']))
+							&& !array_key_exists($refEntity->getAlias(), $this->_reference)
+						) {
+							$reference['alias'] = $refEntity->getAlias();
+						}
+					}
+					catch(Err $e) {
+						throw new Err(array(
+							'#REASON#' => $e->getMessage().' ('.Err::LANG_PREFIX.$e->getCode().')'
+						), Err::E_CFG_REF_READ_ENTITY_FAIL);
+					}
+				}
+				else{
+					if(!empty($reference['table']) && !self::validateTblName($reference['table'])) {
+						throw new Err('', Err::E_CFG_REF_WRG_NAME);
+					}
+				}
+				if( empty($reference['alias']) || !self::validateTblAlias($reference['alias']) ) {
+					throw new Err('', Err::E_CFG_REF_WRG_ALIAS);
+				}
+				if( array_key_exists($reference['alias'], $this->_reference) ) {
+					throw new Err('', Err::E_CFG_REF_ALIAS_NOT_UQ);
+				}
+				if(empty($reference['type'])) {
+					throw new Err('', Err::REF)
+				}
+				switch()
+				$this->_reference[$reference['alias']] = $reference;
+			}
+		}
+
+		// Ставим метку завершения чтения, на тот случай если кто-то напишет такой код,
+		// в котором объект будет доступен для работы уже после выброса исключения
 		$this->_readSuccess = true;
 
-		// DBSimple Data
 
-//		foreach($this->_fields as $fieldCode => &$field) {
-//			$fieldCheckType = $this->cfgField2DBSimpleFieldCheck($field);
-//			if(null !== $fieldCheckType) {
-//				$this->_arTableFieldsCheck[$field['code']] = $fieldCheckType;
-//				$this->_createTable[$field['code']] = array(
-//					'data_type' => $this->cfgFieldType2MySQL($field),
-//					'deny_null' => ' not null',
-//					'default' => ''
-//				);
-//				if(true === $field['deny_null']) {
-//					$this->_createTable[$field['code']]['deny_null'] = ' null';
-//				}
-//				if(!empty($field['default'])) {
-//					$this->_arTableFieldsDefault[$field['code']] = $field['default'];
-//					$this->_createTable[$field['code']]['default'] = $this->_arTableFieldsDefault[$field['code']];
-//				}
-//				if(true === $field['selected_by_default']) {
-//					if(null === $this->_arSelectDefault) $this->_arSelectDefault = array();
-//					$this->_arSelectDefault[] = $field['code'];
-//				}
-//			}
-//		}
 		$debug=1;
+	}
+
+	static protected function normalizeConfigPath($path) {
+		Tools::_fixFilePath($path);
+		return $path;
+	}
+
+	static protected function validateNamespace($namespace) {
+		if(strlen($namespace) > 254
+			//SomeVeryIncredibleNameOfNamespaceOrFuckingClass - 48 symbols
+			|| !preg_match('~(?:[a-zA-Z][a-zA-Z0-9\_]{0,50}(?:\\\\?))+~', $namespace)
+		) {
+			return false;
+		}
+		return true;
+	}
+	static protected function validateClassName($className) {
+		if(!preg_match('~(?:[a-zA-Z][a-zA-Z0-9\_]{0,50})+~', $className)) {
+			return false;
+		}
+		return true;
+	}
+	static protected function validateTblAlias($alias) {
+		if(!preg_match('~[a-zA-Z][a-zA-Z0-9\_]{0,254}~', $alias)){
+			return false;
+		}
+		return true;
+	}
+	static protected function validateTblName($name) {
+		if(!preg_match('~[a-zA-Z][a-zA-Z0-9\_]{1,62}~', $name)) {
+			return false;
+		}
+		return true;
+	}
+
+	// Interface
+	public function getModuleID() {
+		return $this->_moduleID;
+	}
+	public function getEventsID() {
+		return $this->_eventsID;
+	}
+	public function getNamespace() {
+		return $this->_namespace;
+	}
+	public function getClass() {
+		return $this->_class;
+	}
+	public function getAlias() {
+		return $this->_tableAlias;
+	}
+	public function getTableName() {
+		return $this->_tableName;
+	}
+	public function getFieldsList($bOWnFields = false) {
+		if(true === $bOWnFields) {
+			$ownFields = array();
+			foreach($this->_fields as $fieldAlias => &$field) {
+				if($field['type'] != 'ex' && $field['type'] != '') {
+					$ownFields[] = $fieldAlias;
+				}
+			}
+			return $ownFields;
+		}
+		return array_keys($this->_fields);
+	}
+	public function getField($fieldCode) {
+		if(array_key_exists($fieldCode, $this->_fields)) {
+			throw new Err('', Err::E_GET_FLD_NOT_FOUND);
+		}
+		return $this->_fields[$fieldCode];
+	}
+	public function isReadSuccess() {
+		return $this->_readSuccess;
+	}
+	public function getCreateTableCode() {
+		/** \CDatabase $DB */
+		global $DB;
+		$createCode = 'create table if exists '.$this->_tableName."\n";
+		$fieldCount = count($this->_fields);
+		$iField = 0;
+		$primaryKey = null;
+		foreach($this->_fields as &$field) {
+			$iField++;
+			$dataType = $this->cfgFieldType2MySQL($field);
+			$deny_null = ' null';
+			$default = '';
+			$ai = '';
+			if(true === $field['deny_null']) {
+				$deny_null = ' not null';
+			}
+			if(!empty($field['default'])) {
+				$default = $DB->ForSql($field['default']);
+			}
+			if(true === $field['auto_increment']) {
+				$ai = ' auto_increment';
+			}
+			$comma = ($fieldCount > $iField)?',':'';
+			$createCode .= "\t".$field['code'].' '.$dataType.$deny_null.$ai.$default.$comma."\n";
+			if(null === $primaryKey && true === $field['primary_key']) {
+				$primaryKey = 'primary key('.$field['code'].')';
+			}
+		}
+		if(null !== $primaryKey) {
+			$createCode .= "\t".$primaryKey."\n";
+		}
+		// TODO: тут надо сгенерировать код создания индексов
+	}
+	public function getConfigContent() {
+		// TODO: Написать получение кода конфига из класса
+		// TODO: Написать методы __sleep и __wakeup
+	}
+
+	public function getConfigPath() {
+		return $this->_configPath;
+	}
+	public function saveConfigFile() {
+		//TODO: Написать сохранение конфига
 	}
 
 	protected function checkExistsType(&$type) {
@@ -423,43 +616,5 @@ class Config implements IConfig
 		return false;
 	}
 
-	public function getCreateTableCode() {
-		/** \CDatabase $DB */
-		global $DB;
-		$createCode = 'create table if exists '.$this->_tableName."\n";
-		$fieldCount = count($this->_fields);
-		$iField = 0;
-		$primaryKey = null;
-		foreach($this->_fields as &$field) {
-			$iField++;
-			$dataType = $this->cfgFieldType2MySQL($field);
-			$deny_null = ' null';
-			$default = '';
-			$ai = '';
-			if(true === $field['deny_null']) {
-				$deny_null = ' not null';
-			}
-			if(!empty($field['default'])) {
-				$default = $DB->ForSql($field['default']);
-			}
-			if(true === $field['auto_increment']) {
-				$ai = ' auto_increment';
-			}
-			$comma = ($fieldCount > $iField)?',':'';
-			$createCode .= "\t".$field['code'].' '.$dataType.$deny_null.$ai.$default.$comma."\n";
-			if(null === $primaryKey && true === $field['primary_key']) {
-				$primaryKey = 'primary key('.$field['code'].')';
-			}
-		}
-		if(null !== $primaryKey) {
-			$createCode .= "\t".$primaryKey."\n";
-		}
-		// TODO: тут надо сгенерировать код создания индексов
-	}
 
-
-
-	public function saveConfig() {
-
-	}
 } 
