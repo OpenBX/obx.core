@@ -155,21 +155,31 @@ class Record extends MessagePoolDecorator {
 	}
 
 
+	/**
+	 * @param array $fields
+	 * @param null $indexName
+	 * @return bool
+	 * @throws \OBX\Core\Exceptions\DBSimple\RecordError
+	 * Прочитать запись по значениям полей уникального индекса
+	 * Имя индекса можно указать явно,
+	 * что бы не производить сопоставление о полям существующих в сущности уникальных индексов
+	 * (хотя это экономия на спичках...)
+	 */
 	public function readByUniqueIndex(array $fields, $indexName = null) {
-		$unixIndexList = $this->entity->getTableUnique();
-		if(null !== $indexName && array_key_exists($indexName, $unixIndexList)) {
-			if( !$this->_checkUniqueIndex($fields, $unixIndexList[$indexName]) ) {
+		$uniqueIndexList = $this->entity->getTableUnique();
+		if(null !== $indexName && !empty($uniqueIndexList[$indexName])) {
+			if( !$this->_checkUniqueIndex($fields, $uniqueIndexList[$indexName]) ) {
 				$e = new RecordError('', RecordError::E_CANT_RD_BY_UQ_NOT_ALL_FLD);
 				$this->addErrorException($e);
 				// Здесь обязательно кидаем исключение,
 				// поскольку задача программиста проследить за тем, что бы были заполнены все поля unique-индекса
 				throw $e;
 			}
-			return $this->_readByUniqueIndex($fields, $unixIndexList[$indexName]);
+			return $this->_readByUniqueIndex($fields, $uniqueIndexList[$indexName]);
 		}
 		// Ищем уникальный индекс, поля которого переданы в аргумент $fields
 		$foundUniqueIndex = null;
-		foreach($unixIndexList as $indexName => &$indexFields) {
+		foreach($uniqueIndexList as $indexName => &$indexFields) {
 			if($this->_checkUniqueIndex($fields, $indexFields, true)) {
 				$foundUniqueIndex = $indexName;
 			}
@@ -181,7 +191,7 @@ class Record extends MessagePoolDecorator {
 			// поскольку задача программиста проследить за тем, что бы были заполнены все поля unique-индекса
 			throw $e;
 		}
-		return $this->_readByUniqueIndex($fields, $unixIndexList[$foundUniqueIndex]);
+		return $this->_readByUniqueIndex($fields, $uniqueIndexList[$foundUniqueIndex]);
 	}
 
 	private function _readByUniqueIndex($fields) {

@@ -6,7 +6,6 @@
 	"version": "0.1.0",
 	"events_id": "TestEntityRow",
 
-	"lang_encoding": "UTF-8",
 	"lang_prefix": "OBX_DBS_TEST_ENTITY",
 	"title": {"lang": "%_ENTITY_TITLE", "ru": "Тестовая сущность", "en": "Entity for testing"},
 
