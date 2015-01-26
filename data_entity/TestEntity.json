@@ -125,7 +125,7 @@
 	},
 	"unique": {
 		"obx_core_test_entity_code_bchar": {
-			"fields": ["CODE", ""],
+			"fields": ["CODE", "SOME_BCHAR"],
 			"duplicate_error": {
 				"lang": "%_E_DUP_UQ_CODE",
 				"ru": "может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR"
@@ -138,7 +138,7 @@
 	"error_nothing_to_delete": {"lang": "%_E_NOTHING_TO_DELETE", "ru": "Ошибка удаления: запись не найдена"},
 	"error_nothing_to_update": {"lang": "%_E_NOTHING_TO_UPDATE", "ru": "Ошибка обновления: запись не найдена"},
 	"group_by_default": ["E.ID"],
-	"sort_by_default":[{"E.ID": "ASC"}],
+	"sort_by_default":[{"by": "E.ID", "order": "ASC"}],
 
 	"reference": [
 		{

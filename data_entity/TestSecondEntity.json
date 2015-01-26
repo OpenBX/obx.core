@@ -37,6 +37,14 @@
 				"lang": "%_FLD_REQUIRED_TEST_ENTITY_ID",
 				"ru": "Не заполнена привязка к тестовой сущности"
 			}
+		},
+		"TEST_ENTITY_NAME": {
+			"type": "ex",
+			"get": {"ref": "E.NAME"}
+		},
+		"TEST_ENTITY_CODE": {
+			"type": "ex",
+			"get": {"ref": "E.CODE"}
 		}
 	},
 	"unique": {

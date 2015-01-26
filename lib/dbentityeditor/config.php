@@ -35,6 +35,8 @@ class Config implements IConfig
 	protected $_tableName = null;
 	protected $_tableAlias = null;
 	protected $_fields = array();
+	protected $_unique = array();
+	protected $_index = array();
 	protected $_reference = array();
 	protected $_parentRefConfig = null;
 	protected $_readSuccess = false;
@@ -284,12 +286,71 @@ class Config implements IConfig
 			$this->_fields[$fieldAlias] = $field;
 		} unset($field, $rawField);
 
-		// TODO: Заполнить unique
-		// TODO: Заполнить index
+
+		if(!empty($configData['index']) && is_array($configData['index'])) {
+			foreach($configData['index'] as $indexName => &$indexConfig) {
+				if(!self::validateTblAlias($indexName)) {
+					throw new Err('', Err::E_CFG_WRG_IDX);
+				}
+				if(empty($indexConfig) || !is_array($indexConfig)) {
+					throw new Err('', Err::E_CFG_WRG_IDX);
+				}
+				foreach($indexConfig as $fieldInUnique) {
+					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
+						throw new Err('', Err::E_CFG_WRG_IDX);
+					}
+				}
+			}
+			$this->_index = $configData['index'];
+		}
+
+		if(!empty($configData['unique']) && is_array($configData['unique'])) {
+			foreach($configData['unique'] as $rawUqIdxName => &$rawUniqueConfig) {
+				if(!self::validateTblAlias($rawUqIdxName)) {
+					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
+				}
+				if(empty($rawUniqueConfig) || !is_array($rawUniqueConfig)
+					|| empty($rawUniqueConfig['fields']) || !is_array($rawUniqueConfig['fields'])
+				) {
+					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
+				}
+				foreach($rawUniqueConfig['fields'] as $fieldInUnique) {
+					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
+						throw new Err('', Err::E_CFG_WRG_UQ_IDX_FLD);
+					}
+				}
+				$this->_unique[$rawUqIdxName] = array(
+					'fields' => $rawUniqueConfig['fields'],
+					'duplicate_error' => array(
+						'lang' => '%_E_DUP_UQ_'.$rawUqIdxName,
+						'ru' => 'ERR_DUP_UQ__'.$rawUqIdxName,
+						'en' => 'ERR_DUP_UQ__'.$rawUqIdxName
+					)
+				);
+				if(!empty($rawUniqueConfig['duplicate_error']['lang'])) {
+					$this->_unique[$rawUqIdxName]['duplicate_error']['lang'] = $rawUniqueConfig['duplicate_error']['lang'];
+				}
+				if(!empty($rawUniqueConfig['duplicate_error']['ru'])) {
+					$this->_unique[$rawUqIdxName]['duplicate_error']['ru'] = $rawUniqueConfig['duplicate_error']['ru'];
+				}
+				if(!empty($rawUniqueConfig['duplicate_error']['en'])) {
+					$this->_unique[$rawUqIdxName]['duplicate_error']['en'] = $rawUniqueConfig['duplicate_error']['en'];
+				}
+			}
+
+		}
+
 		// TODO: Заполнить group_by_default
 		// TODO: Заполнить sort_by_default
 
-		// TODO: Обраотка ссылок на другие таблицы или сущности
+		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
+			foreach($configData['sort_by_default'] as &$rawSort) {
+				if(empty($rawSort) || !is_array($rawSort) || empty($rawSort['by']) || empty($rawSort['order'])) {
+
+				}
+			}
+		}
+
 		if(!empty($rawReferenceList)) {
 			foreach($rawReferenceList as &$reference) {
 				$reference['fields'] = null;

@@ -26,20 +26,27 @@ class ConfigError extends AError {
 
 	const E_CFG_FLD_LIST_IS_EMPTY = 8;
 
-	const E_CFG_TBL_WRG_NAME = 9;
-	const E_CFG_TBL_WRG_ALIAS = 10;
+	const E_CFG_TBL_WRG_NAME = 10;
+	const E_CFG_TBL_WRG_ALIAS = 11;
 
-	const E_CFG_FLD_WRG_NAME = 11;
-	const E_CFG_FLD_WRG_TYPE = 12;
+	const E_CFG_FLD_WRG_NAME = 21;
+	const E_CFG_FLD_WRG_TYPE = 22;
 
-	const E_CFG_REF_WRG_NAME = 13;
-	const E_CFG_REF_WRG_ALIAS = 14;
-	const E_CFG_REF_ALIAS_NOT_UQ = 15;
-	const E_CFG_REF_READ_ENTITY_FAIL = 16;
-	const E_CFG_REF_WRG_JOIN_TYPE = 17;
-	const E_CFG_REF_WRG_CONDITION = 18;
+	const E_CFG_WRG_IDX = 30;
+	const E_CFG_WRG_IDX_FLD = 31;
+	const E_CFG_WRG_UQ_IDX = 35;
+	const E_CFG_WRG_UQ_IDX_FLD = 36;
 
-	const E_GET_FLD_NOT_FOUND = 51;
+	const E_CFG_REF_WRG_NAME = 40;
+	const E_CFG_REF_WRG_ALIAS = 41;
+	const E_CFG_REF_ALIAS_NOT_UQ = 42;
+	const E_CFG_REF_READ_ENTITY_FAIL = 43;
+	const E_CFG_REF_WRG_JOIN_TYPE = 44;
+	const E_CFG_REF_WRG_CONDITION = 45;
+
+	const E_CFG_WRG_DEF_SORT = 50;
+
+	const E_GET_FLD_NOT_FOUND = 70;
 
 	//const E_CFG_
 }
