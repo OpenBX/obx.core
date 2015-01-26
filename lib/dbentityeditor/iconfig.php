@@ -20,6 +20,8 @@ interface IConfig {
 	function getTableName();
 	function getFieldsList($bOWnFields = false);
 	function getField($fieldCode);
+	function getIndex();
+	function getUnique();
 	function isReadSuccess();
 	function getCreateTableCode();
 	function getConfigContent();

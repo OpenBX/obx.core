@@ -340,16 +340,17 @@ class Config implements IConfig
 
 		}
 
-		// TODO: Заполнить group_by_default
-		// TODO: Заполнить sort_by_default
 
+		// TODO: Заполнить sort_by_default
 		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
 			foreach($configData['sort_by_default'] as &$rawSort) {
 				if(empty($rawSort) || !is_array($rawSort) || empty($rawSort['by']) || empty($rawSort['order'])) {
-
+					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 				}
 			}
 		}
+
+		// TODO: Заполнить group_by_default
 
 		if(!empty($rawReferenceList)) {
 			foreach($rawReferenceList as &$reference) {
@@ -553,9 +554,19 @@ class Config implements IConfig
 		}
 		return $this->_fields[$fieldCode];
 	}
+
+	public function getIndex() {
+		return $this->_index;
+	}
+
+	public function getUnique() {
+		return $this->_unique;
+	}
+
 	public function isReadSuccess() {
 		return $this->_readSuccess;
 	}
+
 	public function getCreateTableCode() {
 		/** \CDatabase $DB */
 		global $DB;

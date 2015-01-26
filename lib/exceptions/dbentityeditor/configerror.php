@@ -23,7 +23,6 @@ class ConfigError extends AError {
 	const E_CFG_WRG_NAMESPACE = 5;
 	const E_CFG_WRG_CLASS_NAME = 6;
 	const E_CFG_NO_CLASS_PATH = 7;
-
 	const E_CFG_FLD_LIST_IS_EMPTY = 8;
 
 	const E_CFG_TBL_WRG_NAME = 10;
