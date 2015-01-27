@@ -1,14 +1,14 @@
 {
 	"module": "obx.core",
 	"namespace": "OBX\\Core\\DBSEntities",
-	"class": "TestEntity",
+	"class": "TestSecondEntity",
 	"class_path": "data_entity/DBSEntities",
-	"events_id": "TestEntityRow",
+	"events_id": "TestSecondEntityRow",
 
 	"lang_prefix": "OBX_DBS_SECOND_ENTITY",
 	"title": {"lang": "%_ENTITY_TITLE", "ru": "Тестовая сущность", "en": "Entity for testing"},
 
-	"table_name": "obx_core_second_entity",
+	"table_name": "obx_core_test_second_entity",
 	"table_alias": "S",
 	"fields": {
 		"ID": {

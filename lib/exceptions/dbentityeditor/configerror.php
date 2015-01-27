@@ -43,6 +43,7 @@ class ConfigError extends AError {
 	const E_CFG_REF_READ_ENTITY_FAIL = 43;
 	const E_CFG_REF_WRG_JOIN_TYPE = 44;
 	const E_CFG_REF_WRG_CONDITION = 45;
+	const E_CFG_REF_ENTITY_SAME_CLASS = 46;
 
 	const E_CFG_WRG_DEF_SORT = 50;
 

@@ -176,6 +176,12 @@ class Config implements IConfig
 			//throw new Err('', Err::E_CFG_NO_CLASS_PATH);
 			$this->_classPath = self::normalizePath($configData['class_path']);
 		}
+		if(null !== $this->_parentRefConfig) {
+			$refClass = $this->_parentRefConfig->getNamespace().'\\'.$this->_parentRefConfig->getClass();
+			if($refClass == $this->_namespace.'\\'.$this->_class) {
+				throw new Err('', Err::E_CFG_REF_ENTITY_SAME_CLASS);
+			}
+		}
 	}
 
 	protected function _initTableName(&$configData) {
@@ -391,6 +397,9 @@ class Config implements IConfig
 						$reference['table'] = $refEntity->getTableName();
 					}
 					catch(Err $e) {
+						if($e->getCode() == Err::E_CFG_REF_ENTITY_SAME_CLASS) {
+							throw $e;
+						}
 						throw new Err(array(
 							'#REASON#' => $e->getMessage().' ('.Err::LANG_PREFIX.$e->getCode().')'
 						), Err::E_CFG_REF_READ_ENTITY_FAIL);
