@@ -24,6 +24,7 @@ class ConfigError extends AError {
 	const E_CFG_WRG_CLASS_NAME = 6;
 	const E_CFG_NO_CLASS_PATH = 7;
 	const E_CFG_FLD_LIST_IS_EMPTY = 8;
+	const E_VERSION_IS_EMPTY = 9;
 
 	const E_CFG_TBL_WRG_NAME = 10;
 	const E_CFG_TBL_WRG_ALIAS = 11;

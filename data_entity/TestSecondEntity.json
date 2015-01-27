@@ -3,7 +3,6 @@
 	"namespace": "OBX\\Core\\DBSEntities",
 	"class": "TestEntity",
 	"class_path": "data_entity/DBSEntities",
-	"version": "0.1.0",
 	"events_id": "TestEntityRow",
 
 	"lang_prefix": "OBX_DBS_SECOND_ENTITY",

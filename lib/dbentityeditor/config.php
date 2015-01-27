@@ -49,15 +49,13 @@ class Config implements IConfig
 	 * @throws Err
 	 */
 	public function __construct($entityConfigFile, self $referencedConfig = null) {
-		/** @global \CDatabase $DB */
-		global $DB;
 		$this->_parentRefConfig = $referencedConfig;
 		$this->MessagePool = new MessagePool();
 		if( !is_file(OBX_DOC_ROOT.$entityConfigFile) ) {
 			throw new Err('', Err::E_OPEN_CFG_FAILED);
 		}
-		$entityConfigFile = self::normalizePath($entityConfigFile);
-		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$entityConfigFile);
+		$this->_configPath = self::normalizePath($entityConfigFile);
+		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$this->_configPath);
 		$configData = json_decode($jsonConfig, true);
 		if(null === $configData) {
 			throw new Err(
@@ -65,7 +63,23 @@ class Config implements IConfig
 				Err::E_PARSE_CFG_FAILED
 			);
 		}
-		$this->_configPath = $entityConfigFile;
+		$this->_initialEntityData($configData);
+		$this->_initVersion($configData);
+		$this->_initEntityClass($configData);
+		$this->_initTableName($configData);
+		$this->_initLangData($configData);
+		$this->_initFields($configData);
+		$this->_initIndex($configData);
+		$this->_initUnique($configData);
+		$this->_initDefaultSort($configData);
+		$this->_initDefaultGroupBy($configData);
+		$this->_initReferences($configData);
+		// Ставим метку завершения чтения, на тот случай если кто-то напишет такой код,
+		// в котором объект будет доступен для работы уже после выброса исключения
+		$this->_readSuccess = true;
+	}
+
+	protected function _initialEntityData(&$configData) {
 		if( empty($configData['module'])
 			&& !is_dir(OBX_DOC_ROOT.$configData['module'])
 			&& !is_file(OBX_DOC_ROOT.$configData['module'].'/include.php')
@@ -78,19 +92,70 @@ class Config implements IConfig
 			throw new Err('', Err::E_CFG_NO_EVT_ID);
 		}
 		$this->_eventsID = $configData['events_id'];
-		/** @noinspection PhpUndefinedMethodInspection */
+	}
+
+	protected function _initVersion(&$configData) {
 		//$this->_version = \CUpdateClient::GetModuleVersion($this->_entityModuleID);
 		if(!empty($configData['version']) && strpos($configData['version'], '.') !== false) {
-			$arVersion = explode('.', $configData['version']);
-			if(count($arVersion) >= 3
-				&& is_numeric($arVersion[0])
-				&& is_numeric($arVersion[1])
-				&& is_numeric($arVersion[2])
-			) {
-				$this->_version = $arVersion[0].'.'.$arVersion[1].'.'.$arVersion[2];
+			if( null !== ($arVersion = $this->_parseVersion($configData['version'])) ) {
+				$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
 			}
 		}
+		if(empty($this->_version)) {
+			// TODO: Получить данные о версии модуля
+			$modulePath = OBX_DOC_ROOT.'/bitrix/modules/'.$this->_moduleID;
+			if(is_file($modulePath.'/install/version.php')) {
+				/** @noinspection PhpIncludeInspection */
+				$returnVersionArray = include $modulePath.'/install/version.php';
+				if(!empty($arModuleVersion['VERSION'])
+					&& null !== ($arVersion=$this->_parseVersion($arModuleVersion['VERSION']))
+				) {
+					$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+				}
+				elseif(!empty($returnVersionArray['VERSION'])
+					&& null !== ($arVersion=$this->_parseVersion($returnVersionArray['VERSION']))
+				) {
+					$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+				}
+				else {
+					$moduleClass = str_replace('.', '_', $this->_moduleID);
+					if(self::validateClassName($moduleClass) ) {
+						if( !class_exists($moduleClass) ) {
+							/** @noinspection PhpIncludeInspection */
+							require_once OBX_DOC_ROOT.$modulePath.'/install/index.php';
+						}
+						if( class_exists($moduleClass) ) {
+							$moduleInstaller = new $moduleClass;
+							if( null !== ($arVersion = $this->_parseVersion($moduleInstaller->VERSION)) ) {
+								$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+							}
+						}
+					}
+				}
+			}
+			if(empty($this->_version)) {
+				throw new Err('', Err::E_VERSION_IS_EMPTY);
+			}
+		}
+	}
 
+	protected function _parseVersion($version) {
+		$arVersion = explode('.', $version);
+		if(count($arVersion) >= 3
+			&& is_numeric($arVersion[0])
+			&& is_numeric($arVersion[1])
+			&& is_numeric($arVersion[2])
+		) {
+			return array(
+				'MAJOR' => intval($arVersion[0]),
+				'MINOR' => intval($arVersion[1]),
+				'FIXES' => intval($arVersion[2])
+			);
+		}
+		return null;
+	}
+
+	protected function _initEntityClass(&$configData) {
 		$configData['namespace'] = ''.trim($configData['namespace'], ' \\');
 		//$configData['namespace'] = str_replace('\\\\', '\\', $configData['namespace']);
 		if( !self::validateNamespace($configData['namespace']) ) {
@@ -112,7 +177,9 @@ class Config implements IConfig
 			//throw new Err('', Err::E_CFG_NO_CLASS_PATH);
 			$this->_classPath = self::normalizePath($configData['class_path']);
 		}
+	}
 
+	protected function _initTableName(&$configData) {
 		$configData['table_alias'] = trim($configData['table_alias']);
 		$configData['table_name'] = trim($configData['table_name']);
 		if( !self::validateTblAlias($configData['table_alias']) ) {
@@ -130,6 +197,9 @@ class Config implements IConfig
 				$this->_langPrefix = $configData['lang_prefix'];
 			}
 		}
+	}
+
+	protected function _initLangData(&$configData) {
 		$this->_title = array(
 			'lang' => '%_ENTITY_TITLE',
 			'ru' => $this->_langPrefix.'_ENTITY_TITLE',
@@ -145,7 +215,6 @@ class Config implements IConfig
 			'ru' => $this->_langPrefix.'_E_NOTHING_TO_DELETE',
 			'en' => $this->_langPrefix.'_E_NOTHING_TO_DELETE'
 		);
-
 		if(!empty($configData['title']) && is_array($configData['title'])) {
 			if(!empty($configData['title']['lang'])) $this->_title['lang'] = $configData['title']['lang'];
 			if(!empty($configData['title']['ru'])) $this->_title['ru'] = $configData['title']['ru'];
@@ -161,29 +230,11 @@ class Config implements IConfig
 			if(!empty($configData['error_nothing_to_update']['ru']))   $this->_errorNothingToUpdate['ru'] = $configData['error_nothing_to_update']['ru'];
 			if(!empty($configData['error_nothing_to_update']['en']))   $this->_errorNothingToUpdate['en'] = $configData['error_nothing_to_update']['en'];
 		}
+	}
 
-		// Наполнение ссылок на другие таблицы или сущности
-		$rawReferenceList = array();
-		if(!empty($configData['reference']) && is_array($configData['reference'])) {
-			foreach($configData['reference'] as $rawReference) {
-				$reference = array(
-					"table" => null,
-					"entity" => null,
-					"alias" => null,
-					"type" => null,
-					"condition" => null,
-					"reference_field" => null,
-					"self_field" => null
-				);
-				foreach($reference as $refParam => &$refParamValue) {
-					if(!empty($rawReference[$refParam]) && is_string($rawReference[$refParam]) ) {
-						$refParamValue = $rawReference[$refParam];
-					}
-				}
-				$rawReferenceList[] = $reference;
-			} unset($rawReference);
-		}
-
+	protected function _initFields(&$configData) {
+		/** @global \CDatabase $DB */
+		global $DB;
 		// Обработка данных полей
 		if(empty($configData['fields']) || !is_array($configData['fields'])) {
 			throw new Err('', Err::E_CFG_FLD_LIST_IS_EMPTY);
@@ -285,59 +336,31 @@ class Config implements IConfig
 
 			$this->_fields[$fieldAlias] = $field;
 		} unset($field, $rawField);
+	}
 
-
-		if(!empty($configData['index']) && is_array($configData['index'])) {
-			foreach($configData['index'] as $indexName => &$indexConfig) {
-				if(!self::validateTblAlias($indexName)) {
-					throw new Err('', Err::E_CFG_WRG_IDX);
-				}
-				if(empty($indexConfig) || !is_array($indexConfig)) {
-					throw new Err('', Err::E_CFG_WRG_IDX);
-				}
-				foreach($indexConfig as $fieldInUnique) {
-					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
-						throw new Err('', Err::E_CFG_WRG_IDX);
-					}
-				}
-			}
-			$this->_index = $configData['index'];
-		}
-
-		if(!empty($configData['unique']) && is_array($configData['unique'])) {
-			foreach($configData['unique'] as $rawUqIdxName => &$rawUniqueConfig) {
-				if(!self::validateTblAlias($rawUqIdxName)) {
-					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
-				}
-				if(empty($rawUniqueConfig) || !is_array($rawUniqueConfig)
-					|| empty($rawUniqueConfig['fields']) || !is_array($rawUniqueConfig['fields'])
-				) {
-					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
-				}
-				foreach($rawUniqueConfig['fields'] as $fieldInUnique) {
-					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
-						throw new Err('', Err::E_CFG_WRG_UQ_IDX_FLD);
-					}
-				}
-				$this->_unique[$rawUqIdxName] = array(
-					'fields' => $rawUniqueConfig['fields'],
-					'duplicate_error' => array(
-						'lang' => '%_E_DUP_UQ_'.$rawUqIdxName,
-						'ru' => 'ERR_DUP_UQ__'.$rawUqIdxName,
-						'en' => 'ERR_DUP_UQ__'.$rawUqIdxName
-					)
+	protected function _initReferences(&$configData){
+		/** @global \CDatabase $DB */
+		global $DB;
+		// Наполнение ссылок на другие таблицы или сущности
+		$rawReferenceList = array();
+		if(!empty($configData['reference']) && is_array($configData['reference'])) {
+			foreach($configData['reference'] as $rawReference) {
+				$reference = array(
+					"table" => null,
+					"entity" => null,
+					"alias" => null,
+					"type" => null,
+					"condition" => null,
+					"reference_field" => null,
+					"self_field" => null
 				);
-				if(!empty($rawUniqueConfig['duplicate_error']['lang'])) {
-					$this->_unique[$rawUqIdxName]['duplicate_error']['lang'] = $rawUniqueConfig['duplicate_error']['lang'];
+				foreach($reference as $refParam => &$refParamValue) {
+					if(!empty($rawReference[$refParam]) && is_string($rawReference[$refParam]) ) {
+						$refParamValue = $rawReference[$refParam];
+					}
 				}
-				if(!empty($rawUniqueConfig['duplicate_error']['ru'])) {
-					$this->_unique[$rawUqIdxName]['duplicate_error']['ru'] = $rawUniqueConfig['duplicate_error']['ru'];
-				}
-				if(!empty($rawUniqueConfig['duplicate_error']['en'])) {
-					$this->_unique[$rawUqIdxName]['duplicate_error']['en'] = $rawUniqueConfig['duplicate_error']['en'];
-				}
-			}
-
+				$rawReferenceList[] = $reference;
+			} unset($rawReference);
 		}
 
 		if(!empty($rawReferenceList)) {
@@ -435,7 +458,66 @@ class Config implements IConfig
 				$this->_reference[$reference['alias']] = $reference;
 			}
 		}
+	}
 
+	protected function _initIndex(&$configData) {
+		if(!empty($configData['index']) && is_array($configData['index'])) {
+			foreach($configData['index'] as $indexName => &$indexConfig) {
+				if(!self::validateTblAlias($indexName)) {
+					throw new Err('', Err::E_CFG_WRG_IDX);
+				}
+				if(empty($indexConfig) || !is_array($indexConfig)) {
+					throw new Err('', Err::E_CFG_WRG_IDX);
+				}
+				foreach($indexConfig as $fieldInUnique) {
+					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
+						throw new Err('', Err::E_CFG_WRG_IDX);
+					}
+				}
+			}
+			$this->_index = $configData['index'];
+		}
+	}
+
+	protected function _initUnique(&$configData) {
+		if(!empty($configData['unique']) && is_array($configData['unique'])) {
+			foreach($configData['unique'] as $rawUqIdxName => &$rawUniqueConfig) {
+				if(!self::validateTblAlias($rawUqIdxName)) {
+					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
+				}
+				if(empty($rawUniqueConfig) || !is_array($rawUniqueConfig)
+					|| empty($rawUniqueConfig['fields']) || !is_array($rawUniqueConfig['fields'])
+				) {
+					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
+				}
+				foreach($rawUniqueConfig['fields'] as $fieldInUnique) {
+					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
+						throw new Err('', Err::E_CFG_WRG_UQ_IDX_FLD);
+					}
+				}
+				$this->_unique[$rawUqIdxName] = array(
+					'fields' => $rawUniqueConfig['fields'],
+					'duplicate_error' => array(
+						'lang' => '%_E_DUP_UQ_'.$rawUqIdxName,
+						'ru' => 'ERR_DUP_UQ__'.$rawUqIdxName,
+						'en' => 'ERR_DUP_UQ__'.$rawUqIdxName
+					)
+				);
+				if(!empty($rawUniqueConfig['duplicate_error']['lang'])) {
+					$this->_unique[$rawUqIdxName]['duplicate_error']['lang'] = $rawUniqueConfig['duplicate_error']['lang'];
+				}
+				if(!empty($rawUniqueConfig['duplicate_error']['ru'])) {
+					$this->_unique[$rawUqIdxName]['duplicate_error']['ru'] = $rawUniqueConfig['duplicate_error']['ru'];
+				}
+				if(!empty($rawUniqueConfig['duplicate_error']['en'])) {
+					$this->_unique[$rawUqIdxName]['duplicate_error']['en'] = $rawUniqueConfig['duplicate_error']['en'];
+				}
+			}
+
+		}
+	}
+
+	protected function _initDefaultSort(&$configData) {
 		// TODO: Заполнить sort_by_default
 		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
 			foreach($configData['sort_by_default'] as &$rawSort) {
@@ -466,12 +548,10 @@ class Config implements IConfig
 				}
 			}
 		}
+	}
 
+	protected function _initDefaultGroupBy(&$configData) {
 		// TODO: Заполнить group_by_default
-
-		// Ставим метку завершения чтения, на тот случай если кто-то напишет такой код,
-		// в котором объект будет доступен для работы уже после выброса исключения
-		$this->_readSuccess = true;
 	}
 
 	static protected function normalizePath($path) {
