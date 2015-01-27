@@ -102,7 +102,6 @@ class Config implements IConfig
 			}
 		}
 		if(empty($this->_version)) {
-			// TODO: Получить данные о версии модуля
 			$modulePath = OBX_DOC_ROOT.'/bitrix/modules/'.$this->_moduleID;
 			if(is_file($modulePath.'/install/version.php')) {
 				/** @noinspection PhpIncludeInspection */
