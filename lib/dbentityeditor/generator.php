@@ -27,6 +27,7 @@ abstract class Generator implements IGenerator {
 	protected $_methods = array();
 	protected $_methodsAccess = array();
 	protected $_methodsStatic = array();
+	protected $_methodAbstract = array();
 
 	final public function __construct(IConfig $config){
 		if( null === $config || !$config->isReadSuccess()) {
