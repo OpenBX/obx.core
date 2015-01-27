@@ -266,7 +266,7 @@ class Config implements IConfig
 			if( !$this->checkExistsType($fieldType) ) {
 				throw new Err('', Err::E_CFG_FLD_WRG_TYPE);
 			}
-			$codeStrUpper = strtoupper($rawField['code']);
+			$codeStrUpper = strtoupper($fieldAlias);
 			// Задаем набор возможных опций поля
 			$field = array(
 				'code' => $fieldAlias,
@@ -814,7 +814,20 @@ class Config implements IConfig
 		return $createCode;
 	}
 	public function getConfigContent() {
-		return self::jsonToReadable(json_encode(array(
+		$references = array();
+		foreach($this->_reference as $refAlias => &$reference) {
+			$references[$refAlias] = array();
+			if(!empty($reference['entity'])) {
+				$references[$refAlias]['entity'] = $reference['entity'];
+			}
+			else {
+				$references[$refAlias]['table'] = $reference['table'];
+			}
+			$references[$refAlias]['alias'] = $reference['alias'];
+			$references[$refAlias]['type'] = $reference['type'];
+			$references[$refAlias]['condition'] = $reference['condition'];
+		}
+		return self::jsonRemoveUnicodeSequences(self::jsonToReadable(json_encode(array(
 			'module' => $this->_moduleID,
 			'namespace' => $this->_namespace,
 			'class' => $this->_class,
@@ -833,8 +846,8 @@ class Config implements IConfig
 			'index' => $this->_index,
 			'group_by_default' => $this->_defaultGroupBy,
 			'sort_by_default' => $this->_defaultSort,
-			'reference' => $this->_reference
-		)));
+			'reference' => $references
+		))));
 		// TODO: Написать методы __sleep и __wakeup
 	}
 	static protected function jsonToReadable($json){
@@ -872,6 +885,20 @@ class Config implements IConfig
 			}
 		}
 		return $r;
+	}
+	static protected function fixBadUnicodeForJson($str) {
+		$str = preg_replace("/\\\\u00([0-9a-f]{2})\\\\u00([0-9a-f]{2})\\\\u00([0-9a-f]{2})\\\\u00([0-9a-f]{2})/e", 'chr(hexdec("$1")).chr(hexdec("$2")).chr(hexdec("$3")).chr(hexdec("$4"))', $str);
+		$str = preg_replace("/\\\\u00([0-9a-f]{2})\\\\u00([0-9a-f]{2})\\\\u00([0-9a-f]{2})/e", 'chr(hexdec("$1")).chr(hexdec("$2")).chr(hexdec("$3"))', $str);
+		$str = preg_replace("/\\\\u00([0-9a-f]{2})\\\\u00([0-9a-f]{2})/e", 'chr(hexdec("$1")).chr(hexdec("$2"))', $str);
+		$str = preg_replace("/\\\\u00([0-9a-f]{2})/e", 'chr(hexdec("$1"))', $str);
+		return $str;
+	}
+	function jsonRemoveUnicodeSequences($json) {
+		//return preg_replace("/\\\\u([a-f0-9]{4})/e", "iconv('UCS-4LE','UTF-8',pack('V', hexdec('U$1')))", $json);
+		// Уберем ключ /e - eval и сделаем через колбэк
+		return preg_replace_callback("/\\\\u([a-f0-9]{4})/", function($matches) {
+			return iconv('UCS-4LE','UTF-8',pack('V', hexdec('U'.$matches[1])));
+		}, $json);
 	}
 
 	public function getConfigPath() {

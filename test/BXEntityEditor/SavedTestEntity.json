@@ -8,7 +8,7 @@
 	"lang_prefix": "OBX_DBS_TEST_ENTITY",
 	"title": {
 		"lang": "%_ENTITY_DESCRIPTION",
-		"ru": "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u043e\u0432\u043e\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438",
+		"ru": "Описание тестовой сущности",
 		"en": "Entity for testing description"
 	},
 	"description": {
@@ -18,12 +18,12 @@
 	},
 	"error_nothing_to_delete": {
 		"lang": "%_E_NOTHING_TO_DELETE",
-		"ru": "\u041e\u0448\u0438\u0431\u043a\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f: \u0437\u0430\u043f\u0438\u0441\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430",
+		"ru": "Ошибка удаления: запись не найдена",
 		"en": "OBX_DBS_TEST_ENTITY_E_NOTHING_TO_DELETE"
 	},
 	"error_nothing_to_update": {
 		"lang": "%_E_NOTHING_TO_UPDATE",
-		"ru": "\u041e\u0448\u0438\u0431\u043a\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f: \u0437\u0430\u043f\u0438\u0441\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430",
+		"ru": "Ошибка обновления: запись не найдена",
 		"en": "OBX_DBS_TEST_ENTITY_E_NOTHING_TO_UPDATE"
 	},
 	"table_name": "obx_core_test_entity",
@@ -42,9 +42,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_ID",
+				"ru": "REQUIRED__ID__FIELD",
+				"en": "REQUIRED__ID__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -60,12 +60,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_ID",
-				"ru": "\u0418\u0434",
+				"ru": "Ид",
 				"en": "Id"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_ID",
-				"ru": "\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 \u0437\u0430\u043f\u0438\u0441\u0438",
+				"ru": "Идентификатор записи",
 				"en": "Identifier of row"
 			}
 		},
@@ -83,8 +83,8 @@
 			"required": true,
 			"required_error": {
 				"lang": "%_CODE_IS_EMPTY",
-				"ru": "\u041f\u043e\u043b\u0435 \"\u041a\u043e\u0434\" \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e",
-				"en": "REQUIRED____FIELD"
+				"ru": "Поле \"Код\" не заполнено",
+				"en": "REQUIRED__CODE__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -100,12 +100,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_CODE",
-				"ru": "\u041a\u043e\u0434",
+				"ru": "Код",
 				"en": "Code"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_CODE",
-				"ru": "\u0421\u0438\u043c\u0432\u043e\u043b\u044c\u043d\u044b\u0439 \u043a\u043e\u0434",
+				"ru": "Символьный код",
 				"en": "Symbolic code"
 			}
 		},
@@ -123,8 +123,8 @@
 			"required": true,
 			"required_error": {
 				"lang": "%_NAME_IS_EMPTY",
-				"ru": "\u041f\u043e\u043b\u0435 \"\u0418\u043c\u044f\" \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e",
-				"en": "REQUIRED____FIELD"
+				"ru": "Поле \"Имя\" не заполнено",
+				"en": "REQUIRED__NAME__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -140,12 +140,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_NAME",
-				"ru": "\u0418\u043c\u044f",
+				"ru": "Имя",
 				"en": "Name"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_NAME",
-				"ru": "\u0418\u043c\u044f",
+				"ru": "Имя",
 				"en": "Name"
 			}
 		},
@@ -163,8 +163,8 @@
 			"required": true,
 			"required_error": {
 				"lang": "%_SORT_IS_EMPTY",
-				"ru": "\u041f\u043e\u043b\u0435 \"\u0421\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0430\" \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e",
-				"en": "REQUIRED____FIELD"
+				"ru": "Поле \"Сортировка\" не заполнено",
+				"en": "REQUIRED__SORT__FIELD"
 			},
 			"default": "100",
 			"validator": null,
@@ -180,12 +180,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "&_FLD_TITLE_SORT",
-				"ru": "\u0421\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0430",
+				"ru": "Сортировка",
 				"en": "Sort"
 			},
 			"description": {
 				"lang": "&_FLD_DSCR_SORT",
-				"ru": "\u0421\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0430",
+				"ru": "Сортировка",
 				"en": "Sort"
 			}
 		},
@@ -202,9 +202,9 @@
 			"no_check": false,
 			"required": true,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_SOME_BCHAR",
+				"ru": "REQUIRED__SOME_BCHAR__FIELD",
+				"en": "REQUIRED__SOME_BCHAR__FIELD"
 			},
 			"default": "Y",
 			"validator": null,
@@ -220,12 +220,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_SOME_BCHAR",
-				"ru": "\u0414\u0430\/\u041d\u0435\u0442",
+				"ru": "Да\/Нет",
 				"en": "Yes\/No"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_SOME_BCHAR",
-				"ru": "\u0427\u0435\u043a\u0431\u043e\u043a\u0441 \u0414\u0430\/\u041d\u0435\u0442",
+				"ru": "Чекбокс Да\/Нет",
 				"en": "Checkbox Yes\/No"
 			}
 		},
@@ -242,9 +242,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_CREATE_TIME",
+				"ru": "REQUIRED__CREATE_TIME__FIELD",
+				"en": "REQUIRED__CREATE_TIME__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -260,12 +260,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_CREATE_TIME",
-				"ru": "\u0414\u0430\/\u041d\u0435\u0442",
+				"ru": "Да\/Нет",
 				"en": "Yes\/No"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_CREATE_TIME",
-				"ru": "\u0427\u0435\u043a\u0431\u043e\u043a\u0441 \u0414\u0430\/\u041d\u0435\u0442",
+				"ru": "Чекбокс Да\/Нет",
 				"en": "Checkbox Yes\/No"
 			}
 		},
@@ -282,9 +282,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_TIMESTAMP_X",
+				"ru": "REQUIRED__TIMESTAMP_X__FIELD",
+				"en": "REQUIRED__TIMESTAMP_X__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -300,12 +300,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_TIMESTAMP_X",
-				"ru": "\u0414\u0430\/\u041d\u0435\u0442",
+				"ru": "Да\/Нет",
 				"en": "Yes\/No"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_TIMESTAMP_X",
-				"ru": "\u0427\u0435\u043a\u0431\u043e\u043a\u0441 \u0414\u0430\/\u041d\u0435\u0442",
+				"ru": "Чекбокс Да\/Нет",
 				"en": "Checkbox Yes\/No"
 			}
 		},
@@ -322,9 +322,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_SOME_TEXT",
+				"ru": "REQUIRED__SOME_TEXT__FIELD",
+				"en": "REQUIRED__SOME_TEXT__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -340,12 +340,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_SOME_TEXT",
-				"ru": "\u0422\u0435\u043a\u0441\u0442",
+				"ru": "Текст",
 				"en": "Text"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_SOME_TEXT",
-				"ru": "\u041d\u0435\u043c\u043d\u043e\u0433\u043e \u0442\u0435\u043a\u0441\u0442\u0430",
+				"ru": "Немного текста",
 				"en": "Some text"
 			}
 		},
@@ -362,9 +362,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_IBLOCK_ID",
+				"ru": "REQUIRED__IBLOCK_ID__FIELD",
+				"en": "REQUIRED__IBLOCK_ID__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -380,12 +380,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_IBLOCK_ID",
-				"ru": "\u0418\u0434 \u0418\u043d\u043e\u0431\u043b\u043e\u043a\u0430",
+				"ru": "Ид Иноблока",
 				"en": "Infoblock Id"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_IBLOCK_ID",
-				"ru": "\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 \u0438\u043d\u0444\u043e\u0431\u043b\u043e\u043a\u0430",
+				"ru": "Идентификатор инфоблока",
 				"en": "Infoblock identifier"
 			}
 		},
@@ -402,9 +402,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_IBLOCK_CODE",
+				"ru": "REQUIRED__IBLOCK_CODE__FIELD",
+				"en": "REQUIRED__IBLOCK_CODE__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -420,12 +420,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_IBLOCK_CODE",
-				"ru": "\u041a\u043e\u0434 \u0418\u043d\u043e\u0431\u043b\u043e\u043a\u0430",
+				"ru": "Код Иноблока",
 				"en": "Infoblock code"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_IBLOCK_CODE",
-				"ru": "\u0421\u0438\u043c\u0432\u043e\u043b\u044c\u043d\u044b\u0439 \u043a\u043e\u0434 \u0438\u043d\u0444\u043e\u0431\u043b\u043e\u043a\u0430",
+				"ru": "Символьный код инфоблока",
 				"en": "Symbolic Infoblock code"
 			}
 		},
@@ -442,9 +442,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_IBLOCK_NAME",
+				"ru": "REQUIRED__IBLOCK_NAME__FIELD",
+				"en": "REQUIRED__IBLOCK_NAME__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -460,12 +460,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_IBLOCK_CODE",
-				"ru": "\u0418\u043c\u044f \u0438\u043d\u043e\u0431\u043b\u043e\u043a\u0430",
+				"ru": "Имя иноблока",
 				"en": "Infoblock name"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_IBLOCK_CODE",
-				"ru": "\u0418\u043c\u044f \u0438\u043d\u0444\u043e\u0431\u043b\u043e\u043a\u0430",
+				"ru": "Имя инфоблока",
 				"en": "Infoblock name"
 			}
 		},
@@ -482,9 +482,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_USER_ID",
+				"ru": "REQUIRED__USER_ID__FIELD",
+				"en": "REQUIRED__USER_ID__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -500,12 +500,12 @@
 			"selected_by_default": false,
 			"title": {
 				"lang": "%_FLD_TITLE_USER",
-				"ru": "\u0418\u0434 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f",
+				"ru": "Ид пользователя",
 				"en": "User Id"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_USER",
-				"ru": "\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c",
+				"ru": "Идентификатор пользователь",
 				"en": "User identifier"
 			}
 		},
@@ -522,9 +522,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_USER",
+				"ru": "REQUIRED__USER__FIELD",
+				"en": "REQUIRED__USER__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -540,12 +540,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_USER",
-				"ru": "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c",
+				"ru": "Пользователь",
 				"en": "User"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_USER",
-				"ru": "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c",
+				"ru": "Пользователь",
 				"en": "User"
 			}
 		},
@@ -562,9 +562,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_CUSTOM_CK",
+				"ru": "REQUIRED__CUSTOM_CK__FIELD",
+				"en": "REQUIRED__CUSTOM_CK__FIELD"
 			},
 			"default": null,
 			"validator": "__custom__",
@@ -580,12 +580,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_CUSTOM_CK",
-				"ru": "\u041a\u0430\u0441\u0442\u041e\u043c",
+				"ru": "КастОм",
 				"en": "Custom"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_CUSTOM_CK",
-				"ru": "\u041f\u043e\u043b\u0435 \u0441 \u043f\u043e\u0440\u043e\u0438\u0437\u0432\u043e\u043b\u043d\u043e\u0439 \u043f\u0440\u043e\u0435\u0440\u043a\u043e\u0439",
+				"ru": "Поле с пороизволной проеркой",
 				"en": "Field with custom check"
 			}
 		},
@@ -602,9 +602,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_VALIDATION",
+				"ru": "REQUIRED__VALIDATION__FIELD",
+				"en": "REQUIRED__VALIDATION__FIELD"
 			},
 			"default": null,
 			"validator": "OBX\\Core\\Validator\\DBSimpleTestValidator",
@@ -620,12 +620,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_VALIDATION",
-				"ru": "\u041f\u043e \u0432\u0430\u043b\u0438\u0434\u0430\u0442\u043e\u0440\u0443",
+				"ru": "По валидатору",
 				"en": "By valid"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_VALIDATION",
-				"ru": "\u041f\u043e\u043b\u0435 \u0441 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u043e\u0439 \u0432\u0430\u043b\u0438\u0434\u0430\u0442\u043e\u0440\u043e\u043c",
+				"ru": "Поле с проверкой валидатором",
 				"en": "Field with validator check"
 			}
 		},
@@ -642,9 +642,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_SEC_ENT_JSON",
+				"ru": "REQUIRED__SEC_ENT_JSON__FIELD",
+				"en": "REQUIRED__SEC_ENT_JSON__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -660,12 +660,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_SEC_ENT_JSON",
-				"ru": "\u0421\u043f\u0438\u0441\u043e\u043a2",
+				"ru": "Список2",
 				"en": "List2"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_SEC_ENT_JSON",
-				"ru": "\u0421\u043f\u0438\u0441\u043e\u043a \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432 2-\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438 \u0432 Json",
+				"ru": "Список элементов 2-й сущности в Json",
 				"en": "Elements list of 2nd entity"
 			}
 		},
@@ -682,9 +682,9 @@
 			"no_check": false,
 			"required": false,
 			"required_error": {
-				"lang": "%_ERR_REQUIRED_",
-				"ru": "REQUIRED____FIELD",
-				"en": "REQUIRED____FIELD"
+				"lang": "%_ERR_REQUIRED_SEC_ENT_CNT",
+				"ru": "REQUIRED__SEC_ENT_CNT__FIELD",
+				"en": "REQUIRED__SEC_ENT_CNT__FIELD"
 			},
 			"default": null,
 			"validator": null,
@@ -700,12 +700,12 @@
 			"selected_by_default": true,
 			"title": {
 				"lang": "%_FLD_TITLE_SEC_ENT_JSON",
-				"ru": "\u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e2",
+				"ru": "количество2",
 				"en": "Count2"
 			},
 			"description": {
 				"lang": "%_FLD_DSCR_SEC_ENT_JSON",
-				"ru": "\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432 2-\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438",
+				"ru": "Количество элементов 2-й сущности",
 				"en": "Elements count of 2nd entity"
 			}
 		}
@@ -718,7 +718,7 @@
 			],
 			"duplicate_error": {
 				"lang": "%_E_DUP_UQ_CODE",
-				"ru": "\u043c\u043e\u0436\u0435\u0442 \u0431\u044b\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u0432\u0435 \u0437\u0430\u043f\u0438\u0441\u0438 \u0441 \u043e\u0434\u0438\u043d\u0430\u043a\u043e\u0432\u044b\u043c CODE \u0438 \u0443 \u043d\u0438\u0445 \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c \u0440\u0430\u0437\u043d\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 SOME_BCHAR",
+				"ru": "может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR",
 				"en": "ERR_DUP_UQ__obx_core_test_entity_code_bchar"
 			}
 		}
@@ -743,137 +743,21 @@
 	"reference": {
 		"IB": {
 			"table": "b_iblock",
-			"entity": null,
 			"alias": "IB",
 			"type": "left_join",
-			"condition": "E.IBLOCK_ID = IB.ID",
-			"reference_field": "ID",
-			"self_field": "IBLOCK_ID",
-			"fields": [
-				"ID",
-				"TIMESTAMP_X",
-				"IBLOCK_TYPE_ID",
-				"LID",
-				"CODE",
-				"NAME",
-				"ACTIVE",
-				"SORT",
-				"LIST_PAGE_URL",
-				"DETAIL_PAGE_URL",
-				"SECTION_PAGE_URL",
-				"PICTURE",
-				"DESCRIPTION",
-				"DESCRIPTION_TYPE",
-				"RSS_TTL",
-				"RSS_ACTIVE",
-				"RSS_FILE_ACTIVE",
-				"RSS_FILE_LIMIT",
-				"RSS_FILE_DAYS",
-				"RSS_YANDEX_ACTIVE",
-				"XML_ID",
-				"TMP_ID",
-				"INDEX_ELEMENT",
-				"INDEX_SECTION",
-				"WORKFLOW",
-				"BIZPROC",
-				"SECTION_CHOOSER",
-				"LIST_MODE",
-				"RIGHTS_MODE",
-				"SECTION_PROPERTY",
-				"VERSION",
-				"LAST_CONV_ELEMENT",
-				"SOCNET_GROUP_ID",
-				"EDIT_FILE_BEFORE",
-				"EDIT_FILE_AFTER",
-				"SECTIONS_NAME",
-				"SECTION_NAME",
-				"ELEMENTS_NAME",
-				"ELEMENT_NAME"
-			]
+			"condition": "E.IBLOCK_ID = IB.ID"
 		},
 		"U": {
 			"table": "b_user",
-			"entity": null,
 			"alias": "U",
 			"type": "left_join",
-			"condition": "E.USER_ID = U.ID",
-			"reference_field": "ID",
-			"self_field": "USER_ID",
-			"fields": [
-				"ID",
-				"TIMESTAMP_X",
-				"LOGIN",
-				"PASSWORD",
-				"CHECKWORD",
-				"ACTIVE",
-				"NAME",
-				"LAST_NAME",
-				"EMAIL",
-				"LAST_LOGIN",
-				"DATE_REGISTER",
-				"LID",
-				"PERSONAL_PROFESSION",
-				"PERSONAL_WWW",
-				"PERSONAL_ICQ",
-				"PERSONAL_GENDER",
-				"PERSONAL_BIRTHDATE",
-				"PERSONAL_PHOTO",
-				"PERSONAL_PHONE",
-				"PERSONAL_FAX",
-				"PERSONAL_MOBILE",
-				"PERSONAL_PAGER",
-				"PERSONAL_STREET",
-				"PERSONAL_MAILBOX",
-				"PERSONAL_CITY",
-				"PERSONAL_STATE",
-				"PERSONAL_ZIP",
-				"PERSONAL_COUNTRY",
-				"PERSONAL_NOTES",
-				"WORK_COMPANY",
-				"WORK_DEPARTMENT",
-				"WORK_POSITION",
-				"WORK_WWW",
-				"WORK_PHONE",
-				"WORK_FAX",
-				"WORK_PAGER",
-				"WORK_STREET",
-				"WORK_MAILBOX",
-				"WORK_CITY",
-				"WORK_STATE",
-				"WORK_ZIP",
-				"WORK_COUNTRY",
-				"WORK_PROFILE",
-				"WORK_LOGO",
-				"WORK_NOTES",
-				"ADMIN_NOTES",
-				"STORED_HASH",
-				"XML_ID",
-				"PERSONAL_BIRTHDAY",
-				"EXTERNAL_AUTH_ID",
-				"CHECKWORD_TIME",
-				"SECOND_NAME",
-				"CONFIRM_CODE",
-				"LOGIN_ATTEMPTS",
-				"LAST_ACTIVITY_DATE",
-				"AUTO_TIME_ZONE",
-				"TIME_ZONE",
-				"TIME_ZONE_OFFSET"
-			]
+			"condition": "E.USER_ID = U.ID"
 		},
 		"S": {
-			"table": "obx_core_test_second_entity",
 			"entity": "TestSecondEntity.json",
 			"alias": "S",
 			"type": "left_join",
-			"condition": "E.ID = S.TEST_ENTITY_ID",
-			"reference_field": "TEST_ENTITY_ID",
-			"self_field": "ID",
-			"fields": [
-				"ID",
-				"CODE",
-				"NAME",
-				"TEST_ENTITY_ID"
-			]
+			"condition": "E.ID = S.TEST_ENTITY_ID"
 		}
 	}
 }
