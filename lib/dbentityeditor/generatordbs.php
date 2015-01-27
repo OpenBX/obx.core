@@ -17,36 +17,33 @@ use OBX\Core\Exceptions\DBEntityEditor\GeneratorDBSError as Err;
  * @package OBX\Core\DBEntityEditor
  * Генератор сущности DBSimple
  */
-class GeneratorDBS implements IGenerator {
+class GeneratorDBS extends Generator {
 	// DBSimple Vars
-	protected $_entityModuleID = null;
-	protected $_entityEventsID = null;
-	protected $_mainTable = null;
-	protected $_mainTablePrimaryKey = null;
-	protected $_mainTableAutoIncrement = null;
-	protected $_arTableList = null;
-	protected $_arTableLinks = null;
-	protected $_arTableLeftJoin = null;
-	protected $_arTableFields = null;
-	protected $_arSelectDefault = null;
-	protected $_arTableUnique = null;
-	protected $_arSortDefault = null;
-	protected $_arTableFieldsDefault = null;
-	protected $_arTableFieldsCheck = null;
-
-	protected $_config = null;
+	//protected $_entityModuleID = null;
+	//protected $_entityEventsID = null;
+	//protected $_mainTable = null;
+	//protected $_mainTablePrimaryKey = null;
+	//protected $_mainTableAutoIncrement = null;
+	//protected $_arTableList = null;
+	//protected $_arTableLinks = null;
+	//protected $_arTableLeftJoin = null;
+	//protected $_arTableFields = null;
+	//protected $_arSelectDefault = null;
+	//protected $_arTableUnique = null;
+	//protected $_arSortDefault = null;
+	//protected $_arTableFieldsDefault = null;
+	//protected $_arTableFieldsCheck = null;
 
 
-	public function __construct(IConfig $config) {
-		if( null === $config || !$config->isReadSuccess()) {
-			throw new Err('', Err::E_CFG_INCORRECT);
-		}
-		$this->_config = $config;
-		$this->_classPath = $this->_config->getClass();
-		$this->_mainTable = $this->_config->getAlias();
-		$this->_arTableList = array(
-			$this->_mainTable => $this->_config->getTableName()
-		);
+
+
+	public function __init() {
+
+		//$this->_classPath = $this->_config->getClass();
+		//$this->_mainTable = $this->_config->getAlias();
+		//$this->_arTableList = array(
+		//	$this->_mainTable => $this->_config->getTableName()
+		//);
 
 		// DBSimple Data
 
@@ -152,7 +149,7 @@ class GeneratorDBS implements IGenerator {
 
 	}
 
-	public function saveEntityClass() {
+	public function saveEntityClass($path) {
 
 	}
 } 
