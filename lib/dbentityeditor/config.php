@@ -386,8 +386,11 @@ class Config implements IConfig
 				$reference['fields'] = null;
 				if(!empty($reference['entity'])) {
 					try {
-						$curConfigDir = dirname($this->_configPath);
-						$referenceConfigPath = $curConfigDir.'/'.$reference['entity'];
+						$referenceConfigPath = self::normalizePath($reference['entity']);
+						if(substr($referenceConfigPath, 0, 1) != '/') {
+							$curConfigDir = dirname($this->_configPath);
+							$referenceConfigPath = $curConfigDir.'/'.$reference['entity'];
+						}
 						$referenceConfigPath = self::normalizePath($referenceConfigPath);
 						if(null !== $this->_parentRefConfig
 							&& $this->_parentRefConfig->getConfigPath() == $referenceConfigPath
@@ -848,7 +851,6 @@ class Config implements IConfig
 			'sort_by_default' => $this->_defaultSort,
 			'reference' => $references
 		))));
-		// TODO: Написать методы __sleep и __wakeup
 	}
 	static protected function jsonToReadable($json){
 		$tc = 0;        //tab count
@@ -904,8 +906,15 @@ class Config implements IConfig
 	public function getConfigPath() {
 		return $this->_configPath;
 	}
-	public function saveConfigFile() {
-		//TODO: Написать сохранение конфига
+	public function saveConfigFile($path = null) {
+		if(null === $path) {
+			$path = $this->_configPath;
+		}
+		$path = OBX_DOC_ROOT.$path;
+		if( !CheckDirPath($path) ) {
+			throw new Err('', Err::E_SAVE_CFG_FAILED);
+		}
+		file_put_contents($path, $this->getConfigContent());
 	}
 
 	protected function checkExistsType(&$type) {

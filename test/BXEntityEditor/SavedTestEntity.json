@@ -754,7 +754,7 @@
 			"condition": "E.USER_ID = U.ID"
 		},
 		"S": {
-			"entity": "TestSecondEntity.json",
+			"entity": "/bitrix/modules/obx.core/data_entity/TestSecondEntity.json",
 			"alias": "S",
 			"type": "left_join",
 			"condition": "E.ID = S.TEST_ENTITY_ID"

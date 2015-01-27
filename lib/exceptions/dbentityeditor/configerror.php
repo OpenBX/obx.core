@@ -49,6 +49,7 @@ class ConfigError extends AError {
 	const E_CFG_WRG_DEF_GRP_BY = 51;
 
 	const E_GET_FLD_NOT_FOUND = 70;
+	const E_SAVE_CFG_FAILED = 80;
 
 	//const E_CFG_
 }

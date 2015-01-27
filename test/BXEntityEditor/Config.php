@@ -22,6 +22,7 @@ class TestConfig extends TestCase {
 
 
 	const TEST_ENTITY = '/bitrix/modules/obx.core/data_entity/TestEntity.json';
+	const TEST_ENTITY_SAVE = '/bitrix/modules/obx.core/test/BXEntityEditor/SavedTestEntity.json';
 
 	public function _test() {
 		$config = new Config(self::TEST_ENTITY);
@@ -59,5 +60,21 @@ SQL;
 		$arJson = json_decode($json, true);
 		$this->assertNotEmpty($arJson['fields']['SORT']['required_error']['lang']);
 		$this->assertEquals('%_SORT_IS_EMPTY', $arJson['fields']['SORT']['required_error']['lang']);
+	}
+
+	public function testSaveConfigFile() {
+		$config = new Config(self::TEST_ENTITY);
+		$config->saveConfigFile(self::TEST_ENTITY_SAVE);
+		$savedConfigContent = file_get_contents(OBX_DOC_ROOT.self::TEST_ENTITY_SAVE);
+		$savedConfigContent = str_replace(
+			'"TestSecondEntity.json"',
+			'"/bitrix/modules/obx.core/data_entity/TestSecondEntity.json"',
+			$savedConfigContent
+		);
+		file_put_contents(OBX_DOC_ROOT.self::TEST_ENTITY_SAVE, $savedConfigContent);
+
+		$configReloaded = new Config(self::TEST_ENTITY_SAVE);
+		$this->assertEquals($config->getNamespace(), $configReloaded->getNamespace());
+		$this->assertEquals($config->getClass(), $configReloaded->getClass());
 	}
 }
