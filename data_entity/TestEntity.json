@@ -8,6 +8,7 @@
 
 	"lang_prefix": "OBX_DBS_TEST_ENTITY",
 	"title": {"lang": "%_ENTITY_TITLE", "ru": "Тестовая сущность", "en": "Entity for testing"},
+	"description": {"lang": "%_ENTITY_DESCRIPTION", "ru": "Описание тестовой сущности", "en": "Entity for testing description"},
 
 	"table_name": "obx_core_test_entity",
 	"table_alias": "E",

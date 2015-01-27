@@ -24,12 +24,12 @@ class TestConfig extends TestCase {
 	const TEST_ENTITY = '/bitrix/modules/obx.core/data_entity/TestEntity.json';
 
 	public function _test() {
-		$generator = new Config(self::TEST_ENTITY);
+		$config = new Config(self::TEST_ENTITY);
 	}
 
 	public function testGenerateCreateSql() {
-		$generator = new Config(self::TEST_ENTITY);
-		$sqlCreateEntity = $generator->getCreateTableCode();
+		$config = new Config(self::TEST_ENTITY);
+		$sqlCreateEntity = $config->getCreateTableCode();
 		$expectedSql = <<<SQL
 create table if not exists obx_core_test_entity(
 	ID int(11) unsigned not null auto_increment,
@@ -52,4 +52,12 @@ create table if not exists obx_core_test_entity(
 SQL;
 		$this->assertEquals($expectedSql, $sqlCreateEntity);
 	}
-} 
+
+	public function testGetConfigContent() {
+		$config = new Config(self::TEST_ENTITY);
+		$json = $config->getConfigContent();
+		$arJson = json_decode($json, true);
+		$this->assertNotEmpty($arJson['fields']['SORT']['required_error']['lang']);
+		$this->assertEquals('%_SORT_IS_EMPTY', $arJson['fields']['SORT']['required_error']['lang']);
+	}
+}

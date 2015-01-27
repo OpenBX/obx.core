@@ -1,0 +1,879 @@
+{
+	"module": "obx.core",
+	"namespace": "OBX\\Core\\DBSEntities",
+	"class": "TestEntity",
+	"class_path": "data_entity\/DBSEntities",
+	"version": "0.1.0",
+	"events_id": "TestEntityRow",
+	"lang_prefix": "OBX_DBS_TEST_ENTITY",
+	"title": {
+		"lang": "%_ENTITY_DESCRIPTION",
+		"ru": "\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0442\u0435\u0441\u0442\u043e\u0432\u043e\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438",
+		"en": "Entity for testing description"
+	},
+	"description": {
+		"lang": "%_ENTITY_DESCRIPTION",
+		"ru": "OBX_DBS_TEST_ENTITY_ENTITY_DESCRIPTION",
+		"en": "OBX_DBS_TEST_ENTITY_ENTITY_DESCRIPTION"
+	},
+	"error_nothing_to_delete": {
+		"lang": "%_E_NOTHING_TO_DELETE",
+		"ru": "\u041e\u0448\u0438\u0431\u043a\u0430 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u044f: \u0437\u0430\u043f\u0438\u0441\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430",
+		"en": "OBX_DBS_TEST_ENTITY_E_NOTHING_TO_DELETE"
+	},
+	"error_nothing_to_update": {
+		"lang": "%_E_NOTHING_TO_UPDATE",
+		"ru": "\u041e\u0448\u0438\u0431\u043a\u0430 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f: \u0437\u0430\u043f\u0438\u0441\u044c \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430",
+		"en": "OBX_DBS_TEST_ENTITY_E_NOTHING_TO_UPDATE"
+	},
+	"table_name": "obx_core_test_entity",
+	"table_alias": "E",
+	"fields": {
+		"ID": {
+			"code": "ID",
+			"type": "pk_id",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": true,
+			"primary_key": true,
+			"deny_null": true,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_ID",
+				"ru": "\u0418\u0434",
+				"en": "Id"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_ID",
+				"ru": "\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 \u0437\u0430\u043f\u0438\u0441\u0438",
+				"en": "Identifier of row"
+			}
+		},
+		"CODE": {
+			"code": "CODE",
+			"type": "code",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": true,
+			"deny_zero": false,
+			"no_check": false,
+			"required": true,
+			"required_error": {
+				"lang": "%_CODE_IS_EMPTY",
+				"ru": "\u041f\u043e\u043b\u0435 \"\u041a\u043e\u0434\" \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_CODE",
+				"ru": "\u041a\u043e\u0434",
+				"en": "Code"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_CODE",
+				"ru": "\u0421\u0438\u043c\u0432\u043e\u043b\u044c\u043d\u044b\u0439 \u043a\u043e\u0434",
+				"en": "Symbolic code"
+			}
+		},
+		"NAME": {
+			"code": "NAME",
+			"type": "string",
+			"user_type": null,
+			"length": "255",
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": true,
+			"deny_zero": false,
+			"no_check": false,
+			"required": true,
+			"required_error": {
+				"lang": "%_NAME_IS_EMPTY",
+				"ru": "\u041f\u043e\u043b\u0435 \"\u0418\u043c\u044f\" \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_NAME",
+				"ru": "\u0418\u043c\u044f",
+				"en": "Name"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_NAME",
+				"ru": "\u0418\u043c\u044f",
+				"en": "Name"
+			}
+		},
+		"SORT": {
+			"code": "SORT",
+			"type": "int",
+			"user_type": null,
+			"length": "11",
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": true,
+			"deny_zero": false,
+			"no_check": false,
+			"required": true,
+			"required_error": {
+				"lang": "%_SORT_IS_EMPTY",
+				"ru": "\u041f\u043e\u043b\u0435 \"\u0421\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0430\" \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d\u043e",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": "100",
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": "100",
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "&_FLD_TITLE_SORT",
+				"ru": "\u0421\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0430",
+				"en": "Sort"
+			},
+			"description": {
+				"lang": "&_FLD_DSCR_SORT",
+				"ru": "\u0421\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u043a\u0430",
+				"en": "Sort"
+			}
+		},
+		"SOME_BCHAR": {
+			"code": "SOME_BCHAR",
+			"type": "bool_char",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": true,
+			"deny_zero": false,
+			"no_check": false,
+			"required": true,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": "Y",
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": "Y",
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_SOME_BCHAR",
+				"ru": "\u0414\u0430\/\u041d\u0435\u0442",
+				"en": "Yes\/No"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_SOME_BCHAR",
+				"ru": "\u0427\u0435\u043a\u0431\u043e\u043a\u0441 \u0414\u0430\/\u041d\u0435\u0442",
+				"en": "Checkbox Yes\/No"
+			}
+		},
+		"CREATE_TIME": {
+			"code": "CREATE_TIME",
+			"type": "datetime",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_CREATE_TIME",
+				"ru": "\u0414\u0430\/\u041d\u0435\u0442",
+				"en": "Yes\/No"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_CREATE_TIME",
+				"ru": "\u0427\u0435\u043a\u0431\u043e\u043a\u0441 \u0414\u0430\/\u041d\u0435\u0442",
+				"en": "Checkbox Yes\/No"
+			}
+		},
+		"TIMESTAMP_X": {
+			"code": "TIMESTAMP_X",
+			"type": "datetime",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_TIMESTAMP_X",
+				"ru": "\u0414\u0430\/\u041d\u0435\u0442",
+				"en": "Yes\/No"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_TIMESTAMP_X",
+				"ru": "\u0427\u0435\u043a\u0431\u043e\u043a\u0441 \u0414\u0430\/\u041d\u0435\u0442",
+				"en": "Checkbox Yes\/No"
+			}
+		},
+		"SOME_TEXT": {
+			"code": "SOME_TEXT",
+			"type": "text",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_SOME_TEXT",
+				"ru": "\u0422\u0435\u043a\u0441\u0442",
+				"en": "Text"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_SOME_TEXT",
+				"ru": "\u041d\u0435\u043c\u043d\u043e\u0433\u043e \u0442\u0435\u043a\u0441\u0442\u0430",
+				"en": "Some text"
+			}
+		},
+		"IBLOCK_ID": {
+			"code": "IBLOCK_ID",
+			"type": "iblock_id",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": true,
+			"deny_zero": true,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_IBLOCK_ID",
+				"ru": "\u0418\u0434 \u0418\u043d\u043e\u0431\u043b\u043e\u043a\u0430",
+				"en": "Infoblock Id"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_IBLOCK_ID",
+				"ru": "\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 \u0438\u043d\u0444\u043e\u0431\u043b\u043e\u043a\u0430",
+				"en": "Infoblock identifier"
+			}
+		},
+		"IBLOCK_CODE": {
+			"code": "IBLOCK_CODE",
+			"type": "ex",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": "IB.CODE",
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_IBLOCK_CODE",
+				"ru": "\u041a\u043e\u0434 \u0418\u043d\u043e\u0431\u043b\u043e\u043a\u0430",
+				"en": "Infoblock code"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_IBLOCK_CODE",
+				"ru": "\u0421\u0438\u043c\u0432\u043e\u043b\u044c\u043d\u044b\u0439 \u043a\u043e\u0434 \u0438\u043d\u0444\u043e\u0431\u043b\u043e\u043a\u0430",
+				"en": "Symbolic Infoblock code"
+			}
+		},
+		"IBLOCK_NAME": {
+			"code": "IBLOCK_NAME",
+			"type": "ex",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": "IB.NAME",
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_IBLOCK_CODE",
+				"ru": "\u0418\u043c\u044f \u0438\u043d\u043e\u0431\u043b\u043e\u043a\u0430",
+				"en": "Infoblock name"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_IBLOCK_CODE",
+				"ru": "\u0418\u043c\u044f \u0438\u043d\u0444\u043e\u0431\u043b\u043e\u043a\u0430",
+				"en": "Infoblock name"
+			}
+		},
+		"USER_ID": {
+			"code": "USER_ID",
+			"type": "user_id",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": "U.ID",
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": false,
+			"title": {
+				"lang": "%_FLD_TITLE_USER",
+				"ru": "\u0418\u0434 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f",
+				"en": "User Id"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_USER",
+				"ru": "\u0418\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0442\u043e\u0440 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c",
+				"en": "User identifier"
+			}
+		},
+		"USER": {
+			"code": "USER",
+			"type": "ex",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": "concat(U.NAME, ' ', U.LAST_NAME)",
+				"sub_query_4_filter": "E.USER_ID",
+				"required_tables": "Array",
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_USER",
+				"ru": "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c",
+				"en": "User"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_USER",
+				"ru": "\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c",
+				"en": "User"
+			}
+		},
+		"CUSTOM_CK": {
+			"code": "CUSTOM_CK",
+			"type": "string",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": "__custom__",
+			"break_invalid": true,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_CUSTOM_CK",
+				"ru": "\u041a\u0430\u0441\u0442\u041e\u043c",
+				"en": "Custom"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_CUSTOM_CK",
+				"ru": "\u041f\u043e\u043b\u0435 \u0441 \u043f\u043e\u0440\u043e\u0438\u0437\u0432\u043e\u043b\u043d\u043e\u0439 \u043f\u0440\u043e\u0435\u0440\u043a\u043e\u0439",
+				"en": "Field with custom check"
+			}
+		},
+		"VALIDATION": {
+			"code": "VALIDATION",
+			"type": "string",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": "OBX\\Core\\Validator\\DBSimpleTestValidator",
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": null,
+				"sub_query_4_filter": null,
+				"required_tables": null,
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_VALIDATION",
+				"ru": "\u041f\u043e \u0432\u0430\u043b\u0438\u0434\u0430\u0442\u043e\u0440\u0443",
+				"en": "By valid"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_VALIDATION",
+				"ru": "\u041f\u043e\u043b\u0435 \u0441 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u043e\u0439 \u0432\u0430\u043b\u0438\u0434\u0430\u0442\u043e\u0440\u043e\u043c",
+				"en": "Field with validator check"
+			}
+		},
+		"SEC_ENT_JSON": {
+			"code": "SEC_ENT_JSON",
+			"type": "ex",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": "concat('[',group_concat('\"',S.ID, '\":', '\"',S.NAME, '\"'),']')",
+				"sub_query_4_filter": null,
+				"required_tables": "Array",
+				"required_group_by": "Array"
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_SEC_ENT_JSON",
+				"ru": "\u0421\u043f\u0438\u0441\u043e\u043a2",
+				"en": "List2"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_SEC_ENT_JSON",
+				"ru": "\u0421\u043f\u0438\u0441\u043e\u043a \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432 2-\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438 \u0432 Json",
+				"en": "Elements list of 2nd entity"
+			}
+		},
+		"SEC_ENT_CNT": {
+			"code": "SEC_ENT_CNT",
+			"type": "ex",
+			"user_type": null,
+			"length": null,
+			"unsigned": false,
+			"auto_increment": false,
+			"primary_key": false,
+			"deny_null": false,
+			"deny_zero": false,
+			"no_check": false,
+			"required": false,
+			"required_error": {
+				"lang": "%_ERR_REQUIRED_",
+				"ru": "REQUIRED____FIELD",
+				"en": "REQUIRED____FIELD"
+			},
+			"default": null,
+			"validator": null,
+			"break_invalid": false,
+			"get": {
+				"ref": null,
+				"if_null_return": null,
+				"sub_query": "count(S.ID)",
+				"sub_query_4_filter": "SELECT count(SE.ID) FROM obx_core_test_sec_entity as SE WHERE SE.TEST_ENTITY_ID = E.ID",
+				"required_tables": "Array",
+				"required_group_by": null
+			},
+			"selected_by_default": true,
+			"title": {
+				"lang": "%_FLD_TITLE_SEC_ENT_JSON",
+				"ru": "\u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e2",
+				"en": "Count2"
+			},
+			"description": {
+				"lang": "%_FLD_DSCR_SEC_ENT_JSON",
+				"ru": "\u041a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432 2-\u0439 \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u0438",
+				"en": "Elements count of 2nd entity"
+			}
+		}
+	},
+	"unique": {
+		"obx_core_test_entity_code_bchar": {
+			"fields": [
+				"CODE",
+				"SOME_BCHAR"
+			],
+			"duplicate_error": {
+				"lang": "%_E_DUP_UQ_CODE",
+				"ru": "\u043c\u043e\u0436\u0435\u0442 \u0431\u044b\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u0432\u0435 \u0437\u0430\u043f\u0438\u0441\u0438 \u0441 \u043e\u0434\u0438\u043d\u0430\u043a\u043e\u0432\u044b\u043c CODE \u0438 \u0443 \u043d\u0438\u0445 \u0434\u043e\u043b\u0436\u043d\u043e \u0431\u044b\u0442\u044c \u0440\u0430\u0437\u043d\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 SOME_BCHAR",
+				"en": "ERR_DUP_UQ__obx_core_test_entity_code_bchar"
+			}
+		}
+	},
+	"index": {
+		"obx_core_test_entity_code": [
+			"CODE"
+		]
+	},
+	"group_by_default": [
+		"E.ID"
+	],
+	"sort_by_default": [
+		{
+			"by": "E.SORT",
+			"order": "ASC"
+		},{
+			"by": "E.ID",
+			"order": "ASC"
+		}
+	],
+	"reference": {
+		"IB": {
+			"table": "b_iblock",
+			"entity": null,
+			"alias": "IB",
+			"type": "left_join",
+			"condition": "E.IBLOCK_ID = IB.ID",
+			"reference_field": "ID",
+			"self_field": "IBLOCK_ID",
+			"fields": [
+				"ID",
+				"TIMESTAMP_X",
+				"IBLOCK_TYPE_ID",
+				"LID",
+				"CODE",
+				"NAME",
+				"ACTIVE",
+				"SORT",
+				"LIST_PAGE_URL",
+				"DETAIL_PAGE_URL",
+				"SECTION_PAGE_URL",
+				"PICTURE",
+				"DESCRIPTION",
+				"DESCRIPTION_TYPE",
+				"RSS_TTL",
+				"RSS_ACTIVE",
+				"RSS_FILE_ACTIVE",
+				"RSS_FILE_LIMIT",
+				"RSS_FILE_DAYS",
+				"RSS_YANDEX_ACTIVE",
+				"XML_ID",
+				"TMP_ID",
+				"INDEX_ELEMENT",
+				"INDEX_SECTION",
+				"WORKFLOW",
+				"BIZPROC",
+				"SECTION_CHOOSER",
+				"LIST_MODE",
+				"RIGHTS_MODE",
+				"SECTION_PROPERTY",
+				"VERSION",
+				"LAST_CONV_ELEMENT",
+				"SOCNET_GROUP_ID",
+				"EDIT_FILE_BEFORE",
+				"EDIT_FILE_AFTER",
+				"SECTIONS_NAME",
+				"SECTION_NAME",
+				"ELEMENTS_NAME",
+				"ELEMENT_NAME"
+			]
+		},
+		"U": {
+			"table": "b_user",
+			"entity": null,
+			"alias": "U",
+			"type": "left_join",
+			"condition": "E.USER_ID = U.ID",
+			"reference_field": "ID",
+			"self_field": "USER_ID",
+			"fields": [
+				"ID",
+				"TIMESTAMP_X",
+				"LOGIN",
+				"PASSWORD",
+				"CHECKWORD",
+				"ACTIVE",
+				"NAME",
+				"LAST_NAME",
+				"EMAIL",
+				"LAST_LOGIN",
+				"DATE_REGISTER",
+				"LID",
+				"PERSONAL_PROFESSION",
+				"PERSONAL_WWW",
+				"PERSONAL_ICQ",
+				"PERSONAL_GENDER",
+				"PERSONAL_BIRTHDATE",
+				"PERSONAL_PHOTO",
+				"PERSONAL_PHONE",
+				"PERSONAL_FAX",
+				"PERSONAL_MOBILE",
+				"PERSONAL_PAGER",
+				"PERSONAL_STREET",
+				"PERSONAL_MAILBOX",
+				"PERSONAL_CITY",
+				"PERSONAL_STATE",
+				"PERSONAL_ZIP",
+				"PERSONAL_COUNTRY",
+				"PERSONAL_NOTES",
+				"WORK_COMPANY",
+				"WORK_DEPARTMENT",
+				"WORK_POSITION",
+				"WORK_WWW",
+				"WORK_PHONE",
+				"WORK_FAX",
+				"WORK_PAGER",
+				"WORK_STREET",
+				"WORK_MAILBOX",
+				"WORK_CITY",
+				"WORK_STATE",
+				"WORK_ZIP",
+				"WORK_COUNTRY",
+				"WORK_PROFILE",
+				"WORK_LOGO",
+				"WORK_NOTES",
+				"ADMIN_NOTES",
+				"STORED_HASH",
+				"XML_ID",
+				"PERSONAL_BIRTHDAY",
+				"EXTERNAL_AUTH_ID",
+				"CHECKWORD_TIME",
+				"SECOND_NAME",
+				"CONFIRM_CODE",
+				"LOGIN_ATTEMPTS",
+				"LAST_ACTIVITY_DATE",
+				"AUTO_TIME_ZONE",
+				"TIME_ZONE",
+				"TIME_ZONE_OFFSET"
+			]
+		},
+		"S": {
+			"table": "obx_core_test_second_entity",
+			"entity": "TestSecondEntity.json",
+			"alias": "S",
+			"type": "left_join",
+			"condition": "E.ID = S.TEST_ENTITY_ID",
+			"reference_field": "TEST_ENTITY_ID",
+			"self_field": "ID",
+			"fields": [
+				"ID",
+				"CODE",
+				"NAME",
+				"TEST_ENTITY_ID"
+			]
+		}
+	}
+}

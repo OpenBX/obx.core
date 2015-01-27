@@ -30,6 +30,7 @@ class Config implements IConfig
 	protected $_version = null;
 	protected $_langPrefix = null;
 	protected $_title = null;
+	protected $_description = null;
 	protected $_errorNothingToUpdate = null;
 	protected $_errorNothingToDelete = null;
 	protected $_tableName = null;
@@ -212,6 +213,11 @@ class Config implements IConfig
 			'ru' => $this->_langPrefix.'_ENTITY_TITLE',
 			'en' => $this->_langPrefix.'_ENTITY_TITLE'
 		);
+		$this->_description = array(
+			'lang' => '%_ENTITY_DESCRIPTION',
+			'ru' => $this->_langPrefix.'_ENTITY_DESCRIPTION',
+			'en' => $this->_langPrefix.'_ENTITY_DESCRIPTION'
+		);
 		$this->_errorNothingToUpdate = array(
 			'lang' => '%_E_NOTHING_TO_UPDATE',
 			'ru' => $this->_langPrefix.'_E_NOTHING_TO_UPDATE',
@@ -226,6 +232,11 @@ class Config implements IConfig
 			if(!empty($configData['title']['lang'])) $this->_title['lang'] = $configData['title']['lang'];
 			if(!empty($configData['title']['ru'])) $this->_title['ru'] = $configData['title']['ru'];
 			if(!empty($configData['title']['en'])) $this->_title['en'] = $configData['title']['en'];
+		}
+		if(!empty($configData['description']) && is_array($configData['title'])) {
+			if(!empty($configData['description']['lang'])) $this->_title['lang'] = $configData['description']['lang'];
+			if(!empty($configData['description']['ru'])) $this->_title['ru'] = $configData['description']['ru'];
+			if(!empty($configData['description']['en'])) $this->_title['en'] = $configData['description']['en'];
 		}
 		if(!empty($configData['error_nothing_to_delete']) && is_array($configData['error_nothing_to_delete'])) {
 			if(!empty($configData['error_nothing_to_delete']['lang'])) $this->_errorNothingToDelete['lang'] = $configData['error_nothing_to_delete']['lang'];
@@ -565,17 +576,26 @@ class Config implements IConfig
 							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 						}
 					}
-					$this->_defaultSort[$sortByField['table'].'.'.$sortByField['field']] = $rawSort['order'];
+					$this->_defaultSort[] = array(
+						'by' => $sortByField['table'].'.'.$sortByField['field'],
+						'order' => $rawSort['order']
+					);
 				}
 				else {
 					if( empty($this->_fields[$rawSort['by']]) ) {
 						throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 					}
 					if('ex' == $this->_fields[$rawSort['by']]['type']) {
-						$this->_defaultSort[$rawSort['by']] = $rawSort['order'];
+						$this->_defaultSort[] = array(
+							'by' => $rawSort['by'],
+							'order' => $rawSort['order']
+						);
 					}
 					else {
-						$this->_defaultSort[$this->_tableAlias.'.'.$rawSort['by']] = $rawSort['order'];
+						$this->_defaultSort[] = array(
+							'by' => $this->_tableAlias.'.'.$rawSort['by'],
+							'order' => $rawSort['order']
+						);
 					}
 				}
 			}
@@ -622,7 +642,6 @@ class Config implements IConfig
 					else {
 						$this->_defaultGroupBy[] = $this->_tableAlias.'.'.$rawGroupBy;
 					}
-
 				}
 			}
 		}
@@ -795,8 +814,64 @@ class Config implements IConfig
 		return $createCode;
 	}
 	public function getConfigContent() {
-		// TODO: Написать получение кода конфига из класса
+		return self::jsonToReadable(json_encode(array(
+			'module' => $this->_moduleID,
+			'namespace' => $this->_namespace,
+			'class' => $this->_class,
+			'class_path' => $this->_classPath,
+			'version' => $this->_version,
+			'events_id' => $this->_eventsID,
+			'lang_prefix' => $this->_langPrefix,
+			'title' => $this->_title,
+			'description' => $this->_description,
+			'error_nothing_to_delete' => $this->_errorNothingToDelete,
+			'error_nothing_to_update' => $this->_errorNothingToUpdate,
+			'table_name' => $this->_tableName,
+			'table_alias' => $this->_tableAlias,
+			'fields' => $this->_fields,
+			'unique' => $this->_unique,
+			'index' => $this->_index,
+			'group_by_default' => $this->_defaultGroupBy,
+			'sort_by_default' => $this->_defaultSort,
+			'reference' => $this->_reference
+		)));
 		// TODO: Написать методы __sleep и __wakeup
+	}
+	static protected function jsonToReadable($json){
+		$tc = 0;        //tab count
+		$r = '';        //result
+		$q = false;     //quotes
+		$t = "\t";      //tab
+		$nl = "\n";     //new line
+
+		for($i=0;$i<strlen($json);$i++){
+			$c = $json[$i];
+			if($c=='"' && $json[$i-1]!='\\') $q = !$q;
+			if($q){
+				$r .= $c;
+				continue;
+			}
+			switch($c){
+				case '{':
+				case '[':
+					$r .= $c . $nl . str_repeat($t, ++$tc);
+					break;
+				case '}':
+				case ']':
+					$r .= $nl . str_repeat($t, --$tc) . $c;
+					break;
+				case ',':
+					$r .= $c;
+					if($json[$i+1]!='{' && $json[$i+1]!='[') $r .= $nl . str_repeat($t, $tc);
+					break;
+				case ':':
+					$r .= $c . ' ';
+					break;
+				default:
+					$r .= $c;
+			}
+		}
+		return $r;
 	}
 
 	public function getConfigPath() {
