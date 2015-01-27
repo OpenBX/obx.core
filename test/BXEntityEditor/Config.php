@@ -10,7 +10,6 @@
 
 namespace OBX\Core\Test\BXEntityEditor;
 
-use Bitrix\Main\Loader;
 use OBX\Core\Test\TestCase;
 use OBX\Core\DBEntityEditor\Config;
 use OBX\Core\SimpleBenchMark;
@@ -24,18 +23,33 @@ class TestConfig extends TestCase {
 
 	const TEST_ENTITY = '/bitrix/modules/obx.core/data_entity/TestEntity.json';
 
-	public function test() {
+	public function _test() {
 		$generator = new Config(self::TEST_ENTITY);
 	}
 
-	public function _testGenerteCreateSql() {
+	public function testGenerateCreateSql() {
 		$generator = new Config(self::TEST_ENTITY);
-
+		$sqlCreateEntity = $generator->getCreateTableCode();
 		$expectedSql = <<<SQL
-create table if exists obx_core_test_entity(
-
+create table if not exists obx_core_test_entity(
+	ID int(11) unsigned not null auto_increment,
+	CODE varchar(15) not null,
+	NAME varchar(255) not null,
+	SORT int(11) not null default '100',
+	SOME_BCHAR char(1) not null default 'Y',
+	CREATE_TIME datetime null,
+	TIMESTAMP_X datetime null,
+	SOME_TEXT text null,
+	IBLOCK_ID int(11) not null,
+	USER_ID int(11) null,
+	CUSTOM_CK varchar(255) null,
+	VALIDATION varchar(255) null,
+	primary key(ID),
+	unique obx_core_test_entity_code_bchar(CODE, SOME_BCHAR),
+	index obx_core_test_entity_code(CODE)
 );
-SQL;
 
+SQL;
+		$this->assertEquals($expectedSql, $sqlCreateEntity);
 	}
 } 

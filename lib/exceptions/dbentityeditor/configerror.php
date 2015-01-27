@@ -46,6 +46,7 @@ class ConfigError extends AError {
 	const E_CFG_REF_ENTITY_SAME_CLASS = 46;
 
 	const E_CFG_WRG_DEF_SORT = 50;
+	const E_CFG_WRG_DEF_GRP_BY = 51;
 
 	const E_GET_FLD_NOT_FOUND = 70;
 

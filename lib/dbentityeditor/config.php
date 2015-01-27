@@ -38,6 +38,8 @@ class Config implements IConfig
 	protected $_unique = array();
 	protected $_index = array();
 	protected $_reference = array();
+	protected $_defaultSort = array();
+	protected $_defaultGroupBy = array();
 	protected $_parentRefConfig = null;
 	protected $_readSuccess = false;
 
@@ -69,11 +71,11 @@ class Config implements IConfig
 		$this->_initTableName($configData);
 		$this->_initLangData($configData);
 		$this->_initFields($configData);
+		$this->_initReferences($configData);
 		$this->_initIndex($configData);
 		$this->_initUnique($configData);
 		$this->_initDefaultSort($configData);
 		$this->_initDefaultGroupBy($configData);
-		$this->_initReferences($configData);
 		// Ставим метку завершения чтения, на тот случай если кто-то напишет такой код,
 		// в котором объект будет доступен для работы уже после выброса исключения
 		$this->_readSuccess = true;
@@ -533,8 +535,8 @@ class Config implements IConfig
 				) {
 					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 				}
-				$rawSort['by'] = ''.$rawSort['by'];
-				$rawSort['order'] = strtoupper($rawSort['order']);
+				$rawSort['by'] = trim($rawSort['by']);
+				$rawSort['order'] = strtoupper(trim($rawSort['order']));
 				switch($rawSort['order']) {
 					case 'ASC':
 					case 'DESC':
@@ -555,16 +557,75 @@ class Config implements IConfig
 							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 						}
 					}
+					else {
+						if(empty($this->_reference[$sortByField['table']])) {
+							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+						}
+						if( empty($this->_reference[ $sortByField['table'] ][ $sortByField['field'] ]) ) {
+							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+						}
+					}
+					$this->_defaultSort[$sortByField['table'].'.'.$sortByField['field']] = $rawSort['order'];
 				}
-				elseif( empty($this->_fields[$rawSort['by']]) ) {
-					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+				else {
+					if( empty($this->_fields[$rawSort['by']]) ) {
+						throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+					}
+					if('ex' == $this->_fields[$rawSort['by']]['type']) {
+						$this->_defaultSort[$rawSort['by']] = $rawSort['order'];
+					}
+					else {
+						$this->_defaultSort[$this->_tableAlias.'.'.$rawSort['by']] = $rawSort['order'];
+					}
 				}
 			}
 		}
 	}
 
 	protected function _initDefaultGroupBy(&$configData) {
-		// TODO: Заполнить group_by_default
+		if(!empty($configData['group_by_default']) && is_array($configData['group_by_default'])) {
+			foreach($configData['group_by_default'] as &$rawGroupBy) {
+				$rawGroupBy = trim($rawGroupBy);
+				if( empty($rawGroupBy) ) {
+					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+				}
+				if(strpos($rawGroupBy, '.')!==false) {
+					$groupByField = array('table'=>null, 'field'=>null);
+					list($groupByField['table'], $groupByField['field']) = explode('.', $rawGroupBy);
+					$groupByField['table'] = trim($groupByField['table']);
+					$groupByField['field'] = trim($groupByField['field']);
+					if($groupByField['table'] == $this->_tableAlias) {
+						if( empty($this->_fields[$groupByField['field']])
+							|| 'ex' == $this->_fields[$groupByField['field']]['type']
+							|| '' == $this->_fields[$groupByField['field']]['type']
+						) {
+							throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
+						}
+					}
+					else {
+						if(empty($this->_reference[$groupByField['table']])) {
+							throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
+						}
+						if( empty($this->_reference[ $groupByField['table'] ][ $groupByField['field'] ]) ) {
+							throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
+						}
+					}
+					$this->_defaultGroupBy[] = $groupByField['table'].'.'.$groupByField['field'];
+				}
+				else {
+					if( empty($this->_fields[$rawGroupBy]) ) {
+						throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
+					}
+					if('ex' == $this->_fields[$rawGroupBy]['type']) {
+						$this->_defaultGroupBy[] = $rawGroupBy;
+					}
+					else {
+						$this->_defaultGroupBy[] = $this->_tableAlias.'.'.$rawGroupBy;
+					}
+
+				}
+			}
+		}
 	}
 
 	static protected function normalizePath($path) {
@@ -681,11 +742,14 @@ class Config implements IConfig
 	public function getCreateTableCode() {
 		/** \CDatabase $DB */
 		global $DB;
-		$createCode = 'create table if exists '.$this->_tableName."\n";
+		$createCode = 'create table if not exists '.$this->_tableName."(\n";
 		$fieldCount = count($this->_fields);
 		$iField = 0;
 		$primaryKey = null;
 		foreach($this->_fields as &$field) {
+			if('ex' == $field['type'] || '' == $field['type']) {
+				continue;
+			}
 			$iField++;
 			$dataType = $this->cfgFieldType2MySQL($field);
 			$deny_null = ' null';
@@ -695,7 +759,7 @@ class Config implements IConfig
 				$deny_null = ' not null';
 			}
 			if(!empty($field['default'])) {
-				$default = $DB->ForSql($field['default']);
+				$default = ' default \''.$DB->ForSql($field['default']).'\'';
 			}
 			if(true === $field['auto_increment']) {
 				$ai = ' auto_increment';
@@ -707,9 +771,28 @@ class Config implements IConfig
 			}
 		}
 		if(null !== $primaryKey) {
-			$createCode .= "\t".$primaryKey."\n";
+			$createCode .= "\t".$primaryKey;
 		}
-		// TODO: тут надо сгенерировать код создания индексов
+		if( !empty($this->_unique) || !empty($this->_index) ) {
+			$createCode .= ",\n";
+			foreach($this->_unique as $uniqueCode => $unique) {
+				$createCode .= "\tunique ".$uniqueCode.'('.implode(', ', $unique['fields']).')';
+			}
+			if(!empty($this->_index)) {
+				$createCode .= ",\n";
+				foreach($this->_index as $indexCode => $index) {
+					$createCode .= "\tindex ".$indexCode.'('.implode(', ', $index).")\n";
+				}
+			}
+			else {
+				$createCode .= "\n";
+			}
+		}
+		else {
+			$createCode .= "\n";
+		}
+		$createCode .= ");\n";
+		return $createCode;
 	}
 	public function getConfigContent() {
 		// TODO: Написать получение кода конфига из класса
@@ -850,12 +933,8 @@ class Config implements IConfig
 				$field['length'] = 11;
 			}
 		} else $field['length'] = 11;
-		$ai = '';
-		if(true === $field['auto_increment']) {
-			$ai = ' auto_increment';
-		}
 		$unsigned = ($this->checkUnsignedField($field)?' unsigned':'');
-		return 'int('.$field['length'].')'.$unsigned.$ai;
+		return 'int('.$field['length'].')'.$unsigned;
 	}
 
 	protected function checkUnsignedField(&$field) {

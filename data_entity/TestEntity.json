@@ -30,6 +30,14 @@
 			"title": {"lang": "%_FLD_TITLE_NAME", "ru": "Имя", "en": "Name"},
 			"description": {"lang": "%_FLD_DSCR_NAME", "ru": "Имя", "en": "Name"}
 		},
+		"SORT": {
+			"type": "int", "length": 11, "deny_null": true, "default": 100,
+			"required": true,
+			"required_error": {"lang": "%_SORT_IS_EMPTY", "ru": "Поле \"Сортировка\" не заполнено"},
+			"title": {"lang": "&_FLD_TITLE_SORT", "ru": "Сортировка", "en": "Sort"},
+			"description": {"lang": "&_FLD_DSCR_SORT", "ru": "Сортировка", "en": "Sort"},
+			"get": {"if_null_return": 100}
+		},
 		"SOME_BCHAR": {
 			"type": "bool_char",
 			"deny_null": true, "required": true, "default": "Y",
@@ -138,7 +146,10 @@
 	"error_nothing_to_delete": {"lang": "%_E_NOTHING_TO_DELETE", "ru": "Ошибка удаления: запись не найдена"},
 	"error_nothing_to_update": {"lang": "%_E_NOTHING_TO_UPDATE", "ru": "Ошибка обновления: запись не найдена"},
 	"group_by_default": ["E.ID"],
-	"sort_by_default":[{"by": "E.ID", "order": "ASC"}],
+	"sort_by_default":[
+		{"by": "SORT", "order": "ASC"},
+		{"by": "E.ID", "order": "ASC"}
+	],
 
 	"reference": [
 		{
