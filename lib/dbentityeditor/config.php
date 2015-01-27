@@ -526,7 +526,6 @@ class Config implements IConfig
 	}
 
 	protected function _initDefaultSort(&$configData) {
-		// TODO: Заполнить sort_by_default
 		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
 			foreach($configData['sort_by_default'] as &$rawSort) {
 				if( empty($rawSort) || !is_array($rawSort)
@@ -549,10 +548,16 @@ class Config implements IConfig
 					$sortByField['table'] = trim($sortByField['table']);
 					$sortByField['field'] = trim($sortByField['field']);
 					if($sortByField['table'] == $this->_tableAlias) {
-						if( empty($this->_fields[$sortByField['field']]) ) {
+						if( empty($this->_fields[$sortByField['field']])
+							|| 'ex' == $this->_fields[$sortByField['field']]['type']
+							|| '' == $this->_fields[$sortByField['field']]['type']
+						) {
 							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 						}
 					}
+				}
+				elseif( empty($this->_fields[$rawSort['by']]) ) {
+					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 				}
 			}
 		}
