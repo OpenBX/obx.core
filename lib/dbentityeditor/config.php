@@ -340,18 +340,6 @@ class Config implements IConfig
 
 		}
 
-
-		// TODO: Заполнить sort_by_default
-		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
-			foreach($configData['sort_by_default'] as &$rawSort) {
-				if(empty($rawSort) || !is_array($rawSort) || empty($rawSort['by']) || empty($rawSort['order'])) {
-					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
-				}
-			}
-		}
-
-		// TODO: Заполнить group_by_default
-
 		if(!empty($rawReferenceList)) {
 			foreach($rawReferenceList as &$reference) {
 				$reference['fields'] = null;
@@ -448,12 +436,42 @@ class Config implements IConfig
 			}
 		}
 
+		// TODO: Заполнить sort_by_default
+		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
+			foreach($configData['sort_by_default'] as &$rawSort) {
+				if( empty($rawSort) || !is_array($rawSort)
+					|| empty($rawSort['by']) || empty($rawSort['order'])
+				) {
+					throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+				}
+				$rawSort['by'] = ''.$rawSort['by'];
+				$rawSort['order'] = strtoupper($rawSort['order']);
+				switch($rawSort['order']) {
+					case 'ASC':
+					case 'DESC':
+						break;
+					default:
+						throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+				}
+				if(strpos($rawSort['by'], '.')!==false) {
+					$sortByField = array('table'=>null, 'field'=>null);
+					list($sortByField['table'], $sortByField['field']) = explode('.', $rawSort['by']);
+					$sortByField['table'] = trim($sortByField['table']);
+					$sortByField['field'] = trim($sortByField['field']);
+					if($sortByField['table'] == $this->_tableAlias) {
+						if( empty($this->_fields[$sortByField['field']]) ) {
+							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
+						}
+					}
+				}
+			}
+		}
+
+		// TODO: Заполнить group_by_default
+
 		// Ставим метку завершения чтения, на тот случай если кто-то напишет такой код,
 		// в котором объект будет доступен для работы уже после выброса исключения
 		$this->_readSuccess = true;
-
-
-		$debug=1;
 	}
 
 	static protected function normalizePath($path) {
