@@ -39,13 +39,16 @@ class GeneratorDBS extends Generator {
 
 	public function __init() {
 
-		$this->namespace = '';
-
+		$this->namespace = $this->config->getNamespace();
+		$this->className = $this->config->getClass();
+		$this->uses = array(
+			'OBX\Core\DBSimple\Entity'
+		);
+		$this->extends = 'Entity';
 		$this->addInitialVariable('protected', '_entityModuleID', $this->config->getModuleID());
 		$this->addInitialVariable('protected', '_entityEventsID', $this->config->getEventsID());
 		$this->addInitialVariable('protected', '_mainTable', $this->config->getAlias());
 		$arOwnFields = $this->config->getFieldsList(true);
-
 		$bPrimaryFound = false;
 		$bAutoIncrementFound = false;
 		foreach($arOwnFields as $fieldName) {
@@ -57,41 +60,55 @@ class GeneratorDBS extends Generator {
 				$this->addInitialVariable('protected', '_mainTableAutoIncrement', $fieldName);
 			}
 		}
-		$this->addMethod('public', '__construct', array(), <<<PHP
-	\$this->
-PHP
-);
+		$this->initReferences();
 
-		//$this->_classPath = $this->_config->getClass();
-		//$this->_mainTable = $this->_config->getAlias();
-		//$this->_arTableList = array(
-		//	$this->_mainTable => $this->_config->getTableName()
-		//);
+		$this->addMethod('public', '__construct', array(),
+			$this->init_arFieldsCheck()
+		);
+		$debug=1;
+	}
 
-		// DBSimple Data
+	private function init_arFieldsCheck() {
+		$code_arFieldsCheck = "\t\t".'$this->_arTableFieldsCheck('."\n";
+		$arFieldsList = $this->config->getFieldsList(true);
+		foreach($arFieldsList as $fieldAlias) {
+			$field = $this->config->getField($fieldAlias);
+			$arCheckFlags = $this->cfgField2DBSimpleFieldCheck($field);
+			$code_arFieldsCheck .= "\t\t\t'".$field['code'].'\' => self::'.implode(' | self::', $arCheckFlags).",\n";
+		}
+		$code_arFieldsCheck .= "\t\t);\n";
+		return $code_arFieldsCheck;
+	}
 
-//		foreach($this->_fields as $fieldCode => &$field) {
-//			$fieldCheckType = $this->cfgField2DBSimpleFieldCheck($field);
-//			if(null !== $fieldCheckType) {
-//				$this->_arTableFieldsCheck[$field['code']] = $fieldCheckType;
-//				$this->_createTable[$field['code']] = array(
-//					'data_type' => $this->cfgFieldType2MySQL($field),
-//					'deny_null' => ' not null',
-//					'default' => ''
-//				);
-//				if(true === $field['deny_null']) {
-//					$this->_createTable[$field['code']]['deny_null'] = ' null';
-//				}
-//				if(!empty($field['default'])) {
-//					$this->_arTableFieldsDefault[$field['code']] = $field['default'];
-//					$this->_createTable[$field['code']]['default'] = $this->_arTableFieldsDefault[$field['code']];
-//				}
-//				if(true === $field['selected_by_default']) {
-//					if(null === $this->_arSelectDefault) $this->_arSelectDefault = array();
-//					$this->_arSelectDefault[] = $field['code'];
-//				}
-//			}
-//		}
+	private function initReferences() {
+		$referenceList = $this->config->getReferences();
+		$value_arTableLinks = array();
+		$value_arTableLeftJoin = array();
+		$value_arTableRightJoin = array();
+		foreach($referenceList as $reference) {
+			$value_arTableLinks[] = array(
+				array($reference['alias'] => $reference['reference_field']),
+				array($this->config->getAlias() => $reference['self_field'])
+			);
+			switch($reference['type']) {
+				case 'left_join':
+					$value_arTableLeftJoin[$reference['alias']] = $reference['condition'];
+					break;
+				case 'right_join':
+					$value_arTableRightJoin[$reference['alias']] = $reference['condition'];
+					break;
+			}
+		}
+		if(!empty($value_arTableLinks)) {
+			$this->addInitialVariable('protected', '_arTableLinks', $value_arTableLinks);
+		}
+		if(!empty($value_arTableLeftJoin)) {
+			$this->addInitialVariable('protected', '_arTableLeftJoin', $value_arTableLeftJoin);
+		}
+		if(!empty($value_arTableRightJoin)) {
+			$this->addInitialVariable('protected', '_arTableRightJoin', $value_arTableRightJoin);
+		}
+
 	}
 
 	protected function cfgField2DBSimpleFieldCheck(&$field) {

@@ -750,7 +750,7 @@ class Config implements IConfig
 		return array_keys($this->fields);
 	}
 	public function getField($fieldCode) {
-		if(array_key_exists($fieldCode, $this->fields)) {
+		if(empty($this->fields[$fieldCode])) {
 			throw new Err('', Err::E_GET_FLD_NOT_FOUND);
 		}
 		return $this->fields[$fieldCode];
@@ -762,6 +762,10 @@ class Config implements IConfig
 
 	public function getUnique() {
 		return $this->unique;
+	}
+
+	public function getReferences() {
+		return $this->reference;
 	}
 
 	public function isReadSuccess() {

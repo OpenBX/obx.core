@@ -22,6 +22,7 @@ interface IConfig {
 	function getField($fieldCode);
 	function getIndex();
 	function getUnique();
+	function getReferences();
 	function isReadSuccess();
 	function getCreateTableCode();
 	function getConfigContent();

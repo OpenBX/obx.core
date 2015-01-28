@@ -93,7 +93,7 @@ abstract class Generator implements IGenerator {
 		elseif(is_numeric($initialValue)) {
 			$quote = '';
 		}
-		elseif(strpos($initialValue, 'const:')) {
+		elseif(strpos($initialValue, 'const:')!==false) {
 			$initialValue = trim(str_replace('const:', '', $initialValue));
 			if(self::validateConstName($initialValue)) {
 				$quote = '';
