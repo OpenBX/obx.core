@@ -764,6 +764,14 @@ class Config implements IConfig
 		return $this->unique;
 	}
 
+	public function getDefaultSort() {
+		return $this->defaultSort;
+	}
+
+	public function getDefaultGroupBy() {
+		return $this->defaultGroupBy;
+	}
+
 	public function getReferences() {
 		return $this->reference;
 	}

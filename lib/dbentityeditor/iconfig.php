@@ -22,6 +22,8 @@ interface IConfig {
 	function getField($fieldCode);
 	function getIndex();
 	function getUnique();
+	function getDefaultSort();
+	function getDefaultGroupBy();
 	function getReferences();
 	function isReadSuccess();
 	function getCreateTableCode();

@@ -19,22 +19,22 @@ use OBX\Core\Exceptions\DBEntityEditor\GeneratorDBSError as Err;
  */
 class GeneratorDBS extends Generator {
 	// DBSimple Vars
-	//protected $_entityModuleID = null;
-	//protected $_entityEventsID = null;
-	//protected $_mainTable = null;
-	//protected $_mainTablePrimaryKey = null;
-	//protected $_mainTableAutoIncrement = null;
-	//protected $_arTableList = null;
-	//protected $_arTableLinks = null;
-	//protected $_arTableLeftJoin = null;
-	//protected $_arTableFields = null;
-	//protected $_arSelectDefault = null;
-	//protected $_arTableUnique = null;
-	//protected $_arSortDefault = null;
-	//protected $_arTableFieldsDefault = null;
-	//protected $_arTableFieldsCheck = null;
-
-
+	private $_entityModuleID = null;
+	private $_entityEventsID = null;
+	private $_mainTable = null;
+	private $_mainTablePrimaryKey = null;
+	private $_mainTableAutoIncrement = null;
+	private $_arTableList = null;
+	private $_arTableLinks = null;
+	private $_arTableLeftJoin = null;
+	private $_arTableRightJoin = null;
+	private $_arTableFields = null;
+	private $_arSelectDefault = null;
+	private $_arTableUnique = null;
+	private $_arSortDefault = null;
+	private $_arGroupByFields = null;
+	private $_arTableFieldsDefault = null;
+	private $_arTableFieldsCheck = null;
 
 
 	public function __init() {
@@ -45,30 +45,78 @@ class GeneratorDBS extends Generator {
 			'OBX\Core\DBSimple\Entity'
 		);
 		$this->extends = 'Entity';
-		$this->addInitialVariable('protected', '_entityModuleID', $this->config->getModuleID());
-		$this->addInitialVariable('protected', '_entityEventsID', $this->config->getEventsID());
-		$this->addInitialVariable('protected', '_mainTable', $this->config->getAlias());
+		$this->_entityModuleID = $this->config->getModuleID();
+		$this->_entityEventsID = $this->config->getEventsID();
+		$this->_mainTable = $this->config->getAlias();
 		$arOwnFields = $this->config->getFieldsList(true);
 		$bPrimaryFound = false;
 		$bAutoIncrementFound = false;
 		foreach($arOwnFields as $fieldName) {
 			$field = $this->config->getField($fieldName);
 			if(false === $bPrimaryFound && true == $field['primary_key']) {
-				$this->addInitialVariable('protected', '_mainTablePrimaryKey', $fieldName);
+				$this->_mainTablePrimaryKey = $fieldName;
 			}
 			if(false === $bAutoIncrementFound && true == $field['auto_increment']) {
-				$this->addInitialVariable('protected', '_mainTableAutoIncrement', $fieldName);
+				$this->_mainTableAutoIncrement = $fieldName;
 			}
 		}
+		$this->_arTableList = array(
+			$this->_mainTable => $this->config->getTableName()
+		);
 		$this->initReferences();
+		$this->init_arSelectDefault();
+		$this->init_arTableUnique();
+		$this->init_arSortDefault();
 
 		$this->addMethod('public', '__construct', array(),
-			$this->init_arFieldsCheck()
+			$this->getCode_arFieldsCheck()
 		);
 		$debug=1;
 	}
 
-	private function init_arFieldsCheck() {
+	private function init_arGroupByFields() {
+		// TODO: Написать метод init_arGroupByFields
+	}
+
+	private function init_arSortDefault() {
+		// TODO: init_arSortDefault Этот код генерит имя полей с алиасом. DBSimple такого не пропустит
+		// DBSimple проверяет есть ли такое поле по имени алиаса поля, а не по самому полю с указанием алиаса таблицы
+		$_arSortDefault = array();
+		$arSortFields = $this->config->getDefaultSort();
+		foreach($arSortFields as $sort) {
+			$_arSortDefault[$sort['by']] = $sort['order'];
+		}
+		if(!empty($_arSortDefault)) {
+			$this->_arSortDefault;
+		}
+	}
+
+	private function init_arTableUnique() {
+		$_arTableUnique = array();
+		$uniqueList = $this->config->getUnique();
+		foreach($uniqueList as $uqName => $unique) {
+			$_arTableUnique[$uqName] = $unique['fields'];
+		}
+		if(!empty($_arTableUnique)) {
+			$this->_arTableUnique = $_arTableUnique;
+		}
+	}
+
+	private function init_arSelectDefault() {
+		$_arSelectDefault = array();
+		$arFieldsList = $this->config->getFieldsList(false);
+		foreach($arFieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			if(true === $field['selected_by_default']) {
+				$_arSelectDefault[] = $fieldCode;
+			}
+		}
+		if(!empty($_arSelectDefault)) {
+			$this->_arSelectDefault = $_arSelectDefault;
+		}
+	}
+
+	private function getCode_arFieldsCheck() {
 		$code_arFieldsCheck = "\t\t".'$this->_arTableFieldsCheck('."\n";
 		$arFieldsList = $this->config->getFieldsList(true);
 		foreach($arFieldsList as $fieldAlias) {
@@ -82,31 +130,31 @@ class GeneratorDBS extends Generator {
 
 	private function initReferences() {
 		$referenceList = $this->config->getReferences();
-		$value_arTableLinks = array();
-		$value_arTableLeftJoin = array();
-		$value_arTableRightJoin = array();
+		$_arTableLinks = array();
+		$_arTableLeftJoin = array();
+		$_arTableRightJoin = array();
 		foreach($referenceList as $reference) {
-			$value_arTableLinks[] = array(
+			$_arTableLinks[] = array(
 				array($reference['alias'] => $reference['reference_field']),
 				array($this->config->getAlias() => $reference['self_field'])
 			);
 			switch($reference['type']) {
 				case 'left_join':
-					$value_arTableLeftJoin[$reference['alias']] = $reference['condition'];
+					$_arTableLeftJoin[$reference['alias']] = $reference['condition'];
 					break;
 				case 'right_join':
-					$value_arTableRightJoin[$reference['alias']] = $reference['condition'];
+					$_arTableRightJoin[$reference['alias']] = $reference['condition'];
 					break;
 			}
 		}
-		if(!empty($value_arTableLinks)) {
-			$this->addInitialVariable('protected', '_arTableLinks', $value_arTableLinks);
+		if(!empty($_arTableLinks)) {
+			$this->_arTableLinks = $_arTableLinks;
 		}
-		if(!empty($value_arTableLeftJoin)) {
-			$this->addInitialVariable('protected', '_arTableLeftJoin', $value_arTableLeftJoin);
+		if(!empty($_arTableLeftJoin)) {
+			$this->_arTableLeftJoin = $_arTableLeftJoin;
 		}
-		if(!empty($value_arTableRightJoin)) {
-			$this->addInitialVariable('protected', '_arTableRightJoin', $value_arTableRightJoin);
+		if(!empty($_arTableRightJoin)) {
+			$this->_arTableRightJoin = $_arTableRightJoin;
 		}
 
 	}
