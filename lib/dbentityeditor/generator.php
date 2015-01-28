@@ -12,7 +12,6 @@ namespace OBX\Core\DBEntityEditor;
 
 use OBX\Core\Exceptions\DBEntityEditor\GeneratorError as Err;
 
-
 abstract class Generator implements IGenerator {
 	/** @var null|\OBX\Core\DBEntityEditor\IConfig  */
 	protected $config = null;
