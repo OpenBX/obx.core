@@ -18,6 +18,7 @@
 			<file>XmlParserEvent.php</file>
 			<file>TestErrorExceptions.php</file>
 			<file>BXEntityEditor/Config.php</file>
+			<file>BXEntityEditor/Generator.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>

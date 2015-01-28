@@ -39,6 +39,29 @@ class GeneratorDBS extends Generator {
 
 	public function __init() {
 
+		$this->namespace = '';
+
+		$this->addInitialVariable('protected', '_entityModuleID', $this->config->getModuleID());
+		$this->addInitialVariable('protected', '_entityEventsID', $this->config->getEventsID());
+		$this->addInitialVariable('protected', '_mainTable', $this->config->getAlias());
+		$arOwnFields = $this->config->getFieldsList(true);
+
+		$bPrimaryFound = false;
+		$bAutoIncrementFound = false;
+		foreach($arOwnFields as $fieldName) {
+			$field = $this->config->getField($fieldName);
+			if(false === $bPrimaryFound && true == $field['primary_key']) {
+				$this->addInitialVariable('protected', '_mainTablePrimaryKey', $fieldName);
+			}
+			if(false === $bAutoIncrementFound && true == $field['auto_increment']) {
+				$this->addInitialVariable('protected', '_mainTableAutoIncrement', $fieldName);
+			}
+		}
+		$this->addMethod('public', '__construct', array(), <<<PHP
+	\$this->
+PHP
+);
+
 		//$this->_classPath = $this->_config->getClass();
 		//$this->_mainTable = $this->_config->getAlias();
 		//$this->_arTableList = array(

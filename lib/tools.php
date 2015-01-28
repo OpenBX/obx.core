@@ -339,6 +339,22 @@ namespace OBX\Core {
 			return $arMerged;
 		}
 
+		static public function parseVersion($version) {
+			$arVersion = explode('.', $version);
+			if(count($arVersion) >= 3
+				&& is_numeric($arVersion[0])
+				&& is_numeric($arVersion[1])
+				&& is_numeric($arVersion[2])
+			) {
+				return array(
+					'MAJOR' => intval($arVersion[0]),
+					'MINOR' => intval($arVersion[1]),
+					'FIXES' => intval($arVersion[2])
+				);
+			}
+			return null;
+		}
+
 		//////////// РАБОТА С ФАЙЛАМИ И ПАПКАМИ
 		/**
 		 *

@@ -8,20 +8,19 @@
  ** @copyright 2015 DevTop                    **
  ***********************************************/
 
-namespace OBX\Core\Exceptions\DBEntityEditor;
+namespace OBX\Core\Test\BXEntityEditor;
 
-use OBX\Core\Exceptions\AError;
 
-class GeneratorError extends AError {
+use OBX\Core\DBEntityEditor\Config;
+use OBX\Core\Test\TestCase;
+use OBX\Core\DBEntityEditor\GeneratorDBS;
+
+class TestGenerator extends TestCase
+{
 	const _DIR_ = __DIR__;
-	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'OBX_CORE_DB_ENT_GEN_ERR_';
+	const TEST_ENTITY = '/bitrix/modules/obx.core/data_entity/TestEntity.json';
 
-	const E_CFG_INCORRECT = 1;
-
-	const E_ADD_MET_WRG_NAME = 2;
-	const E_ADD_MET_EXISTS = 3;
-	const E_ADD_MET_WRG_ACCESS = 4;
-	const E_ADD_MET_WRG_ARG_NAME = 5;
-	const E_ADD_MET_WRG_ARG_TYPE = 6;
-}
+	public function test() {
+		$generator = new GeneratorDBS(new Config(self::TEST_ENTITY));
+	}
+} 

@@ -18,33 +18,31 @@ IncludeModuleLangFile(__FILE__);
 
 class Config implements IConfig
 {
-	protected $_moduleID = null;
-	protected $_eventsID = null;
+	protected $moduleID = null;
+	protected $eventsID = null;
 
 	protected $MessagePool = null;
 
-	protected $_configPath = null;
-	protected $_namespace = null;
-	protected $_class = null;
-	protected $_classPath = null;
-	protected $_version = null;
-	protected $_langPrefix = null;
-	protected $_title = null;
-	protected $_description = null;
-	protected $_errorNothingToUpdate = null;
-	protected $_errorNothingToDelete = null;
-	protected $_tableName = null;
-	protected $_tableAlias = null;
-	protected $_fields = array();
-	protected $_unique = array();
-	protected $_index = array();
-	protected $_reference = array();
-	protected $_defaultSort = array();
-	protected $_defaultGroupBy = array();
-	protected $_parentRefConfig = null;
-	protected $_readSuccess = false;
-
-	protected $_createTable = array();
+	protected $configPath = null;
+	protected $namespace = null;
+	protected $class = null;
+	protected $classPath = null;
+	protected $version = null;
+	protected $langPrefix = null;
+	protected $title = null;
+	protected $description = null;
+	protected $errorNothingToUpdate = null;
+	protected $errorNothingToDelete = null;
+	protected $tableName = null;
+	protected $tableAlias = null;
+	protected $fields = array();
+	protected $unique = array();
+	protected $index = array();
+	protected $reference = array();
+	protected $defaultSort = array();
+	protected $defaultGroupBy = array();
+	protected $parentRefConfig = null;
+	protected $readSuccess = false;
 
 	/**
 	 * @param string $entityConfigFile
@@ -52,13 +50,13 @@ class Config implements IConfig
 	 * @throws Err
 	 */
 	public function __construct($entityConfigFile, self $referencedConfig = null) {
-		$this->_parentRefConfig = $referencedConfig;
+		$this->parentRefConfig = $referencedConfig;
 		$this->MessagePool = new MessagePool();
 		if( !is_file(OBX_DOC_ROOT.$entityConfigFile) ) {
 			throw new Err('', Err::E_OPEN_CFG_FAILED);
 		}
-		$this->_configPath = self::normalizePath($entityConfigFile);
-		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$this->_configPath);
+		$this->configPath = self::normalizePath($entityConfigFile);
+		$jsonConfig = file_get_contents(OBX_DOC_ROOT.$this->configPath);
 		$configData = json_decode($jsonConfig, true);
 		if(null === $configData) {
 			throw new Err(
@@ -66,23 +64,23 @@ class Config implements IConfig
 				Err::E_PARSE_CFG_FAILED
 			);
 		}
-		$this->_initialEntityData($configData);
-		$this->_initVersion($configData);
-		$this->_initEntityClass($configData);
-		$this->_initTableName($configData);
-		$this->_initLangData($configData);
-		$this->_initFields($configData);
-		$this->_initReferences($configData);
-		$this->_initIndex($configData);
-		$this->_initUnique($configData);
-		$this->_initDefaultSort($configData);
-		$this->_initDefaultGroupBy($configData);
+		$this->initialEntityData($configData);
+		$this->initVersion($configData);
+		$this->initEntityClass($configData);
+		$this->initTableName($configData);
+		$this->initLangData($configData);
+		$this->initFields($configData);
+		$this->initReferences($configData);
+		$this->initIndex($configData);
+		$this->initUnique($configData);
+		$this->initDefaultSort($configData);
+		$this->initDefaultGroupBy($configData);
 		// Ставим метку завершения чтения, на тот случай если кто-то напишет такой код,
 		// в котором объект будет доступен для работы уже после выброса исключения
-		$this->_readSuccess = true;
+		$this->readSuccess = true;
 	}
 
-	protected function _initialEntityData(&$configData) {
+	protected function initialEntityData(&$configData) {
 		if( empty($configData['module'])
 			&& !is_dir(OBX_DOC_ROOT.$configData['module'])
 			&& !is_file(OBX_DOC_ROOT.$configData['module'].'/include.php')
@@ -90,37 +88,37 @@ class Config implements IConfig
 		) {
 			throw new Err('', Err::E_CFG_NO_MOD);
 		}
-		$this->_moduleID = $configData['module'];
+		$this->moduleID = $configData['module'];
 		if( empty($configData['events_id']) ) {
 			throw new Err('', Err::E_CFG_NO_EVT_ID);
 		}
-		$this->_eventsID = $configData['events_id'];
+		$this->eventsID = $configData['events_id'];
 	}
 
-	protected function _initVersion(&$configData) {
+	protected function initVersion(&$configData) {
 		//$this->_version = \CUpdateClient::GetModuleVersion($this->_entityModuleID);
 		if(!empty($configData['version']) && strpos($configData['version'], '.') !== false) {
-			if( null !== ($arVersion = $this->_parseVersion($configData['version'])) ) {
-				$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+			if( null !== ($arVersion = Tools::parseVersion($configData['version'])) ) {
+				$this->version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
 			}
 		}
-		if(empty($this->_version)) {
-			$modulePath = OBX_DOC_ROOT.'/bitrix/modules/'.$this->_moduleID;
+		if(empty($this->version)) {
+			$modulePath = OBX_DOC_ROOT.'/bitrix/modules/'.$this->moduleID;
 			if(is_file($modulePath.'/install/version.php')) {
 				/** @noinspection PhpIncludeInspection */
 				$returnVersionArray = include $modulePath.'/install/version.php';
 				if(!empty($arModuleVersion['VERSION'])
-					&& null !== ($arVersion=$this->_parseVersion($arModuleVersion['VERSION']))
+					&& null !== ($arVersion=Tools::parseVersion($arModuleVersion['VERSION']))
 				) {
-					$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+					$this->version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
 				}
 				elseif(!empty($returnVersionArray['VERSION'])
-					&& null !== ($arVersion=$this->_parseVersion($returnVersionArray['VERSION']))
+					&& null !== ($arVersion=Tools::parseVersion($returnVersionArray['VERSION']))
 				) {
-					$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+					$this->version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
 				}
 				else {
-					$moduleClass = str_replace('.', '_', $this->_moduleID);
+					$moduleClass = str_replace('.', '_', $this->moduleID);
 					if(self::validateClassName($moduleClass) ) {
 						if( !class_exists($moduleClass) ) {
 							/** @noinspection PhpIncludeInspection */
@@ -128,66 +126,50 @@ class Config implements IConfig
 						}
 						if( class_exists($moduleClass) ) {
 							$moduleInstaller = new $moduleClass;
-							if( null !== ($arVersion = $this->_parseVersion($moduleInstaller->VERSION)) ) {
-								$this->_version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
+							if( null !== ($arVersion = Tools::parseVersion($moduleInstaller->VERSION)) ) {
+								$this->version = $arVersion['MAJOR'].'.'.$arVersion['MINOR'].'.'.$arVersion['FIXES'];
 							}
 						}
 					}
 				}
 			}
-			if(empty($this->_version)) {
+			if(empty($this->version)) {
 				throw new Err('', Err::E_VERSION_IS_EMPTY);
 			}
 		}
 	}
 
-	protected function _parseVersion($version) {
-		$arVersion = explode('.', $version);
-		if(count($arVersion) >= 3
-			&& is_numeric($arVersion[0])
-			&& is_numeric($arVersion[1])
-			&& is_numeric($arVersion[2])
-		) {
-			return array(
-				'MAJOR' => intval($arVersion[0]),
-				'MINOR' => intval($arVersion[1]),
-				'FIXES' => intval($arVersion[2])
-			);
-		}
-		return null;
-	}
-
-	protected function _initEntityClass(&$configData) {
+	protected function initEntityClass(&$configData) {
 		$configData['namespace'] = ''.trim($configData['namespace'], ' \\');
 		//$configData['namespace'] = str_replace('\\\\', '\\', $configData['namespace']);
 		if( !self::validateNamespace($configData['namespace']) ) {
 			throw new Err('', Err::E_CFG_WRG_NAMESPACE);
 		}
-		$this->_namespace = $configData['namespace'];
+		$this->namespace = $configData['namespace'];
 
 		$configData['class'] = ''.trim($configData['class'], ' \\');
 		if( !self::validateClassName($configData['class']) ) {
 			throw new Err('', Err::E_CFG_WRG_CLASS_NAME);
 		}
-		$this->_class = $configData['class'];
+		$this->class = $configData['class'];
 
-		$this->_classPath = 'lib/'
-			.strtolower(str_replace('\\', '/', $this->_namespace))
-			.'/'.$this->_class.'.php'
+		$this->classPath = 'lib/'
+			.strtolower(str_replace('\\', '/', $this->namespace))
+			.'/'.$this->class.'.php'
 		;
 		if( !empty($configData['class_path']) ) {
 			//throw new Err('', Err::E_CFG_NO_CLASS_PATH);
-			$this->_classPath = self::normalizePath($configData['class_path']);
+			$this->classPath = self::normalizePath($configData['class_path']);
 		}
-		if(null !== $this->_parentRefConfig) {
-			$refClass = $this->_parentRefConfig->getNamespace().'\\'.$this->_parentRefConfig->getClass();
-			if($refClass == $this->_namespace.'\\'.$this->_class) {
+		if(null !== $this->parentRefConfig) {
+			$refClass = $this->parentRefConfig->getNamespace().'\\'.$this->parentRefConfig->getClass();
+			if($refClass == $this->namespace.'\\'.$this->class) {
 				throw new Err('', Err::E_CFG_REF_ENTITY_SAME_CLASS);
 			}
 		}
 	}
 
-	protected function _initTableName(&$configData) {
+	protected function initTableName(&$configData) {
 		$configData['table_alias'] = trim($configData['table_alias']);
 		$configData['table_name'] = trim($configData['table_name']);
 		if( !self::validateTblAlias($configData['table_alias']) ) {
@@ -196,61 +178,61 @@ class Config implements IConfig
 		if( !self::validateTblName($configData['table_name']) ) {
 			throw new Err('', Err::E_CFG_TBL_WRG_NAME);
 		}
-		$this->_tableName = $configData['table_name'];
-		$this->_tableAlias = $configData['table_alias'];
-		$this->_langPrefix = str_replace('\\', '_', strtoupper($this->_namespace.'\\'.$this->_class));
+		$this->tableName = $configData['table_name'];
+		$this->tableAlias = $configData['table_alias'];
+		$this->langPrefix = str_replace('\\', '_', strtoupper($this->namespace.'\\'.$this->class));
 		if(!empty($configData['lang_prefix'])) {
 			$configData['lang_prefix'] = strtoupper(trim($configData['lang_prefix']));
 			if(preg_match('~[A-Z0-9\\_\\-/\\|]~', $configData['lang_prefix'])) {
-				$this->_langPrefix = $configData['lang_prefix'];
+				$this->langPrefix = $configData['lang_prefix'];
 			}
 		}
 	}
 
-	protected function _initLangData(&$configData) {
-		$this->_title = array(
+	protected function initLangData(&$configData) {
+		$this->title = array(
 			'lang' => '%_ENTITY_TITLE',
-			'ru' => $this->_langPrefix.'_ENTITY_TITLE',
-			'en' => $this->_langPrefix.'_ENTITY_TITLE'
+			'ru' => $this->langPrefix.'_ENTITY_TITLE',
+			'en' => $this->langPrefix.'_ENTITY_TITLE'
 		);
-		$this->_description = array(
+		$this->description = array(
 			'lang' => '%_ENTITY_DESCRIPTION',
-			'ru' => $this->_langPrefix.'_ENTITY_DESCRIPTION',
-			'en' => $this->_langPrefix.'_ENTITY_DESCRIPTION'
+			'ru' => $this->langPrefix.'_ENTITY_DESCRIPTION',
+			'en' => $this->langPrefix.'_ENTITY_DESCRIPTION'
 		);
-		$this->_errorNothingToUpdate = array(
+		$this->errorNothingToUpdate = array(
 			'lang' => '%_E_NOTHING_TO_UPDATE',
-			'ru' => $this->_langPrefix.'_E_NOTHING_TO_UPDATE',
-			'en' => $this->_langPrefix.'_E_NOTHING_TO_UPDATE'
+			'ru' => $this->langPrefix.'_E_NOTHING_TO_UPDATE',
+			'en' => $this->langPrefix.'_E_NOTHING_TO_UPDATE'
 		);
-		$this->_errorNothingToDelete = array(
+		$this->errorNothingToDelete = array(
 			'lang' => '%_E_NOTHING_TO_DELETE',
-			'ru' => $this->_langPrefix.'_E_NOTHING_TO_DELETE',
-			'en' => $this->_langPrefix.'_E_NOTHING_TO_DELETE'
+			'ru' => $this->langPrefix.'_E_NOTHING_TO_DELETE',
+			'en' => $this->langPrefix.'_E_NOTHING_TO_DELETE'
 		);
 		if(!empty($configData['title']) && is_array($configData['title'])) {
-			if(!empty($configData['title']['lang'])) $this->_title['lang'] = $configData['title']['lang'];
-			if(!empty($configData['title']['ru'])) $this->_title['ru'] = $configData['title']['ru'];
-			if(!empty($configData['title']['en'])) $this->_title['en'] = $configData['title']['en'];
+			if(!empty($configData['title']['lang'])) $this->title['lang'] = $configData['title']['lang'];
+			if(!empty($configData['title']['ru'])) $this->title['ru'] = $configData['title']['ru'];
+			if(!empty($configData['title']['en'])) $this->title['en'] = $configData['title']['en'];
 		}
 		if(!empty($configData['description']) && is_array($configData['title'])) {
-			if(!empty($configData['description']['lang'])) $this->_title['lang'] = $configData['description']['lang'];
-			if(!empty($configData['description']['ru'])) $this->_title['ru'] = $configData['description']['ru'];
-			if(!empty($configData['description']['en'])) $this->_title['en'] = $configData['description']['en'];
+			if(!empty($configData['description']['lang'])) $this->title['lang'] = $configData['description']['lang'];
+			if(!empty($configData['description']['ru'])) $this->title['ru'] = $configData['description']['ru'];
+			if(!empty($configData['description']['en'])) $this->title['en'] = $configData['description']['en'];
 		}
 		if(!empty($configData['error_nothing_to_delete']) && is_array($configData['error_nothing_to_delete'])) {
-			if(!empty($configData['error_nothing_to_delete']['lang'])) $this->_errorNothingToDelete['lang'] = $configData['error_nothing_to_delete']['lang'];
-			if(!empty($configData['error_nothing_to_delete']['ru']))   $this->_errorNothingToDelete['ru'] = $configData['error_nothing_to_delete']['ru'];
-			if(!empty($configData['error_nothing_to_delete']['en']))   $this->_errorNothingToDelete['en'] = $configData['error_nothing_to_delete']['en'];
+			if(!empty($configData['error_nothing_to_delete']['lang'])) $this->errorNothingToDelete['lang'] = $configData['error_nothing_to_delete']['lang'];
+			if(!empty($configData['error_nothing_to_delete']['ru']))   $this->errorNothingToDelete['ru'] = $configData['error_nothing_to_delete']['ru'];
+			if(!empty($configData['error_nothing_to_delete']['en']))   $this->errorNothingToDelete['en'] = $configData['error_nothing_to_delete']['en'];
 		}
 		if(!empty($configData['error_nothing_to_update']) && is_array($configData['error_nothing_to_update'])) {
-			if(!empty($configData['error_nothing_to_update']['lang'])) $this->_errorNothingToUpdate['lang'] = $configData['error_nothing_to_update']['lang'];
-			if(!empty($configData['error_nothing_to_update']['ru']))   $this->_errorNothingToUpdate['ru'] = $configData['error_nothing_to_update']['ru'];
-			if(!empty($configData['error_nothing_to_update']['en']))   $this->_errorNothingToUpdate['en'] = $configData['error_nothing_to_update']['en'];
+			if(!empty($configData['error_nothing_to_update']['lang'])) $this->errorNothingToUpdate['lang'] = $configData['error_nothing_to_update']['lang'];
+			if(!empty($configData['error_nothing_to_update']['ru']))   $this->errorNothingToUpdate['ru'] = $configData['error_nothing_to_update']['ru'];
+			if(!empty($configData['error_nothing_to_update']['en']))   $this->errorNothingToUpdate['en'] = $configData['error_nothing_to_update']['en'];
 		}
 	}
 
-	protected function _initFields(&$configData) {
+	protected function initFields(&$configData) {
 		/** @global \CDatabase $DB */
 		global $DB;
 		// Обработка данных полей
@@ -352,11 +334,11 @@ class Config implements IConfig
 				$field['default'] = $DB->ForSql($field['default']);
 			}
 
-			$this->_fields[$fieldAlias] = $field;
+			$this->fields[$fieldAlias] = $field;
 		} unset($field, $rawField);
 	}
 
-	protected function _initReferences(&$configData){
+	protected function initReferences(&$configData){
 		/** @global \CDatabase $DB */
 		global $DB;
 		// Наполнение ссылок на другие таблицы или сущности
@@ -388,14 +370,14 @@ class Config implements IConfig
 					try {
 						$referenceConfigPath = self::normalizePath($reference['entity']);
 						if(substr($referenceConfigPath, 0, 1) != '/') {
-							$curConfigDir = dirname($this->_configPath);
+							$curConfigDir = dirname($this->configPath);
 							$referenceConfigPath = $curConfigDir.'/'.$reference['entity'];
 						}
 						$referenceConfigPath = self::normalizePath($referenceConfigPath);
-						if(null !== $this->_parentRefConfig
-							&& $this->_parentRefConfig->getConfigPath() == $referenceConfigPath
+						if(null !== $this->parentRefConfig
+							&& $this->parentRefConfig->getConfigPath() == $referenceConfigPath
 						) {
-							$refEntity = $this->_parentRefConfig;
+							$refEntity = $this->parentRefConfig;
 						}
 						else {
 							$refEntity = new self($referenceConfigPath, $this);
@@ -406,7 +388,7 @@ class Config implements IConfig
 						// (т.е. не занят ли другой связанной таблицей относительно текущей сущносии)
 						// и только если алиас из объекта не подошел, только тогда выбрасываем исключение на неправильный алиас
 						if( (empty($reference['alias']) || !self::validateTblAlias($reference['alias']))
-							&& !array_key_exists($refEntity->getAlias(), $this->_reference)
+							&& !array_key_exists($refEntity->getAlias(), $this->reference)
 						) {
 							$reference['alias'] = $refEntity->getAlias();
 						}
@@ -440,7 +422,7 @@ class Config implements IConfig
 				if( empty($reference['alias']) || !self::validateTblAlias($reference['alias']) ) {
 					throw new Err('', Err::E_CFG_REF_WRG_ALIAS);
 				}
-				if( array_key_exists($reference['alias'], $this->_reference) ) {
+				if( array_key_exists($reference['alias'], $this->reference) ) {
 					throw new Err('', Err::E_CFG_REF_ALIAS_NOT_UQ);
 				}
 				if(empty($reference['type'])) {
@@ -459,13 +441,13 @@ class Config implements IConfig
 				if(null === $refCondition) {
 					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
 				}
-				if($refCondition['left']['table'] == $this->_tableAlias
+				if($refCondition['left']['table'] == $this->tableAlias
 					&& $refCondition['right']['table'] == $reference['alias']
 				) {
 					$reference['self_field'] = $refCondition['left']['field'];
 					$reference['reference_field'] = $refCondition['right']['field'];
 				}
-				elseif($refCondition['right']['table'] == $this->_tableAlias
+				elseif($refCondition['right']['table'] == $this->tableAlias
 					&& $refCondition['left']['table'] == $reference['alias']
 				) {
 					$reference['self_field'] = $refCondition['right']['field'];
@@ -475,16 +457,16 @@ class Config implements IConfig
 					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
 				}
 				if(!in_array($reference['reference_field'], $reference['fields'])
-					|| empty($this->_fields[$reference['self_field']])
+					|| empty($this->fields[$reference['self_field']])
 				) {
 					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
 				}
-				$this->_reference[$reference['alias']] = $reference;
+				$this->reference[$reference['alias']] = $reference;
 			}
 		}
 	}
 
-	protected function _initIndex(&$configData) {
+	protected function initIndex(&$configData) {
 		if(!empty($configData['index']) && is_array($configData['index'])) {
 			foreach($configData['index'] as $indexName => &$indexConfig) {
 				if(!self::validateTblAlias($indexName)) {
@@ -494,16 +476,16 @@ class Config implements IConfig
 					throw new Err('', Err::E_CFG_WRG_IDX);
 				}
 				foreach($indexConfig as $fieldInUnique) {
-					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
+					if(!self::validateTblAlias($fieldInUnique) || empty($this->fields[$fieldInUnique])) {
 						throw new Err('', Err::E_CFG_WRG_IDX);
 					}
 				}
 			}
-			$this->_index = $configData['index'];
+			$this->index = $configData['index'];
 		}
 	}
 
-	protected function _initUnique(&$configData) {
+	protected function initUnique(&$configData) {
 		if(!empty($configData['unique']) && is_array($configData['unique'])) {
 			foreach($configData['unique'] as $rawUqIdxName => &$rawUniqueConfig) {
 				if(!self::validateTblAlias($rawUqIdxName)) {
@@ -515,11 +497,11 @@ class Config implements IConfig
 					throw new Err('', Err::E_CFG_WRG_UQ_IDX);
 				}
 				foreach($rawUniqueConfig['fields'] as $fieldInUnique) {
-					if(!self::validateTblAlias($fieldInUnique) || empty($this->_fields[$fieldInUnique])) {
+					if(!self::validateTblAlias($fieldInUnique) || empty($this->fields[$fieldInUnique])) {
 						throw new Err('', Err::E_CFG_WRG_UQ_IDX_FLD);
 					}
 				}
-				$this->_unique[$rawUqIdxName] = array(
+				$this->unique[$rawUqIdxName] = array(
 					'fields' => $rawUniqueConfig['fields'],
 					'duplicate_error' => array(
 						'lang' => '%_E_DUP_UQ_'.$rawUqIdxName,
@@ -528,20 +510,20 @@ class Config implements IConfig
 					)
 				);
 				if(!empty($rawUniqueConfig['duplicate_error']['lang'])) {
-					$this->_unique[$rawUqIdxName]['duplicate_error']['lang'] = $rawUniqueConfig['duplicate_error']['lang'];
+					$this->unique[$rawUqIdxName]['duplicate_error']['lang'] = $rawUniqueConfig['duplicate_error']['lang'];
 				}
 				if(!empty($rawUniqueConfig['duplicate_error']['ru'])) {
-					$this->_unique[$rawUqIdxName]['duplicate_error']['ru'] = $rawUniqueConfig['duplicate_error']['ru'];
+					$this->unique[$rawUqIdxName]['duplicate_error']['ru'] = $rawUniqueConfig['duplicate_error']['ru'];
 				}
 				if(!empty($rawUniqueConfig['duplicate_error']['en'])) {
-					$this->_unique[$rawUqIdxName]['duplicate_error']['en'] = $rawUniqueConfig['duplicate_error']['en'];
+					$this->unique[$rawUqIdxName]['duplicate_error']['en'] = $rawUniqueConfig['duplicate_error']['en'];
 				}
 			}
 
 		}
 	}
 
-	protected function _initDefaultSort(&$configData) {
+	protected function initDefaultSort(&$configData) {
 		if(!empty($configData['sort_by_default']) && is_array($configData['sort_by_default'])) {
 			foreach($configData['sort_by_default'] as &$rawSort) {
 				if( empty($rawSort) || !is_array($rawSort)
@@ -563,40 +545,40 @@ class Config implements IConfig
 					list($sortByField['table'], $sortByField['field']) = explode('.', $rawSort['by']);
 					$sortByField['table'] = trim($sortByField['table']);
 					$sortByField['field'] = trim($sortByField['field']);
-					if($sortByField['table'] == $this->_tableAlias) {
-						if( empty($this->_fields[$sortByField['field']])
-							|| 'ex' == $this->_fields[$sortByField['field']]['type']
-							|| '' == $this->_fields[$sortByField['field']]['type']
+					if($sortByField['table'] == $this->tableAlias) {
+						if( empty($this->fields[$sortByField['field']])
+							|| 'ex' == $this->fields[$sortByField['field']]['type']
+							|| '' == $this->fields[$sortByField['field']]['type']
 						) {
 							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 						}
 					}
 					else {
-						if(empty($this->_reference[$sortByField['table']])) {
+						if(empty($this->reference[$sortByField['table']])) {
 							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 						}
-						if( empty($this->_reference[ $sortByField['table'] ][ $sortByField['field'] ]) ) {
+						if( empty($this->reference[ $sortByField['table'] ][ $sortByField['field'] ]) ) {
 							throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 						}
 					}
-					$this->_defaultSort[] = array(
+					$this->defaultSort[] = array(
 						'by' => $sortByField['table'].'.'.$sortByField['field'],
 						'order' => $rawSort['order']
 					);
 				}
 				else {
-					if( empty($this->_fields[$rawSort['by']]) ) {
+					if( empty($this->fields[$rawSort['by']]) ) {
 						throw new Err('', Err::E_CFG_WRG_DEF_SORT);
 					}
-					if('ex' == $this->_fields[$rawSort['by']]['type']) {
-						$this->_defaultSort[] = array(
+					if('ex' == $this->fields[$rawSort['by']]['type']) {
+						$this->defaultSort[] = array(
 							'by' => $rawSort['by'],
 							'order' => $rawSort['order']
 						);
 					}
 					else {
-						$this->_defaultSort[] = array(
-							'by' => $this->_tableAlias.'.'.$rawSort['by'],
+						$this->defaultSort[] = array(
+							'by' => $this->tableAlias.'.'.$rawSort['by'],
 							'order' => $rawSort['order']
 						);
 					}
@@ -605,7 +587,7 @@ class Config implements IConfig
 		}
 	}
 
-	protected function _initDefaultGroupBy(&$configData) {
+	protected function initDefaultGroupBy(&$configData) {
 		if(!empty($configData['group_by_default']) && is_array($configData['group_by_default'])) {
 			foreach($configData['group_by_default'] as &$rawGroupBy) {
 				$rawGroupBy = trim($rawGroupBy);
@@ -617,33 +599,33 @@ class Config implements IConfig
 					list($groupByField['table'], $groupByField['field']) = explode('.', $rawGroupBy);
 					$groupByField['table'] = trim($groupByField['table']);
 					$groupByField['field'] = trim($groupByField['field']);
-					if($groupByField['table'] == $this->_tableAlias) {
-						if( empty($this->_fields[$groupByField['field']])
-							|| 'ex' == $this->_fields[$groupByField['field']]['type']
-							|| '' == $this->_fields[$groupByField['field']]['type']
+					if($groupByField['table'] == $this->tableAlias) {
+						if( empty($this->fields[$groupByField['field']])
+							|| 'ex' == $this->fields[$groupByField['field']]['type']
+							|| '' == $this->fields[$groupByField['field']]['type']
 						) {
 							throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
 						}
 					}
 					else {
-						if(empty($this->_reference[$groupByField['table']])) {
+						if(empty($this->reference[$groupByField['table']])) {
 							throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
 						}
-						if( empty($this->_reference[ $groupByField['table'] ][ $groupByField['field'] ]) ) {
+						if( empty($this->reference[ $groupByField['table'] ][ $groupByField['field'] ]) ) {
 							throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
 						}
 					}
-					$this->_defaultGroupBy[] = $groupByField['table'].'.'.$groupByField['field'];
+					$this->defaultGroupBy[] = $groupByField['table'].'.'.$groupByField['field'];
 				}
 				else {
-					if( empty($this->_fields[$rawGroupBy]) ) {
+					if( empty($this->fields[$rawGroupBy]) ) {
 						throw new Err('', Err::E_CFG_WRG_DEF_GRP_BY);
 					}
-					if('ex' == $this->_fields[$rawGroupBy]['type']) {
-						$this->_defaultGroupBy[] = $rawGroupBy;
+					if('ex' == $this->fields[$rawGroupBy]['type']) {
+						$this->defaultGroupBy[] = $rawGroupBy;
 					}
 					else {
-						$this->_defaultGroupBy[] = $this->_tableAlias.'.'.$rawGroupBy;
+						$this->defaultGroupBy[] = $this->tableAlias.'.'.$rawGroupBy;
 					}
 				}
 			}
@@ -713,62 +695,62 @@ class Config implements IConfig
 
 	// Interface
 	public function getModuleID() {
-		return $this->_moduleID;
+		return $this->moduleID;
 	}
 	public function getEventsID() {
-		return $this->_eventsID;
+		return $this->eventsID;
 	}
 	public function getNamespace() {
-		return $this->_namespace;
+		return $this->namespace;
 	}
 	public function getClass() {
-		return $this->_class;
+		return $this->class;
 	}
 	public function getAlias() {
-		return $this->_tableAlias;
+		return $this->tableAlias;
 	}
 	public function getTableName() {
-		return $this->_tableName;
+		return $this->tableName;
 	}
 	public function getFieldsList($bOWnFields = false) {
 		if(true === $bOWnFields) {
 			$ownFields = array();
-			foreach($this->_fields as $fieldAlias => &$field) {
+			foreach($this->fields as $fieldAlias => &$field) {
 				if($field['type'] != 'ex' && $field['type'] != '') {
 					$ownFields[] = $fieldAlias;
 				}
 			}
 			return $ownFields;
 		}
-		return array_keys($this->_fields);
+		return array_keys($this->fields);
 	}
 	public function getField($fieldCode) {
-		if(array_key_exists($fieldCode, $this->_fields)) {
+		if(array_key_exists($fieldCode, $this->fields)) {
 			throw new Err('', Err::E_GET_FLD_NOT_FOUND);
 		}
-		return $this->_fields[$fieldCode];
+		return $this->fields[$fieldCode];
 	}
 
 	public function getIndex() {
-		return $this->_index;
+		return $this->index;
 	}
 
 	public function getUnique() {
-		return $this->_unique;
+		return $this->unique;
 	}
 
 	public function isReadSuccess() {
-		return $this->_readSuccess;
+		return $this->readSuccess;
 	}
 
 	public function getCreateTableCode() {
 		/** \CDatabase $DB */
 		global $DB;
-		$createCode = 'create table if not exists '.$this->_tableName."(\n";
-		$fieldCount = count($this->_fields);
+		$createCode = 'create table if not exists '.$this->tableName."(\n";
+		$fieldCount = count($this->fields);
 		$iField = 0;
 		$primaryKey = null;
-		foreach($this->_fields as &$field) {
+		foreach($this->fields as &$field) {
 			if('ex' == $field['type'] || '' == $field['type']) {
 				continue;
 			}
@@ -795,14 +777,14 @@ class Config implements IConfig
 		if(null !== $primaryKey) {
 			$createCode .= "\t".$primaryKey;
 		}
-		if( !empty($this->_unique) || !empty($this->_index) ) {
+		if( !empty($this->unique) || !empty($this->index) ) {
 			$createCode .= ",\n";
-			foreach($this->_unique as $uniqueCode => $unique) {
+			foreach($this->unique as $uniqueCode => $unique) {
 				$createCode .= "\tunique ".$uniqueCode.'('.implode(', ', $unique['fields']).')';
 			}
-			if(!empty($this->_index)) {
+			if(!empty($this->index)) {
 				$createCode .= ",\n";
-				foreach($this->_index as $indexCode => $index) {
+				foreach($this->index as $indexCode => $index) {
 					$createCode .= "\tindex ".$indexCode.'('.implode(', ', $index).")\n";
 				}
 			}
@@ -818,7 +800,7 @@ class Config implements IConfig
 	}
 	public function getConfigContent() {
 		$references = array();
-		foreach($this->_reference as $refAlias => &$reference) {
+		foreach($this->reference as $refAlias => &$reference) {
 			$references[$refAlias] = array();
 			if(!empty($reference['entity'])) {
 				$references[$refAlias]['entity'] = $reference['entity'];
@@ -831,24 +813,24 @@ class Config implements IConfig
 			$references[$refAlias]['condition'] = $reference['condition'];
 		}
 		return self::jsonRemoveUnicodeSequences(self::jsonToReadable(json_encode(array(
-			'module' => $this->_moduleID,
-			'namespace' => $this->_namespace,
-			'class' => $this->_class,
-			'class_path' => $this->_classPath,
-			'version' => $this->_version,
-			'events_id' => $this->_eventsID,
-			'lang_prefix' => $this->_langPrefix,
-			'title' => $this->_title,
-			'description' => $this->_description,
-			'error_nothing_to_delete' => $this->_errorNothingToDelete,
-			'error_nothing_to_update' => $this->_errorNothingToUpdate,
-			'table_name' => $this->_tableName,
-			'table_alias' => $this->_tableAlias,
-			'fields' => $this->_fields,
-			'unique' => $this->_unique,
-			'index' => $this->_index,
-			'group_by_default' => $this->_defaultGroupBy,
-			'sort_by_default' => $this->_defaultSort,
+			'module' => $this->moduleID,
+			'namespace' => $this->namespace,
+			'class' => $this->class,
+			'class_path' => $this->classPath,
+			'version' => $this->version,
+			'events_id' => $this->eventsID,
+			'lang_prefix' => $this->langPrefix,
+			'title' => $this->title,
+			'description' => $this->description,
+			'error_nothing_to_delete' => $this->errorNothingToDelete,
+			'error_nothing_to_update' => $this->errorNothingToUpdate,
+			'table_name' => $this->tableName,
+			'table_alias' => $this->tableAlias,
+			'fields' => $this->fields,
+			'unique' => $this->unique,
+			'index' => $this->index,
+			'group_by_default' => $this->defaultGroupBy,
+			'sort_by_default' => $this->defaultSort,
 			'reference' => $references
 		))));
 	}
@@ -904,11 +886,11 @@ class Config implements IConfig
 	}
 
 	public function getConfigPath() {
-		return $this->_configPath;
+		return $this->configPath;
 	}
 	public function saveConfigFile($path = null) {
 		if(null === $path) {
-			$path = $this->_configPath;
+			$path = $this->configPath;
 		}
 		$path = OBX_DOC_ROOT.$path;
 		if( !CheckDirPath($path) ) {
