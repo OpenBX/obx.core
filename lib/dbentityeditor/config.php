@@ -96,6 +96,7 @@ class Config implements IConfig
 		$this->initLangData($configData);
 		$this->initFields($configData);
 		$this->initReferences($configData);
+		$this->initCheckReferencedExFields();
 		$this->initIndex($configData);
 		$this->initUnique($configData);
 		$this->initDefaultSort($configData);
@@ -487,6 +488,22 @@ class Config implements IConfig
 					throw new Err('', Err::E_CFG_REF_WRG_CONDITION);
 				}
 				$this->reference[$reference['alias']] = $reference;
+			}
+		}
+	}
+
+	protected function initCheckReferencedExFields() {
+		foreach($this->fields as $fieldCode => &$field) {
+			if( $field['type'] == 'ex'
+				&& !empty($field['get']['ref'])
+			) {
+				list($refTableAlias, $refFieldName) = explode('.', $field['get']['ref']);
+				if(empty($this->reference[$refTableAlias])) {
+					throw new Err('', Err::E_CFG_FLD_EX_WRG_REF);
+				}
+				if(!in_array($refFieldName, $this->reference[$refTableAlias]['fields'])) {
+					throw new Err('', Err::E_CFG_FLD_EX_WRG_REF);
+				}
 			}
 		}
 	}

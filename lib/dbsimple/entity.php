@@ -317,8 +317,10 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	 * Пока не применяется
 	 * @var array
 	 * @access protected
+	 * @deprecated применяться не будет
 	 */
 	protected $_arTableIndex = array();
+	/** @deprecated применяться не будет */
 	final public function getTableIndex() {
 		return $this->_arTableIndex;
 	}

@@ -35,6 +35,9 @@ class GeneratorDBS extends Generator {
 	private $_arGroupByFields = null;
 	private $_arTableFieldsDefault = null;
 	private $_arTableFieldsCheck = null;
+	private $_arDBSimpleLangMessages = null;
+	private $_arFieldsDescription = null;
+	private $_arTableJoinNullFieldDefaults = null;
 
 
 	public function __init() {
@@ -67,6 +70,7 @@ class GeneratorDBS extends Generator {
 		$this->init_arSelectDefault();
 		$this->init_arTableUnique();
 		$this->init_arSortDefault();
+		$this->init_arGroupByFields();
 
 		$this->addMethod('public', '__construct', array(),
 			$this->getCode_arFieldsCheck()
@@ -75,20 +79,63 @@ class GeneratorDBS extends Generator {
 	}
 
 	private function init_arGroupByFields() {
-		// TODO: Написать метод init_arGroupByFields
+		$_arGroupByFieldsDefault = array();
+		$cfgGroupByFields = $this->config->getDefaultGroupBy();
+		$arRefFields = $this->getConfRefFields();
+		$selfFields = $this->config->getFieldsList(true);
+		foreach($selfFields as $selfFieldName) {
+			$arRefFields[$this->config->getAlias().'.'.$selfFieldName] = $selfFieldName;
+		}
+		foreach($cfgGroupByFields as $groupByFieldName) {
+			if( strpos($groupByFieldName, '.') !== false ) {
+				if(!empty($arRefFields[$groupByFieldName])) {
+					$_arGroupByFieldsDefault[] = $arRefFields[$groupByFieldName];
+				}
+			}
+			else {
+				$_arGroupByFieldsDefault[] = $groupByFieldName;
+			}
+		}
+		if(!empty($_arGroupByFieldsDefault)) {
+			$this->_arGroupByFields = $_arGroupByFieldsDefault;
+		}
 	}
 
 	private function init_arSortDefault() {
-		// TODO: init_arSortDefault Этот код генерит имя полей с алиасом. DBSimple такого не пропустит
+		// Если этот метод сгенерит имя полей с алиасом. DBSimple такого не пропустит
 		// DBSimple проверяет есть ли такое поле по имени алиаса поля, а не по самому полю с указанием алиаса таблицы
 		$_arSortDefault = array();
 		$arSortFields = $this->config->getDefaultSort();
+		$arRefFields = $this->getConfRefFields();
+		$selfFields = $this->config->getFieldsList(true);
+		foreach($selfFields as $selfFieldName) {
+			$arRefFields[$this->config->getAlias().'.'.$selfFieldName] = $selfFieldName;
+		}
 		foreach($arSortFields as $sort) {
-			$_arSortDefault[$sort['by']] = $sort['order'];
+			if( strpos($sort['by'], '.') !== false ) {
+				if(!empty($arRefFields[$sort['by']])) {
+					$_arSortDefault[$arRefFields[$sort['by']]] = $sort['order'];
+				}
+			}
+			else {
+				$_arSortDefault[$sort['by']] = $sort['order'];
+			}
 		}
 		if(!empty($_arSortDefault)) {
-			$this->_arSortDefault;
+			$this->_arSortDefault = $_arSortDefault;
 		}
+	}
+
+	private function getConfRefFields() {
+		$arRefFields = array();
+		$arFieldsList = $this->config->getFieldsList(false);
+		foreach($arFieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			if($field['type'] == 'ex' && !empty($field['get']['ref']) ) {
+				$arRefFields[$field['get']['ref']] = $fieldCode;
+			}
+		}
+		return $arRefFields;
 	}
 
 	private function init_arTableUnique() {
