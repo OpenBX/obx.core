@@ -181,6 +181,7 @@ class GeneratorDBS extends Generator {
 		$_arTableLeftJoin = array();
 		$_arTableRightJoin = array();
 		foreach($referenceList as $reference) {
+			$this->_arTableList[$reference['alias']] = $reference['table'];
 			$_arTableLinks[] = array(
 				array($reference['alias'] => $reference['reference_field']),
 				array($this->config->getAlias() => $reference['self_field'])

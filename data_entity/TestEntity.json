@@ -112,6 +112,7 @@
 		},
 		"SEC_ENT_JSON": {
 			"type": "ex",
+			"selected_by_default": false,
 			"get": {
 				"sub_query": "concat('[',group_concat('\"',S.ID, '\":', '\"',S.NAME, '\"'),']')",
 				"required_tables": ["S"],
@@ -122,7 +123,7 @@
 		},
 		"SEC_ENT_CNT": {
 			"type": "ex",
-			"selected_by_default": true,
+			"selected_by_default": false,
 			"get": {
 				"sub_query": "count(S.ID)",
 				"sub_query_4_filter": "SELECT count(SE.ID) FROM obx_core_test_sec_entity as SE WHERE SE.TEST_ENTITY_ID = E.ID",
