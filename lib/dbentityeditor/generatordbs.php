@@ -92,8 +92,7 @@ class GeneratorDBS extends Generator {
 		$this->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
 
 		$this->addMethod('public', '__construct', array(),
-			''
-			.$this->getCode_arFieldsCheck()
+			 $this->getCode_arFieldsCheck()
 			.$this->getCode_arDBSimpleLangMessages()
 			.$this->getCode_arFieldsDescription()
 		);
@@ -255,7 +254,68 @@ class GeneratorDBS extends Generator {
 	}
 
 	private function getCode_arDBSimpleLangMessages() {
-		//TODO: Написать метод getCode_arDBSimpleLangMessages
+		$code_arDBSimpleLangMessages = "\t\t".'$this->_arDBSimpleLangMessages = array('."\n";
+		$langPrefix = $this->config->getLangPrefix();
+		$fieldsList = $this->config->getFieldsList(true);
+		$iErrorCode = 0;
+		foreach($fieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			if(true === $field['required'] && !empty($field['required_error'])) {
+				$iErrorCode++;
+				$code_arDBSimpleLangMessages .= ''
+					."\t\t\t'REQ_FLD_$fieldCode' => array(\n"
+						."\t\t\t\t'TYPE' => 'E',\n"
+						."\t\t\t\t'TEXT' => Loc::getMessage('"
+							.str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])
+						."'),\n"
+						."\t\t\t\t'CODE' => $iErrorCode\n"
+					."\t\t\t),\n";
+			}
+		}
+		$uniqueList = $this->config->getUnique();
+		foreach($uniqueList as $uqCode => $unique) {
+			$iErrorCode++;
+			$code_arDBSimpleLangMessages .= ''
+				."\t\t\t'DUP_ADD_$uqCode' => array(\n"
+					."\t\t\t\t'TYPE' => 'E',\n"
+					."\t\t\t\t'TEXT' => Loc::getMessage('"
+						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])
+					."'),\n"
+					."\t\t\t\t'CODE' => $iErrorCode\n"
+				."\t\t\t),\n";
+			$iErrorCode++;
+			$code_arDBSimpleLangMessages .= ''
+				."\t\t\t'DUP_UPD_$uqCode' => array(\n"
+					."\t\t\t\t'TYPE' => 'E',\n"
+					."\t\t\t\t'TEXT' => Loc::getMessage('"
+						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])
+					."'),\n"
+					."\t\t\t\t'CODE' => $iErrorCode\n"
+				."\t\t\t),\n";
+		}
+
+		$langMessages = $this->config->getLangMessages();
+		$iErrorCode++;
+		$code_arDBSimpleLangMessages .= ''
+			."\t\t\t'NOTHING_TO_DELETE' => array(\n"
+				."\t\t\t\t'TYPE' => 'E',\n"
+				."\t\t\t\t'TEXT' => Loc::getMessage('"
+					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])
+				."'),\n"
+				."\t\t\t\t'CODE' => $iErrorCode\n"
+			."\t\t\t),\n";
+		$iErrorCode++;
+		$code_arDBSimpleLangMessages .= ''
+			."\t\t\t'NOTHING_TO_UPDATE' => array(\n"
+				."\t\t\t\t'TYPE' => 'E',\n"
+				."\t\t\t\t'TEXT' => Loc::getMessage('"
+					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_update']['lang'])
+				."'),\n"
+				."\t\t\t\t'CODE' => $iErrorCode\n"
+			."\t\t\t),\n";
+
+		$code_arDBSimpleLangMessages .= "\t\t);\n";
+		return $code_arDBSimpleLangMessages;
 	}
 
 	private function getCode_arFieldsDescription() {

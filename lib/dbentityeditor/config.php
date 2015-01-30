@@ -54,9 +54,9 @@ class Config implements IConfig
 	protected $classPath = null;
 	protected $version = null;
 	protected $langPrefix = null;
-	protected $title = null;
+	protected $title = array();
 	protected $description = null;
-	protected $errorNothingToUpdate = null;
+	protected $errorNothingToUpdate = array();
 	protected $errorNothingToDelete = null;
 	protected $tableName = null;
 	protected $tableAlias = null;
@@ -237,24 +237,16 @@ class Config implements IConfig
 			'en' => $this->langPrefix.'_E_NOTHING_TO_DELETE'
 		);
 		if(!empty($configData['title']) && is_array($configData['title'])) {
-			if(!empty($configData['title']['lang'])) $this->title['lang'] = $configData['title']['lang'];
-			if(!empty($configData['title']['ru'])) $this->title['ru'] = $configData['title']['ru'];
-			if(!empty($configData['title']['en'])) $this->title['en'] = $configData['title']['en'];
+			self::fillSkeletonArray($this->title, $configData['title']);
 		}
-		if(!empty($configData['description']) && is_array($configData['title'])) {
-			if(!empty($configData['description']['lang'])) $this->title['lang'] = $configData['description']['lang'];
-			if(!empty($configData['description']['ru'])) $this->title['ru'] = $configData['description']['ru'];
-			if(!empty($configData['description']['en'])) $this->title['en'] = $configData['description']['en'];
+		if(!empty($configData['description']) && is_array($configData['description'])) {
+			self::fillSkeletonArray($this->description, $configData['description']);
 		}
 		if(!empty($configData['error_nothing_to_delete']) && is_array($configData['error_nothing_to_delete'])) {
-			if(!empty($configData['error_nothing_to_delete']['lang'])) $this->errorNothingToDelete['lang'] = $configData['error_nothing_to_delete']['lang'];
-			if(!empty($configData['error_nothing_to_delete']['ru']))   $this->errorNothingToDelete['ru'] = $configData['error_nothing_to_delete']['ru'];
-			if(!empty($configData['error_nothing_to_delete']['en']))   $this->errorNothingToDelete['en'] = $configData['error_nothing_to_delete']['en'];
+			self::fillSkeletonArray($this->errorNothingToDelete, $configData['error_nothing_to_delete']);
 		}
 		if(!empty($configData['error_nothing_to_update']) && is_array($configData['error_nothing_to_update'])) {
-			if(!empty($configData['error_nothing_to_update']['lang'])) $this->errorNothingToUpdate['lang'] = $configData['error_nothing_to_update']['lang'];
-			if(!empty($configData['error_nothing_to_update']['ru']))   $this->errorNothingToUpdate['ru'] = $configData['error_nothing_to_update']['ru'];
-			if(!empty($configData['error_nothing_to_update']['en']))   $this->errorNothingToUpdate['en'] = $configData['error_nothing_to_update']['en'];
+			self::fillSkeletonArray($this->errorNothingToUpdate, $configData['error_nothing_to_update']);
 		}
 	}
 
@@ -288,6 +280,11 @@ class Config implements IConfig
 				'deny_zero' => false,
 				'no_check' => false,
 				'required' => false,
+				'required_error' => array(
+					'lang' => '%_ERR_REQUIRED_'.$codeStrUpper,
+					'ru' => 'REQUIRED__'.$codeStrUpper.'__FIELD',
+					'en' => 'REQUIRED__'.$codeStrUpper.'__FIELD'
+				),
 				'required_error' => array(
 					'lang' => '%_ERR_REQUIRED_'.$codeStrUpper,
 					'ru' => 'REQUIRED__'.$codeStrUpper.'__FIELD',
@@ -338,10 +335,19 @@ class Config implements IConfig
 					}
 				}
 			}
-			if(null === $fldAttrValue && isset($copiedArray[$fldAttrName])) {
+			elseif(
+				(null === $fldAttrValue || is_string($fldAttrValue))
+				&& isset($copiedArray[$fldAttrName])
+			) {
 				$fldAttrValue = ''.$copiedArray[$fldAttrName];
 			}
-			if(is_array($fldAttrValue)
+			elseif(is_integer($fldAttrValue)) {
+				$fldAttrValue = intval($copiedArray[$fldAttrName]);
+			}
+			elseif(is_float($fldAttrValue)) {
+				$fldAttrValue = floatval($copiedArray[$fldAttrName]);
+			}
+			elseif(is_array($fldAttrValue)
 				&& is_array($copiedArray[$fldAttrName])
 				&& !empty($copiedArray[$fldAttrName])
 			) {
@@ -554,23 +560,20 @@ class Config implements IConfig
 				}
 				$this->unique[$rawUqIdxName] = array(
 					'fields' => $rawUniqueConfig['fields'],
-					'duplicate_error' => array(
+					'duplicate_error_add' => array(
 						'lang' => '%_E_DUP_UQ_'.$rawUqIdxName,
-						'ru' => 'ERR_DUP_UQ__'.$rawUqIdxName,
-						'en' => 'ERR_DUP_UQ__'.$rawUqIdxName
+						'ru' => 'ERR_DUP_ADD_UQ__'.$rawUqIdxName,
+						'en' => 'ERR_DUP_ADD_UQ__'.$rawUqIdxName
+					),
+					'duplicate_error_update' => array(
+						'lang' => '%_E_DUP_UPD_UQ_'.$rawUqIdxName,
+						'ru' => 'ERR_DUP_UPD_UQ__'.$rawUqIdxName,
+						'en' => 'ERR_DUP_UPD_UQ__'.$rawUqIdxName
 					)
 				);
-				if(!empty($rawUniqueConfig['duplicate_error']['lang'])) {
-					$this->unique[$rawUqIdxName]['duplicate_error']['lang'] = $rawUniqueConfig['duplicate_error']['lang'];
-				}
-				if(!empty($rawUniqueConfig['duplicate_error']['ru'])) {
-					$this->unique[$rawUqIdxName]['duplicate_error']['ru'] = $rawUniqueConfig['duplicate_error']['ru'];
-				}
-				if(!empty($rawUniqueConfig['duplicate_error']['en'])) {
-					$this->unique[$rawUqIdxName]['duplicate_error']['en'] = $rawUniqueConfig['duplicate_error']['en'];
-				}
+				self::fillSkeletonArray($this->unique[$rawUqIdxName]['duplicate_error_add'], $rawUniqueConfig['duplicate_error_add']);
+				self::fillSkeletonArray($this->unique[$rawUqIdxName]['duplicate_error_update'], $rawUniqueConfig['duplicate_error_update']);
 			}
-
 		}
 	}
 
@@ -762,6 +765,18 @@ class Config implements IConfig
 	}
 	public function getTableName() {
 		return $this->tableName;
+	}
+
+	public function getLangPrefix() {
+		return $this->langPrefix;
+	}
+	public function getLangMessages() {
+		return array(
+			'title' => $this->title,
+			'description' => $this->description,
+			'error_nothing_to_delete' => $this->errorNothingToDelete,
+			'error_nothing_to_update' => $this->errorNothingToUpdate,
+		);
 	}
 	public function getFieldsList($bOWnFields = false) {
 		if(true === $bOWnFields) {

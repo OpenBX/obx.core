@@ -18,6 +18,8 @@ interface IConfig {
 	function getClass();
 	function getAlias();
 	function getTableName();
+	function getLangPrefix();
+	function getLangMessages();
 	function getFieldsList($bOWnFields = false);
 	function getField($fieldCode);
 	function getIndex();

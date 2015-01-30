@@ -49,9 +49,13 @@
 	"unique": {
 		"obx_core_sec_entity_code": {
 			"fields": ["CODE"],
-			"duplicate_error": {
-				"lang": "%_E_DUP_UQ_CODE",
-				"ru": "Запись с таким Кодом уже существует"
+			"duplicate_error_add": {
+				"lang": "%_E_DUP_ADD_UQ_CODE",
+				"ru": "Не удалось добавить: Запись с таким Кодом уже существует"
+			},
+			"duplicate_error_update": {
+				"lang": "%_E_DUP_UPD_UQ_CODE",
+				"ru": "не удалось обновить: Запись с таким Кодом уже существует"
 			}
 		}
 	},

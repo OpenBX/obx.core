@@ -138,9 +138,13 @@
 	"unique": {
 		"obx_core_test_entity_code_bchar": {
 			"fields": ["CODE", "SOME_BCHAR"],
-			"duplicate_error": {
-				"lang": "%_E_DUP_UQ_CODE",
-				"ru": "может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR"
+			"duplicate_error_add": {
+				"lang": "%_E_DUP_ADD_UQ_CODE_BCHAR",
+				"ru": "Ошибка добавления: может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR"
+			},
+			"duplicate_error_update": {
+				"lang": "%_E_DUP_UPD_UQ_CODE_BCHAR",
+				"ru": "Ошибка обновления: может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR"
 			}
 		}
 	},

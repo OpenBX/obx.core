@@ -69,7 +69,7 @@ abstract class Generator implements IGenerator {
 		$methodDefinition = ((true===$abstract)?'abstract ':'')
 			.$access
 			.((true===$static)?' static':'')
-			.'function '.$name.'('.implode(',', $argList).")"
+			.' function '.$name.'('.implode(',', $argList).")"
 		;
 		$this->methods[$name] = array(
 			'name' => $name,
