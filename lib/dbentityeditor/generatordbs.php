@@ -11,7 +11,7 @@
 namespace OBX\Core\DBEntityEditor;
 
 use OBX\Core\Exceptions\DBEntityEditor\GeneratorDBSError as Err;
-use OBX\Core\Tools;
+use OBX\Core\PhpGenerator\PhpClass;
 
 /**
  * Class GeneratorDBS
@@ -42,13 +42,10 @@ class GeneratorDBS extends Generator {
 
 
 	public function __init() {
-
-		$this->namespace = $this->config->getNamespace();
-		$this->className = $this->config->getClass();
-		$this->uses = array(
+		$this->class->setUses(array(
 			'OBX\Core\DBSimple\Entity'
-		);
-		$this->extends = 'Entity';
+		));
+		$this->class->setBaseClass('Entity');
 		$this->_entityModuleID = $this->config->getModuleID();
 		$this->_entityEventsID = $this->config->getEventsID();
 		$this->_mainTable = $this->config->getAlias();
@@ -76,23 +73,23 @@ class GeneratorDBS extends Generator {
 		$this->init_arTableJoinNullFieldDefaults();
 		$this->init_arTableFields();
 
-		$this->addVariableIfNotNull('protected', '_entityModuleID', $this->_entityModuleID);
-		$this->addVariableIfNotNull('protected', '_entityEventsID', $this->_entityEventsID);
-		$this->addVariableIfNotNull('protected', '_mainTable', $this->_mainTable);
-		$this->addVariableIfNotNull('protected', '_mainTablePrimaryKey', $this->_mainTablePrimaryKey);
-		$this->addVariableIfNotNull('protected', '_mainTableAutoIncrement', $this->_mainTableAutoIncrement);
-		$this->addVariableIfNotNull('protected', '_arTableList', $this->_arTableList);
-		$this->addVariableIfNotNull('protected', '_arTableLinks', $this->_arTableLinks);
-		$this->addVariableIfNotNull('protected', '_arTableLeftJoin', $this->_arTableLeftJoin);
-		$this->addVariableIfNotNull('protected', '_arTableRightJoin', $this->_arTableRightJoin);
-		$this->addVariableIfNotNull('protected', '_arSelectDefault', $this->_arSelectDefault);
-		$this->addVariableIfNotNull('protected', '_arTableUnique', $this->_arTableUnique);
-		$this->addVariableIfNotNull('protected', '_arSortDefault', $this->_arSortDefault);
-		$this->addVariableIfNotNull('protected', '_arGroupByFields', $this->_arGroupByFields);
-		$this->addVariableIfNotNull('protected', '_arTableFieldsDefault', $this->_arTableFieldsDefault);
-		$this->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
+		$this->class->addVariableIfNotNull('protected', '_entityModuleID', $this->_entityModuleID);
+		$this->class->addVariableIfNotNull('protected', '_entityEventsID', $this->_entityEventsID);
+		$this->class->addVariableIfNotNull('protected', '_mainTable', $this->_mainTable);
+		$this->class->addVariableIfNotNull('protected', '_mainTablePrimaryKey', $this->_mainTablePrimaryKey);
+		$this->class->addVariableIfNotNull('protected', '_mainTableAutoIncrement', $this->_mainTableAutoIncrement);
+		$this->class->addVariableIfNotNull('protected', '_arTableList', $this->_arTableList);
+		$this->class->addVariableIfNotNull('protected', '_arTableLinks', $this->_arTableLinks);
+		$this->class->addVariableIfNotNull('protected', '_arTableLeftJoin', $this->_arTableLeftJoin);
+		$this->class->addVariableIfNotNull('protected', '_arTableRightJoin', $this->_arTableRightJoin);
+		$this->class->addVariableIfNotNull('protected', '_arSelectDefault', $this->_arSelectDefault);
+		$this->class->addVariableIfNotNull('protected', '_arTableUnique', $this->_arTableUnique);
+		$this->class->addVariableIfNotNull('protected', '_arSortDefault', $this->_arSortDefault);
+		$this->class->addVariableIfNotNull('protected', '_arGroupByFields', $this->_arGroupByFields);
+		$this->class->addVariableIfNotNull('protected', '_arTableFieldsDefault', $this->_arTableFieldsDefault);
+		$this->class->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
 
-		$this->addMethod('public', '__construct', array(),
+		$this->class->addMethod('public', '__construct', array(),
 			 $this->getCode_arFieldsCheck()
 			.$this->getCode_arDBSimpleLangMessages()
 			.$this->getCode_arFieldsDescription()
@@ -263,7 +260,7 @@ class GeneratorDBS extends Generator {
 			$field = $this->config->getField($fieldCode);
 			if(true === $field['required'] && !empty($field['required_error'])) {
 				$iErrorCode++;
-				$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+				$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
 						'TYPE' => 'E',
 						'REQ_FLD_'.$fieldCode => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])."'),\n",
 						'CODE' => $iErrorCode
@@ -273,14 +270,14 @@ class GeneratorDBS extends Generator {
 		$uniqueList = $this->config->getUnique();
 		foreach($uniqueList as $uqCode => $unique) {
 			$iErrorCode++;
-			$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+			$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
 					'TYPE' => 'E',
 					'DUP_ADD_'.$uqCode => "::Loc::getMessage('"
 						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])."'),\n",
 					'CODE' => $iErrorCode
 				), "\t\t\t");
 			$iErrorCode++;
-			$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+			$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
 					'TYPE' => 'E',
 					'DUP_UPD_'.$uqCode => "::Loc::getMessage('"
 						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])."'),\n",
@@ -290,14 +287,14 @@ class GeneratorDBS extends Generator {
 
 		$langMessages = $this->config->getLangMessages();
 		$iErrorCode++;
-		$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+		$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
 				'TYPE' => 'E',
 				'NOTHING_TO_DELETE' => "::Loc::getMessage('"
 					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])."'),\n",
 				'CODE' => $iErrorCode
 			), "\t\t\t");
 		$iErrorCode++;
-		$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+		$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
 			'TYPE' => 'E',
 			'TEXT' => "::Loc::getMessage('"
 					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_update']['lang'])
@@ -420,7 +417,7 @@ class GeneratorDBS extends Generator {
 	}
 
 	public function generateEntityClass() {
-
+		return $this->class->generateClass();
 	}
 
 	public function saveEntityClass($path) {
