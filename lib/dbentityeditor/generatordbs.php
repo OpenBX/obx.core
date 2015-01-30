@@ -11,6 +11,7 @@
 namespace OBX\Core\DBEntityEditor;
 
 use OBX\Core\Exceptions\DBEntityEditor\GeneratorDBSError as Err;
+use OBX\Core\Tools;
 
 /**
  * Class GeneratorDBS
@@ -262,57 +263,47 @@ class GeneratorDBS extends Generator {
 			$field = $this->config->getField($fieldCode);
 			if(true === $field['required'] && !empty($field['required_error'])) {
 				$iErrorCode++;
-				$code_arDBSimpleLangMessages .= ''
-					."\t\t\t'REQ_FLD_$fieldCode' => array(\n"
-						."\t\t\t\t'TYPE' => 'E',\n"
-						."\t\t\t\t'TEXT' => Loc::getMessage('"
-							.str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])
-						."'),\n"
-						."\t\t\t\t'CODE' => $iErrorCode\n"
-					."\t\t\t),\n";
+				$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+						'TYPE' => 'E',
+						'REQ_FLD_'.$fieldCode => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])."'),\n",
+						'CODE' => $iErrorCode
+				), "\t\t\t");
 			}
 		}
 		$uniqueList = $this->config->getUnique();
 		foreach($uniqueList as $uqCode => $unique) {
 			$iErrorCode++;
-			$code_arDBSimpleLangMessages .= ''
-				."\t\t\t'DUP_ADD_$uqCode' => array(\n"
-					."\t\t\t\t'TYPE' => 'E',\n"
-					."\t\t\t\t'TEXT' => Loc::getMessage('"
-						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])
-					."'),\n"
-					."\t\t\t\t'CODE' => $iErrorCode\n"
-				."\t\t\t),\n";
+			$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+					'TYPE' => 'E',
+					'DUP_ADD_'.$uqCode => "::Loc::getMessage('"
+						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])."'),\n",
+					'CODE' => $iErrorCode
+				), "\t\t\t");
 			$iErrorCode++;
-			$code_arDBSimpleLangMessages .= ''
-				."\t\t\t'DUP_UPD_$uqCode' => array(\n"
-					."\t\t\t\t'TYPE' => 'E',\n"
-					."\t\t\t\t'TEXT' => Loc::getMessage('"
-						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])
-					."'),\n"
-					."\t\t\t\t'CODE' => $iErrorCode\n"
-				."\t\t\t),\n";
+			$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+					'TYPE' => 'E',
+					'DUP_UPD_'.$uqCode => "::Loc::getMessage('"
+						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])."'),\n",
+					'CODE' => $iErrorCode
+				), "\t\t\t");
 		}
 
 		$langMessages = $this->config->getLangMessages();
 		$iErrorCode++;
-		$code_arDBSimpleLangMessages .= ''
-			."\t\t\t'NOTHING_TO_DELETE' => array(\n"
-				."\t\t\t\t'TYPE' => 'E',\n"
-				."\t\t\t\t'TEXT' => Loc::getMessage('"
-					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])
-				."'),\n"
-				."\t\t\t\t'CODE' => $iErrorCode\n"
-			."\t\t\t),\n";
+		$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+				'TYPE' => 'E',
+				'NOTHING_TO_DELETE' => "::Loc::getMessage('"
+					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])."'),\n",
+				'CODE' => $iErrorCode
+			), "\t\t\t");
 		$iErrorCode++;
-		$code_arDBSimpleLangMessages .= ''
-			."\t\t\t'NOTHING_TO_UPDATE' => array(\n"
-				."\t\t\t\t'TYPE' => 'E',\n"
-				."\t\t\t\t'TEXT' => Loc::getMessage('"
+		$code_arDBSimpleLangMessages .= "\t\t\t".Tools::convertArray2PhpCode(array(
+			'TYPE' => 'E',
+			'TEXT' => "::Loc::getMessage('"
 					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_update']['lang'])
-				."'),\n"
-				."\t\t\t\t'CODE' => $iErrorCode\n"
-			."\t\t\t),\n";
+				."')\n",
+			'CODE' => $iErrorCode
+		), "\t\t\t");
 
 		$code_arDBSimpleLangMessages .= "\t\t);\n";
 		return $code_arDBSimpleLangMessages;

@@ -11,8 +11,10 @@
 namespace OBX\Core\DBEntityEditor;
 
 use OBX\Core\Exceptions\DBEntityEditor\GeneratorError as Err;
+use OBX\Core\PhpGenerator\AClass;
+use OBX\Core\PhpGenerator\IClass;
 
-abstract class Generator implements IGenerator {
+abstract class Generator extends AClass implements IGenerator, IClass {
 	/** @var null|\OBX\Core\DBEntityEditor\IConfig  */
 	protected $config = null;
 
@@ -35,7 +37,7 @@ abstract class Generator implements IGenerator {
 
 	abstract protected function __init();
 
-	protected function addMethod($access, $name, $argList, $code, $static = false, $abstract = false) {
+	protected function addMethod($access, $name, $argList, $code, $static = false, $abstract = false, $final = false) {
 		if(true === $abstract) {
 			$this->abstract = true;
 		}
@@ -66,10 +68,12 @@ abstract class Generator implements IGenerator {
 				throw new Err('', Err::E_ADD_MET_WRG_ARG_NAME);
 			}
 		}
-		$methodDefinition = ((true===$abstract)?'abstract ':'')
+		$methodDefinition =
+			 ((true===$final)?'final ':'')
+			.((true===$abstract)?'abstract ':'')
 			.$access
-			.((true===$static)?' static':'')
-			.' function '.$name.'('.implode(',', $argList).")"
+			.((true===$static)?'static ':'')
+			.'function '.$name.'('.implode(',', $argList).")"
 		;
 		$this->methods[$name] = array(
 			'name' => $name,
@@ -77,34 +81,60 @@ abstract class Generator implements IGenerator {
 			'static' => !!$static,
 			'abstract' => $abstract,
 			'arguments' => $argList,
-			'code' =>"\n{\n"
-						."\n".$code."\n"
-						."}\n"
+			'value' =>"\n{\n\n".$code."\n}\n",
+			'php' => $methodDefinition."\n{\n\n".$code."\n}\n"
 		);
 	}
 
 	protected function addVariable($access, $name, $initialValue, $static = false) {
-		// TODO: Написать проверки
-		$quote = '\'';
-		if(is_bool($initialValue) ){
-			$initialValue = $initialValue?'true':'false';
-			$quote = '';
+		$access = trim($access);
+		switch($access) {
+			case 'public':
+			case 'protected':
+			case 'private':
+				break;
+			default:
+				throw new Err('', Err::E_ADD_VAR_WRG_ACCESS);
+		}
+		$name = trim($name);
+		if(!self::validateVariableName($name)) {
+			throw new Err('', Err::E_ADD_VAR_WRG_NAME);
+		}
+		$qt = '\'';
+		if(null === $initialValue) {
+			$qt = ''; $initialValue = 'null';
+		}
+		elseif(is_bool($initialValue)) {
+			$qt = '';
+			$initialValue = ($initialValue?'true':false);
 		}
 		elseif(is_numeric($initialValue)) {
-			$quote = '';
+			$qt = '';
 		}
-		elseif(strpos($initialValue, 'const:')!==false) {
-			$initialValue = trim(str_replace('const:', '', $initialValue));
-			if(self::validateConstName($initialValue)) {
-				$quote = '';
+		elseif(is_string($initialValue) || is_object($initialValue)) {
+			$initialValue = ''.$initialValue;
+			if('const:' === substr($initialValue, 0, 6)) {
+				$qt = '';
+				$initialValue = trim(substr($initialValue, 6));
+				if(!self::validateConstName($initialValue)) {
+					throw new Err('', Err::E_ADD_VAR_INIT_VAL_NOT_CONST);
+				}
 			}
+			else {
+				$initialValue = str_replace('\\', '\\\\', $initialValue);
+				$initialValue = str_replace('\'', '\\\'', $initialValue);
+			}
+		}
+		elseif(is_array($initialValue)) {
+			$initialValue = Tools::convertArray2PhpCode($initialValue, "\t\t\t");
 		}
 		$this->variables[$name] = array(
 			'name' => $name,
-			'value' => $initialValue,
+			'value' => $qt.$initialValue.$qt,
 			'access' => $access,
 			'static' => $static,
-			'code' => ($static?'static ':'').$access.' $'.$name.' = '.$quote.$initialValue.$quote.';'
+			'definition' => ($static?'static ':'').$access.' $'.$name,
+			'php' => ($static?'static ':'').$access.' $'.$name.' = '.$qt.$initialValue.$qt.';'
 		);
 	}
 
@@ -118,6 +148,8 @@ abstract class Generator implements IGenerator {
 			$this->addVariable($access, $name, $initialValue, $static);
 		}
 	}
+
+
 
 
 	protected function addConstant($name, $value) {

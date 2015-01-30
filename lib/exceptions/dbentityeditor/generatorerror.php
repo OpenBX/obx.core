@@ -19,9 +19,13 @@ class GeneratorError extends AError {
 
 	const E_CFG_INCORRECT = 1;
 
-	const E_ADD_MET_WRG_NAME = 2;
-	const E_ADD_MET_EXISTS = 3;
-	const E_ADD_MET_WRG_ACCESS = 4;
-	const E_ADD_MET_WRG_ARG_NAME = 5;
-	const E_ADD_MET_WRG_ARG_TYPE = 6;
+	const E_ADD_MET_WRG_NAME = 11;
+	const E_ADD_MET_EXISTS = 12;
+	const E_ADD_MET_WRG_ACCESS = 13;
+	const E_ADD_MET_WRG_ARG_NAME = 14;
+	const E_ADD_MET_WRG_ARG_TYPE = 15;
+
+	const E_ADD_VAR_WRG_ACCESS = 20;
+	const E_ADD_VAR_WRG_NAME = 21;
+	const E_ADD_VAR_INIT_VAL_NOT_CONST = 22;
 }
