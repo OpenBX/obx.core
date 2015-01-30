@@ -31,7 +31,8 @@ class ConfigError extends AError {
 
 	const E_CFG_FLD_WRG_NAME = 21;			// Неверно указано имя поля сущности
 	const E_CFG_FLD_WRG_TYPE = 22;			// Неверно указан тип поля сущности
-	const E_CFG_FLD_EX_WRG_REF = 23;		// Неверн указано поле связанной сущности в поле исходной сущности
+	const E_CFG_FLD_EX_WRG_REF = 23;		// Неверно указано поле связанной сущности в поле исходной сущности
+	const E_CFG_FLD_EX_WRG_REQ_TBL = 24;	// Неверно указана обязательная таблица для поля/подзапроса
 
 	const E_CFG_WRG_IDX = 30;				// Неверно задан индекс
 	const E_CFG_WRG_IDX_FLD = 31;			// Неверно задано поле индекса

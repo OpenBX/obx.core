@@ -34,9 +34,9 @@ class GeneratorDBS extends Generator {
 	private $_arSortDefault = null;
 	private $_arGroupByFields = null;
 	private $_arTableFieldsDefault = null;
-	private $_arTableFieldsCheck = null;
-	private $_arDBSimpleLangMessages = null;
-	private $_arFieldsDescription = null;
+	//private $_arTableFieldsCheck = null;
+	//private $_arDBSimpleLangMessages = null;
+	//private $_arFieldsDescription = null;
 	private $_arTableJoinNullFieldDefaults = null;
 
 
@@ -71,11 +71,90 @@ class GeneratorDBS extends Generator {
 		$this->init_arTableUnique();
 		$this->init_arSortDefault();
 		$this->init_arGroupByFields();
+		$this->init_arTableFieldsDefault();
+		$this->init_arTableJoinNullFieldDefaults();
+		$this->init_arTableFields();
+
+		$this->addVariableIfNotNull('protected', '_entityModuleID', $this->_entityModuleID);
+		$this->addVariableIfNotNull('protected', '_entityEventsID', $this->_entityEventsID);
+		$this->addVariableIfNotNull('protected', '_mainTable', $this->_mainTable);
+		$this->addVariableIfNotNull('protected', '_mainTablePrimaryKey', $this->_mainTablePrimaryKey);
+		$this->addVariableIfNotNull('protected', '_mainTableAutoIncrement', $this->_mainTableAutoIncrement);
+		$this->addVariableIfNotNull('protected', '_arTableList', $this->_arTableList);
+		$this->addVariableIfNotNull('protected', '_arTableLinks', $this->_arTableLinks);
+		$this->addVariableIfNotNull('protected', '_arTableLeftJoin', $this->_arTableLeftJoin);
+		$this->addVariableIfNotNull('protected', '_arTableRightJoin', $this->_arTableRightJoin);
+		$this->addVariableIfNotNull('protected', '_arSelectDefault', $this->_arSelectDefault);
+		$this->addVariableIfNotNull('protected', '_arTableUnique', $this->_arTableUnique);
+		$this->addVariableIfNotNull('protected', '_arSortDefault', $this->_arSortDefault);
+		$this->addVariableIfNotNull('protected', '_arGroupByFields', $this->_arGroupByFields);
+		$this->addVariableIfNotNull('protected', '_arTableFieldsDefault', $this->_arTableFieldsDefault);
+		$this->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
 
 		$this->addMethod('public', '__construct', array(),
-			$this->getCode_arFieldsCheck()
+			''
+			.$this->getCode_arFieldsCheck()
+			.$this->getCode_arDBSimpleLangMessages()
+			.$this->getCode_arFieldsDescription()
 		);
 		$debug=1;
+	}
+
+	private function init_arTableFields() {
+		$_arTableFields = array();
+		$arFieldsList = $this->config->getFieldsList(false);
+		foreach($arFieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			if($field['type'] != 'ex') {
+				$_arTableFields[$fieldCode] = array($this->config->getAlias() => $fieldCode);
+			}
+			else {
+				if(!empty($field['get']['ref'])) {
+					list($refTableAlias, $refFieldName) = explode('.', $field['get']['ref']);
+					$_arTableFields[$fieldCode] = array($refTableAlias => $refFieldName);
+				}
+				elseif(!empty($field['get']['sub_query'])) {
+					$_arTableFields[$fieldCode] = array(
+						'SUB_QUERY' => $field['get']['sub_query'],
+						'REQUIRED_TABLES' => $field['get']['required_tables']
+					);
+				}
+			}
+			if(!empty($field['get']['sub_query_4_filter'])) {
+				$_arTableFields[$fieldCode]['SUB_QUERY_4_FILTER'] = $field['get']['sub_query_4_filter'];
+			}
+		}
+		if(!empty($_arTableFields)) {
+			$this->_arTableFields = $_arTableFields;
+		}
+	}
+
+	private function init_arTableJoinNullFieldDefaults() {
+		$arFieldsList = $this->config->getFieldsList(false);
+		$_arTableJoinNullFieldDefaults = array();
+		foreach($arFieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			if(!empty($field['get']['if_null_return'])) {
+				$_arTableJoinNullFieldDefaults[$fieldCode] = $field['get']['if_null_return'];
+			}
+		}
+		if(!empty($_arTableJoinNullFieldDefaults)) {
+			$this->_arTableJoinNullFieldDefaults = $_arTableJoinNullFieldDefaults;
+		}
+	}
+
+	private function init_arTableFieldsDefault() {
+		$arFieldsList = $this->config->getFieldsList(true);
+		$_arTableFieldsDefault = array();
+		foreach($arFieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			if(!empty($field['default'])) {
+				$_arTableFieldsDefault[$fieldCode] = $field['default'];
+			}
+		}
+		if(!empty($_arTableFieldsDefault)) {
+			$this->_arTableFieldsDefault = $_arTableFieldsDefault;
+		}
 	}
 
 	private function init_arGroupByFields() {
@@ -173,6 +252,14 @@ class GeneratorDBS extends Generator {
 		}
 		$code_arFieldsCheck .= "\t\t);\n";
 		return $code_arFieldsCheck;
+	}
+
+	private function getCode_arDBSimpleLangMessages() {
+		//TODO: Написать метод getCode_arDBSimpleLangMessages
+	}
+
+	private function getCode_arFieldsDescription() {
+		//TODO: Написать метод getCode_arFieldsDescription
 	}
 
 	private function initReferences() {

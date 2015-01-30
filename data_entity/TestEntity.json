@@ -94,7 +94,8 @@
 			"get": {
 				"sub_query": "concat(U.NAME, ' ', U.LAST_NAME)",
 				"sub_query_4_filter": "E.USER_ID",
-				"required_tables": ["U", "E"]
+				"required_tables": ["U", "E"],
+				"if_null_return": "no-name"
 			},
 			"title": {"lang": "%_FLD_TITLE_USER", "ru": "Пользователь", "en": "User"},
 			"description": {"lang": "%_FLD_DSCR_USER", "ru": "Пользователь", "en": "User"}
@@ -127,7 +128,8 @@
 			"get": {
 				"sub_query": "count(S.ID)",
 				"sub_query_4_filter": "SELECT count(SE.ID) FROM obx_core_test_sec_entity as SE WHERE SE.TEST_ENTITY_ID = E.ID",
-				"required_tables": ["S"]
+				"required_tables": ["S"],
+				"if_null_return": "0"
 			},
 			"title": {"lang": "%_FLD_TITLE_SEC_ENT_JSON", "ru": "количество2", "en": "Count2"},
 			"description": {"lang": "%_FLD_DSCR_SEC_ENT_JSON","ru": "Количество элементов 2-й сущности", "en": "Elements count of 2nd entity"}

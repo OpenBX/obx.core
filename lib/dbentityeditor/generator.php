@@ -83,7 +83,7 @@ abstract class Generator implements IGenerator {
 		);
 	}
 
-	protected function addInitialVariable($access, $name, $initialValue, $static = false) {
+	protected function addVariable($access, $name, $initialValue, $static = false) {
 		// TODO: Написать проверки
 		$quote = '\'';
 		if(is_bool($initialValue) ){
@@ -107,6 +107,18 @@ abstract class Generator implements IGenerator {
 			'code' => ($static?'static ':'').$access.' $'.$name.' = '.$quote.$initialValue.$quote.';'
 		);
 	}
+
+	protected function addVariableIfNotNull($access, $name, $initialValue, $static = false) {
+		if(null !== $initialValue) {
+			$this->addVariable($access, $name, $initialValue, $static);
+		}
+	}
+	protected function addVariableIfNotEmpty($access, $name, $initialValue, $static = false) {
+		if(!empty($initialValue)) {
+			$this->addVariable($access, $name, $initialValue, $static);
+		}
+	}
+
 
 	protected function addConstant($name, $value) {
 

@@ -301,7 +301,7 @@ class Config implements IConfig
 					'if_null_return' => null,
 					'sub_query' => null,
 					'sub_query_4_filter' => null,
-					'required_tables' => null,
+					'required_tables' => array(),
 					'required_group_by' => null
 				),
 				'selected_by_default' => true,
@@ -320,48 +320,47 @@ class Config implements IConfig
 				$field['selected_by_default'] = true;
 			}
 			// Заменяем дефолтные параметры поля, на те, что указаны в конфиге
-			foreach($field as $fldAttrName => &$fldAttrValue) {
-				if(is_bool($fldAttrValue)) {
-					if(isset($rawField[$fldAttrName]) ) {
-						if( $rawField[$fldAttrName] === !$fldAttrValue) {
-							$fldAttrValue = !$fldAttrValue;
-						}
-					}
-				}
-				if(null === $fldAttrValue && isset($rawField[$fldAttrName])) {
-					$fldAttrValue = ''.$rawField[$fldAttrName];
-				}
-				if(is_array($fldAttrValue)
-					&& is_array($rawField[$fldAttrName])
-					&& !empty($rawField[$fldAttrName])
-				) {
-					if(array_key_exists('lang', $fldAttrValue)) {
-						if(!empty($rawField[$fldAttrName]['lang'])) $fldAttrValue['lang'] = $rawField[$fldAttrName]['lang'];
-						if(!empty($rawField[$fldAttrName]['ru'])) $fldAttrValue['ru'] = $rawField[$fldAttrName]['ru'];
-						if(!empty($rawField[$fldAttrName]['en'])) $fldAttrValue['en'] = $rawField[$fldAttrName]['en'];
-					}
-					else {
-						foreach($fldAttrValue as $fldSubAttrName => &$fldSubAttrValue) {
-							if(is_bool($fldSubAttrValue)) {
-								if(isset($rawField[$fldAttrName][$fldSubAttrName]) ) {
-									if( $rawField[$fldAttrName][$fldSubAttrName] === !$fldSubAttrValue) {
-										$fldSubAttrValue = !$fldSubAttrValue;
-									}
-								}
-							}
-							if(null === $fldSubAttrValue && isset($rawField[$fldAttrName][$fldSubAttrName])) {
-								$fldSubAttrValue = ''.$rawField[$fldAttrName][$fldSubAttrName];
-							}
-						} unset($fldSubAttrName, $fldSubAttrValue);
-					}
-				}
-			} unset($fldAttrName, $fldAttrValue);
+			self::fillSkeletonArray($field, $rawField);
 			if(!empty($field['default'])) {
 				$field['default'] = $DB->ForSql($field['default']);
 			}
 
 			$this->fields[$fieldAlias] = $field;
 		} unset($field, $rawField);
+	}
+
+	static private function fillSkeletonArray(&$templateArray, &$copiedArray) {
+		foreach($templateArray as $fldAttrName => &$fldAttrValue) {
+			if(is_bool($fldAttrValue)) {
+				if(isset($copiedArray[$fldAttrName]) ) {
+					if( $copiedArray[$fldAttrName] === !$fldAttrValue) {
+						$fldAttrValue = !$fldAttrValue;
+					}
+				}
+			}
+			if(null === $fldAttrValue && isset($copiedArray[$fldAttrName])) {
+				$fldAttrValue = ''.$copiedArray[$fldAttrName];
+			}
+			if(is_array($fldAttrValue)
+				&& is_array($copiedArray[$fldAttrName])
+				&& !empty($copiedArray[$fldAttrName])
+			) {
+				if(array_key_exists('lang', $fldAttrValue)) {
+					if(!empty($copiedArray[$fldAttrName]['lang'])) $fldAttrValue['lang'] = $copiedArray[$fldAttrName]['lang'];
+					if(!empty($copiedArray[$fldAttrName]['ru'])) $fldAttrValue['ru'] = $copiedArray[$fldAttrName]['ru'];
+					if(!empty($copiedArray[$fldAttrName]['en'])) $fldAttrValue['en'] = $copiedArray[$fldAttrName]['en'];
+				}
+				elseif(empty($fldAttrValue)) {
+					// Если внутренний подмассив пуст. значит для него не задан шаблон
+					// порсто копируем
+					$fldAttrValue = $copiedArray[$fldAttrName];
+				}
+				else {
+					// А вот если шаблон для подмассива задан, то рекурсируем
+					self::fillSkeletonArray($fldAttrValue, $copiedArray[$fldAttrName]);
+				}
+			}
+		} unset($fldAttrName, $fldAttrValue);
 	}
 
 	protected function initReferences(&$configData){
@@ -503,6 +502,16 @@ class Config implements IConfig
 				}
 				if(!in_array($refFieldName, $this->reference[$refTableAlias]['fields'])) {
 					throw new Err('', Err::E_CFG_FLD_EX_WRG_REF);
+				}
+			}
+			if(!empty($field['get']['required_tables'])) {
+				if(!is_array($field['get']['required_tables'])) {
+					throw new Err('', Err::E_CFG_FLD_EX_WRG_REQ_TBL);
+				}
+				foreach($field['get']['required_tables'] as $reqTblAlias) {
+					if($reqTblAlias !== $this->tableAlias && empty($this->reference[$reqTblAlias])) {
+						throw new Err('', Err::E_CFG_FLD_EX_WRG_REQ_TBL);
+					}
 				}
 			}
 		}
