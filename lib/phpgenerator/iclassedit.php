@@ -11,7 +11,11 @@
 namespace OBX\Core\PhpGenerator;
 
 
-interface IClass extends IClassInfo, IClassEdit {
-	function useLangFile($bUse = true);
-	function generateClass();
+interface IClassEdit {
+	function setNamespace($namespace);
+	function setBaseClass($class);
+	function setUses($usesList);
+	function addMethod($access, $name, $argList, $code, $static = false, $abstract = false, $final = false);
+	function addVariable($access, $name, $initialValue, $static = false);
+	function addConstant($name, $value);
 } 

@@ -16,5 +16,5 @@ class GeneratorDBSError extends AError {
 	const _DIR_ = __DIR__;
 	const LANG_PREFIX = 'OBX_DBSIMPLE_ENTITY_GEN_';
 
-	const E_CFG_INCORRECT = 1;
+
 } 

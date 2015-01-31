@@ -13,7 +13,7 @@ namespace OBX\Core\DBEntityEditor;
 
 interface IGenerator {
 	function __construct(IConfig $config);
-
+	function getConfig();
 	function generateEntityClass();
-	function saveEntityClass($path);
+	function saveEntityClass($path = null);
 }

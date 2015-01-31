@@ -31,5 +31,6 @@ interface IConfig {
 	function getCreateTableCode();
 	function getConfigContent();
 	function getConfigPath();
+	function getClassPath();
 	function saveConfigFile($path = null);
 }

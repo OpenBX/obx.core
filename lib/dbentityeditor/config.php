@@ -966,6 +966,9 @@ class Config implements IConfig
 	public function getConfigPath() {
 		return $this->configPath;
 	}
+	public function getClassPath() {
+		return $this->classPath;
+	}
 	public function saveConfigFile($path = null) {
 		if(null === $path) {
 			$path = $this->configPath;

@@ -41,11 +41,11 @@ class GeneratorDBS extends Generator {
 	private $_arTableJoinNullFieldDefaults = null;
 
 
-	public function __init() {
-		$this->class->setUses(array(
+	protected function __init() {
+		$this->phpClass->setUses(array(
 			'OBX\Core\DBSimple\Entity'
 		));
-		$this->class->setBaseClass('Entity');
+		$this->phpClass->setBaseClass('Entity');
 		$this->_entityModuleID = $this->config->getModuleID();
 		$this->_entityEventsID = $this->config->getEventsID();
 		$this->_mainTable = $this->config->getAlias();
@@ -73,27 +73,31 @@ class GeneratorDBS extends Generator {
 		$this->init_arTableJoinNullFieldDefaults();
 		$this->init_arTableFields();
 
-		$this->class->addVariableIfNotNull('protected', '_entityModuleID', $this->_entityModuleID);
-		$this->class->addVariableIfNotNull('protected', '_entityEventsID', $this->_entityEventsID);
-		$this->class->addVariableIfNotNull('protected', '_mainTable', $this->_mainTable);
-		$this->class->addVariableIfNotNull('protected', '_mainTablePrimaryKey', $this->_mainTablePrimaryKey);
-		$this->class->addVariableIfNotNull('protected', '_mainTableAutoIncrement', $this->_mainTableAutoIncrement);
-		$this->class->addVariableIfNotNull('protected', '_arTableList', $this->_arTableList);
-		$this->class->addVariableIfNotNull('protected', '_arTableLinks', $this->_arTableLinks);
-		$this->class->addVariableIfNotNull('protected', '_arTableLeftJoin', $this->_arTableLeftJoin);
-		$this->class->addVariableIfNotNull('protected', '_arTableRightJoin', $this->_arTableRightJoin);
-		$this->class->addVariableIfNotNull('protected', '_arSelectDefault', $this->_arSelectDefault);
-		$this->class->addVariableIfNotNull('protected', '_arTableUnique', $this->_arTableUnique);
-		$this->class->addVariableIfNotNull('protected', '_arSortDefault', $this->_arSortDefault);
-		$this->class->addVariableIfNotNull('protected', '_arGroupByFields', $this->_arGroupByFields);
-		$this->class->addVariableIfNotNull('protected', '_arTableFieldsDefault', $this->_arTableFieldsDefault);
-		$this->class->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
+		$this->phpClass->addVariableIfNotNull('protected', '_entityModuleID', $this->_entityModuleID);
+		$this->phpClass->addVariableIfNotNull('protected', '_entityEventsID', $this->_entityEventsID);
+		$this->phpClass->addVariableIfNotNull('protected', '_mainTable', $this->_mainTable);
+		$this->phpClass->addVariableIfNotNull('protected', '_mainTablePrimaryKey', $this->_mainTablePrimaryKey);
+		$this->phpClass->addVariableIfNotNull('protected', '_mainTableAutoIncrement', $this->_mainTableAutoIncrement);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableList', $this->_arTableList);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableLinks', $this->_arTableLinks);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableLeftJoin', $this->_arTableLeftJoin);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableRightJoin', $this->_arTableRightJoin);
+		$this->phpClass->addVariableIfNotNull('protected', '_arSelectDefault', $this->_arSelectDefault);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableUnique', $this->_arTableUnique);
+		$this->phpClass->addVariableIfNotNull('protected', '_arSortDefault', $this->_arSortDefault);
+		$this->phpClass->addVariableIfNotNull('protected', '_arGroupByFields', $this->_arGroupByFields);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableFieldsDefault', $this->_arTableFieldsDefault);
+		$this->phpClass->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
 
-		$this->class->addMethod('public', '__construct', array(),
+		$this->phpClass->addMethod('public', '__construct', array(),
 			 $this->getCode_arFieldsCheck()
 			.$this->getCode_arDBSimpleLangMessages()
 			.$this->getCode_arFieldsDescription()
 		);
+
+		$this->phpClass->addConstant('BX_UTF', 'const:BX_UTF');
+		$this->phpClass->addConstant('text_constant', 'some %text data');
+
 		$debug=1;
 	}
 
@@ -240,7 +244,7 @@ class GeneratorDBS extends Generator {
 	}
 
 	private function getCode_arFieldsCheck() {
-		$code_arFieldsCheck = "\t\t".'$this->_arTableFieldsCheck('."\n";
+		$code_arFieldsCheck = "\t\t".'$this->_arTableFieldsCheck = array('."\n";
 		$arFieldsList = $this->config->getFieldsList(true);
 		foreach($arFieldsList as $fieldAlias) {
 			$field = $this->config->getField($fieldAlias);
@@ -252,57 +256,52 @@ class GeneratorDBS extends Generator {
 	}
 
 	private function getCode_arDBSimpleLangMessages() {
-		$code_arDBSimpleLangMessages = "\t\t".'$this->_arDBSimpleLangMessages = array('."\n";
+		$_arDBSimpleLangMessages = array();
 		$langPrefix = $this->config->getLangPrefix();
 		$fieldsList = $this->config->getFieldsList(true);
 		$iErrorCode = 0;
 		foreach($fieldsList as $fieldCode) {
 			$field = $this->config->getField($fieldCode);
 			if(true === $field['required'] && !empty($field['required_error'])) {
-				$iErrorCode++;
-				$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
+				$_arDBSimpleLangMessages['REQ_FLD_'.$fieldCode] = array(
 						'TYPE' => 'E',
-						'REQ_FLD_'.$fieldCode => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])."'),\n",
-						'CODE' => $iErrorCode
-				), "\t\t\t");
+						'TEXT' => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])."')",
+						'CODE' => ++$iErrorCode
+				);
 			}
 		}
 		$uniqueList = $this->config->getUnique();
 		foreach($uniqueList as $uqCode => $unique) {
-			$iErrorCode++;
-			$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
-					'TYPE' => 'E',
-					'DUP_ADD_'.$uqCode => "::Loc::getMessage('"
-						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])."'),\n",
-					'CODE' => $iErrorCode
-				), "\t\t\t");
-			$iErrorCode++;
-			$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
-					'TYPE' => 'E',
-					'DUP_UPD_'.$uqCode => "::Loc::getMessage('"
-						.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])."'),\n",
-					'CODE' => $iErrorCode
-				), "\t\t\t");
+			$_arDBSimpleLangMessages['DUP_ADD_'.$uqCode] = array(
+				'TYPE' => 'E',
+				'TEXT' => "::Loc::getMessage('"
+					.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])."')",
+				'CODE' => ++$iErrorCode
+			);
+			$_arDBSimpleLangMessages['DUP_UPD_'.$uqCode] = array(
+				'TYPE' => 'E',
+				'TEXT' => "::Loc::getMessage('"
+					.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])."')",
+				'CODE' => ++$iErrorCode
+			);
 		}
 
 		$langMessages = $this->config->getLangMessages();
-		$iErrorCode++;
-		$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
-				'TYPE' => 'E',
-				'NOTHING_TO_DELETE' => "::Loc::getMessage('"
-					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])."'),\n",
-				'CODE' => $iErrorCode
-			), "\t\t\t");
-		$iErrorCode++;
-		$code_arDBSimpleLangMessages .= "\t\t\t".PhpClass::convertArray2PhpCode(array(
+		$_arDBSimpleLangMessages['NOTHING_TO_DELETE'] = array(
 			'TYPE' => 'E',
 			'TEXT' => "::Loc::getMessage('"
-					.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_update']['lang'])
+				.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])."')",
+			'CODE' => ++$iErrorCode
+		);
+		$_arDBSimpleLangMessages['NOTHING_TO_UPDATE'] = array(
+			'TYPE' => 'E',
+			'TEXT' => "::Loc::getMessage('"
+				.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_update']['lang'])
 				."')\n",
-			'CODE' => $iErrorCode
-		), "\t\t\t");
-
-		$code_arDBSimpleLangMessages .= "\t\t);\n";
+			'CODE' => ++$iErrorCode
+		);
+		$code_arDBSimpleLangMessages = "\t\t".'$this->_arDBSimpleLangMessages = '
+			.PhpClass::convertArray2PhpCode($_arDBSimpleLangMessages, "\t\t\t").";\n";
 		return $code_arDBSimpleLangMessages;
 	}
 
@@ -342,7 +341,7 @@ class GeneratorDBS extends Generator {
 
 	}
 
-	protected function cfgField2DBSimpleFieldCheck(&$field) {
+	private function cfgField2DBSimpleFieldCheck(&$field) {
 		$flags = array();
 		switch($field['type']) {
 			case '':
@@ -411,16 +410,8 @@ class GeneratorDBS extends Generator {
 		if(true === $field['deny_zero']) $flags[] = 'FLD_NOT_ZERO';
 		if(true === $field['required']) $flags[] = 'FLD_REQUIRED';
 		if(!empty($field['default'])) $flags[] = 'FLD_DEFAULT';
-		if(!empty($field['validator'])) $flags[] = 'FLD_T_CUSTOM_CK';
+		if(!empty($field['validator'])) $flags[] = 'FLD_CUSTOM_CK';
 		if(true === $field['break_invalid']) $flags[] = 'FLD_BRK_INCORR';
 		return $flags;
-	}
-
-	public function generateEntityClass() {
-		return $this->class->generateClass();
-	}
-
-	public function saveEntityClass($path) {
-
 	}
 } 
