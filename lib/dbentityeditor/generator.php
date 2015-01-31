@@ -12,6 +12,7 @@ namespace OBX\Core\DBEntityEditor;
 
 use OBX\Core\Exceptions\DBEntityEditor\GeneratorError as Err;
 use OBX\Core\PhpGenerator\PhpClass;
+use OBX\Core\Tools;
 
 abstract class Generator implements IGenerator {
 	/** @var null|\OBX\Core\DBEntityEditor\IConfig */
@@ -46,9 +47,20 @@ abstract class Generator implements IGenerator {
 		if(empty($path)) {
 			$path = $this->config->getClassPath();
 		}
+		Tools::_fixFilePath($path);
+		if('/' != substr($path, 0, 1)) {
+			$path = '/bitrix/modules/'.$this->config->getModuleID().'/'.$path;
+		}
 		if( !CheckDirPath(OBX_DOC_ROOT.$path) ) {
 			throw new Err('', Err::E_CLASS_SAVE_FAILED);
 		}
-		file_put_contents(OBX_DOC_ROOT.$path, $this->phpClass->generateClass());
+		if( false === file_put_contents(
+				OBX_DOC_ROOT.$path,
+				$this->phpClass->generateClass()
+			)
+		) {
+			return false;
+		}
+		return true;
 	}
 }

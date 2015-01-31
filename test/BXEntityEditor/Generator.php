@@ -23,7 +23,7 @@ class TestGenerator extends TestCase
 
 	public function testGenerateClass() {
 		$generator = new GeneratorDBS(new Config(self::TEST_ENTITY));
-		if(file_exists(self::TEST_ENTITY_PHP)) {
+		if(file_exists(OBX_DOC_ROOT.self::TEST_ENTITY_PHP)) {
 			unlink(OBX_DOC_ROOT.self::TEST_ENTITY_PHP);
 		}
 		$this->assertFileNotExists(OBX_DOC_ROOT.self::TEST_ENTITY_PHP);

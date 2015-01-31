@@ -94,11 +94,6 @@ class GeneratorDBS extends Generator {
 			.$this->getCode_arDBSimpleLangMessages()
 			.$this->getCode_arFieldsDescription()
 		);
-
-		$this->phpClass->addConstant('BX_UTF', 'const:BX_UTF');
-		$this->phpClass->addConstant('text_constant', 'some %text data');
-
-		$debug=1;
 	}
 
 	private function init_arTableFields() {
@@ -301,12 +296,22 @@ class GeneratorDBS extends Generator {
 			'CODE' => ++$iErrorCode
 		);
 		$code_arDBSimpleLangMessages = "\t\t".'$this->_arDBSimpleLangMessages = '
-			.PhpClass::convertArray2PhpCode($_arDBSimpleLangMessages, "\t\t\t").";\n";
+			.PhpClass::convertArray2PhpCode($_arDBSimpleLangMessages, "\t\t").";\n";
 		return $code_arDBSimpleLangMessages;
 	}
 
 	private function getCode_arFieldsDescription() {
-		//TODO: Написать метод getCode_arFieldsDescription
+		$_arFieldsDescription = array();
+		$arFieldsList = $this->config->getFieldsList(false);
+		$langPrefix = $this->config->getLangPrefix();
+		foreach($arFieldsList as $fieldCode) {
+			$field = $this->config->getField($fieldCode);
+			$_arFieldsDescription[$fieldCode] = array(
+				'NAME' => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['title']['lang'])."')",
+				'DESCRIPTION' => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['description']['lang'])."')",
+			);
+		}
+		return "\t\t".'$this->_arFieldsDescription = '.PhpClass::convertArray2PhpCode($_arFieldsDescription, "\t\t").';';
 	}
 
 	private function initReferences() {

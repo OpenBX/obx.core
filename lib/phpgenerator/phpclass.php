@@ -205,7 +205,7 @@ class PhpClass implements IClass {
 		}
 		elseif(is_array($initialValue)) {
 			$qt = '';
-			$initialValue = self::convertArray2PhpCode($initialValue, "\t\t\t");
+			$initialValue = self::convertArray2PhpCode($initialValue, "\t");
 		}
 		$this->variables[$name] = array(
 			'name' => $name,
@@ -271,8 +271,8 @@ class PhpClass implements IClass {
 			'static' => !!$static,
 			'abstract' => $abstract,
 			'arguments' => $argList,
-			'value' =>"\n{\n\n".$code."\n}",
-			'php' => $methodDefinition."\n{\n\n".$code."\n}"
+			'value' =>"\n\t{\n\n".$code."\n\t}",
+			'php' => $methodDefinition."\n\t{\n\n".$code."\n\t}"
 		);
 	}
 
@@ -324,7 +324,6 @@ class PhpClass implements IClass {
 	}
 
 	public function generateClass() {
-		// TODO: Написать метод generateClass
 		$phpClass = '<?'."php\n\n";
 		$phpClass .= 'namespace '.$this->namespace.";\n";
 		foreach($this->uses as $use => $alias) {
@@ -346,21 +345,21 @@ class PhpClass implements IClass {
 
 		if(!empty($this->constants)) {
 			foreach($this->constants as $const) {
-				$phpClass .= $const['php']."\n";
+				$phpClass .= "\t".$const['php']."\n";
 			}
 		}
 
 		if(!empty($this->variables)) {
 			$phpClass .= "\n";
 			foreach($this->variables as $variable) {
-				$phpClass .= $variable['php']."\n";
+				$phpClass .= "\t".$variable['php']."\n";
 			}
 		}
 
 		if(!empty($this->methods)) {
 			$phpClass .= "\n";
 			foreach($this->methods as $method) {
-				$phpClass .= $method['php']."\n";
+				$phpClass .= "\t".$method['php']."\n";
 			}
 		}
 
@@ -375,8 +374,22 @@ class PhpClass implements IClass {
 	 * @return string
 	 */
 	static public function convertArray2PhpCode($array, $whiteOffset = '') {
-		$strResult = "array(\n";
+		$complexArray = true;
+		if(count($array)==1) {
+			list($firstElementKey, $firstElementValue) = each($array);
+			if(!is_array($firstElementValue)) {
+				$complexArray = false;
+			}
+			unset($firstElementKey, $firstElementValue);
+			reset($array);
+		}
+
+		$strResult = 'array('.($complexArray?"\n":'');
 		foreach($array as $paramName => &$paramValue) {
+			$pqt = '\'';
+			if(is_numeric($paramName) && floatval($paramName) == intval($paramName)) {
+				$pqt = '';
+			}
 			if(!is_array($paramValue)) {
 				$qt = '\'';
 				if(null === $paramValue) {
@@ -400,16 +413,16 @@ class PhpClass implements IClass {
 						$paramValue = str_replace('\'', '\\\'', $paramValue);
 					}
 				}
-				$strResult .= $whiteOffset."\t'".$paramName."' => ".$qt.$paramValue.$qt.",\n";
+				$strResult .= ($complexArray?$whiteOffset."\t":'').$pqt.$paramName.$pqt." => ".$qt.$paramValue.$qt.($complexArray?",\n":'');
 			}
 			else {
 				$strResult .= $whiteOffset
-					."\t'".$paramName
-					."' => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t")
+					."\t".$pqt.$paramName.$pqt
+					." => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t")
 					.",\n";
 			}
 		}
-		$strResult .= $whiteOffset.")";
+		$strResult .= ($complexArray?$whiteOffset:'').")";
 		return $strResult;
 	}
 
