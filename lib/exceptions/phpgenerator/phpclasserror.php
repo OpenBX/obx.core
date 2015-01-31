@@ -4,8 +4,8 @@ namespace OBX\Core\Exceptions\PhpGenerator;
 use OBX\Core\Exceptions\AError;
 
 class PhpClassError extends AError {
-	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'OBX_CORE_GEN_PHP_CLASS_ERR_';
+	const FILE = __FILE__;
+	const ID = 'OBX_CORE_GEN_PHP_CLASS_ERR_';
 
 	const E_WRG_NAMESPACE = 1;
 	const E_WRG_CLASS = 2;

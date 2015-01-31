@@ -12,8 +12,8 @@ namespace OBX\Core\Exceptions;
 abstract class AError extends \ErrorException {
 
 	static protected $_arLangMessages = array();
-	const _FILE_ = null;
-	const LANG_PREFIX = null;
+	const FILE = null;
+	const ID = null;
 
 	/**
 	 * @param string|array $message [optional] The Exception message to throw.
@@ -38,13 +38,13 @@ abstract class AError extends \ErrorException {
 		if(array_key_exists($class, self::$_arLangMessages)) {
 			return ;
 		}
-		if(static::_FILE_ === null) {
-			throw new \ErrorException('You must redeclare '.$class.'::_FILE_ constant exactly: const _FILE_ = __FILE__;');
+		if(static::FILE === null) {
+			throw new \ErrorException('You must redeclare '.$class.'::FILE constant exactly: const FILE = __FILE__;');
 		}
-		if(static::LANG_PREFIX === null) {
-			throw new \ErrorException('You must redeclare '.$class.'::LANG_PREFIX constant exactly: const LANG_PREFIX = "YOUR_EXCEPTION_PREFIX";');
+		if(static::ID === null) {
+			throw new \ErrorException('You must redeclare '.$class.'::ID constant exactly: const ID = "YOUR_LANG_MESSAGES_PREFIX";');
 		}
-		self::$_arLangMessages[$class] = IncludeModuleLangFile(static::_FILE_, false, true);
+		self::$_arLangMessages[$class] = IncludeModuleLangFile(static::FILE, false, true);
 	}
 
 	/**
@@ -58,12 +58,12 @@ abstract class AError extends \ErrorException {
 		self::loadMessages($class);
 		$message = '';
 		$arLangMessages = &self::$_arLangMessages[$class];
-		$langPrefix = static::LANG_PREFIX;
-		if(array_key_exists($langPrefix.$errorCode, $arLangMessages)) {
-			$message = $arLangMessages[$langPrefix.$errorCode];
+		$msgID = static::ID;
+		if(array_key_exists($msgID.$errorCode, $arLangMessages)) {
+			$message = $arLangMessages[$msgID.$errorCode];
 		}
 		else {
-			$message = $langPrefix.intval($errorCode);
+			$message = $msgID.intval($errorCode);
 		}
 		if(null !== $arReplace && is_array($arReplace)) {
 			$arReplaceSearch = array_keys($arReplace);

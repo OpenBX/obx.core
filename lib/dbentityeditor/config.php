@@ -430,7 +430,7 @@ class Config implements IConfig
 							throw $e;
 						}
 						throw new Err(array(
-							'#REASON#' => $e->getMessage().' ('.Err::LANG_PREFIX.$e->getCode().')'
+							'#REASON#' => $e->getMessage().' ('.Err::ID.$e->getCode().')'
 						), Err::E_CFG_REF_READ_ENTITY_FAIL);
 					}
 				}

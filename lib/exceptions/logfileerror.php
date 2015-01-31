@@ -10,8 +10,8 @@
 namespace OBX\Core\Exceptions;
 
 class LogFileError extends AError {
-	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'OBX_CORE_LOGFILE_ERROR_';
+	const FILE = __FILE__;
+	const ID = 'OBX_CORE_LOGFILE_ERROR_';
 	const E_WRONG_PATH = 1;
 	const E_PERM_DENIED = 2;
 	const E_CANT_OPEN = 3;

@@ -56,8 +56,8 @@ if(!defined('CURLE_CHUNK_FAILED')) define('CURLE_CHUNK_FAILED', 88);
 if(!defined('CURLE_NO_CONNECTION_AVAILABLE')) define('CURLE_NO_CONNECTION_AVAILABLE', 89);
 
 class CurlError extends RequestError {
-	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'CURLE_';
+	const FILE = __FILE__;
+	const ID = 'CURLE_';
 
 	const E_M_TIMEOUT_REACHED = 2001;
 	const E_M_SELECT_ERROR = 2002;

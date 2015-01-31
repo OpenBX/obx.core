@@ -12,9 +12,8 @@ namespace OBX\Core\Exceptions\DBEntityEditor;
 use OBX\Core\Exceptions\AError;
 
 class ConfigError extends AError {
-	const _DIR_ = __DIR__;
-	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'OBX_CORE_ENT_GEN_CFG_';
+	const FILE = __FILE__;
+	const ID = 'OBX_CORE_ENT_GEN_CFG_';
 
 	const E_OPEN_CFG_FAILED = 1;			// Не удалось открыть файл
 	const E_PARSE_CFG_FAILED = 2;			// Не удалось прочитать файл

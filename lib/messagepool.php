@@ -163,7 +163,7 @@ class MessagePool implements IMessagePool
 		if($Exception instanceof AError) {
 			$class = get_class($Exception);
 			/** @var AError $class */
-			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
+			$errorCode = $class::ID.$Exception->getCode();
 			$this->addError($Exception->getMessage(), $errorCode);
 			throw $Exception;
 		}
@@ -181,7 +181,7 @@ class MessagePool implements IMessagePool
 		if($Exception instanceof AError) {
 			$class = get_class($Exception);
 			/** @var AError $class */
-			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
+			$errorCode = $class::ID.$Exception->getCode();
 			$this->addError($exceptionTextPrefix.$Exception->getMessage(), $errorCode);
 		}
 		elseif($Exception instanceof \Exception) {
@@ -202,7 +202,7 @@ class MessagePool implements IMessagePool
 		if($Exception instanceof AError) {
 			/** @var AError $class */
 			$class = get_class($Exception);
-			$errorCode = $class::LANG_PREFIX.$Exception->getCode();
+			$errorCode = $class::ID.$Exception->getCode();
 			$this->addWarning($exceptionTextPrefix.$Exception->getMessage(), $errorCode, $debugLevel);
 		}
 		elseif($Exception instanceof \Exception) {

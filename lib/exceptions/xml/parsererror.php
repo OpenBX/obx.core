@@ -13,8 +13,8 @@ namespace OBX\Core\Exceptions\Xml;
 use OBX\Core\Exceptions\AError;
 
 class ParserError extends AError {
-	const _FILE_ = __FILE__;
-	const LANG_PREFIX = 'OBX_CORE_XML_PARSER_ERROR_';
+	const FILE = __FILE__;
+	const ID = 'OBX_CORE_XML_PARSER_ERROR_';
 	const E_XML_FILE_NOT_FOUND = 1;
 	const E_XML_FILE_CANT_OPEN = 2;
 	const E_TMP_TBL_WRONG_NAME = 3;
