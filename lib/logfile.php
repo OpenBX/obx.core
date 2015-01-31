@@ -98,6 +98,7 @@ class LogFile {
 			),
 			(($type == self::MSG_TYPE_NOTE)?$this->_logMessageFormat:$this->_logErrWrnFormat)
 		)."\r\n");
+		return true;
 	}
 
 	public function setDefaultMessageType($defaultMessageType) {
