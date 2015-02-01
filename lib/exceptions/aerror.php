@@ -72,4 +72,8 @@ abstract class AError extends \ErrorException {
 		}
 		return $message;
 	}
+
+	public function getFullCode() {
+		return static::ID.$this->getCode();
+	}
 } 

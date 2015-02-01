@@ -9,9 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Test;
-use OBX\Core\Test\TestCase;
 use OBX\Core\Xml\Parser as XmlParser;
-use OBX\Core\Xml\Exceptions\ParserError as XmlParserError;
 
 class XmlParserAttr extends TestCase {
 	const _DIR_ = __DIR__;

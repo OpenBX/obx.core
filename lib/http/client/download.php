@@ -12,6 +12,7 @@ namespace OBX\Core\Http\Client;
 use OBX\Core\MessagePoolDecorator;
 use OBX\Core\Exceptions\Http\DownloadError;
 use OBX\Core\Mime;
+use OBX\Core\Http\Request;
 
 IncludeModuleLangFile(__FILE__);
 

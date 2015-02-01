@@ -2,19 +2,19 @@
 	"module": "obx.core",
 	"namespace": "OBX\\Core\\DBSEntities",
 	"class": "TestEntity",
-	"class_path": "data_entity\/DBSEntities",
+	"class_path": "data_entity\/DBSEntities\/TestEntity.php",
 	"version": "0.1.0",
 	"events_id": "TestEntityRow",
 	"lang_prefix": "OBX_DBS_TEST_ENTITY",
 	"title": {
-		"lang": "%_ENTITY_DESCRIPTION",
-		"ru": "Описание тестовой сущности",
-		"en": "Entity for testing description"
+		"lang": "%_ENTITY_TITLE",
+		"ru": "Тестовая сущность",
+		"en": "Entity for testing"
 	},
 	"description": {
 		"lang": "%_ENTITY_DESCRIPTION",
-		"ru": "OBX_DBS_TEST_ENTITY_ENTITY_DESCRIPTION",
-		"en": "OBX_DBS_TEST_ENTITY_ENTITY_DESCRIPTION"
+		"ru": "Описание тестовой сущности",
+		"en": "Entity for testing description"
 	},
 	"error_nothing_to_delete": {
 		"lang": "%_E_NOTHING_TO_DELETE",
@@ -54,7 +54,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -94,7 +96,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -134,7 +138,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -174,7 +180,9 @@
 				"if_null_return": "100",
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -214,7 +222,9 @@
 				"if_null_return": "Y",
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -254,7 +264,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -294,7 +306,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -334,7 +348,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -374,7 +390,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -414,7 +432,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -454,7 +474,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -494,7 +516,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": false,
@@ -531,10 +555,13 @@
 			"break_invalid": false,
 			"get": {
 				"ref": null,
-				"if_null_return": null,
+				"if_null_return": "no-name",
 				"sub_query": "concat(U.NAME, ' ', U.LAST_NAME)",
 				"sub_query_4_filter": "E.USER_ID",
-				"required_tables": "Array",
+				"required_tables": [
+					"U",
+					"E"
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -574,7 +601,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -614,7 +643,9 @@
 				"if_null_return": null,
 				"sub_query": null,
 				"sub_query_4_filter": null,
-				"required_tables": null,
+				"required_tables": [
+					
+				],
 				"required_group_by": null
 			},
 			"selected_by_default": true,
@@ -654,10 +685,12 @@
 				"if_null_return": null,
 				"sub_query": "concat('[',group_concat('\"',S.ID, '\":', '\"',S.NAME, '\"'),']')",
 				"sub_query_4_filter": null,
-				"required_tables": "Array",
+				"required_tables": [
+					"S"
+				],
 				"required_group_by": "Array"
 			},
-			"selected_by_default": true,
+			"selected_by_default": false,
 			"title": {
 				"lang": "%_FLD_TITLE_SEC_ENT_JSON",
 				"ru": "Список2",
@@ -691,13 +724,15 @@
 			"break_invalid": false,
 			"get": {
 				"ref": null,
-				"if_null_return": null,
+				"if_null_return": "0",
 				"sub_query": "count(S.ID)",
 				"sub_query_4_filter": "SELECT count(SE.ID) FROM obx_core_test_sec_entity as SE WHERE SE.TEST_ENTITY_ID = E.ID",
-				"required_tables": "Array",
+				"required_tables": [
+					"S"
+				],
 				"required_group_by": null
 			},
-			"selected_by_default": true,
+			"selected_by_default": false,
 			"title": {
 				"lang": "%_FLD_TITLE_SEC_ENT_JSON",
 				"ru": "количество2",
@@ -716,10 +751,15 @@
 				"CODE",
 				"SOME_BCHAR"
 			],
-			"duplicate_error": {
-				"lang": "%_E_DUP_UQ_CODE",
-				"ru": "может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR",
-				"en": "ERR_DUP_UQ__obx_core_test_entity_code_bchar"
+			"duplicate_error_add": {
+				"lang": "%_E_DUP_ADD_UQ_CODE_BCHAR",
+				"ru": "Ошибка добавления: может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR",
+				"en": "ERR_DUP_ADD_UQ__obx_core_test_entity_code_bchar"
+			},
+			"duplicate_error_update": {
+				"lang": "%_E_DUP_UPD_UQ_CODE_BCHAR",
+				"ru": "Ошибка обновления: может быть только две записи с одинаковым CODE и у них должно быть разное значение SOME_BCHAR",
+				"en": "ERR_DUP_UPD_UQ__obx_core_test_entity_code_bchar"
 			}
 		}
 	},

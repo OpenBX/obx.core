@@ -10,6 +10,8 @@
 
 namespace OBX\Core\Test;
 
+use OBX\Core\Exceptions\AError;
+
 class TestErrorExceptions extends TestCase {
 	const _DIR_ = __DIR__;
 
@@ -35,7 +37,7 @@ class TestErrorExceptions extends TestCase {
 	}
 
 	/**
-	 * @param $class
+	 * @param AError $class
 	 * @param $path
 	 * @dataProvider getClassList
 	 */
@@ -49,7 +51,7 @@ class TestErrorExceptions extends TestCase {
 			if(substr($constantName, 0, 2) !== 'E_') {
 				continue;
 			}
-			$errCode = $class::LANG_PREFIX.$constantValue;
+			$errCode = $class::ID.$constantValue;
 			$this->assertArrayHasKey($errCode, $arErrMsg);
 			/** @noinspection PhpUndefinedMethodInspection */
 			$this->assertEquals($arErrMsg[$errCode], $class::getLangMessage($constantValue));
