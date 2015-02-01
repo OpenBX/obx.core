@@ -157,7 +157,7 @@ class MultiRequest extends MessagePoolDecorator {
 			return $this->getMessagePool()->registerLogFile($LogFile);
 		}
 		catch(LogFileError $e) {
-			$this->addError($e->getMessage(), $e->getCode());
+			$this->addError($e->getMessage(), LogFileError::ID.$e->getCode());
 		}
 		return false;
 	}
@@ -390,8 +390,11 @@ class MultiRequest extends MessagePoolDecorator {
 			try {
 				$Request->saveToDir($relPath, $saveMode);
 			}
+			catch(CurlError $e) {
+				$this->addWarning($e->getMessage(), CurlError::ID.$e->getCode());
+			}
 			catch(RequestError $e) {
-				$this->addWarning($e->getMessage(), $e->getCode());
+				$this->addWarning($e->getMessage(), RequestError::ID.$e->getCode());
 			}
 		}
 	}

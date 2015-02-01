@@ -9,6 +9,7 @@
  ***********************************************/
 
 namespace OBX\Core\Curl;
+use OBX\Core\Exceptions\Curl\CurlError;
 use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Tools;
 
@@ -32,8 +33,12 @@ class MultiRequestBXFile extends MultiRequest {
 			$Request = new RequestBXFile($url, $requestID);
 			$bSuccess = $this->addRequest($Request);
 		}
+		catch(CurlError $e) {
+			$this->addError($e->getMessage(), CurlError::ID.$e->getCode());
+			return false;
+		}
 		catch(RequestError $e) {
-			$this->addError($e->getMessage(), $e->getCode());
+			$this->addError($e->getMessage(), RequestError::ID.$e->getCode());
 			return false;
 		}
 		return $bSuccess;
