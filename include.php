@@ -8,11 +8,10 @@
  ** @copyright 2015 DevTop                    **
  ***********************************************/
 
-use Bitrix\Main\Loader;
 
 require_once __DIR__.'/includes/constants.php';
 
-Loader::registerAutoLoadClasses('obx.core', array(
+CModule::AddAutoloadClasses('obx.core', array(
 	'OBX_Build' => 'lib/build.php',
 	'OBX_Tools' => 'lib/tools.php',
 	'OBX\\Core\\Tools' => 'lib/tools.php',
