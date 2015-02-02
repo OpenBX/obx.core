@@ -19,5 +19,5 @@ interface IAssistant {
 	function getState();
 	function getMessagePoos();
 	function run();
-	
+
 }
