@@ -285,11 +285,6 @@ class Config implements IConfig
 					'ru' => 'REQUIRED__'.$codeStrUpper.'__FIELD',
 					'en' => 'REQUIRED__'.$codeStrUpper.'__FIELD'
 				),
-				'required_error' => array(
-					'lang' => '%_ERR_REQUIRED_'.$codeStrUpper,
-					'ru' => 'REQUIRED__'.$codeStrUpper.'__FIELD',
-					'en' => 'REQUIRED__'.$codeStrUpper.'__FIELD'
-				),
 				'default' => null,
 				'validator' => null,
 				'break_invalid' => false,

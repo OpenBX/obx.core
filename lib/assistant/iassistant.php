@@ -11,7 +11,13 @@
 namespace OBX\Core\Assistant;
 
 
-abstract class Base
-{
+interface IAssistant {
+	function setCondition($conditionData);
+	function setStepTime();
+	function setPauseTime();
 
-} 
+	function getState();
+	function getMessagePoos();
+	function run();
+	
+}
