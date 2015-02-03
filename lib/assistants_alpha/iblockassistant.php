@@ -16,7 +16,7 @@ namespace OBX\Core\Assistants_Alpha;
  *
  * @example
  * <code>
- * <?php require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/obx.core/includes/assistant_before.php');
+ * <?php require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/obx.core/includes/assistant_a_before.php');
  *
  * class ElCodeUpd extends OBX\Core\Assistant\IblockAssistant {
  *      public function doAction ($arItem, $ob) {
@@ -39,7 +39,7 @@ namespace OBX\Core\Assistants_Alpha;
  *
  * $assistant->Run();
  *
- * require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/obx.core/includes/assistant_after.php');
+ * require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/obx.core/includes/assistant_a_after.php');
  * </code>
  */
 class IBlockAssistant extends BasicAssistant {

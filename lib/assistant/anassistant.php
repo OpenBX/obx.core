@@ -11,7 +11,7 @@
 namespace OBX\Core\Assistant;
 
 
-abstract class Base
+abstract class AnAssistant
 {
 
 } 
