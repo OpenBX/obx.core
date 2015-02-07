@@ -1160,9 +1160,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 				$arSelect = $arSelectDefault;
 			}
 			else {
-				foreach ($arTableFields as $fieldCode => $arSqlField) {
-					$arSelect[] = $fieldCode;
-				}
+				$arSelect = array_keys($arTableFields);
 			}
 		}
 		$bFirst = true;

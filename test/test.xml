@@ -17,6 +17,7 @@
 			<file>XmlParserAttr.php</file>
 			<file>XmlParserEvent.php</file>
 			<file>TestErrorExceptions.php</file>
+			<file>DBSimple/ActiveRecordUse.php</file>
 			<file>BXEntityEditor/Config.php</file>
 			<file>BXEntityEditor/Generator.php</file>
 		</testsuite>

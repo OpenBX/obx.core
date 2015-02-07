@@ -87,7 +87,7 @@ abstract class EntityStatic extends MessagePoolStatic implements IEntityStatic {
 	public static function __callStatic($name, $arguments) {
 		$instance = self::getInstance();
 		if(!method_exists($instance, $name)) {
-			throw new \ErrorException(__CLASS__.': Method not found');
+			throw new \ErrorException(__CLASS__.': Method "'.$name.'" not found');
 		}
 		return call_user_func_array(array($instance, $name), $arguments);
 	}

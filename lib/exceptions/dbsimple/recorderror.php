@@ -17,13 +17,14 @@ class RecordError extends AError
 	const ID = 'OBX_CORE_DBS_RECORD_ERROR_';
 
 	const E_RECORD_ENTITY_NOT_SET = 1;
-	const E_CANT_READ_FROM_DB_RESULT = 2;
-	const E_WRONG_DB_RESULT_ENTITY = 3;
-	const E_CANT_SET_PRIMARY_KEY_VALUE = 4;
-	const E_CANT_FIND_RECORD = 5;
-	const E_SAVE_FAILED = 6;
-	const E_GET_WRONG_FIELD = 7;
-	const E_SET_WRONG_FIELD = 8;
-	const E_CANT_RD_BY_UQ_NOT_ALL_FLD = 9;
-
+	const E_READ_NOT_DBS_RESULT = 2;
+	const E_READ_NO_IDENTITY_FIELD = 3;
+	const E_WRONG_DB_RESULT_ENTITY = 4;
+	const E_SET_PRIMARY_KEY_VALUE = 5;
+	const E_FIND_RECORD = 6;
+	const E_SAVE_FAILED = 7;
+	const E_GET_WRONG_FIELD = 8;
+	const E_GET_LAZY_FIELD = 9;
+	const E_SET_WRONG_FIELD = 10;
+	const E_READ_BY_UQ_NOT_ALL_FLD = 11;
 }

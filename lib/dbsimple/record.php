@@ -10,7 +10,7 @@
 
 namespace OBX\Core\DBSimple;
 
-use OBX\Core\Exceptions\DBSimple\RecordError;
+use OBX\Core\Exceptions\DBSimple\RecordError as Err;
 use OBX\Core\MessagePoolDecorator;
 
 IncludeModuleLangFile(__FILE__);
@@ -26,29 +26,44 @@ class Record extends MessagePoolDecorator {
 	protected $primaryKeyAutoIncrement = true;
 
 	protected $fieldsValues = null;
-	protected $currentSelect = null;
 
 	// DBSResult integration
 	protected $result = null;
+
+	const DEF_LAZY_LOAD = false;
+	protected $lazyLoad = self::DEF_LAZY_LOAD;
 
 	/**
 	 * @param Entity $entity
 	 * @param int|string|null|Entity $id
 	 * @param null $select
-	 * @throws RecordError
+	 * @param bool $lazyLoad
+	 * @throws Err
 	 */
-	public function __construct(Entity $entity, $id = null, $select = null) {
+	public function __construct(Entity $entity, $id = null, $select = null, $lazyLoad = self::DEF_LAZY_LOAD) {
 		if( !($entity instanceof Entity) ) {
-			throw new RecordError('', RecordError::E_RECORD_ENTITY_NOT_SET);
+			throw new Err('', Err::E_RECORD_ENTITY_NOT_SET);
 		}
 		$this->entity = $entity;
 		$this->primaryKey = $this->entity->getMainTablePrimaryKey();
 		$this->primaryKeyAutoIncrement = $this->entity->getMainTableAutoIncrement();
-		$this->entityFields = array_keys($this->entity->getTableFieldsCheck());
+		if(empty($select) || !is_array($select)) {
+			$this->entityFields = array_keys($this->entity->getTableFieldsCheck());
+		}
+		else {
+			$this->entityFields = array();
+			$arRealTableFields = $this->entity->getTableFields();
+			foreach($select as &$field) {
+				if(!array_key_exists($field, $arRealTableFields)) {
+					$this->entityFields[] = $field;
+				}
+			}
+		}
 		$this->MessagePool = $this->entity->getMessagePool();
 		if(null !== $id) {
 			$this->read($id, $select);
 		}
+		$this->lazyLoad = !!$lazyLoad;
 	}
 
 	public function getEntity() {
@@ -75,16 +90,24 @@ class Record extends MessagePoolDecorator {
 
 	public function readFromDBResult(DBResult $result) {
 		if( !($result instanceof DBResult) ) {
-			$e = new RecordError('', RecordError::E_CANT_READ_FROM_DB_RESULT);
+			$e = new Err('', Err::E_READ_NOT_DBS_RESULT);
 			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
 		if($this->entity !== $result->getDBSimpleEntity()) {
-			$e = new RecordError('', RecordError::E_WRONG_DB_RESULT_ENTITY);
+			$e = new Err('', Err::E_WRONG_DB_RESULT_ENTITY);
 			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
 		if( $arResult = $result->Fetch() ) {
+			$primaryKey = $this->entity->getMainTablePrimaryKey();
+			if( !array_key_exists($primaryKey, $arResult)
+				&& !$this->_checkUniqueIndex($arResult, $foundUniqueName)
+			) {
+				$e = new Err('', Err::E_READ_NO_IDENTITY_FIELD);
+				$this->MessagePool->addErrorException($e);
+				throw $e;
+			}
 			foreach($arResult as $field => &$value) {
 				if(in_array($field, $this->entityFields)) {
 					$this->fieldsValues[$field] = $value;
@@ -92,7 +115,7 @@ class Record extends MessagePoolDecorator {
 			}
 		}
 		else {
-			$this->MessagePool->addErrorException(new RecordError('', RecordError::E_CANT_FIND_RECORD));
+			$this->MessagePool->addErrorException(new Err('', Err::E_FIND_RECORD));
 			return false;
 		}
 		$this->bNewRecord = false;
@@ -101,20 +124,22 @@ class Record extends MessagePoolDecorator {
 
 	public function __set($field, $value) {
 		if($this->primaryKey == $field) {
-			$e = new RecordError('', RecordError::E_CANT_SET_PRIMARY_KEY_VALUE);
+			$e = new Err('', Err::E_SET_PRIMARY_KEY_VALUE);
 			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
 
 		if( true === $this->bNewRecord ) {
 			if(!in_array($field, $this->entityFields)) {
-				$e = new RecordError(array('#FIELD#' => $field), RecordError::E_SET_WRONG_FIELD);
+				$e = new Err(array('#FIELD#' => $field), Err::E_SET_WRONG_FIELD);
 				$this->MessagePool->addErrorException($e);
 				throw $e;
 			}
 		}
-		elseif(!array_key_exists($field, $this->fieldsValues)) {
-			$e = new RecordError(array('#FIELD#' => $field), RecordError::E_SET_WRONG_FIELD);
+		elseif(!array_key_exists($field, $this->fieldsValues)
+			&& !in_array($field, $this->entityFields)
+		) {
+			$e = new Err(array('#FIELD#' => $field), Err::E_SET_WRONG_FIELD);
 			$this->MessagePool->addErrorException($e);
 			throw $e;
 		}
@@ -124,9 +149,36 @@ class Record extends MessagePoolDecorator {
 
 	public function __get($field) {
 		if(!array_key_exists($field, $this->fieldsValues)) {
-			$e = new RecordError(array('#FIELD#' => $field), RecordError::E_GET_WRONG_FIELD);
-			$this->MessagePool->addErrorException($e);
-			throw $e;
+			if( true !== $this->lazyLoad || !in_array($field, $this->entityFields)
+			) {
+				$e = new Err(array('#FIELD#' => $field), Err::E_GET_WRONG_FIELD);
+				$this->MessagePool->addErrorException($e);
+				throw $e;
+			}
+			// TODO: lazyLoad
+			// Что бы получить недостающие данные, нам необходим первичный или unique ключ
+			// Надо обязательно проверить получение этих данных в методе readFromDBResult
+			// если эти данные не пришли, надо выбросить исключение
+			$primaryKey = $this->entity->getMainTablePrimaryKey();
+			if(array_key_exists($primaryKey, $this->fieldsValues)) {
+				if( !$this->readFromDBResult($this->entity->getByID($this->fieldsValues[$primaryKey], null, true)) ) {
+					$e = new Err(array('#FIELD#' => $field), Err::E_GET_LAZY_FIELD);
+					$this->addErrorException($e);
+					throw $e;
+				}
+			}
+			else {
+				if( !$this->_checkUniqueIndex($this->fieldsValues, $foundUniqueName) ) {
+					$e = new Err(array('#FIELD#' => $field), Err::E_GET_LAZY_FIELD);
+					$this->addErrorException($e);
+					throw $e;
+				}
+				if( !$this->readByUniqueIndex($this->fieldsValues) ) {
+					$e = new Err(array('#FIELD#' => $field), Err::E_GET_LAZY_FIELD);
+					$this->addErrorException($e);
+					throw $e;
+				}
+			}
 		}
 		return $this->fieldsValues[$field];
 	}
@@ -159,61 +211,68 @@ class Record extends MessagePoolDecorator {
 	 * @param array $fields
 	 * @param null $indexName
 	 * @return bool
-	 * @throws \OBX\Core\Exceptions\DBSimple\RecordError
+	 * @throws Err
 	 * Прочитать запись по значениям полей уникального индекса
-	 * Имя индекса можно указать явно,
-	 * что бы не производить сопоставление о полям существующих в сущности уникальных индексов
-	 * (хотя это экономия на спичках...)
+	 * Имя индекса можно указать явно. Это необходимо в том случае если в $fields
+	 * указаны значения полей подходящих под несколько уникальных ключей и нужна явная
+	 * возможность убрать неопределенность. Однако если не указать, то будет выбран первый
+	 * попавшийся ключ, значения которого будут заполнены
 	 */
 	public function readByUniqueIndex(array $fields, $indexName = null) {
-		$uniqueIndexList = $this->entity->getTableUnique();
-		if(null !== $indexName && !empty($uniqueIndexList[$indexName])) {
-			if( !$this->_checkUniqueIndex($fields, $uniqueIndexList[$indexName]) ) {
-				$e = new RecordError('', RecordError::E_CANT_RD_BY_UQ_NOT_ALL_FLD);
-				$this->addErrorException($e);
-				// Здесь обязательно кидаем исключение,
-				// поскольку задача программиста проследить за тем, что бы были заполнены все поля unique-индекса
-				throw $e;
-			}
-			return $this->_readByUniqueIndex($fields, $uniqueIndexList[$indexName]);
-		}
-		// Ищем уникальный индекс, поля которого переданы в аргумент $fields
-		$foundUniqueIndex = null;
-		foreach($uniqueIndexList as $indexName => &$indexFields) {
-			if($this->_checkUniqueIndex($fields, $indexFields, true)) {
-				$foundUniqueIndex = $indexName;
-			}
-		}
-		if(null === $foundUniqueIndex) {
-			$e = new RecordError('', RecordError::E_CANT_RD_BY_UQ_NOT_ALL_FLD);
+		// Првоеряем есть ли поля уникального индекса
+		if(!$this->_checkUniqueIndex($fields, $indexName)) {
+			$e = new Err('', Err::E_READ_BY_UQ_NOT_ALL_FLD);
 			$this->addErrorException($e);
 			// Здесь обязательно кидаем исключение,
 			// поскольку задача программиста проследить за тем, что бы были заполнены все поля unique-индекса
 			throw $e;
 		}
-		return $this->_readByUniqueIndex($fields, $uniqueIndexList[$foundUniqueIndex]);
-	}
-
-	private function _readByUniqueIndex($fields) {
-		$dbResult = $this->entity->getList(null, $fields);
+		$arUniqueList = $this->entity->getTableUnique();
+		$filterFieldsList = $arUniqueList[$indexName];
+		$filter = array();
+		foreach($filterFieldsList as $filterField) {
+			$filter[$filterField] = $this->fieldsValues[$filterField];
+		}
+		$dbResult = $this->entity->getList(null, $filter);
 		if( !($result = $dbResult->Fetch()) ) {
-			$this->addErrorException(new RecordError('', RecordError::E_CANT_FIND_RECORD));
+			$this->addErrorException(new Err('', Err::E_FIND_RECORD));
 			return false;
 		}
 		$this->fieldsValues = $result;
 		$this->bNewRecord = false;
 		return true;
 	}
+
 	/**
 	 * Проверяет заполнены ли все поля указанного unique-индекса
 	 * @param array &$fields
-	 * @param array &$indexFields
+	 * @param string &$indexName
 	 * @return bool
 	 */
-	private function _checkUniqueIndex(&$fields, &$indexFields) {
-		foreach($indexFields as &$indexField) {
-			if(!array_key_exists($indexField, $fields)) {
-				return false;
+	private function _checkUniqueIndex(&$fields, &$indexName = null) {
+		static $uniqueIndexList = null;
+		if(null === $uniqueIndexList) $uniqueIndexList = $this->entity->getTableUnique();
+
+		if(null !== $indexName) {
+			if( !array_key_exists($indexName, $uniqueIndexList) ) {
+				$indexName = null;
+			}
+		}
+		if(null === $indexName) {
+			foreach($uniqueIndexList as $uniqueName => &$indexFieldsList) {
+				foreach($indexFieldsList as $fieldCode) {
+					if(!array_key_exists($fieldCode, $fields)) {
+						return false;
+					}
+				}
+				$indexName = $uniqueName;
+			}
+		}
+		else {
+			foreach($uniqueIndexList[$indexName] as $fieldCode) {
+				if(!array_key_exists($fieldCode, $fields)) {
+					return false;
+				}
 			}
 		}
 		return true;

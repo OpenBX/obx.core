@@ -29,10 +29,11 @@ class DBResult extends \CDBResult {
 	}
 
 	/**
+	 * @param bool $lazyLoad
 	 * @return Record
 	 */
-	public function fetchRecord() {
-		$record = new Record($this->_obxDBSimpleEntity);
+	public function fetchRecord($lazyLoad = Record::DEF_LAZY_LOAD) {
+		$record = new Record($this->_obxDBSimpleEntity, null, null, $lazyLoad);
 		if(true !== $record->readFromDBResult($this)) {
 			$record = null;
 		}
