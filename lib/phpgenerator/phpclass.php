@@ -126,7 +126,7 @@ class PhpClass implements IClass {
 	public function setLangPrefix($langPrefix) {
 		$langPrefix = strtoupper(trim($langPrefix));
 		if(!empty($langPrefix)) {
-			if(preg_match('~[A-Z0-9\\_\\-/\\|:]~', $langPrefix)) {
+			if(self::validateLangMessageID($langPrefix)) {
 				$this->langPrefix = $langPrefix;
 			}
 		}
@@ -388,9 +388,11 @@ class PhpClass implements IClass {
 	 * @param String $whiteOffset - отступ от начала каждй строки(для красоты)
 	 * @param Array $langRegister - если в массиве попадаются элементы для выноса в языковые файлы,
 	 * 								они регистрируются в этой ссылке
+	 * @param bool &$bDynamicValue
 	 * @return string
 	 */
-	static public function convertArray2PhpCode($array, $whiteOffset = '', &$langRegister = null) {
+	static public function convertArray2PhpCode($array, $whiteOffset = '', &$langRegister = null, &$bDynamicValue = false) {
+		$bDynamicValue = (true === $bDynamicValue)?true:false;
 		$complexArray = true;
 		if(count($array)==1) {
 			list($firstElementKey, $firstElementValue) = each($array);
@@ -421,9 +423,41 @@ class PhpClass implements IClass {
 				}
 				elseif(is_string($paramValue) || is_object($paramValue)) {
 					$paramValue = ''.$paramValue;
-					if('::' === substr($paramValue, 0, 2)) {
-						$qt = '';
-						$paramValue = trim(substr($paramValue, 2));
+
+					$dblColonPos = strpos($paramValue, '::');
+					if(false !== $dblColonPos) {
+						if($dblColonPos == 0) {
+							$qt = '';
+							$paramValue = trim(substr($paramValue, 2));
+							$bDynamicValue = true;
+						}
+						elseif($dblColonPos > 0) {
+							list($constClass, $constName) = explode('::', $paramValue);
+							$constClass = trim($constClass);
+							$constName = trim($constName);
+							if('' === $constClass) {
+								$qt = '';
+								$bDynamicValue = true;
+								$paramValue = $constName;
+							}
+							elseif('static' === $constClass && self::validateConstName($constName)) {
+								$qt = '';
+								$bDynamicValue = true;
+								$paramValue = 'static::'.$constName;
+							}
+							elseif('self' === $constClass && self::validateConstName($constName)) {
+								$qt = '';
+								$paramValue = 'static::'.$constName;
+							}
+							elseif(self::validateClass($constClass) && self::validateConstName($constName)) {
+								$qt = '';
+								$paramValue = $constClass.'::'.$constName;
+							}
+							else {
+								$paramValue = str_replace('\\', '\\\\', $paramValue);
+								$paramValue = str_replace('\'', '\\\'', $paramValue);
+							}
+						}
 					}
 					else {
 						$paramValue = str_replace('\\', '\\\\', $paramValue);
@@ -433,20 +467,30 @@ class PhpClass implements IClass {
 				$strResult .= ($complexArray?$whiteOffset."\t":'').$pqt.$paramName.$pqt." => ".$qt.$paramValue.$qt.($complexArray?",\n":'');
 			}
 			else {
-				if(!empty($paramValue['lang']) && (!empty($paramValue['ru']) || !empty($paramValue['en']))) {
-					$langRegister[$paramValue['lang']] = array(
-						'ru' => $paramValue['ru'],
-						'en' => $paramValue['en']
-					);
-					$strResult .= $whiteOffset
-						."\t".$pqt.$paramName.$pqt
-						.' => Loc::getMessage(\''.$paramValue['lang'].'\')'
-						.".\n";
+				if(!empty($paramValue['lang'])) {
+					$langRegister[$paramValue['lang']] = array();
+					$msgID = null;
+					foreach($paramValue as $lang => &$message) {
+						if('lang' === $lang && self::validateLangMessageID($message)) {
+							$msgID = $message;
+							$strResult .= $whiteOffset
+								."\t".$pqt.$paramName.$pqt
+								.' => Loc::getMessage(\''.$msgID.'\')'
+								.".\n";
+							continue;
+						}
+						if( null !== $msgID && preg_match('~^[a-z]{2}$~', $lang) ) {
+							if(empty($langRegister[$msgID]) || !is_array($langRegister[$msgID])) {
+								$langRegister[$msgID] = array();
+							}
+							$langRegister[$msgID][$lang] = $message;
+						}
+					}
 				}
 				else {
 					$strResult .= $whiteOffset
 						."\t".$pqt.$paramName.$pqt
-						." => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t", $langRegister)
+						." => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t", $langRegister, $bDynamicValue)
 						.",\n";
 				}
 			}
@@ -469,11 +513,11 @@ class PhpClass implements IClass {
 			$msgID = null;
 			foreach($langArray as $lang => $message) {
 				$lang = strtolower(trim($lang));
-				if('lang' === $lang) {
+				if('lang' === $lang && self::validateLangMessageID($message)) {
 					$msgID = $message;
 					continue;
 				}
-				if(preg_match('~^[a-z]{2}$~', $lang)) {
+				if(preg_match('~^[a-z]{2}$~', $lang) && self::validateLangMessageID($msgID) ) {
 					if(empty($this->langMessages[$msgID]) || !is_array($this->langMessages[$msgID])) {
 						$this->langMessages[$msgID] = array();
 					}
@@ -481,6 +525,13 @@ class PhpClass implements IClass {
 				}
 			}
 		}
+	}
+
+	static private function validateLangMessageID($msgID) {
+		if( preg_match('~[a-zA-Z0-9\\_\\-/\\|:]~', $msgID) ) {
+			return true;
+		}
+		return false;
 	}
 
 	public function getLangMessages($msgID) {

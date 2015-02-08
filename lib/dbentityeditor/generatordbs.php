@@ -35,9 +35,9 @@ class GeneratorDBS extends Generator {
 	private $_arSortDefault = null;
 	private $_arGroupByFields = null;
 	private $_arTableFieldsDefault = null;
-	//private $_arTableFieldsCheck = null;
-	//private $_arDBSimpleLangMessages = null;
-	//private $_arFieldsDescription = null;
+	private $_arTableFieldsCheck = null;
+	private $_arDBSimpleLangMessages = null;
+	private $_arFieldsDescription = null;
 	private $_arTableJoinNullFieldDefaults = null;
 
 
@@ -89,10 +89,10 @@ class GeneratorDBS extends Generator {
 		$this->phpClass->addVariableIfNotNull('protected', '_arTableFieldsDefault', $this->_arTableFieldsDefault);
 		$this->phpClass->addVariableIfNotNull('protected', '_arTableJoinNullFieldDefaults', $this->_arTableJoinNullFieldDefaults);
 
+		$this->phpClass->addVariableIfNotNull('protected', '_arFieldsCheck', array(), $this->_arFieldsCheck);
+
 		$this->phpClass->addMethod('public', '__construct', array(),
-			 $this->getCode_arFieldsCheck()
-			.$this->getCode_arDBSimpleLangMessages()
-			.$this->getCode_arFieldsDescription()
+			$this->getVariableDynamicInitCode('all')
 		);
 	}
 
@@ -259,21 +259,22 @@ class GeneratorDBS extends Generator {
 			if(true === $field['required'] && !empty($field['required_error'])) {
 				$_arDBSimpleLangMessages['REQ_FLD_'.$fieldCode] = array(
 						'TYPE' => 'E',
-						'TEXT' => 'lang:'.$field['required_error']['lang'],
+						'TEXT' => $field['required_error'],
 						'CODE' => ++$iErrorCode
 				);
+				$this->phpClass->setLangMessageArray($field['required_error']);
 			}
 		}
 		$uniqueList = $this->config->getUnique();
 		foreach($uniqueList as $uqCode => $unique) {
 			$_arDBSimpleLangMessages['DUP_ADD_'.$uqCode] = array(
 				'TYPE' => 'E',
-				'TEXT' => 'lang:'.$unique['duplicate_error_add']['lang'],
+				'TEXT' => $unique['duplicate_error_add'],
 				'CODE' => ++$iErrorCode
 			);
 			$_arDBSimpleLangMessages['DUP_UPD_'.$uqCode] = array(
 				'TYPE' => 'E',
-				'TEXT' => 'lang:'.$unique['duplicate_error_update']['lang'],
+				'TEXT' => $unique['duplicate_error_update'],
 				'CODE' => ++$iErrorCode
 			);
 		}
@@ -281,18 +282,20 @@ class GeneratorDBS extends Generator {
 		$langMessages = $this->config->getLangMessages();
 		$_arDBSimpleLangMessages['NOTHING_TO_DELETE'] = array(
 			'TYPE' => 'E',
-			'TEXT' => 'lang:'.$langMessages['error_nothing_to_delete']['lang'],
+			'TEXT' => $langMessages['error_nothing_to_delete'],
 			'CODE' => ++$iErrorCode
 		);
 		$_arDBSimpleLangMessages['NOTHING_TO_UPDATE'] = array(
 			'TYPE' => 'E',
-			'TEXT' => 'lang:'.$langMessages['error_nothing_to_update']['lang'],
+			'TEXT' => $langMessages['error_nothing_to_update'],
 			'CODE' => ++$iErrorCode
 		);
 		$code_arDBSimpleLangMessages = "\t\t".'$this->_arDBSimpleLangMessages = '
 			.PhpClass::convertArray2PhpCode($_arDBSimpleLangMessages, "\t\t", $langRegister).";\n";
 		foreach($langRegister as $msgID => $langArray) {
-
+			foreach($langArray as $lang => $message) {
+				$this->phpClass->setLangMessage($msgID, $lang, $message);
+			}
 		}
 		return $code_arDBSimpleLangMessages;
 	}
@@ -300,7 +303,6 @@ class GeneratorDBS extends Generator {
 	private function getCode_arFieldsDescription() {
 		$_arFieldsDescription = array();
 		$arFieldsList = $this->config->getFieldsList(false);
-		$langPrefix = $this->config->getLangPrefix();
 		foreach($arFieldsList as $fieldCode) {
 			$field = $this->config->getField($fieldCode);
 			$_arFieldsDescription[$fieldCode] = array(
