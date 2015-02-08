@@ -22,6 +22,7 @@ class PhpClass implements IClass {
 	private $extends = null;
 	private $implements = array();
 	private $variables = array();
+	private $variablesDynamicInit = array();
 	private $methods = array();
 	private $constants = array();
 	private $langPrefix = null;
@@ -179,7 +180,7 @@ class PhpClass implements IClass {
 		return $this->constants[$name];
 	}
 
-	public function addVariable($access, $name, $initialValue, $static = false) {
+	public function addVariable($access, $name, $initialValue, $static = false, $bLangAutoRegister = false) {
 		$access = trim($access);
 		switch($access) {
 			case 'public':
@@ -193,52 +194,59 @@ class PhpClass implements IClass {
 		if(!self::validateVariableName($name)) {
 			throw new Err('', Err::E_ADD_VAR_WRG_NAME);
 		}
-		$qt = '\'';
-		if(null === $initialValue) {
-			$qt = ''; $initialValue = 'null';
-		}
-		elseif(is_bool($initialValue)) {
-			$qt = '';
-			$initialValue = ($initialValue?'true':false);
-		}
-		elseif(is_numeric($initialValue)) {
-			$qt = '';
-		}
-		elseif(is_string($initialValue) || is_object($initialValue)) {
-			$initialValue = ''.$initialValue;
-			if('const:' === substr($initialValue, 0, 6)) {
-				$qt = '';
-				$initialValue = trim(substr($initialValue, 6));
-				if(!self::validateConstName($initialValue)) {
-					throw new Err('', Err::E_ADD_VAR_INIT_VAL_NOT_CONST);
-				}
-			}
-			else {
-				$initialValue = str_replace('\\', '\\\\', $initialValue);
-				$initialValue = str_replace('\'', '\\\'', $initialValue);
-			}
-		}
-		elseif(is_array($initialValue)) {
-			$qt = '';
-			$initialValue = self::convertArray2PhpCode($initialValue, "\t");
-		}
+		$value = self::convertValue2PhpCode($initialValue, "\t", $bDynamicValue, $valueType, $langRegister);
 		$this->variables[$name] = array(
 			'name' => $name,
-			'value' => $qt.$initialValue.$qt,
+			'value' => $value,
+			'type' => $valueType,
 			'access' => $access,
 			'static' => $static,
 			'definition' => ($static?'static ':'').$access.' $'.$name,
-			'php' => ($static?'static ':'').$access.' $'.$name.' = '.$qt.$initialValue.$qt.';'
+			'dynamicValue' => $bDynamicValue,
+			'php' => ($static?'static ':'').$access.' $'.$name.' = '.($bDynamicValue?'null':$value).';'
 		);
-	}
-	public function addVariableIfNotNull($access, $name, $initialValue, $static = false) {
-		if(null !== $initialValue) {
-			$this->addVariable($access, $name, $initialValue, $static);
+		if($bDynamicValue) {
+			$this->variablesDynamicInit[$name] = &$this->variables[$name];
+		}
+		if(true === $bLangAutoRegister && !empty($langRegister)) {
+			foreach($langRegister as $msgID => &$messagesList) {
+				foreach($messagesList as $lang => &$message) {
+					$this->setLangMessage($msgID, $lang, $message);
+				}
+			}
 		}
 	}
-	public function addVariableIfNotEmpty($access, $name, $initialValue, $static = false) {
+	public function addVariableIfNotNull($access, $name, $initialValue, $static = false, $bLangAutoRegister = false) {
+		if(null !== $initialValue) {
+			$this->addVariable($access, $name, $initialValue, $static, $bLangAutoRegister);
+		}
+	}
+	public function addVariableIfNotEmpty($access, $name, $initialValue, $static = false, $bLangAutoRegister = false) {
 		if(!empty($initialValue)) {
-			$this->addVariable($access, $name, $initialValue, $static);
+			$this->addVariable($access, $name, $initialValue, $static, $bLangAutoRegister);
+		}
+	}
+
+	public function getVariableDynamicInitCode($varName = null) {
+		if(null !== $varName) {
+			if(!empty($this->variablesDynamicInit[$varName])) {
+				$varValue = $this->variablesDynamicInit[$varName]['value'];
+				$varValue = str_replace("\n\t", "\n\t\t", $varValue);
+				$varValue = str_replace(
+					'Loc::getMessage(\'%_',
+					'Loc::getMessage(\''.$this->langPrefix.'_',
+					$varValue
+				);
+				return "\t\t\$this->".$varName.' = '.$varValue.";\n";
+			}
+			return '';
+		}
+		else {
+			$result = '';
+			foreach($this->variables as &$variable) {
+				$result .= $this->getVariableDynamicInitCode($variable['name']);
+			}
+			return $result;
 		}
 	}
 
@@ -389,24 +397,42 @@ class PhpClass implements IClass {
 	 * @param Array $langRegister - если в массиве попадаются элементы для выноса в языковые файлы,
 	 * 								они регистрируются в этой ссылке
 	 * @param bool &$bDynamicValue
+	 * @param string &$valueType
 	 * @return string
 	 */
-	static public function convertArray2PhpCode($value, $whiteOffset = '', &$langRegister = null, &$bDynamicValue = false) {
+	static public function convertValue2PhpCode($value, $whiteOffset = '', &$bDynamicValue = false, &$valueType = null, &$langRegister = null) {
 		$bDynamicValue = (true === $bDynamicValue)?true:false;
 		$strResult = '';
 		if(!is_array($value)) {
 			$qt = '\'';
 			if(null === $value) {
+				$valueType = 'null';
 				$qt = ''; $value = 'null';
 			}
 			elseif(is_bool($value)) {
+				$valueType = 'bool';
 				$qt = '';
 				$value = ($value?'true':false);
 			}
 			elseif(is_numeric($value)) {
+				if(is_int($value)) {
+					$valueType = 'int';
+				}
+				elseif(is_float($value)) {
+					$valueType = 'float';
+				}
+				elseif( floatval($value) == intval($value) ) {
+					$valueType = 'int';
+					$value = intval($value);
+				}
+				else {
+					$value = 'float';
+					$value = floatval($value);
+				}
 				$qt = '';
 			}
 			elseif(is_string($value) || is_object($value)) {
+				$valueType = 'string';
 				$value = ''.$value;
 				$dblColonPos = strpos($value, '::');
 				if(false !== $dblColonPos) {
@@ -456,8 +482,8 @@ class PhpClass implements IClass {
 			foreach($value as $lang => &$message) {
 				if('lang' === $lang ) {
 					$msgID = $message;
-					$strResult .= 'Loc::getMessage(\''.$msgID.'\')'
-						.",\n";
+					$strResult .= "Loc::getMessage('".$msgID."')";
+					$bDynamicValue = true;
 					continue;
 				}
 				if( null !== $msgID && preg_match('~^[a-z]{2}$~', $lang) ) {
@@ -467,8 +493,10 @@ class PhpClass implements IClass {
 					$langRegister[$msgID][$lang] = $message;
 				}
 			}
+			$valueType = 'lang';
 		}
 		else {
+			$valueType = 'array';
 			$complexArray = true;
 			if(count($value)==1) {
 				list($firstElementKey, $firstElementValue) = each($value);
@@ -478,36 +506,19 @@ class PhpClass implements IClass {
 				unset($firstElementKey, $firstElementValue);
 				reset($value);
 			}
-
+			$strResult = 'array('.($complexArray?"\n":'');
 			foreach($value as $arKey => &$arValue) {
-
-			}
-			$pqt = '\'';
-			if(is_numeric($arKey) && floatval($arKey) == intval($arKey)) {
-				$pqt = '';
-			}
-			$strResult = 'array('.($complexArray?"\n".$whiteOffset."\t":'')
-			.$pqt.$arKey.$pqt." => ".self::convertArray2PhpCode($arValue)
-			.($complexArray?",\n":'');
-		}
-
-
-
-
-
-
-
-			else {
-
-				else {
-					$strResult .= $whiteOffset
-						."\t".$pqt.$arKey.$pqt
-						." => ".self::convertArray2PhpCode($value, $whiteOffset."\t", $langRegister, $bDynamicValue)
-						.",\n";
+				$pqt = '\'';
+				if(is_numeric($arKey) && floatval($arKey) == intval($arKey)) {
+					$pqt = '';
 				}
+				$strResult .= ($complexArray?$whiteOffset."\t":'')
+					.$pqt.$arKey.$pqt." => "
+					.self::convertValue2PhpCode($arValue, $whiteOffset."\t", $bDynamicValue, $notValueTypeVar=null, $langRegister)
+					.($complexArray?",\n":'');
 			}
+			$strResult .= ($complexArray?$whiteOffset:'').')';
 		}
-		$strResult .= ($complexArray?$whiteOffset:'').")";
 		return $strResult;
 	}
 
@@ -561,7 +572,7 @@ class PhpClass implements IClass {
 	}
 
 	public function generateLangFiles() {
-
+		//TODO: Написать класс генерации языковых файлов
 	}
 
 	static protected function validateClass($class) {
