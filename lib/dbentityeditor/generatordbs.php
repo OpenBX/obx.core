@@ -92,7 +92,7 @@ class GeneratorDBS extends Generator {
 		$this->phpClass->addVariableIfNotNull('protected', '_arFieldsCheck', array(), $this->_arFieldsCheck);
 
 		$this->phpClass->addMethod('public', '__construct', array(),
-			$this->getVariableDynamicInitCode('all')
+			$this->getVariableDynamicInitCode()
 		);
 	}
 
@@ -238,7 +238,7 @@ class GeneratorDBS extends Generator {
 		}
 	}
 
-	private function getCode_arFieldsCheck() {
+	private function init_arFieldsCheck() {
 		$code_arFieldsCheck = "\t\t".'$this->_arTableFieldsCheck = array('."\n";
 		$arFieldsList = $this->config->getFieldsList(true);
 		foreach($arFieldsList as $fieldAlias) {
@@ -250,7 +250,7 @@ class GeneratorDBS extends Generator {
 		return $code_arFieldsCheck;
 	}
 
-	private function getCode_arDBSimpleLangMessages() {
+	private function init_arDBSimpleLangMessages() {
 		$_arDBSimpleLangMessages = array();
 		$fieldsList = $this->config->getFieldsList(true);
 		$iErrorCode = 0;

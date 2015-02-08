@@ -384,113 +384,125 @@ class PhpClass implements IClass {
 
 	/**
 	 * Возвращает строку с php-кодом массива переданного на вход
-	 * @param Array $array - входной массив, для вывода в виде php-кода
+	 * @param Array $value - входной массив, для вывода в виде php-кода
 	 * @param String $whiteOffset - отступ от начала каждй строки(для красоты)
 	 * @param Array $langRegister - если в массиве попадаются элементы для выноса в языковые файлы,
 	 * 								они регистрируются в этой ссылке
 	 * @param bool &$bDynamicValue
 	 * @return string
 	 */
-	static public function convertArray2PhpCode($array, $whiteOffset = '', &$langRegister = null, &$bDynamicValue = false) {
+	static public function convertArray2PhpCode($value, $whiteOffset = '', &$langRegister = null, &$bDynamicValue = false) {
 		$bDynamicValue = (true === $bDynamicValue)?true:false;
-		$complexArray = true;
-		if(count($array)==1) {
-			list($firstElementKey, $firstElementValue) = each($array);
-			if(!is_array($firstElementValue)) {
-				$complexArray = false;
+		$strResult = '';
+		if(!is_array($value)) {
+			$qt = '\'';
+			if(null === $value) {
+				$qt = ''; $value = 'null';
 			}
-			unset($firstElementKey, $firstElementValue);
-			reset($array);
-		}
-
-		$strResult = 'array('.($complexArray?"\n":'');
-		foreach($array as $paramName => &$paramValue) {
-			$pqt = '\'';
-			if(is_numeric($paramName) && floatval($paramName) == intval($paramName)) {
-				$pqt = '';
+			elseif(is_bool($value)) {
+				$qt = '';
+				$value = ($value?'true':false);
 			}
-			if(!is_array($paramValue)) {
-				$qt = '\'';
-				if(null === $paramValue) {
-					$qt = ''; $paramValue = 'null';
-				}
-				elseif(is_bool($paramValue)) {
-					$qt = '';
-					$paramValue = ($paramValue?'true':false);
-				}
-				elseif(is_numeric($paramValue)) {
-					$qt = '';
-				}
-				elseif(is_string($paramValue) || is_object($paramValue)) {
-					$paramValue = ''.$paramValue;
-
-					$dblColonPos = strpos($paramValue, '::');
-					if(false !== $dblColonPos) {
-						if($dblColonPos == 0) {
+			elseif(is_numeric($value)) {
+				$qt = '';
+			}
+			elseif(is_string($value) || is_object($value)) {
+				$value = ''.$value;
+				$dblColonPos = strpos($value, '::');
+				if(false !== $dblColonPos) {
+					if($dblColonPos == 0) {
+						$qt = '';
+						$value = trim(substr($value, 2));
+						$bDynamicValue = true;
+					}
+					elseif($dblColonPos > 0) {
+						list($constClass, $constName) = explode('::', $value);
+						$constClass = trim($constClass);
+						$constName = trim($constName);
+						if('' === $constClass) {
 							$qt = '';
-							$paramValue = trim(substr($paramValue, 2));
 							$bDynamicValue = true;
+							$value = $constName;
 						}
-						elseif($dblColonPos > 0) {
-							list($constClass, $constName) = explode('::', $paramValue);
-							$constClass = trim($constClass);
-							$constName = trim($constName);
-							if('' === $constClass) {
-								$qt = '';
-								$bDynamicValue = true;
-								$paramValue = $constName;
-							}
-							elseif('static' === $constClass && self::validateConstName($constName)) {
-								$qt = '';
-								$bDynamicValue = true;
-								$paramValue = 'static::'.$constName;
-							}
-							elseif('self' === $constClass && self::validateConstName($constName)) {
-								$qt = '';
-								$paramValue = 'static::'.$constName;
-							}
-							elseif(self::validateClass($constClass) && self::validateConstName($constName)) {
-								$qt = '';
-								$paramValue = $constClass.'::'.$constName;
-							}
-							else {
-								$paramValue = str_replace('\\', '\\\\', $paramValue);
-								$paramValue = str_replace('\'', '\\\'', $paramValue);
-							}
+						elseif('static' === $constClass && self::validateConstName($constName)) {
+							$qt = '';
+							$bDynamicValue = true;
+							$value = 'static::'.$constName;
 						}
-					}
-					else {
-						$paramValue = str_replace('\\', '\\\\', $paramValue);
-						$paramValue = str_replace('\'', '\\\'', $paramValue);
-					}
-				}
-				$strResult .= ($complexArray?$whiteOffset."\t":'').$pqt.$paramName.$pqt." => ".$qt.$paramValue.$qt.($complexArray?",\n":'');
-			}
-			else {
-				if(!empty($paramValue['lang'])) {
-					$langRegister[$paramValue['lang']] = array();
-					$msgID = null;
-					foreach($paramValue as $lang => &$message) {
-						if('lang' === $lang && self::validateLangMessageID($message)) {
-							$msgID = $message;
-							$strResult .= $whiteOffset
-								."\t".$pqt.$paramName.$pqt
-								.' => Loc::getMessage(\''.$msgID.'\')'
-								.".\n";
-							continue;
+						elseif('self' === $constClass && self::validateConstName($constName)) {
+							$qt = '';
+							$value = 'static::'.$constName;
 						}
-						if( null !== $msgID && preg_match('~^[a-z]{2}$~', $lang) ) {
-							if(empty($langRegister[$msgID]) || !is_array($langRegister[$msgID])) {
-								$langRegister[$msgID] = array();
-							}
-							$langRegister[$msgID][$lang] = $message;
+						elseif(self::validateClass($constClass) && self::validateConstName($constName)) {
+							$qt = '';
+							$value = $constClass.'::'.$constName;
+						}
+						else {
+							$value = str_replace('\\', '\\\\', $value);
+							$value = str_replace('\'', '\\\'', $value);
 						}
 					}
 				}
 				else {
+					$value = str_replace('\\', '\\\\', $value);
+					$value = str_replace('\'', '\\\'', $value);
+				}
+			}
+			$strResult = $qt.$value.$qt;
+		}
+		elseif(!empty($value['lang']) && self::validateLangMessageID($value['lang'])) {
+			$langRegister[$value['lang']] = array();
+			$msgID = null;
+			foreach($value as $lang => &$message) {
+				if('lang' === $lang ) {
+					$msgID = $message;
+					$strResult .= 'Loc::getMessage(\''.$msgID.'\')'
+						.",\n";
+					continue;
+				}
+				if( null !== $msgID && preg_match('~^[a-z]{2}$~', $lang) ) {
+					if(empty($langRegister[$msgID]) || !is_array($langRegister[$msgID])) {
+						$langRegister[$msgID] = array();
+					}
+					$langRegister[$msgID][$lang] = $message;
+				}
+			}
+		}
+		else {
+			$complexArray = true;
+			if(count($value)==1) {
+				list($firstElementKey, $firstElementValue) = each($value);
+				if(!is_array($firstElementValue)) {
+					$complexArray = false;
+				}
+				unset($firstElementKey, $firstElementValue);
+				reset($value);
+			}
+
+			foreach($value as $arKey => &$arValue) {
+
+			}
+			$pqt = '\'';
+			if(is_numeric($arKey) && floatval($arKey) == intval($arKey)) {
+				$pqt = '';
+			}
+			$strResult = 'array('.($complexArray?"\n".$whiteOffset."\t":'')
+			.$pqt.$arKey.$pqt." => ".self::convertArray2PhpCode($arValue)
+			.($complexArray?",\n":'');
+		}
+
+
+
+
+
+
+
+			else {
+
+				else {
 					$strResult .= $whiteOffset
-						."\t".$pqt.$paramName.$pqt
-						." => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t", $langRegister, $bDynamicValue)
+						."\t".$pqt.$arKey.$pqt
+						." => ".self::convertArray2PhpCode($value, $whiteOffset."\t", $langRegister, $bDynamicValue)
 						.",\n";
 				}
 			}
