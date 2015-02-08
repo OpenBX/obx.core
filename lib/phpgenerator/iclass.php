@@ -14,4 +14,5 @@ namespace OBX\Core\PhpGenerator;
 interface IClass extends IClassInfo, IClassEdit {
 	function useLangFile($bUse = true);
 	function generateClass();
+	function generateLangFiles();
 } 

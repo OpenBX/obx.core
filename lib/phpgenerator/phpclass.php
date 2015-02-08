@@ -24,6 +24,8 @@ class PhpClass implements IClass {
 	private $variables = array();
 	private $methods = array();
 	private $constants = array();
+	private $langPrefix = null;
+	private $langMessages = array();
 
 	public function __construct($class) {
 		$arClass = self::splitClassNameFromNamespace($class);
@@ -114,6 +116,19 @@ class PhpClass implements IClass {
 				throw new Err('', Err::E_SET_USES_ALIAS_EXIST);
 			}
 			$this->uses[$use] = $alias;
+		}
+	}
+
+	public function getLangPrefix() {
+		return $this->langPrefix;
+	}
+
+	public function setLangPrefix($langPrefix) {
+		$langPrefix = strtoupper(trim($langPrefix));
+		if(!empty($langPrefix)) {
+			if(preg_match('~[A-Z0-9\\_\\-/\\|:]~', $langPrefix)) {
+				$this->langPrefix = $langPrefix;
+			}
 		}
 	}
 
@@ -371,9 +386,11 @@ class PhpClass implements IClass {
 	 * Возвращает строку с php-кодом массива переданного на вход
 	 * @param Array $array - входной массив, для вывода в виде php-кода
 	 * @param String $whiteOffset - отступ от начала каждй строки(для красоты)
+	 * @param Array $langRegister - если в массиве попадаются элементы для выноса в языковые файлы,
+	 * 								они регистрируются в этой ссылке
 	 * @return string
 	 */
-	static public function convertArray2PhpCode($array, $whiteOffset = '') {
+	static public function convertArray2PhpCode($array, $whiteOffset = '', &$langRegister = null) {
 		$complexArray = true;
 		if(count($array)==1) {
 			list($firstElementKey, $firstElementValue) = each($array);
@@ -416,14 +433,72 @@ class PhpClass implements IClass {
 				$strResult .= ($complexArray?$whiteOffset."\t":'').$pqt.$paramName.$pqt." => ".$qt.$paramValue.$qt.($complexArray?",\n":'');
 			}
 			else {
-				$strResult .= $whiteOffset
-					."\t".$pqt.$paramName.$pqt
-					." => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t")
-					.",\n";
+				if(!empty($paramValue['lang']) && (!empty($paramValue['ru']) || !empty($paramValue['en']))) {
+					$langRegister[$paramValue['lang']] = array(
+						'ru' => $paramValue['ru'],
+						'en' => $paramValue['en']
+					);
+					$strResult .= $whiteOffset
+						."\t".$pqt.$paramName.$pqt
+						.' => Loc::getMessage(\''.$paramValue['lang'].'\')'
+						.".\n";
+				}
+				else {
+					$strResult .= $whiteOffset
+						."\t".$pqt.$paramName.$pqt
+						." => ".self::convertArray2PhpCode($paramValue, $whiteOffset."\t", $langRegister)
+						.",\n";
+				}
 			}
 		}
 		$strResult .= ($complexArray?$whiteOffset:'').")";
 		return $strResult;
+	}
+
+	public function setLangMessage($msgID, $lang, $message) {
+		if( !array_key_exists($msgID, $this->langMessages)
+			|| !is_array($this->langMessages[$msgID])
+		) {
+			$this->langMessages[$msgID] = array();
+		}
+		$this->langMessages[$msgID][$lang] = $message;
+	}
+
+	public function setLangMessageArray($langArray) {
+		if(!empty($langArray['lang'])) {
+			$msgID = null;
+			foreach($langArray as $lang => $message) {
+				$lang = strtolower(trim($lang));
+				if('lang' === $lang) {
+					$msgID = $message;
+					continue;
+				}
+				if(preg_match('~^[a-z]{2}$~', $lang)) {
+					if(empty($this->langMessages[$msgID]) || !is_array($this->langMessages[$msgID])) {
+						$this->langMessages[$msgID] = array();
+					}
+					$this->langMessages[$msgID][$lang] = $message;
+				}
+			}
+		}
+	}
+
+	public function getLangMessages($msgID) {
+		if(!empty($this->langMessages[$msgID]) && is_array($this->langMessages[$msgID])) {
+			return $this->langMessages[$msgID];
+		}
+		return null;
+	}
+
+	public function getLangMessage($msgID, $lang) {
+		if(!empty($this->langMessages[$msgID]) && !empty($this->langMessages[$msgID][$lang])) {
+			return $this->langMessages[$msgID][$lang];
+		}
+		return null;
+	}
+
+	public function generateLangFiles() {
+
 	}
 
 	static protected function validateClass($class) {

@@ -25,4 +25,7 @@ interface IClassInfo {
 	function getVariable($name);
 	function getConstantsList($bFullDescription = false);
 	function getConstant($name);
+	function getLangPrefix();
+	function getLangMessages($msgID);
+	function getLangMessage($msgID, $lang);
 } 

@@ -209,7 +209,7 @@ class Config implements IConfig
 		$this->langPrefix = str_replace('\\', '_', strtoupper($this->namespace.'\\'.$this->class));
 		if(!empty($configData['lang_prefix'])) {
 			$configData['lang_prefix'] = strtoupper(trim($configData['lang_prefix']));
-			if(preg_match('~[A-Z0-9\\_\\-/\\|]~', $configData['lang_prefix'])) {
+			if(preg_match('~[A-Z0-9\\_\\-/\\|:]~', $configData['lang_prefix'])) {
 				$this->langPrefix = $configData['lang_prefix'];
 			}
 		}
@@ -771,11 +771,19 @@ class Config implements IConfig
 		return $this->langPrefix;
 	}
 	public function getLangMessages() {
+		$fieldsLang = array();
+		foreach($this->fields as &$field) {
+			$fieldsLang[$field['code']] = array(
+				'title' => $field['title'],
+				'description' => $field['description']
+			);
+		}
 		return array(
 			'title' => $this->title,
 			'description' => $this->description,
 			'error_nothing_to_delete' => $this->errorNothingToDelete,
 			'error_nothing_to_update' => $this->errorNothingToUpdate,
+			'fields' => $fieldsLang
 		);
 	}
 	public function getFieldsList($bOWnFields = false) {

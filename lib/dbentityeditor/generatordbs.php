@@ -252,7 +252,6 @@ class GeneratorDBS extends Generator {
 
 	private function getCode_arDBSimpleLangMessages() {
 		$_arDBSimpleLangMessages = array();
-		$langPrefix = $this->config->getLangPrefix();
 		$fieldsList = $this->config->getFieldsList(true);
 		$iErrorCode = 0;
 		foreach($fieldsList as $fieldCode) {
@@ -260,7 +259,7 @@ class GeneratorDBS extends Generator {
 			if(true === $field['required'] && !empty($field['required_error'])) {
 				$_arDBSimpleLangMessages['REQ_FLD_'.$fieldCode] = array(
 						'TYPE' => 'E',
-						'TEXT' => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['required_error']['lang'])."')",
+						'TEXT' => 'lang:'.$field['required_error']['lang'],
 						'CODE' => ++$iErrorCode
 				);
 			}
@@ -269,14 +268,12 @@ class GeneratorDBS extends Generator {
 		foreach($uniqueList as $uqCode => $unique) {
 			$_arDBSimpleLangMessages['DUP_ADD_'.$uqCode] = array(
 				'TYPE' => 'E',
-				'TEXT' => "::Loc::getMessage('"
-					.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_add']['lang'])."')",
+				'TEXT' => 'lang:'.$unique['duplicate_error_add']['lang'],
 				'CODE' => ++$iErrorCode
 			);
 			$_arDBSimpleLangMessages['DUP_UPD_'.$uqCode] = array(
 				'TYPE' => 'E',
-				'TEXT' => "::Loc::getMessage('"
-					.str_replace('%_', $langPrefix.'_', $unique['duplicate_error_update']['lang'])."')",
+				'TEXT' => 'lang:'.$unique['duplicate_error_update']['lang'],
 				'CODE' => ++$iErrorCode
 			);
 		}
@@ -284,19 +281,19 @@ class GeneratorDBS extends Generator {
 		$langMessages = $this->config->getLangMessages();
 		$_arDBSimpleLangMessages['NOTHING_TO_DELETE'] = array(
 			'TYPE' => 'E',
-			'TEXT' => "::Loc::getMessage('"
-				.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_delete']['lang'])."')",
+			'TEXT' => 'lang:'.$langMessages['error_nothing_to_delete']['lang'],
 			'CODE' => ++$iErrorCode
 		);
 		$_arDBSimpleLangMessages['NOTHING_TO_UPDATE'] = array(
 			'TYPE' => 'E',
-			'TEXT' => "::Loc::getMessage('"
-				.str_replace('%_', $langPrefix.'_', $langMessages['error_nothing_to_update']['lang'])
-				."')\n",
+			'TEXT' => 'lang:'.$langMessages['error_nothing_to_update']['lang'],
 			'CODE' => ++$iErrorCode
 		);
 		$code_arDBSimpleLangMessages = "\t\t".'$this->_arDBSimpleLangMessages = '
-			.PhpClass::convertArray2PhpCode($_arDBSimpleLangMessages, "\t\t").";\n";
+			.PhpClass::convertArray2PhpCode($_arDBSimpleLangMessages, "\t\t", $langRegister).";\n";
+		foreach($langRegister as $msgID => $langArray) {
+
+		}
 		return $code_arDBSimpleLangMessages;
 	}
 
@@ -307,9 +304,11 @@ class GeneratorDBS extends Generator {
 		foreach($arFieldsList as $fieldCode) {
 			$field = $this->config->getField($fieldCode);
 			$_arFieldsDescription[$fieldCode] = array(
-				'NAME' => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['title']['lang'])."')",
-				'DESCRIPTION' => "::Loc::getMessage('".str_replace('%_', $langPrefix.'_', $field['description']['lang'])."')",
+				'NAME' => $field['title'],
+				'DESCRIPTION' => $field['description']
 			);
+			$this->phpClass->setLangMessageArray($field['title']);
+			$this->phpClass->setLangMessageArray($field['description']);
 		}
 		return "\t\t".'$this->_arFieldsDescription = '.PhpClass::convertArray2PhpCode($_arFieldsDescription, "\t\t").';';
 	}

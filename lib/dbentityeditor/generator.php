@@ -29,6 +29,7 @@ abstract class Generator implements IGenerator {
 		$this->phpClass = new PhpClass($this->config->getClass());
 		$this->phpClass->setNamespace($this->config->getNamespace());
 		$this->phpClass->useLangFile();
+		$this->phpClass->setLangPrefix($this->config->getLangPrefix());
 		$this->__init($config);
 	}
 
