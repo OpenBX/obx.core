@@ -594,6 +594,10 @@ namespace OBX\Core {
 		static public function setLessProductionReady($bCompiled = true) {
 			self::getLessCssConnector()->setProductionReady($bCompiled);
 		}
+		/** @deprecated use OBX\Core\LessCss\Connector instead */
+		static public function clearLessFilesList() {
+			return self::getLessCssConnector()->clearFilesList();
+		}
 
 		///////////////////////////////////
 		/// CONNECTNG DEFERRED JS FILES ///

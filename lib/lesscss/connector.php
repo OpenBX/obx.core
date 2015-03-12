@@ -206,6 +206,12 @@ class Connector
 		}
 		return $this->_arFiles;
 	}
+
+	public function clearFilesList() {
+		$this->_arFiles = array();
+		$this->_arFilesSort = array();
+	}
+
 	/**
 	 * @static
 	 * @param \CBitrixComponent|\CBitrixComponentTemplate|string $component
