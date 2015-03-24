@@ -1,32 +1,34 @@
 <?php
-/***********************************************
- ** @product OBX:Core Bitrix Module           **
- ** @authors                                  **
- **         Maksim S. Makarov aka pr0n1x      **
- ** @license Affero GPLv3                     **
- ** @mailto rootfavell@gmail.com              **
- ** @copyright 2015 Devtop                    **
- ***********************************************/
+/**
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2015 Devtop
+ */
 
 namespace OBX\Core\Assistant;
 
 
-abstract class State {
+class State extends AState implements IStateSave {
 
-	protected $stateData;
-
-	abstract public function linkStateTo(&$EXTERNAL);
-	abstract public function getStatus();
-
-	public function setStateKey($key, $data) {
+	public function setStateKeysList(array $keys) {
 
 	}
 
-	public function saveStateToFile() {
+	public function linkStateTo(&$EXTERNAL) {
 
 	}
 
-	public function readStateFromFile() {
+	public function getStatus($getFloat = false) {
+
+	}
+
+	public function saveState() {
+
+	}
+
+	public function readState() {
 
 	}
 } 

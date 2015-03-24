@@ -9,6 +9,8 @@
 
 namespace OBX\Core\Assistant;
 
-class IBlockSection {
-
+interface IState {
+	function linkStateTo(&$EXTERNAL);
+	function getStatus($getFloat = false);
+	function setStateKey($key, $data);
 } 

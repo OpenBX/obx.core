@@ -9,6 +9,8 @@
 
 namespace OBX\Core\Assistant;
 
-class IBlockSection {
 
+interface IStateSave extends IState {
+	function saveState();
+	function readState();
 } 
