@@ -689,8 +689,9 @@ class Request {
 		if( empty($fileName) ) {
 			$baseName = static::generateID();
 		}
-		if(empty($fileExt)) {
-			$fileExt = $Mime->getFileExt($contentType, static::DOWNLOAD_FILE_EXT);
+		$fileExtFromMime = $Mime->getFileExt($contentType, null);
+		if(!empty($fileExtFromMime) && $fileExtFromMime != $fileExt) {
+			$fileExt = $fileExtFromMime;
 		}
 		else {
 			switch($fileExt) {
@@ -917,8 +918,38 @@ class Request {
 		return $this->_contentExpectedSize;
 	}
 
-	public function getDownloadProgress() {
+	public function getDownloadedSize() {
+		return $this->_dwnFileSize;
+	}
 
+	public function getDownloadProgress() {
+		if( null === $this->_contentExpectedSize ) {
+			$this->getInfo(null, true);
+		}
+		if($this->getStatus() != 200) {
+			return 0;
+		}
+		return round( (($this->_dwnFileSize / $this->_contentExpectedSize) * 100), 2);
+	}
+
+	public function getOriginalName() {
+		if(null === $this->_originalName) {
+			if(null == $this->_contentType) {
+				$this->getInfo(null, true);
+			}
+			$this->_fillOriginalName($this->_contentType);
+		}
+		return $this->_originalName;
+	}
+
+	public function getOriginalExt() {
+		if(null === $this->_originalExt) {
+			if(null == $this->_contentType) {
+				$this->getInfo(null, true);
+			}
+			$this->_fillOriginalName($this->_contentType);
+		}
+		return $this->_originalExt;
 	}
 
 	public function getInfo($curlOpt = null, $bFillVars = false){

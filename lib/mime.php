@@ -29,6 +29,7 @@ class Mime {
 		'application/json' => 'json',
 		'text/html' => 'html',
 		'text/plain' => 'txt',
+		'application/xml' => 'xml',
 		'text/xml' => 'xml',
 	);
 
