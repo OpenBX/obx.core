@@ -13,6 +13,9 @@ use OBX\Core\Exceptions\Curl\RequestError;
 use OBX\Core\Tools;
 
 class MultiRequestBXFile extends MultiRequest {
+	const F_IB_IMG_PREVIEW = RequestBXFile::F_IB_IMG_PREVIEW;
+	const F_IB_IMG_DETAIL = RequestBXFile::F_IB_IMG_DETAIL;
+	const F_IB_IMG_BOTH = RequestBXFile::F_IB_IMG_BOTH;
 	const F_IB_IMG_PROP_APPEND = RequestBXFile::F_IB_IMG_PROP_APPEND;
 	const F_IB_IMG_PROP_REPLACE = RequestBXFile::F_IB_IMG_PROP_REPLACE;
 
@@ -41,6 +44,16 @@ class MultiRequestBXFile extends MultiRequest {
 			return false;
 		}
 		return $bSuccess;
+	}
+
+	public function saveToIBElement($elementID, $target = self::F_IB_IMG_DETAIL, $description = '') {
+		if(empty($this->_arRequestList)) {
+			return false;
+		}
+		/** @var RequestBXFile $request */
+		/** @noinspection PhpUnusedLocalVariableInspection */
+		foreach($this->_arRequestList as $request) break;
+		return $request->saveToIBElement($elementID, $target, $description);
 	}
 
 	public function saveToIBProp($iblockID, $elementID, $propCode, $action = self::F_IB_IMG_PROP_APPEND) {

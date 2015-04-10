@@ -20,7 +20,7 @@ use OBX\Core\PhpGenerator\PhpClass;
 class GeneratorDBS extends Generator {
 	// DBSimple Vars
 	private $_entityModuleID = null;
-	private $_entityEventsID = null;
+	private $_entityID = null;
 	private $_mainTable = null;
 	private $_mainTablePrimaryKey = null;
 	private $_mainTableAutoIncrement = null;
@@ -46,7 +46,7 @@ class GeneratorDBS extends Generator {
 		));
 		$this->phpClass->setBaseClass('Entity');
 		$this->_entityModuleID = $this->config->getModuleID();
-		$this->_entityEventsID = $this->config->getEventsID();
+		$this->_entityID = $this->config->getEntityID();
 		$this->_mainTable = $this->config->getAlias();
 		$arOwnFields = $this->config->getFieldsList(true);
 		$bPrimaryFound = false;
@@ -76,7 +76,7 @@ class GeneratorDBS extends Generator {
 		$this->init_arFieldsDescription();
 
 		$this->phpClass->addVariableIfNotNull('protected', '_entityModuleID', $this->_entityModuleID);
-		$this->phpClass->addVariableIfNotNull('protected', '_entityEventsID', $this->_entityEventsID);
+		$this->phpClass->addVariableIfNotNull('protected', '_entityID', $this->_entityID);
 		$this->phpClass->addVariableIfNotNull('protected', '_mainTable', $this->_mainTable);
 		$this->phpClass->addVariableIfNotNull('protected', '_mainTablePrimaryKey', $this->_mainTablePrimaryKey);
 		$this->phpClass->addVariableIfNotNull('protected', '_mainTableAutoIncrement', $this->_mainTableAutoIncrement);

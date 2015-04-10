@@ -43,7 +43,7 @@ IncludeModuleLangFile(__FILE__);
 class Config implements IConfig
 {
 	protected $moduleID = null;
-	protected $eventsID = null;
+	protected $entityID = null;
 
 	protected $MessagePool = null;
 
@@ -117,7 +117,7 @@ class Config implements IConfig
 		if( empty($configData['events_id']) ) {
 			throw new Err('', Err::E_CFG_NO_EVT_ID);
 		}
-		$this->eventsID = $configData['events_id'];
+		$this->entityID = $configData['events_id'];
 	}
 
 	protected function initVersion(&$configData) {
@@ -745,8 +745,8 @@ class Config implements IConfig
 	public function getModuleID() {
 		return $this->moduleID;
 	}
-	public function getEventsID() {
-		return $this->eventsID;
+	public function getEntityID() {
+		return $this->entityID;
 	}
 	public function getNamespace() {
 		return $this->namespace;
@@ -898,7 +898,7 @@ class Config implements IConfig
 			'class' => $this->class,
 			'class_path' => $this->classPath,
 			'version' => $this->version,
-			'events_id' => $this->eventsID,
+			'events_id' => $this->entityID,
 			'lang_prefix' => $this->langPrefix,
 			'title' => $this->title,
 			'description' => $this->description,

@@ -12,7 +12,7 @@ namespace OBX\Core\DBEntityEditor;
 
 interface IConfig {
 	function getModuleID();
-	function getEventsID();
+	function getEntityID();
 	function getNamespace();
 	function getClass();
 	function getAlias();
