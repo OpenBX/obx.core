@@ -4,13 +4,13 @@
  * @author Maksim S. Makarov aka pr0n1x
  * @license Affero GPLv3
  * @mailto rootfavell@gmail.com
- * @copyright 2013 Devtop
+ * @copyright 2015 Devtop
  */
 
 namespace OBX\Core\Exceptions;
 
 
-abstract class AError extends \ErrorException implements IBase {
+abstract class Base extends \Exception implements IBase {
 
 	static protected $_arLangMessages = array();
 	const FILE = null;
@@ -24,7 +24,7 @@ abstract class AError extends \ErrorException implements IBase {
 	 * @param int $lineno [optional] The line number where the exception is thrown.
 	 * @param \Exception $previous [optional] The previous exception used for the exception chaining.
 	 */
-	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous = null) {
+	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, \Exception $previous = null) {
 		if(empty($message)) {
 			$message = static::getLangMessage($code);
 		}
@@ -76,4 +76,4 @@ abstract class AError extends \ErrorException implements IBase {
 	public function getFullCode() {
 		return static::ID.$this->getCode();
 	}
-} 
+}
