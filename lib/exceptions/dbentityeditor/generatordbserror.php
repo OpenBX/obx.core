@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: maximum
- * Date: 23.01.15
- * Time: 16:53
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2015 Devtop
  */
 
 namespace OBX\Core\Exceptions\DBEntityEditor;

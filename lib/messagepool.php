@@ -1,12 +1,11 @@
 <?php
-/***********************************************
- ** @product OBX:Core Bitrix Module           **
- ** @authors                                  **
- **         Maksim S. Makarov aka pr0n1x      **
- ** @license Affero GPLv3                     **
- ** @mailto rootfavell@gmail.com              **
- ** @copyright 2015 DevTop                    **
- ***********************************************/
+/**
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2013 Devtop
+ */
 
 namespace OBX\Core;
 
@@ -179,10 +178,7 @@ class MessagePool implements IMessagePool
 	 */
 	public function addErrorException(\Exception $Exception, $exceptionTextPrefix = ''){
 		if($Exception instanceof AError) {
-			$class = get_class($Exception);
-			/** @var AError $class */
-			$errorCode = $class::ID.$Exception->getCode();
-			$this->addError($exceptionTextPrefix.$Exception->getMessage(), $errorCode);
+			$this->addError($exceptionTextPrefix.$Exception->getMessage(), $Exception->getFullCode());
 		}
 		elseif($Exception instanceof \Exception) {
 			$this->addError($exceptionTextPrefix.$Exception->getMessage(), $Exception->getCode());

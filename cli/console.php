@@ -1,5 +1,13 @@
 <?php
-list($_SERVER['DOCUMENT_ROOT']) = explode('/bitrix/modules', dirname(__FILE__));
+/**
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2013 Devtop
+ */
+
+list($_SERVER['DOCUMENT_ROOT']) = explode('/bitrix/modules', __DIR__);
 /**
  * http://php.net/manual/en/features.commandline.interactive.php
  * Note:

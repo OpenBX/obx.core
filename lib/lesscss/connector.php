@@ -1,12 +1,11 @@
 <?php
-/***********************************************
- ** @product OBX:Core Bitrix Module           **
- ** @authors                                  **
- **         Maksim S. Makarov aka pr0n1x      **
- ** @license Affero GPLv3                     **
- ** @mailto rootfavell@gmail.com              **
- ** @copyright 2013 DevTop                    **
- ***********************************************/
+/**
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2013 DevTop
+ */
 
 namespace OBX\Core\LessCss;
 
@@ -182,7 +181,7 @@ class Connector
 					is_file(OBX_DOC_ROOT.SITE_TEMPLATE_PATH.'/'.$lessFilePath)
 					|| (
 						is_file(OBX_DOC_ROOT.SITE_TEMPLATE_PATH.'/'.$compiledLessFilePath)
-						&& $this->isLessProductionReady()
+						&& $this->isProductionReady()
 					)
 					//					// На случай если мы будем комипировать less в папку css
 					//					|| (

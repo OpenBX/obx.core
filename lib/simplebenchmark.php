@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: maximum
- * Date: 05.12.13
- * Time: 17:53
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2013 Devtop
  */
 
 namespace OBX\Core;

@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: maximum
- * Date: 29.11.13
- * Time: 18:04
+ * @product OBX:Core Bitrix Module
+ * @author Maksim S. Makarov aka pr0n1x
+ * @license Affero GPLv3
+ * @mailto rootfavell@gmail.com
+ * @copyright 2013 Devtop
  */
 
 namespace OBX\Core\Exceptions;
@@ -56,7 +57,6 @@ abstract class AError extends \ErrorException {
 	static public function getLangMessage($errorCode, $arReplace = null) {
 		$class = get_called_class();
 		self::loadMessages($class);
-		$message = '';
 		$arLangMessages = &self::$_arLangMessages[$class];
 		$msgID = static::ID;
 		if(array_key_exists($msgID.$errorCode, $arLangMessages)) {
