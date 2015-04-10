@@ -11,7 +11,7 @@ class TestEntity extends Entity
 {
 
 	protected $_entityModuleID = 'obx.core';
-	protected $_entityEventsID = 'TestEntityRow';
+	protected $_entityID = 'TestEntityRow';
 	protected $_mainTable = 'E';
 	protected $_mainTablePrimaryKey = 'ID';
 	protected $_mainTableAutoIncrement = 'ID';

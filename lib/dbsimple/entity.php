@@ -321,6 +321,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	protected $_arTableIndex = array();
 	/** @deprecated применяться не будет */
 	final public function getTableIndex() {
+		/** @noinspection PhpDeprecationInspection */
 		return $this->_arTableIndex;
 	}
 
@@ -502,6 +503,11 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	 * on<EventsID>BeforeDeleteByFilter
 	 * on<EventsID>AfterDeleteByFilter
 	 */
+	protected $_entityID = null;
+	/**
+	 * @var null|string
+	 * @deprecated
+	 */
 	protected $_entityEventsID = null;
 
 	/**
@@ -535,76 +541,81 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	 * @return void
 	 */
 	protected function _getEntityEvents() {
-		if($this->_entityModuleID === null || $this->_entityEventsID === null) {
+		/** @noinspection PhpDeprecationInspection */
+		if($this->_entityID === null && $this->_entityEventsID !== null) {
+			/** @noinspection PhpDeprecationInspection */
+			$this->_entityID = $this->_entityEventsID;
+		}
+		if($this->_entityModuleID === null || $this->_entityID === null) {
 			return;
 		}
 		////////////////////////////////////////////////////////////////////
 		$this->_arEntityEvents['onStartAdd'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onStart'.$this->_entityEventsID.'Add',
+			'onStart'.$this->_entityID.'Add',
 			true
 		);
 		$this->_arEntityEvents['onBeforeAdd'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onBefore'.$this->_entityEventsID.'Add',
+			'onBefore'.$this->_entityID.'Add',
 			true
 		);
 		$this->_arEntityEvents['onAfterAdd'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onAfter'.$this->_entityEventsID.'Add',
+			'onAfter'.$this->_entityID.'Add',
 			true
 		);
 		////////////////////////////////////////////////////////////////////
 		$this->_arEntityEvents['onStartUpdate'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onStart'.$this->_entityEventsID.'Update',
+			'onStart'.$this->_entityID.'Update',
 			true
 		);
 		$this->_arEntityEvents['onBeforeUpdate'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onBefore'.$this->_entityEventsID.'Update',
+			'onBefore'.$this->_entityID.'Update',
 			true
 		);
 		$this->_arEntityEvents['onBeforeExecUpdate'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onBeforeExec'.$this->_entityEventsID.'Update',
+			'onBeforeExec'.$this->_entityID.'Update',
 			true
 		);
 		$this->_arEntityEvents['onAfterUpdate'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onAfter'.$this->_entityEventsID.'Update',
+			'onAfter'.$this->_entityID.'Update',
 			true
 		);
 		////////////////////////////////////////////////////////////////////
 		$this->_arEntityEvents['onStartDelete'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onStart'.$this->_entityEventsID.'Delete',
+			'onStart'.$this->_entityID.'Delete',
 			true
 		);
 		$this->_arEntityEvents['onBeforeDelete'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onBefore'.$this->_entityEventsID.'Delete',
+			'onBefore'.$this->_entityID.'Delete',
 			true
 		);
 		$this->_arEntityEvents['onAfterDelete'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onAfter'.$this->_entityEventsID.'Delete',
+			'onAfter'.$this->_entityID.'Delete',
 			true
 		);
 		////////////////////////////////////////////////////////////////////
 		$this->_arEntityEvents['onStartDeleteByFilter'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onStart'.$this->_entityEventsID.'DeleteByFilter',
+			'onStart'.$this->_entityID.'DeleteByFilter',
 			true
 		);
 		$this->_arEntityEvents['onBeforeDeleteByFilter'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onBefore'.$this->_entityEventsID.'DeleteByFilter',
+			'onBefore'.$this->_entityID.'DeleteByFilter',
 			true
 		);
 		$this->_arEntityEvents['onAfterDeleteByFilter'] = GetModuleEvents(
 			$this->_entityModuleID,
-			'onAfter'.$this->_entityEventsID.'DeleteByFilter',
+			'onAfter'.$this->_entityID.'DeleteByFilter',
 			true
 		);
 		$this->_bEntityEventsInit = true;
