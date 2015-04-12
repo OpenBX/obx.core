@@ -281,67 +281,40 @@ class MultiRequest extends MessagePoolDecorator {
 		if($this->_timeout < 1 && $this->_timeoutRequestsMax > 0) {
 			$this->setTimeout($this->_timeoutRequestsMax);
 		}
-		if($this->_timeout > 0) {
-			$endTime = time() + $this->_timeout;
-			do {
-				$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-			} while ($mrc === CURLM_CALL_MULTI_PERFORM);
-			$i = 0;
-			$maxSelectErrors = 1000;
-			$iSelectErrorCount = 0;
-			while ($countRunning>0) {
-				$mrs = curl_multi_select($this->_curlMulti, 0.1);
-				if ($mrs !== -1) {
-					$iSelectErrorCount = 0;
-					do {
-						$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-					} while ($mrc === CURLM_CALL_MULTI_PERFORM);
-				}
-				else {
-					//http://www.php.net/manual/ru/function.curl-multi-select.php
-					//Alex Palmer
-					//On php 5.3.18+ be aware that curl_multi_select() may return -1 forever until you call curl_multi_exec().
-					//See https://bugs.php.net/bug.php?id=63411 for more information.
-					$iSelectErrorCount++;
-					if($iSelectErrorCount >= $maxSelectErrors ) {
-						throw new CurlError('', CurlError::E_M_SELECT_ERROR);
-					}
+		$iSelectErrorCount = 0;
+		$iterationUSleep = 5; // микросекунды, т.е. одна миллионная
+		$multiSelectTimeout = 1; // секунды
+		// Если ошибка select-а повторяетсся столько раз, сколько нужно для выполенения в
+		// течение $multiSelectTimeout, значит работа идет в холостую, только тогда должно срабатывать
+		// исключение CurlError::E_M_SELECT_ERROR
+		// минус коэф. на скорость выполнения скрипта
+		// допустим 30%
+		$maxSelectErrors = (($multiSelectTimeout * 1000000) / $iterationUSleep) * 0.7;
+
+		do {
+			$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
+		} while ($mrc === CURLM_CALL_MULTI_PERFORM);
+
+		while ($countRunning>0) {
+			$mrs = curl_multi_select($this->_curlMulti, $multiSelectTimeout);
+			if ($mrs !== -1) {
+				$iSelectErrorCount = 0;
+				do {
 					$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-				}
-				usleep(10); // малость уменьшим потребление процессора
-				$i++;
-				if(false && $i%100 == 0 ) {$i=0; if( time() >= $endTime) {
-					return false;
-				}}
+				} while ($mrc === CURLM_CALL_MULTI_PERFORM);
 			}
-		}
-		else {
-			do {
+			else {
+				//http://www.php.net/manual/ru/function.curl-multi-select.php
+				//Alex Palmer
+				//On php 5.3.18+ be aware that curl_multi_select() may return -1 forever until you call curl_multi_exec().
+				//See https://bugs.php.net/bug.php?id=63411 for more information.
+				$iSelectErrorCount++;
+				if($iSelectErrorCount >= $maxSelectErrors ) {
+					throw new CurlError('', CurlError::E_M_SELECT_ERROR);
+				}
 				$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-			} while ($mrc === CURLM_CALL_MULTI_PERFORM);
-			$maxSelectErrors = 100;
-			$iSelectErrorCount = 0;
-			while ($countRunning>0) {
-				$mrs = curl_multi_select($this->_curlMulti, 0.1);
-				if ($mrs !== -1) {
-					$iSelectErrorCount = 0;
-					do {
-						$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-					} while ($mrc === CURLM_CALL_MULTI_PERFORM);
-				}
-				else {
-					//http://www.php.net/manual/ru/function.curl-multi-select.php
-					//Alex Palmer
-					//On php 5.3.18+ be aware that curl_multi_select() may return -1 forever until you call curl_multi_exec().
-					//See https://bugs.php.net/bug.php?id=63411 for more information.
-					$iSelectErrorCount++;
-					if($iSelectErrorCount >= $maxSelectErrors ) {
-						throw new CurlError('', CurlError::E_M_SELECT_ERROR);
-					}
-					$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
-				}
-				usleep(10); // малость уменьшим потребление процессора
 			}
+			usleep($iterationUSleep); // малость уменьшим потребление процессора
 		}
 		return true;
 	}
@@ -389,11 +362,8 @@ class MultiRequest extends MessagePoolDecorator {
 			try {
 				$Request->saveToDir($relPath, $saveMode);
 			}
-			catch(CurlError $e) {
-				$this->addWarning($e->getMessage(), CurlError::ID.$e->getCode());
-			}
 			catch(RequestError $e) {
-				$this->addWarning($e->getMessage(), RequestError::ID.$e->getCode());
+				$this->addWarning($e->getMessage(), $e->getFullCode());
 			}
 		}
 	}

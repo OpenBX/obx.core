@@ -47,13 +47,20 @@ class MultiRequestBXFile extends MultiRequest {
 	}
 
 	public function saveToIBElement($elementID, $target = self::F_IB_IMG_DETAIL, $description = '') {
+		if(true !== $this->_bRequestsComplete && true !== $this->_bDownloadsComplete) {
+			return false;
+		}
 		if(empty($this->_arRequestList)) {
 			return false;
 		}
 		/** @var RequestBXFile $request */
 		/** @noinspection PhpUnusedLocalVariableInspection */
-		foreach($this->_arRequestList as $request) break;
-		return $request->saveToIBElement($elementID, $target, $description);
+		foreach($this->_arRequestList as $request) {
+			if($request->isDownloadSuccess()) {
+				return $request->saveToIBElement($elementID, $target, $description);
+			}
+		}
+		return false;
 	}
 
 	public function saveToIBProp($iblockID, $elementID, $propCode, $action = self::F_IB_IMG_PROP_APPEND) {
