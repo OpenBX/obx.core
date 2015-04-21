@@ -312,9 +312,9 @@ class TestRequest extends _Request {
 		unset($Request);
 		$this->assertFileNotExists($fullFilePath);
 
-		// Ð¢ÑƒÑ‚ Ñ‚ÐµÑÑ‚Ð¸Ñ€ÑƒÐµÐ¼ Ñ…Ð¸Ñ‚Ñ€ÑƒÑŽ ÑÐ¸Ñ‚ÑƒÐ°Ñ†Ð¸ÑŽ. Ð’ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ñ€ÐµÐ¶Ð¸Ð¼ ÐºÐµÑˆÐ¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ,
-		// Ð½Ðµ Ð½Ðµ Ð·Ð°Ð´Ð°ÐµÐ¼ Ð¸ Ð½Ðµ Ð¿Ð¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ID. Ð¡Ð¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²ÐµÐ½Ð½Ð¾ ID Ð¸Ð½ÐºÐ°Ð¿ÑƒÐ»Ð¸Ñ€Ð¾Ð²Ð°Ð½ Ð² ÐºÐ»Ð°ÑÑ
-		// ÐºÐµÑˆ Ð¾Ñ‡Ð¸ÑÑ‚Ð¸Ñ‚ÑÑ :)
+		// Òóò òåñòèðóåì õèòðóþ ñèòóàöèþ. Âêëþ÷àåì ðåæèì êåøèðîâàíèÿ,
+		// íå íå çàäàåì è íå ïîëó÷àåì ID. Ñîîòâåòñòâåííî ID èíêàïóëèðîâàí â êëàññ
+		// êåø î÷èñòèòñÿ :)
 		$Request = new Request(self::$_urlTestFiles.$fileName);
 		$Request->setCaching(true);
 		$Request->download();
@@ -324,8 +324,8 @@ class TestRequest extends _Request {
 		unset($Request);
 		$this->assertFileNotExists($fullFilePath);
 
-		// Ð Ñ‚ÑƒÑ‚ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ð¼ Ð˜Ð”, ÑÐ¾Ð¾Ñ‚Ð²ÐµÑ‚ÑÑ‚Ð²ÐµÐ½Ð½Ð¾ ID Ð¿ÐµÑ€ÐµÐ´Ð°Ð½ Ð¸Ð· ÐºÐ»Ð°ÑÑÐ° Ð¸ Ð³Ð´Ðµ-Ñ‚Ð¾ Ð¸Ð·Ð²ÐµÑÑ‚ÐµÐ½
-		// ÐºÐµÑˆ Ð¾Ñ‡Ð¸Ñ‰Ð°Ñ‚ÑŒ Ð½ÐµÐ»ÑŒÐ·Ñ
+		// À òóò ïîëó÷èì ÈÄ, ñîîòâåòñòâåííî ID ïåðåäàí èç êëàññà è ãäå-òî èçâåñòåí
+		// êåø î÷èùàòü íåëüçÿ
 		$Request = new Request(self::$_urlTestFiles.$fileName);
 		$Request->setCaching(true);
 		$Request->getID();

@@ -4,11 +4,11 @@ $arResult['TABS'] = array();
 for($iTab=1; $iTab <= $arParams['TABS_COUNT']; $iTab++) {
 	$arParams['TAB_'.$iTab.'_ID'] = trim($arParams['TAB_'.$iTab.'_ID']);
 	if(empty($arParams['TAB_'.$iTab.'_ID']) || $arParams['TAB_'.$iTab.'_ID'] == '_none_') {
-		ShowError('Ð”Ð»Ñ Ð²ÐºÐ»Ð°Ð´ÐºÐ¸ â„–'.$iTab.' Ð½Ðµ Ð·Ð°Ð´Ð°Ð½ ID');
+		ShowError('Äëÿ âêëàäêè ¹'.$iTab.' íå çàäàí ID');
 	}
 	$arParams['SELECTED_TAB'] = trim($arParams['SELECTED_TAB']);
 	if( array_key_exists($arParams['TAB_'.$iTab.'_ID'], $arResult['TABS']) ) {
-		ShowError('Ð’ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð°Ñ… ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ð° Ð·Ð°Ð´Ð°Ð½Ð¾ Ð±Ð¾Ð»ÐµÐµ Ð¾Ð´Ð½Ð¾Ð¹ Ð²ÐºÐ»Ð°Ð´ÐºÐ¸ Ñ ID "'.$arParams['TAB_'.$iTab.'_ID'].'"');
+		ShowError('Â ïàðàìåòðàõ êîìïîíåíòà çàäàíî áîëåå îäíîé âêëàäêè ñ ID "'.$arParams['TAB_'.$iTab.'_ID'].'"');
 	}
     $arChilds = array();
     if (intval($arParams['TAB_'.$iTab.'_CAT_COUNT']) > 0) {

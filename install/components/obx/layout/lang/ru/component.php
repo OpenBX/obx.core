@@ -8,5 +8,5 @@
  ** @mailto rootfavell@gmail.com    **
  ** @mailto tashiro@yandex.ru       **
  *************************************/
-$MESS['OBX_CORE_IS_NOT_INSTALLED'] = 'Â«Ð‘Ð°Ð·Ð¾Ð²Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒ Ð68Â» Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½';
+$MESS['OBX_CORE_IS_NOT_INSTALLED'] = '«Áàçîâûé ìîäóëü À68» íå óñòàíîâëåí';
 ?>

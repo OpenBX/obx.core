@@ -1,12 +1,12 @@
 <?php
 $clean_test_table = '<table id="result_table" cellpadding="0" cellspacing="0" border="0" width="100%" class="internal">'.
 	'<tr class="heading">'.
-		'<td>РўРµРєСѓС‰РµРµ РґРµР№СЃС‚РІРёРµ</td>'.
+		'<td>Текущее действие</td>'.
 		'<td width="1%">&nbsp;</td>'.
 		'</tr>'.
 	'</table>';
 
-$aTabs = array(array("DIV" => "edit1", "TAB" => "РћР±СЂР°Р±РѕС‚РєР°"));
+$aTabs = array(array("DIV" => "edit1", "TAB" => "Обработка"));
 $tabControl = new \CAdminTabControl("tabControl", $aTabs);
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
@@ -27,7 +27,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 		{
 			ShowWaitWindow();
 			document.getElementById('result').innerHTML = '<?=$clean_test_table?>';
-			document.getElementById('status').innerHTML = 'Р Р°Р±РѕС‚Р°СЋ...';
+			document.getElementById('status').innerHTML = 'Работаю...';
 
 			document.getElementById('percent').innerHTML = '0%';
 			document.getElementById('indicator').style.width = '0%';
@@ -52,7 +52,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 			document.getElementById('percent').innerHTML = iPercent + '%';
 			document.getElementById('indicator').style.width = iPercent + '%';
 
-			document.getElementById('status').innerHTML = 'Р Р°Р±РѕС‚Р°СЋ...';
+			document.getElementById('status').innerHTML = 'Работаю...';
 
 			if (strCurrentAction != 'null')
 			{
@@ -77,7 +77,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 		{
 			CloseWaitWindow();
 			document.getElementById('work_start').disabled = '';
-			alert('РЎР±РѕР№ РІ РїРѕР»СѓС‡РµРЅРёРё РґР°РЅРЅС‹С…');
+			alert('Сбой в получении данных');
 		}
 	}
 
@@ -94,8 +94,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 		<td colspan="2">
 			<?=$GLOBALS['assistant_filter']?>
 
-			<input type=button value="РЎС‚Р°СЂС‚" id="work_start" onclick="set_start(1)" />
-			<input type=button value="РЎС‚РѕРї" disabled id="work_stop" onclick="bSubmit=false;set_start(0)" />
+			<input type=button value="Старт" id="work_start" onclick="set_start(1)" />
+			<input type=button value="Стоп" disabled id="work_stop" onclick="bSubmit=false;set_start(0)" />
 			<div id="progress" style="display:none;" width="100%">
 				<br />
 				<div id="status"></div>

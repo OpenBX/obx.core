@@ -18,7 +18,7 @@ IncludeModuleLangFile(__FILE__);
 /**
  * Class Download
  * @package OBX\Core\Http
- * ÐšÐ»Ð°ÑÑ Ð´Ð»Ñ Ð¿Ð¾ÑˆÐ°Ð³Ð¾Ð²Ð¾Ð³Ð¾ ÑÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ñ Ñ„Ð°Ð¹Ð»Ð¾Ð²
+ * Êëàññ äëÿ ïîøàãîâîãî ñêà÷èâàíèÿ ôàéëîâ
  */
 class Download extends MessagePoolDecorator {
 
@@ -109,7 +109,7 @@ HTML;
 	}
 
 	/**
-	 * ÐœÐµÑ‚Ð¾Ð´ Ð´Ð»Ñ Ñ‚ÐµÑÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ ÐºÐ»Ð°ÑÑÐ°
+	 * Ìåòîä äëÿ òåñòèðîâàíèÿ êëàññà
 	 */
 	static public function _clearInstanceCache() {
 		static::$_arInstances = array();
@@ -143,7 +143,7 @@ HTML;
 				if(empty($arUrl['port'])) {
 					$arUrl['port'] = 443;
 				}
-				// Ð¿Ð¾ÐºÐ° Ð²Ñ‹Ð±Ñ€Ð°ÑÑ‹Ð²Ð°ÐµÐ¼ Ñ‚ÑƒÑ‚ Ð¸ÑÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ, Ð¿Ð¾ÐºÐ° Ð½Ðµ Ð¿Ð¾Ð´Ð´ÐµÑ€Ð¶Ð¸Ð²Ð°ÐµÑ‚ÑÑ https
+				// ïîêà âûáðàñûâàåì òóò èñêëþ÷åíèå, ïîêà íå ïîääåðæèâàåòñÿ https
 				throw new DownloadError('', DownloadError::E_WRONG_PROTOCOL);
 				break;
 			default:
@@ -477,9 +477,9 @@ HTML;
 			$this->_dwnFileExt = $arStateJson['dwnFileExt'];
 			$this->_fileLoaded = $arStateJson['fileLoaded'];
 
-			// filesize Ð¸Ð¼ÐµÐµÑ‚ Ð¿Ñ€Ð¾Ð±Ð»ÐµÐ¼Ñ‹ Ñ Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»ÐµÐ½Ð¸ÐµÐ¼ Ñ€Ð°Ð·Ð¼ÐµÑ€Ð° Ñ„Ð°Ð¹Ð»Ð° Ð±Ð¾Ð»ÐµÐµ 2Ð“Ð± Ð½Ð° 32-Ð±Ð¸Ñ‚Ð½Ñ‹Ñ… ÑÐ¸ÑÑ‚ÐµÐ¼Ð°Ñ…
-			// Ð¿Ð¾Ñ‚Ð¾Ð¼Ñƒ ÑÑ‚Ð¾Ð¹ Ñ„-Ð¸ÐµÐ¹ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÑŒÑÑ Ð½Ðµ Ð±ÑƒÐ´ÐµÐ¼ Ð¸ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑÑ‚ÑŒ Ñ€Ð°Ð·Ð¼ÐµÑ€ Ð½Ðµ Ð±ÑƒÐ´ÐµÐ¼
-			// Ð´Ð¾Ð²ÐµÑ€Ð¸Ð¼ÑÑ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¸ Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð½Ð¾Ð¹ Ð¸Ð· state-Ñ„Ð°Ð¹Ð»Ð°
+			// filesize èìååò ïðîáëåìû ñ îïðåäåëåíèåì ðàçìåðà ôàéëà áîëåå 2Ãá íà 32-áèòíûõ ñèñòåìàõ
+			// ïîòîìó ýòîé ô-èåé ïîëüçîâàòüñÿ íå áóäåì è ïðîâåðÿòü ðàçìåð íå áóäåì
+			// äîâåðèìñÿ èíôîðìàöèè ïîëó÷åííîé èç state-ôàéëà
 
 			$this->_rangeFrom = $arStateJson['fileLoaded'];
 			if(!empty($arStateJson['fileExpectedSize'])) {

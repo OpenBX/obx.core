@@ -1,2 +1,2 @@
 <?php
-$MESS['OBX_CORE_DBENTITY_EDITOR_E_FETCH_TABLE_COLUMNS_FAILED'] = 'РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє РїРѕР»РµР№ С‚Р°Р±Р»РёС†С‹';
+$MESS['OBX_CORE_DBENTITY_EDITOR_E_FETCH_TABLE_COLUMNS_FAILED'] = 'Не удалось получить список полей таблицы';

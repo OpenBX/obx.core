@@ -15,7 +15,7 @@ use OBX\Core\PhpGenerator\PhpClass;
 /**
  * Class GeneratorDBS
  * @package OBX\Core\DBEntityEditor
- * Ð“ÐµÐ½ÐµÑ€Ð°Ñ‚Ð¾Ñ€ ÑÑƒÑ‰Ð½Ð¾ÑÑ‚Ð¸ DBSimple
+ * Ãåíåðàòîð ñóùíîñòè DBSimple
  */
 class GeneratorDBS extends Generator {
 	// DBSimple Vars
@@ -181,8 +181,8 @@ class GeneratorDBS extends Generator {
 	}
 
 	private function init_arSortDefault() {
-		// Ð•ÑÐ»Ð¸ ÑÑ‚Ð¾Ñ‚ Ð¼ÐµÑ‚Ð¾Ð´ ÑÐ³ÐµÐ½ÐµÑ€Ð¸Ñ‚ Ð¸Ð¼Ñ Ð¿Ð¾Ð»ÐµÐ¹ Ñ Ð°Ð»Ð¸Ð°ÑÐ¾Ð¼. DBSimple Ñ‚Ð°ÐºÐ¾Ð³Ð¾ Ð½Ðµ Ð¿Ñ€Ð¾Ð¿ÑƒÑÑ‚Ð¸Ñ‚
-		// DBSimple Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑÐµÑ‚ ÐµÑÑ‚ÑŒ Ð»Ð¸ Ñ‚Ð°ÐºÐ¾Ðµ Ð¿Ð¾Ð»Ðµ Ð¿Ð¾ Ð¸Ð¼ÐµÐ½Ð¸ Ð°Ð»Ð¸Ð°ÑÐ° Ð¿Ð¾Ð»Ñ, Ð° Ð½Ðµ Ð¿Ð¾ ÑÐ°Ð¼Ð¾Ð¼Ñƒ Ð¿Ð¾Ð»ÑŽ Ñ ÑƒÐºÐ°Ð·Ð°Ð½Ð¸ÐµÐ¼ Ð°Ð»Ð¸Ð°ÑÐ° Ñ‚Ð°Ð±Ð»Ð¸Ñ†Ñ‹
+		// Åñëè ýòîò ìåòîä ñãåíåðèò èìÿ ïîëåé ñ àëèàñîì. DBSimple òàêîãî íå ïðîïóñòèò
+		// DBSimple ïðîâåðÿåò åñòü ëè òàêîå ïîëå ïî èìåíè àëèàñà ïîëÿ, à íå ïî ñàìîìó ïîëþ ñ óêàçàíèåì àëèàñà òàáëèöû
 		$_arSortDefault = array();
 		$arSortFields = $this->config->getDefaultSort();
 		$arRefFields = $this->getConfRefFields();

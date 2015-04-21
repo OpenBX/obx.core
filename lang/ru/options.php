@@ -8,7 +8,7 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 $MESS['OBX_CORE_SETTINGS_TAB_LESSCSS'] = 'LessCSS';
-$MESS['OBX_MARKET_SETTINGS_TITLE_LESSCSS'] = 'РќР°СЃС‚СЂРѕР№РєРё LessCSS';
-$MESS['OBX_CORE_SETTINGS_LESSCSS_PROD_READY'] = 'Less-С„Р°Р№Р»С‹ СЃРєРѕРјРїРёР»РёСЂРѕРІР°РЅС‹ РґР»СЏ СЃР°Р№С‚РѕРІ';
+$MESS['OBX_MARKET_SETTINGS_TITLE_LESSCSS'] = 'Настройки LessCSS';
+$MESS['OBX_CORE_SETTINGS_LESSCSS_PROD_READY'] = 'Less-файлы скомпилированы для сайтов';
 $MESS['OBX_CORE_SETTINGS_LESSCSS__FOR_'] = '';
  

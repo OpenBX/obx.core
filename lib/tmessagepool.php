@@ -9,7 +9,7 @@
 
 namespace OBX\Core;
 /**
- * TODO: РРЎРїРѕР»СЊР·РѕРІР°С‚РµР»СЊ trait РєРѕРіРґР° РїСЂРёРґРµС‚ РІСЂРµРјСЏ PHP-5.4
+ * TODO: ИСпользователь trait когда придет время PHP-5.4
  */
 trait TMessagePool
 {

@@ -34,7 +34,7 @@ class Parameters {
 	 * @param int $cols
 	 * @param int $rows
 	 * @return array
-	 * @deprecated - ÐµÑÑ‚ÑŒ ÑˆÑ‚Ð°Ñ‚Ð½Ñ‹Ð¹ Ñ‚Ð¸Ð¿ FILE
+	 * @deprecated - åñòü øòàòíûé òèï FILE
 	 */
 	public function getTextArea($name, $cols = 32, $rows = 4) {
 		$cols = intval($cols);
@@ -50,8 +50,8 @@ class Parameters {
 
 	/**
 	 * @param $arParameter
-	 * @param array $arChooserCurVals - ÐµÑÐ»Ð¸ arParameter[MULTIPLE] == Y
-	 * 			Ñ‚Ð¾Ð³Ð´Ð° Ð½Ð°Ð´Ð¾ Ð¾Ð±Ð°Ð·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾ Ð¿Ñ€Ð¾Ð±Ñ€Ð°ÑÑ‹Ð²Ð°Ñ‚ÑŒ arCurrentValues["PARAM_NAME"] Ð²Ð¾ Ð²Ñ‚Ð¾Ñ€Ð¾Ð¹ Ð°Ð³Ñ€ÑƒÐ¼ÐµÐ½Ñ‚
+	 * @param array $arChooserCurVals - åñëè arParameter[MULTIPLE] == Y
+	 * 			òîãäà íàäî îáàçàòåëüíî ïðîáðàñûâàòü arCurrentValues["PARAM_NAME"] âî âòîðîé àãðóìåíò
 	 * @return array
 	 *
 	 * @example
@@ -60,10 +60,10 @@ class Parameters {
 	 * 		array(
 	 * 			'NAME' => 'CHOOSER',
 	 * 			'VALUES' => array(
-	 * 				'key1' => 'Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ 1',
-	 * 				'key2' => 'Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ 2',
-	 * 				'key3' => 'Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ 3',
-	 * 				'key4' => 'Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ 4',
+	 * 				'key1' => 'çíà÷åíèå 1',
+	 * 				'key2' => 'çíà÷åíèå 2',
+	 * 				'key3' => 'çíà÷åíèå 3',
+	 * 				'key4' => 'çíà÷åíèå 4',
 	 * 			),
 	 * 			'DEFAULT' => 'key2',
 	 * 			'MULTIPLE' => 'Y',
@@ -75,7 +75,7 @@ class Parameters {
 	public function getListChooser($arParameter, &$arChooserCurVals = array()) {
 		if(!is_array($arChooserCurVals)) $arChooserCurVals = array();
 		$arParameter['IX_CUR_VALS'] = array_flip($arChooserCurVals);
-		//TODO: Ð¡Ð´ÐµÐ»Ð°Ñ‚ÑŒ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÑƒ $arParameter
+		//TODO: Ñäåëàòü îáðàáîòêó $arParameter
 		return array(
 			'NAME' => $arParameter['NAME'],
 			'TYPE' => 'CUSTOM',

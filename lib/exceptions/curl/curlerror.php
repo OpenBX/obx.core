@@ -317,8 +317,8 @@ class CurlError extends RequestError {
 
 
 	final static public function getCurlErrorNumberByText($errorText) {
-		//С„-РёСЏ РЅР°РїСЂР°РІР»РµРЅР°СЏ РЅР° РёСЃРїСЂР°РІР»РµРЅРёРµ СЃРёС‚С†СѓР°С†РёРё РєРѕРіРґР° С‚РµРєСЃС‚ РѕС€РёР±РєРё РµСЃС‚СЊ, Р° РєРѕРґР° РЅРµС‚.
-		// РєСЂРёРІРѕР№, РјР°С‚СЊ РµРіРѕ cURL
+		//ф-ия направленая на исправление ситцуации когда текст ошибки есть, а кода нет.
+		// кривой, мать его cURL
 		$errorCode = 0;
 		if( strpos($errorText, 'timed out') !== false
 			&& strpos($errorText, 'millisec') !== false
@@ -334,7 +334,7 @@ class CurlError extends RequestError {
 			$errorCode = CurlError::E_RANGE_ERROR;
 		}
 		else {
-			// РµСЃР»Рё РЅРµ РЅР°С€РµР», РІСЃРµ СЂР°РІРЅРѕ РЅР°РґРѕ РґР°РІР°С‚СЊ РєРѕРґ РёСЃРєР»СЋС‡РµРЅРёСЏ
+			// если не нашел, все равно надо давать код исключения
 			$errorCode = CurlError::E_UNKNOWN_ERROR_CODE;
 		}
 		return $errorCode;

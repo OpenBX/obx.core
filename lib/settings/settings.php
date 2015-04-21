@@ -68,7 +68,7 @@ class Settings extends MessagePoolDecorator implements ISettings {
 	}
 
 	/**
-	 * ! Р–РµР»Р°С‚РµР»СЊРЅРѕ РїРµСЂРµРѕРїСЂРµРґРµР»СЏС‚СЊ СЌС‚РѕС‚ РјРµС‚РѕРґ
+	 * ! Желательно переопределять этот метод
 	 * @return string
 	 */
 	public function getSettingsID() {
@@ -175,7 +175,7 @@ class Settings extends MessagePoolDecorator implements ISettings {
 		if(!array_key_exists('VALUE', $arOption)) {
 			$arOption['VALUE'] = '';
 		}
-		// РџРµСЂРµРґ РїРµСЂРІРѕР№ СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРµР№ VALUE Р·Р°РґР°РµС‚ Р·РЅР°С‡РµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ DEFAULT
+		// Перед первой синхронизацией VALUE задает значение по умолчанию DEFAULT
 		$arOption['DEFAULT'] = $arOption['VALUE'];
 		if(!array_key_exists('SORT', $arOption)) {
 			$arOption['SORT'] = 100;
@@ -216,9 +216,9 @@ class Settings extends MessagePoolDecorator implements ISettings {
 	}
 
 	/**
-	 * РџРѕР»СѓС‡РёС‚СЊ (Р·РЅР°С‡РµРЅРёРµ) РѕРїС†РёСЋ(РёРё) РЅР°СЃС‚СЂРѕРµРє
-	 * @param $optionCode - РєРѕРґ РѕРїС†РёРё
-	 * @param bool $bReturnOptionArray - РІРµСЂРЅСѓС‚СЊ РїРѕР»РЅС‹Р№ РјР°СЃСЃРёРІ РѕРїРёСЃР°РЅРёСЏ РѕРїС†РёРё, РёРЅР°С‡Рµ РІРµСЂРЅРµС‚ С‚РѕР»СЊРєРѕ Р·РЅР°С‡РµРЅРёРµ
+	 * Получить (значение) опцию(ии) настроек
+	 * @param $optionCode - код опции
+	 * @param bool $bReturnOptionArray - вернуть полный массив описания опции, иначе вернет только значение
 	 * @return null
 	 */
 	public function getOption($optionCode, $bReturnOptionArray = false) {

@@ -1,4 +1,4 @@
 <?php
 use OBX\Core\Exceptions\LessCss\LessCssError as _;
-$MESS[_::ID._::E_SITE_NOT_FOUND] = 'ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ Ð¸Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ ÐºÐ¾Ð½Ð½ÐµÐºÑ‚Ð¾Ñ€ LessCss. Ð¡Ð°Ð¹Ñ‚ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½.';
-$MESS[_::ID._::E_LESS_JS_FILE_NOT_FOUND] = 'ÐŸÑƒÑ‚ÑŒ Ð´Ð¾ lesscss.js ÑƒÐºÐ°Ð·Ð°Ð½ Ð½ÐµÐ²ÐµÑ€Ð½Ð¾';
+$MESS[_::ID._::E_SITE_NOT_FOUND] = 'Íå óäàëîñü èíèöèàëèçèðîâàòü êîííåêòîð LessCss. Ñàéò íå íàéäåí.';
+$MESS[_::ID._::E_LESS_JS_FILE_NOT_FOUND] = 'Ïóòü äî lesscss.js óêàçàí íåâåðíî';

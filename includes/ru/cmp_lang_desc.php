@@ -1,5 +1,5 @@
 <?php
-$MESS['OBX_CORE_MODULE_NOT_INSTALLED'] = 'ÐœÐ¾Ð´ÑƒÐ»ÑŒ OBX: Â«Ð‘Ð°Ð·Ð¾Ð²Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒÂ» Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½';
-$MESS['OBX_CMP_SERV_SOC_GRP_NAME'] = 'OBX:Ð¡Ð¾Ñ†Ð¸Ð°Ð»ÑŒÐ½Ñ‹Ðµ ÑÐµÑ€Ð²Ð¸ÑÑ‹';
-$MESS['OBX_CMP_SERV_SOC_LINKS_NAME'] = 'Ð¡ÑÑ‹Ð»ÐºÐ¸ Ð½Ð° ÑÐ¾Ñ†ÑÐµÑ‚Ð¸';
-$MESS['OBX_CMP_SERV_SOC_LINKS_DESCRIPTION'] = 'Ð’Ñ‹Ð²Ð¾Ð´Ð¸Ñ‚ ÑÑÑ‹Ð»ÐºÐ¸ Ð½Ð° Ð³Ñ€ÑƒÐ¿Ð¿Ñ‹ Ð² ÑÐ¾Ñ†Ð¸Ð°Ð»ÑŒÐ½Ñ‹Ñ… ÑÐµÑ‚ÑÑ…';
+$MESS['OBX_CORE_MODULE_NOT_INSTALLED'] = 'Ìîäóëü OBX: «Áàçîâûé ìîäóëü» íå óñòàíîâëåí';
+$MESS['OBX_CMP_SERV_SOC_GRP_NAME'] = 'OBX:Ñîöèàëüíûå ñåðâèñû';
+$MESS['OBX_CMP_SERV_SOC_LINKS_NAME'] = 'Ññûëêè íà ñîöñåòè';
+$MESS['OBX_CMP_SERV_SOC_LINKS_DESCRIPTION'] = 'Âûâîäèò ññûëêè íà ãðóïïû â ñîöèàëüíûõ ñåòÿõ';

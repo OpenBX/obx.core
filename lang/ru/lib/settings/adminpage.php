@@ -1,10 +1,10 @@
 <?php
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_VAL'] = 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_TITLE'] = 'Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_VAL'] = 'ÐŸÑ€Ð¸Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_TITLE'] = 'ÐŸÑ€Ð¸Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_VAL'] = 'ÐžÑ‚Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_TITLE'] = 'ÐžÑ‚Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_VAL'] = 'ÐŸÐ¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_TITLE'] = 'Ð£ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ';
-$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_RESTORE_CONFIRM'] = 'ÐŸÐ¾Ð¿Ñ‹Ñ‚ÐºÐ° Ð¿Ñ€Ð¾Ð¸Ð·Ð²ÐµÑÑ‚Ð¸ Ð¿Ð¾Ð»Ð½ÑƒÑŽ Ð¾Ñ‡Ð¸ÑÑ‚ÐºÑƒ Ð²ÑÐµÑ… Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº (Ð²Ð¾ Ð²ÑÐµÑ… Ð²ÐºÐ»Ð°Ð´ÐºÐ°Ñ…). Ð’Ñ‹ ÑƒÐ²ÐµÑ€ÐµÐ½Ñ‹?';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_VAL'] = 'Ñîõðàíèòü';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_SAVE_TITLE'] = 'Ñîõðàíèòü';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_VAL'] = 'Ïðèìåíèòü';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_APPLY_TITLE'] = 'Ïðèìåíèòü';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_VAL'] = 'Îòìåíèòü';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_CANCEL_TITLE'] = 'Îòìåíèòü';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_VAL'] = 'Ïî óìîë÷àíèþ';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_TITLE'] = 'Óñòàíîâèòü çíà÷åíèÿ ïî óìîë÷àíèþ';
+$MESS['OBX_CORE_SETT_ADM_PAGE_BTN_DEF_RESTORE_CONFIRM'] = 'Ïîïûòêà ïðîèçâåñòè ïîëíóþ î÷èñòêó âñåõ íàñòðîåê (âî âñåõ âêëàäêàõ). Âû óâåðåíû?';

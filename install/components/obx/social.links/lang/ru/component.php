@@ -1,2 +1,2 @@
 <?php
-$MESS['OBX_CORE_MODULE_NOT_INSTALLED'] = 'ÐœÐ¾Ð´ÑƒÐ»ÑŒ OBX: Â«Ð‘Ð°Ð·Ð¾Ð²Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒÂ» Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½';
+$MESS['OBX_CORE_MODULE_NOT_INSTALLED'] = 'Ìîäóëü OBX: «Áàçîâûé ìîäóëü» íå óñòàíîâëåí';

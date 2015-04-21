@@ -26,15 +26,15 @@ namespace OBX\Core\Assistants_Alpha;
  *
  * ElCodeUpd::getFilterValues();
  *
- * $assistant = new ElCodeUpd("ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° Ð¸Ð½Ñ„Ð¾Ð±Ð»Ð¾ÐºÐ¾Ð²", $_REQUEST['IBLOCK_ID']);
+ * $assistant = new ElCodeUpd("Îáðàáîòêà èíôîáëîêîâ", $_REQUEST['IBLOCK_ID']);
  *
  * if (isset($_REQUEST['ACTIVE'])) {
  *      $assistant->setFilter(Array('ACTIVE' => $_REQUEST['ACTIVE']));
  * }
  *
- * $assistant->addFilterInput(ElCodeUpd::FILTER_INPUT_TYPE_SELECT, 'IBLOCK_ID', 'Ð˜Ð· ÐºÐ°ÐºÐ¾Ð³Ð¾ Ð˜Ð‘', 3, Array('3' => 'ÐšÐ»Ð¸ÐµÐ½Ñ‚Ñ‹', '4' => 'ÐšÐ¾Ð¼Ð°Ð½Ð´Ð°'));
+ * $assistant->addFilterInput(ElCodeUpd::FILTER_INPUT_TYPE_SELECT, 'IBLOCK_ID', 'Èç êàêîãî ÈÁ', 3, Array('3' => 'Êëèåíòû', '4' => 'Êîìàíäà'));
  *
- * $assistant->addFilterInput(ElCodeUpd::FILTER_INPUT_TYPE_RADIO, 'ACTIVE', 'ÐŸÐ¾ÐºÐ°Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ: ', "Y", Array('Y' => "Ð°ÐºÑ‚Ð¸Ð²Ð½Ñ‹Ñ…", 'N' => "Ð½ÐµÐ°ÐºÑ‚Ð¸Ð²Ð½Ñ‹Ñ…"));
+ * $assistant->addFilterInput(ElCodeUpd::FILTER_INPUT_TYPE_RADIO, 'ACTIVE', 'Ïîêàçûâàòü: ', "Y", Array('Y' => "àêòèâíûõ", 'N' => "íåàêòèâíûõ"));
  *
  * $assistant->Run();
  *
@@ -43,7 +43,7 @@ namespace OBX\Core\Assistants_Alpha;
  */
 class IBlockAssistant extends BasicAssistant {
 
-	protected $message = "ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚Ð°Ð» ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚ Ñ ID: #ID#";
+	protected $message = "Îáðàáîòàë ýëåìåíò ñ ID: #ID#";
 
 	public $iblock_id = 0;
 
@@ -76,7 +76,7 @@ class IBlockAssistant extends BasicAssistant {
 	protected function getCurrentPercent () {
 		$qty = $this->getQty();
 		if ($qty == 0) {
-			$this->setMessage("Ð­Ð»ÐµÐ¼ÐµÐ½Ñ‚Ð¾Ð² Ñ Ð·Ð°Ð´Ð°Ð½Ð½Ñ‹Ð¼ Ñ„Ð¸Ð»ÑŒÑ‚Ñ€Ð¾Ð¼ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð¾.");
+			$this->setMessage("Ýëåìåíòîâ ñ çàäàííûì ôèëüòðîì íå íàéäåíî.");
 			$this->currentPercent = 100;
 		} else {
 			$this->currentPercent = round( 100 * $this->getLeftBorderQty() / $qty, 2);
@@ -97,7 +97,7 @@ class IBlockAssistant extends BasicAssistant {
 		while ($ob = $res->GetNextElement()) {
 			$arItem = $ob->GetFields();
 
-			$this->setMessage("ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚Ð°Ð» ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚ [" . $arItem['ID'] . "] " . $arItem['NAME']);
+			$this->setMessage("Îáðàáîòàë ýëåìåíò [" . $arItem['ID'] . "] " . $arItem['NAME']);
 
 			$id = $this->doAction($arItem, $ob);
 			if ($id > 0) {

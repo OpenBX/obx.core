@@ -41,9 +41,9 @@ class OBX_Build {
 	protected $_lastPubReleaseVersion = null;
 	protected $_lastDevReleaseVersion = null;
 
-	// Р’РµСЂСЃРёСЏ РјРѕРґСѓР»СЏ, РµСЃР»Рё РѕРЅ СЃРѕР±РёСЂР°РµС‚СЃСЏ РєР°Рє РїРѕРґРјРѕРґСѓР»СЊ
+	// Версия модуля, если он собирается как подмодуль
 	protected $_dependencyVersion = null;
-	// РњРёРЅРёРјР°Р»СЊРЅР°СЏ РІРµСЂСЃРёСЏ РІРєР»СЋС‡Р°РµРјС‹С… РѕР±РЅРѕРІР»РµРЅРёР№ РїРѕРґРјРѕРґСѓР»СЏ
+	// Минимальная версия включаемых обновлений подмодуля
 	protected $_dependencyMinVersion = null;
 
 	function __construct($moduleName, self $ParentModule = null) {
@@ -69,8 +69,8 @@ class OBX_Build {
 	}
 
 	public function connectDBConnFile() {
-		// РїСЂРёС€Р»РѕСЃСЊ СЃРґРµР»Р°С‚СЊ С‚Р°Рє, РїРѕСЃРєРѕР»СЊРєСѓ РІ СЏРґСЂРµ Р±РёС‚СЂРёРєСЃ РґР°РЅРЅС‹Р№ С„Р°Р№Р» РїРѕРґРєР»СЋС‡Р°РµС‚СЃСЏ С‡РµСЂРµР· require_once
-		// РїРѕС‚РѕРјСѓ РґР»СЏ РґР°Р»СЊРЅРµР№С€РµРіРѕ РїРѕРґРєР»СЋС‡РµРЅРёСЏ РІ Р±РёР»РґРµСЂРµ СЏРґСЂР° Р±РёС‚СЂРёРєСЃ РїСЂРѕСЃС‚РѕР№ require РЅРµ РїРѕРґС…РѕРґРёС‚
+		// пришлось сделать так, поскольку в ядре битрикс данный файл подключается через require_once
+		// потому для дальнейшего подключения в билдере ядра битрикс простой require не подходит
 		$dbConnCode = file_get_contents($this->_bxRootDir.'/php_interface/dbconn.php');
 		$dbConnCode = preg_replace('~^[\s\S]*?\<\?(?:php)?~im', '', $dbConnCode);
 		$dbConnCode = preg_replace('~\?\>[\s\S]*?$~im', '', $dbConnCode);
@@ -99,7 +99,7 @@ class OBX_Build {
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
 		}
 		else {
-			echo 'РћС€РёР±РєР°: РјРѕРґСѓР»СЊ "'.$moduleName.'" РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.'."\n";
+			echo 'Ошибка: модуль "'.$moduleName.'" не существует.'."\n";
 			die();
 		}
 		$this->_arResources = array();
@@ -169,7 +169,7 @@ class OBX_Build {
 			$arVersion['MIN_VERSION'] = $arVersion['MAX_VERSION'];
 		}
 		if(empty($arVersion['MIN_VERSION']) || empty($arVersion['MAX_VERSION']) || empty($arVersion['MODULE_ID'])) {
-			echo 'РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ РёРЅС‚РµСЂРІР°Р» РІРµСЂСЃРёР№: "'.$moduleVersion.'"'.PHP_EOL;
+			echo 'Не удалось прочитать интервал версий: "'.$moduleVersion.'"'.PHP_EOL;
 		}
 		return $arVersion;
 	}
@@ -181,15 +181,15 @@ class OBX_Build {
 	protected function & addDependency($moduleVersion) {
 		$arVersion = self::readVersionInterval($moduleVersion);
 		if(empty($arVersion['MAX_VERSION'])) {
-			echo 'РћС€РёР±РєР°: '.$this->_moduleName.': РќРµРІРѕР·РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ Р·Р°РІРёСЃРёРјС‹Р№ РјРѕРґСѓР»СЊ "'.$moduleVersion.'". РќРµРІРµСЂРЅРѕ СѓРєР°Р·Р°РЅР° РІРµСЂСЃРёСЏ РёР»Рё РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РјРѕРґСѓР»СЏ."'."\n";
+			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указана версия или идентификатор модуля."'."\n";
 			return null;
 		}
 		if( $arVersion['MAX_VERSION']['RAW_VERSION'] < $arVersion['MIN_VERSION']['RAW_VERSION'] ) {
-			echo 'РћС€РёР±РєР°: '.$this->_moduleName.': РќРµРІРѕР·РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ Р·Р°РІРёСЃРёРјС‹Р№ РјРѕРґСѓР»СЊ "'.$moduleVersion.'". РќРµРІРµСЂРЅРѕ СѓРєР°Р·Р°РЅ РёРЅС‚РµСЂРІР°Р» РІРµСЂСЃРёР№ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё (РјРёРЅ.РІРµСЂСЃРёСЏ < РјР°РєСЃ.РІРµСЂСЃРёСЏ)'."\n";
+			echo 'Ошибка: '.$this->_moduleName.': Невозможно добавить зависимый модуль "'.$moduleVersion.'". Неверно указан интервал версий зависимости (мин.версия < макс.версия)'."\n";
 			return null;
 		}
 		if( !is_dir($this->_modulesDir.'/'.$arVersion['MAX_VERSION']['MODULE_ID']) ) {
-			echo 'РћС€РёР±РєР°: РњРѕРґСѓР»СЊ "'.$arVersion['MAX_VERSION']['MODULE_ID'].'" РЅРµ РЅР°Р№РґРµРЅ';
+			echo 'Ошибка: Модуль "'.$arVersion['MAX_VERSION']['MODULE_ID'].'" не найден';
 			return null;
 		}
 
@@ -197,13 +197,13 @@ class OBX_Build {
 		if($this->_ParentModule instanceof self) {
 			$Dependency = $this->_ParentModule->addDependency($moduleVersion);
 //			if( self::compareVersions($arModuleVersion['VERSION'], $Dependency->_version) !== 0) {
-//				echo 'Р’РµСЂСЃРёРё Р·Р°РІРёСЃРёС‹С… РјРѕРґСѓР»РµР№.'
+//				echo 'Версии зависиых модулей.'
 //					."\n\t"
 //						.$this->_ParentModule->_moduleName.'-'.$this->_ParentModule->_version
-//						.' <-С‚СЂРµР±СѓРµС‚- '.$Dependency->_moduleName.'-'.$Dependency->_version
+//						.' <-требует- '.$Dependency->_moduleName.'-'.$Dependency->_version
 //					."\n\t"
 //						.$this->_moduleName.'-'.$this->_version
-//						.' <-С‚СЂРµР±СѓРµС‚- '.$arModuleVersion['MODULE_ID'].'-'.$arModuleVersion['VERSION']
+//						.' <-требует- '.$arModuleVersion['MODULE_ID'].'-'.$arModuleVersion['VERSION']
 //					."\n"
 //				;
 //			}
@@ -293,11 +293,11 @@ class OBX_Build {
 			$this->_parseConfigFile($configFile);
 			return true;
 		}
-		$errorMessage = 'РќРµ СѓРґР°Р»РѕСЃСЊ РЅР°Р№С‚Рё РєРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ С„Р°Р№Р» СЃР±РѕСЂРєРё "'.$configFile.'"'."\n";
+		$errorMessage = 'Не удалось найти конфигурационный файл сборки "'.$configFile.'"'."\n";
 		if(false !== $bRequire) {
-			die('РћС€РёР±РєР°: '.$errorMessage);
+			die('Ошибка: '.$errorMessage);
 		}
-		echo 'РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ: '.$errorMessage;
+		echo 'Предупреждение: '.$errorMessage;
 		return false;
 	}
 
@@ -424,8 +424,8 @@ class OBX_Build {
 					$configCommandParameter = $arConfigCommandMatches[2];
 				}
 				else {
-					echo 'РћС€РёР±РєР°: РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ РІС‹РїРѕР»РЅРµРЅРёСЏ РєРѕРјР°РЅРґС‹.'
-						.' Р¤РѕСЂРјР°С‚: @command: /some/command/argument.obuild; # РќРµ Р·Р°Р±СѓРґС‚Рµ Р·РЅР°Рє ";"'
+					echo 'Ошибка: Неверный формат выполнения команды.'
+						.' Формат: @command: /some/command/argument.obuild; # Не забудте знак ";"'
 						."\n".' file: "'.$filePath.'"'
 						."\n".' line: '.$lineNumber."\n";
 					die();
@@ -449,11 +449,11 @@ class OBX_Build {
 					continue;
 				}
 				$arResource['OPTIONS'] = array(
-					// РўРѕР»СЊРєРѕ РїСЂРѕРёР·РІРѕРґРёС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂСЊ РјРѕРґСѓР»СЏ, РЅРѕ РЅРµ РіРµРЅРµСЂРёСЂСѓРµС‚ РїСЂР°РІРёР»Р° РґР»СЏ СѓСЃС‚Р°РЅРѕРІРєРё Рё СѓРґР°Р»РµРЅРёСЏ
+					// Только производит сборку внутрь модуля, но не генерирует правила для установки и удаления
 					'BUILD_ONLY' => false,
-					// РўРѕР»СЊРєРѕ РіРµРЅРµСЂРёСЂСѓРµС‚ РїСЂР°РІРёР»Р° СѓСЃС‚Р°РЅРѕРІРєРё Рё СѓРґР°Р»РµРЅРёСЏ, РЅРѕ РЅРµ РїСЂРѕРёР·РІРѕРґРёС‚ СЃР±РѕСЂРєСѓ РІРЅСѓС‚СЂСЊ РјРѕРґСѓР»СЏ
+					// Только генерирует правила установки и удаления, но не производит сборку внутрь модуля
 					'INSTALL_ONLY' => false,
-					// РќРµ РЅРµРіРµСЂРёСЂРѕРІР°С‚СЊ РїСЂР°РІРёР»Р° СѓРґР°Р»РµРЅРёСЏ, С‚РѕР»СЊРєРѕ СѓСЃС‚Р°РЅРѕРІРєРё
+					// Не негерировать правила удаления, только установки
 					'NOT_UNINSTALL' => false
 				);
 				if( strpos($arTmpResource[0], "!") !== false ) {
@@ -771,7 +771,7 @@ class OBX_Build {
 				$DependencyModule->generateUnInstallCode();
 				$DependencyModule->generateBackInstallCode();
 				// [pronix: 2013-07-26]
-				// РўРµРїРµСЂСЊ С„Р°Р№Р»С‹ РїРѕРґРјРѕРґСѓР»РµР№ РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ РІ СЂРµС€РµРЅРёРµ С‚РѕР»СЊРєРѕ РЅР° СЃС‚Р°РґРёРё СЃР±РѕСЂРєРё СЂРµР»РёР·Р°
+				// Теперь файлы подмодулей добавляются в решение только на стадии сборки релиза
 				// +++
 				//// self::deleteDirFilesEx($this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName(), true);
 				//// self::CopyDirFilesEx(
@@ -825,7 +825,7 @@ class OBX_Build {
 		$installCode = '';
 		$getDepsCode = '';
 		// [pronix:2013-07-29]
-		// +++  Р­С‚РѕС‚ РєРѕРґ Р±РѕР»РµРµ РЅРµ Р°РєС‚СѓР°Р»РµРЅ
+		// +++  Этот код более не актуален
 		////if( count($this->_arDepModules) ) {
 		////	foreach($this->_arDepModules as $DependencyModule) {
 		////		$installDepsCode .=			'OBX_CopyDirFilesEx('
@@ -884,7 +884,7 @@ class OBX_Build {
 			file_put_contents($this->_selfDir.'/install/'.$installFile, "<?php\n?>");
 		}
 		// [pronix:2013-07-29]
-		// +++ Р­С‚РѕС‚ РєРѕРґ Р±РѕР»РµРµ РЅРµ Р°РєС‚СѓР°Р»РµРЅ
+		// +++ Этот код более не актуален
 		////if( strlen($installDepsCode)>0 ) {
 		////	$installDepsCode = 	 $this->getHeaderCodeOfInstallFile()
 		////						.$this->getCodeOfCopyFunction()
@@ -930,7 +930,7 @@ class OBX_Build {
 		$backInstallFile = 'get_back_installed_files.php';
 		$backInstallCode = '';
 		// [pronix:2013-08-15]
-		// Р­С‚РѕС‚ РєРѕРґ Р±РѕР»СЊС€Рµ РЅРµ Р°РєС‚СѓР°Р»РµРЅ, СЌС‚Рѕ РЅР°РґРѕ Р±С‹Р»Рѕ Р·Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ РµС€С‘ 2013-07-26
+		// Этот код больше не актуален, это надо было закомментировать ешё 2013-07-26
 		// +++
 		////if( count($this->_arDepModules) ) {
 		////	foreach($this->_arDepModules as $DependencyModule) {
@@ -1104,19 +1104,19 @@ if(!defined("BX_ROOT")) {
 	}
 
 	/**
-	 * Р’ РѕС‚Р»РёС‡РёРµ РѕС‚ Р±РёС‚СЂРёРєСЃРѕРІСЃРєРѕР№ РјРѕР¶РµС‚ РїСЂРёРЅРёРјР°С‚СЊ РІ РєР°С‡РµСЃС‚РІРµ
-	 * РёСЃРєР»СЋС‡РµРЅРёСЏ (Р°СЂРіСѓРјРµРЅС‚ $Exclude) РЅРµ С‚РѕР»СЊРєРѕ СЃС‚СЂРѕРєСѓ, РЅРѕ Рё РјР°СЃСЃРёРІ
-	 * + РґРѕР±Р°РІР»РµРЅ Р°СЂРіСѓРјРµРЅС‚ РёСЃРєР»СЋС‡РµРЅРёСЏ РїРѕ РјР°СЃРєРµ РїСѓС‚Рё
+	 * В отличие от битриксовской может принимать в качестве
+	 * исключения (аргумент $Exclude) не только строку, но и массив
+	 * + добавлен аргумент исключения по маске пути
 	 * @param $path_from
 	 * @param $path_to
 	 * @param bool $ReWrite
 	 * @param bool $Recursive
 	 * @param bool $bDeleteAfterCopy
-	 * @param string | array $Exclude - РёСЃРєР»СЋС‡РµРЅРёРµ РїРѕ РёРјРµРЅРё С„Р°Р№Р»Р°/РїР°РїРєРё
-	 * @param string | array $ExcludePath - РёСЃРєР»СЋС‡РµРЅРёРµ РїРѕ РјР°СЃРєРµ РїСѓС‚Рё
-	 * 						 Р•СЃР»Рё РІРЅР°С‡Р°РѕРµ СЃС‚РѕРёС‚ СЃРёРјРІРѕР» "/", С‚Рѕ РїСѓС‚СЊ СЃС‡РёС‚Р°РµС‚СЃСЏ Р°Р±СЃРѕР»СЋС‚РЅС‹Рј
-	 * 						 РёРЅР°С‡Рµ РёСЃРєР»СЋС‡РµРЅРёРµ СЂР°СЃС‡РёС‚С‹РІР°РµС‚СЃСЏ РїРѕ РїСѓС‚Рё $path_from
-	 * @param null | array $arExcludePath - РЅРµ С‚СЂРѕРіР°С‚СЊ, РЅСѓР¶РµРЅ РґР»СЏ СЂРµРєСѓСЂСЃРёРё
+	 * @param string | array $Exclude - исключение по имени файла/папки
+	 * @param string | array $ExcludePath - исключение по маске пути
+	 * 						 Если вначаое стоит символ "/", то путь считается абсолютным
+	 * 						 иначе исключение расчитывается по пути $path_from
+	 * @param null | array $arExcludePath - не трогать, нужен для рекурсии
 	 * @return bool
 	 */
 	static public function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False, $bDeleteAfterCopy = False, $Exclude = '', $ExcludePath = '', &$arExcludePath = null)
@@ -1154,9 +1154,9 @@ if(!defined("BX_ROOT")) {
 		if( strpos($path_to."/", $path_from."/")===0 || realpath($path_to) === realpath($path_from) ) {
 			$bDeny = true;
 			// +++ [pronix:2013-11-02]
-			// РЅРµР»СЊР·СЏ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РїР°РїРєСѓ from РІ РїР°РїРєСѓ target, РµСЃР»Рё РїР°РїРєР° target РЅР°С…РѕРґРёС‚СЃСЏ РІ РїР°РїРєРµ from (from/target)
-			// РїРѕСЃРєРѕР»СЊРєСѓ РµСЃС‚СЊ С€Р°РЅСЃ РІР»РµС‚РµС‚СЊ РІ СЂРµРєСЃСѓСЂСЃРёРІРЅРѕРµ РєРѕРїРёСЂРѕРІР°РЅРёРµ
-			// !РЅРѕ РµСЃР»Рё РїР°РїРєР° 2 РЅР°С…РѕРґРёС‚СЃСЏ РІ РёСЃРєР»СЋС‡РµРЅРёСЏС…, С‚Рѕ РјРѕР¶РЅРѕ РїСЂРѕРґРѕР»Р¶РёС‚СЊ РєРѕРїРёСЂРѕРІР°РЅРёРµ
+			// нельзя скопировать папку from в папку target, если папка target находится в папке from (from/target)
+			// поскольку есть шанс влететь в рексурсивное копирование
+			// !но если папка 2 находится в исключениях, то можно продолжить копирование
 			if( in_array($path_to, $arExcludePath) ) {
 				$bDeny = false;
 			}
@@ -1291,9 +1291,9 @@ if(!defined("BX_ROOT")) {
 //	}
 
 	/**
-	 * Р Р°Р±РѕС‚Р°РµС‚ С‚Р°Рє Р¶Рµ РєР°Рє Р±РёС‚СЂРёРєСЃРѕРІСЃРєР°СЏ, РЅРѕ РІ РѕС‚Р»РёС‡РёРµ РѕС‚ РЅРµС‘, РјРѕР¶РµС‚ РїСЂРёРЅРёРјР°С‚СЊ РїРѕР»РЅС‹Р№ РїСѓС‚СЊ.
-	 * @param String $path - РїСѓС‚СЊ
-	 * @param bool $bIsPathFull - Р°Р±СЃРѕР»СЋСЊРЅС‹Р№=true, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Р№=false
+	 * Работает так же как битриксовская, но в отличие от неё, может принимать полный путь.
+	 * @param String $path - путь
+	 * @param bool $bIsPathFull - абсолюьный=true, относительный=false
 	 * @return boolean
 	 */
 	static public function deleteDirFilesEx($path, $bIsPathFull = false)
@@ -1370,11 +1370,11 @@ if(!defined("BX_ROOT")) {
 	}
 
 	/**
-	 * Р Р°Р±РѕС‚Р°РµС‚ С‚Р°Рє Р¶Рµ РєР°Рє _replaceComponentParameters
-	 * СЃ С‚РµРј РѕС‚Р»РёС‡РёРµРј, С‡С‚Рѕ РјРѕР¶РµС‚ РїСЂРёРЅСЏС‚СЊ РІ Р°СЂРіСѓРјРµРЅС‚:
-	 * 		1. РјР°СЃСЃРёРІ СЃ С„Р°Р№Р»Р°РјРё
-	 * 		2. С„Р°Р№Р»
-	 * 		3. РµСЃР»Рё Р°СЂРіСѓРјРµРЅС‚ РЅРµ Р·Р°РґР°РЅ, РїСѓС‚Рё РґРѕ РјР°СЃСЃРёРІР° Р±СѓРґСѓ РїСЂРѕС‡РёС‚Р°РЅС‹ РёР· РєРѕРЅС„РёРіР° СЂРµСЃСѓСЂСЃРѕРІ РјРѕРґСѓР»СЏ
+	 * Работает так же как _replaceComponentParameters
+	 * с тем отличием, что может принять в аргумент:
+	 * 		1. массив с файлами
+	 * 		2. файл
+	 * 		3. если аргумент не задан, пути до массива буду прочитаны из конфига ресурсов модуля
 	 * @param bool|array|string $Config
 	 */
 	public function replaceComponentParameters($Config = false) {
@@ -1394,9 +1394,9 @@ if(!defined("BX_ROOT")) {
 	}
 
 	/**
-	 * Р—Р°РјРµРЅСЏРµС‚ РїР°СЂР°РјРµС‚СЂС‹ РєРѕРјРїРѕРЅРµРЅС‚РѕРІ РІ С„Р°Р№Р»Р°С…, СѓРєР°Р·Р°РЅРЅС‹С… РІ РєРѕРЅС„РёРіРµ
+	 * Заменяет параметры компонентов в файлах, указанных в конфиге
 	 * @param $configPath
-	 * РџСЂРёРјРµСЂ РєРѕРЅС„РёРіР°
+	 * Пример конфига
 	 * <?php
 	 * 		return array(
 	 * 			'/ru/index.php' => array(
@@ -1538,9 +1538,9 @@ if(!defined("BX_ROOT")) {
 
 
 	/**
-	 * РџРѕСЃС‚СЂРѕРёС‚СЊ РёРЅРґРµРєСЃ РјР°СЃСЃРёРІР°
+	 * Построить индекс массива
 	 * @param $arList
-	 * @param string | array $str_arKey - РєР»СЋС‡ РїРѕ РєРѕС‚РѕСЂРѕРјСѓ РїСЂРѕРёРЅРґРµРєСЃРёСЂРѕРІР°С‚СЊ РјР°СЃСЃРёРІ
+	 * @param string | array $str_arKey - ключ по которому проиндексировать массив
 	 * @param bool $bUniqueKeys
 	 * @param bool $bSetReferences
 	 * @return array
@@ -1622,9 +1622,9 @@ if(!defined("BX_ROOT")) {
 	}
 
 	/**
-	 * Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃС‚СЂРѕРєСѓ СЃ php-РєРѕРґРѕРј РјР°СЃСЃРёРІР° РїРµСЂРµРґР°РЅРЅРѕРіРѕ РЅР° РІС…РѕРґ
-	 * @param Array $array - РІС…РѕРґРЅРѕР№ РјР°СЃСЃРёРІ, РґР»СЏ РІС‹РІРѕРґР° РІ РІРёРґРµ php-РєРѕРґР°
-	 * @param String $whiteOffset - РѕС‚СЃС‚СѓРї РѕС‚ РЅР°С‡Р°Р»Р° РєР°Р¶РґР№ СЃС‚СЂРѕРєРё(РґР»СЏ РєСЂР°СЃРѕС‚С‹)
+	 * Возвращает строку с php-кодом массива переданного на вход
+	 * @param Array $array - входной массив, для вывода в виде php-кода
+	 * @param String $whiteOffset - отступ от начала каждй строки(для красоты)
 	 * @return string
 	 * @author Maksim S. Makarov aka pr0n1x
 	 * @link https://code.google.com/p/scriptacid/
@@ -1728,28 +1728,28 @@ if(!defined("BX_ROOT")) {
 		 */
 		$obExport = new CIBlockCMLExport;
 		if($obExport->Init($fpXmlFile, $arIB['IBLOCK_ID'], $nextStep, true, $arIB['EXPORT_FULL_PATH'], $arIB['EXPORT_WORK_DIR'])) {
-			// <РљРѕРјРјРµСЂС‡РµСЃРєР°СЏРРЅС„РѕСЂРјР°С†РёСЏ>
+			// <КоммерческаяИнформация>
 			$obExport->StartExport();
 
-				// <РљР»Р°СЃСЃРёС„РёРєР°С‚РѕСЂ>
+				// <Классификатор>
 				$obExport->StartExportMetadata();
-					// <РЎРІРѕР№СЃС‚РІР°>
+					// <Свойства>
 				 	$obExport->ExportProperties($arPropertyMap);
-					// </РЎРІРѕР№СЃС‚РІР°>
-					// <Р“СЂСѓРїРїС‹>
+					// </Свойства>
+					// <Группы>
 					$result = $obExport->ExportSections(
 						$arSectionMap,
 						$start_time,
 						$INTERVAL,
 						$arSectionFilter
 					);
-					// </Р“СЂСѓРїРїС‹>
-				// </РљР»Р°СЃСЃРёС„РёРєР°С‚РѕСЂ>
+					// </Группы>
+				// </Классификатор>
 				$obExport->EndExportMetadata();
 
-				// <РљР°С‚Р°Р»РѕРі>
+				// <Каталог>
 				$obExport->StartExportCatalog();
-					// <РўРѕРІР°СЂС‹>
+					// <Товары>
 					$result = $obExport->ExportElements(
 						$arPropertyMap,
 						$arSectionMap,
@@ -1758,11 +1758,11 @@ if(!defined("BX_ROOT")) {
 						0,
 						$arElementFilter
 					);
-					// </РўРѕРІР°СЂС‹>
-				// </РљР°С‚Р°Р»РѕРі>
+					// </Товары>
+				// </Каталог>
 				$obExport->EndExportCatalog();
 
-			// </РљРѕРјРјРµСЂС‡РµСЃРєР°СЏРРЅС„РѕСЂРјР°С†РёСЏ>
+			// </КоммерческаяИнформация>
 			$obExport->EndExport();
 		}
 		else {
@@ -1860,60 +1860,60 @@ SHORT OPTIONS
     -f: alias --full
 OPTIONS
     --module=MODULE_ID
-         РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РјРѕРґСѓР»СЊ(Рё) РґР»СЏ РєРѕС‚РѕСЂС‹Р· Р±СѓРґСѓС‚ РїСЂРёРјРµРЅРµРЅС‹ РґРµР№СЃС‚РІРёСЏ
+         Устанавливает модуль(и) для которыз будут применены действия
     --build
-         РЎРѕР±РёСЂР°РµС‚ С„Р°Р№Р»С‹ РёР· СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅРѕРіРѕ Р±РёС‚СЂРёРєСЃР° РІРЅСѓС‚СЂСЊ РјРѕРґСѓР»СЏ
+         Собирает файлы из установленного битрикса внутрь модуля
     --full
          alias: --build --iblock-cml --iblock-form-settings
     --replace-cmp-params=[config_path]
-         Р—Р°РјРµРЅСЏРµС‚ РїР°СЂР°РјРµС‚СЂС‹ РєРѕРјРїРѕРЅРµРЅС‚РѕРІ СЃРѕР±СЂР°РЅРЅРѕР№ РїСѓР±Р»РёС‡РєРё РЅР° РїР»РµР№СЃС…РѕР»РґРµСЂС‹
-         Р’РѕР·РјРѕР¶РЅРѕ СЏРІРЅРѕ СѓРєР°Р·Р°С‚СЊ РїСѓС‚СЊ РґРѕ РєРѕРЅС„РёРіР° СЃ РїР°СЂР°РјРµС‚СЂР°РјРё
-         РўР°Рє Р¶Рµ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РІРЅСѓС‚СЂРё --build
+         Заменяет параметры компонентов собранной публички на плейсхолдеры
+         Возможно явно указать путь до конфига с параметрами
+         Так же выполняется внутри --build
     --iblock-cml[=ibcode1,ibcode2...]
-         Р­РєСЃРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ xml-РґР°РЅРЅС‹Рµ РёРЅС„РѕР±Р»РѕРєРѕРІ РјРѕРґСѓР»СЏ
+         Экспортировать xml-данные инфоблоков модуля
     --iblock-form-settings[=ibcode1,ibcode2...]
-         Р­РєСЃРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ РЅР°СЃС‚СЂРѕР№РєРё С„РѕСЂРј СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РёРЅС„РѕР±Р»РѕРєРѕРІ РјРѕРґСѓР»СЏ
+         Экспортировать настройки форм редактирования инфоблоков модуля
     --raw-lang-check
-         Р’С‹СЏРІР»СЏРµС‚ РїСЂРѕРІРµСЂРєСѓ РЅР° РЅР°Р»РёС‡РёРµ СЏР·С‹РєРѕРІРѕРіРѕ С‚РµРєСЃС‚Р° С‚Р°Рј, РіРґРµ РґРѕР»Р¶РЅС‹ Р±С‹С‚СЊ GetMessage('LANG_CODE')
+         Выявляет проверку на наличие языкового текста там, где должны быть GetMessage('LANG_CODE')
     --make-release
-         РЎР±РѕСЂРєР° С„Р°Р№Р»РѕРІ РІС‹РїСѓСЃРєР°
+         Сборка файлов выпуска
     --build-release[=version]
-         РЎР±РѕСЂРєР° Р°СЂС…РёРІР° СЃ РІС‹РїСѓСЃРєРѕРј РґР»СЏ Р·Р°РіСЂСѓР·РєРё РІ РњР°СЂРєРµС‚РџР»РµР№СЃ Р‘РёС‚СЂРёРєСЃ
+         Сборка архива с выпуском для загрузки в МаркетПлейс Битрикс
     --make-update[=versionFrom+versionTo]
-         РЎР±РѕСЂРєР° С„Р°Р№Р»РѕРІ РѕР±РЅРѕРІР»РµРЅРёСЏ,
-            РіРґРµ versionFrom - РІРµСЂСЃРёСЏ РІС‹РїСѓСЃРєР°, РѕС‚ РєРѕС‚РѕСЂРѕРіРѕ РїСЂРѕРёСЃС…РѕРґРёС‚ РѕР±РЅРѕРІР»РµРЅРёРµ
-            Рё versionTo - РІРµСЂСЃРёСЏ, РґРѕ РєРѕС‚РѕСЂРѕР№ РїСЂРѕРёСЃС…РѕРґРёС‚ РѕР±РЅРѕРІР»РµРЅРёРµ.
-         РџСЂРёРјРµСЂС‹:
+         Сборка файлов обновления,
+            где versionFrom - версия выпуска, от которого происходит обновление
+            и versionTo - версия, до которой происходит обновление.
+         Примеры:
              --make-update=+1.0.3
-                Р’ РґР°РЅРЅРѕРј СЃР»СѓС‡Р°Рµ СѓРєР°Р·Р°РЅР° С‚РѕР»СЊРєРѕ versionTo. Р—Р° versionFrom Р±СѓРґРµС‚ РІР·СЏС‚Рѕ Р·РЅР°С‡РµРЅРёРµ РєРѕРЅС„РёРіСѓСЂР°С†РёРё update_from,
-                РµСЃР»Рё РѕРЅРѕ РЅРµ СѓРєР°Р·Р°РЅРѕ, С‚Рѕ Р±СѓРґРµС‚ РІР·СЏС‚Р° РїРѕСЃР»РµРґРЅСЏСЏ РІРµСЂСЃРёСЏ РІ СЃС‚Р°С‚СѓСЃРµ "done",
-                РїРѕСЃР»РµРґРЅРёР№ СЂРµР»РёР· РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїСЂРё СЌС‚РѕРј РІ СЃС‚Р°С‚СѓСЃРµ "development"
-                РёРЅР°С‡Рµ versionTo Рё versionFrom СЃРѕРІРїР°РґСѓС‚ Рё Р±СѓРґРµС‚ РІС‹РІРµРґРµРЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰Р°СЏ РѕС€РёР±РєР°
+                В данном случае указана только versionTo. За versionFrom будет взято значение конфигурации update_from,
+                если оно не указано, то будет взята последняя версия в статусе "done",
+                последний релиз должен быть при этом в статусе "development"
+                иначе versionTo и versionFrom совпадут и будет выведена соответствующая ошибка
              --make-update=1.0.0+
-                Р’ РґР°РЅРЅРѕРј СЃР»СѓС‡Р°Рµ СѓРєР°Р·Р°РЅР° С‚РѕР»СЊРєРѕ versionFrom. Р—Р° РІРµСЂСЃРёСЋ versionTo Р±СѓРґРµС‚ РІР·СЏС‚Р° РїРѕСЃР»РµРґРЅСЏСЏ РІРµСЂСЃРёСЏ,
-                РЅР°С…РѕРґСЏС‰Р°СЏСЃСЏ РІ СЂР°Р·СЂР°Р±РѕС‚РєРµ (РІ СЃС‚Р°С‚СѓСЃРµ "development"), РµСЃР»Рё С‚Р°РєРѕРІР°СЏ РёРјРµРµС‚СЃСЏ.
-             Р•СЃР»Рё Р°СЂРіСѓРјРµРЅС‚ РјРµС‚РѕРґР° РѕСЃС‚Р°РІРёС‚СЊ РїСѓСЃС‚С‹Рј, С‚Рѕ Рё versionTo Рё versionFrom Р±СѓРґСѓС‚ РѕРїСЂРµРґРµР»РµРЅС‹ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.
+                В данном случае указана только versionFrom. За версию versionTo будет взята последняя версия,
+                находящаяся в разработке (в статусе "development"), если таковая имеется.
+             Если аргумент метода оставить пустым, то и versionTo и versionFrom будут определены автоматически.
     --build-update=[versionTo]
-         РЎР±РѕСЂРєР° Р°СЂС…РёРІР° СЃ РѕР±РЅРѕРІР»РµРЅРёРµРј
+         Сборка архива с обновлением
     --install=[files|module|events|database|register]
-         РЈСЃС‚Р°РЅРѕРІРёС‚СЊ СЂРµСЃСѓСЂСЃС‹ РјРѕРґСѓР»СЏ
-             files         - СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С„Р°Р№Р»С‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ СЃ РєРѕС„РёРіСѓСЂР°С†РёРµР№ СЃР±РѕСЂРєРё
-             module-files  - СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С„Р°Р№Р»С‹ РёСЃРїРѕР»СЊР·СѓСЏ CModule::InstallFiles()
-             module        - СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РјРѕРґСѓР»СЊ РёСЃРїРѕР»СЊР·СѓСЏ РѕР±СЉРµРєСЃС‚ CModule::DoInstall()
-             events        - СѓСЃС‚Р°РЅРѕРІРёС‚СЊ СЃРѕР±С‹С‚РёСЏ РјРѕРґСѓР»СЏ - CModule::InstallEvents()
-             database      - СѓСЃС‚РІРЅРѕРІРёС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С… - CModule::InstallDB()
-             data          - СѓСЃС‚РІРЅРѕРІРёС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С… - CModule::InstallData() / Р•СЃР»Рё РјРµС‚РѕРґ СЃСѓС‰РµСЃС‚РІСѓРµС‚
-             tasks         - СѓСЃС‚Р°РЅРѕРІРёС‚СЊ Р·Р°РґР°С‡Рё РјРѕРґСѓР»СЏ
-             register      - С‚РѕР»СЊРєРѕ Р·Р°СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°С‚СЊ РјРѕРґСѓР»СЊ РІ СЃРёСЃС‚РµРјРµ - RegisterModule()
+         Установить ресурсы модуля
+             files         - установить файлы в соответствие с кофигурацией сборки
+             module-files  - установить файлы используя CModule::InstallFiles()
+             module        - установить модуль используя объекст CModule::DoInstall()
+             events        - установить события модуля - CModule::InstallEvents()
+             database      - уствновить базу данных - CModule::InstallDB()
+             data          - уствновить базу данных - CModule::InstallData() / Если метод существует
+             tasks         - установить задачи модуля
+             register      - только зарегистрировать модуль в системе - RegisterModule()
     --uninstall=[files|module|events|database|register]
-             files         - СѓРґР°Р»РёС‚СЊ С„Р°Р№Р»С‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ СЃ РєРѕС„РёРіСѓСЂР°С†РёРµР№ СЃР±РѕСЂРєРё
-             module-files  - СѓРґР°Р»РёС‚СЊ С„Р°Р№Р»С‹ РёСЃРїРѕР»СЊР·СѓСЏ CModule::InstallFiles()
-             module        - СѓРґР°Р»РёС‚СЊ РјРѕРґСѓР»СЊ РёСЃРїРѕР»СЊР·СѓСЏ РѕР±СЉРµРєСЃС‚ CModule::DoUnInstall()
-             events        - СѓРґР°Р»РёС‚СЊ СЃРѕР±С‹С‚РёСЏ РјРѕРґСѓР»СЏ - CModule::InstallEvents()
-             database      - СѓРґР°Р»РёС‚СЊ Р±Р°Р·Сѓ РґР°РЅРЅС‹С… - CModule::InstallDB()
-             data          - СѓРґР°Р»РёС‚СЊ РґР°РЅРЅС‹Рµ - CModule::UnInstallData() / Р•СЃР»Рё РјРµС‚РѕРґ СЃСѓС‰РµСЃС‚РІСѓРµС‚
-             tasks         - РЈРґР°Р»РёС‚СЊ Р·Р°РґР°С‡Рё РјРѕРґСѓР»СЏ
-             register      - РїРѕРјРµС‚РёС‚СЊ РјРѕРґСѓР»СЊ РєР°Рє СѓРґР°Р»РµРЅРЅС‹Р№ - UnRegisterModule()
+             files         - удалить файлы в соответствие с кофигурацией сборки
+             module-files  - удалить файлы используя CModule::InstallFiles()
+             module        - удалить модуль используя объекст CModule::DoUnInstall()
+             events        - удалить события модуля - CModule::InstallEvents()
+             database      - удалить базу данных - CModule::InstallDB()
+             data          - удалить данные - CModule::UnInstallData() / Если метод существует
+             tasks         - Удалить задачи модуля
+             register      - пометить модуль как удаленный - UnRegisterModule()
 HELP;
 		}
 		$helpText .= "\n";
@@ -1967,7 +1967,7 @@ HELP;
 			$ModuleBuilder = new self($defaultModuleID);
 		}
 		else {
-			echo 'РћС€РёР±РєР°: РќРµ СѓРєР°Р·Р°РЅ С†РµР»РµРІРѕР№ РјРѕРґСѓР»СЊ'."\n";
+			echo 'Ошибка: Не указан целевой модуль'."\n";
 			die();
 		}
 
@@ -2031,7 +2031,7 @@ HELP;
 		if( array_key_exists('raw-lang-check', $arCommandOptions) ) {
 			$rawLangCheckResult = $ModuleBuilder->getModuleRawLangText();
 			if(strlen($rawLangCheckResult)>0) {
-				echo 'РќР°Р№РґРµРЅС‹ С„Р°Р№Р»С‹ РІ РєРѕС‚РѕСЂС‹С… СЏР·С‹РєРѕРІС‹Р№ С‚РµРєСЃС‚ РЅРµ РїРµСЂРµРјРµС‰РµРЅ РІ LANG-С„Р°Р№Р»С‹:'."\n".$rawLangCheckResult."\n";
+				echo 'Найдены файлы в которых языковый текст не перемещен в LANG-файлы:'."\n".$rawLangCheckResult."\n";
 			}
 
 		}
@@ -2075,57 +2075,57 @@ HELP;
 				$ModuleBuilder->getCModuleObject()->InstallFiles();
 			}
 			elseif($arCommandOptions['install'] == 'module') {
-				echo 'РЈСЃС‚Р°РЅРѕРІРєР° РјРѕРґСѓР»СЏ: "'.$ModuleBuilder->_moduleName.'"...'."\n";
-				echo "\t".'РЈСЃС‚Р°РЅРѕРІРєР° Р±Р°Р·С‹ РґР°РЅРЅС‹С…...';
+				echo 'Установка модуля: "'.$ModuleBuilder->_moduleName.'"...'."\n";
+				echo "\t".'Установка базы данных...';
 				$ModuleInstaller->InstallDB();
 				echo "OK\n";
-				echo "\t".'РЈСЃС‚Р°РЅРѕРІРєР° С„Р°Р№Р»РѕРІ...';
+				echo "\t".'Установка файлов...';
 				$ModuleBuilder->installResources();
 				echo "OK\n";
-				echo "\t".'РЈСЃС‚Р°РЅРѕРІРєР° СЃРѕР±С‹С‚РёР№...';
+				echo "\t".'Установка событий...';
 				$ModuleInstaller->InstallEvents();
 				echo "OK\n";
-				echo "\t".'РЈСЃС‚Р°РЅРѕРІРєР° Р·Р°РґР°С‡...';
+				echo "\t".'Установка задач...';
 				$ModuleInstaller->InstallTasks();
 				echo "OK\n";
 				if( method_exists($ModuleInstaller, 'InstallData') ) {
-					echo "\n".'РЈСЃС‚Р°РЅРѕРІРєР° РёСЃС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… Рё РЅР°СЃС‚СЂРѕРµРє РјРѕРґСѓР»СЏ...';
+					echo "\n".'Установка исходных данных и настроек модуля...';
 					$ModuleInstaller->InstallData();
 					echo "OK\n";
 				}
-				echo "\t".'Р РµРіРёСЃС‚СЂР°С†РёСЏ РјРѕРґСѓР»СЏ РІ СЃРёСЃС‚РµРјРµ...';
+				echo "\t".'Регистрация модуля в системе...';
 				$ModuleBuilder->registerModule();
 				echo "OK\n";
-				echo "Р“РѕС‚РѕРІРѕ.\n";
+				echo "Готово.\n";
 			}
 			elseif($arCommandOptions['install'] == 'events') {
-				echo 'РЈСЃС‚Р°РЅРѕРІРєР° СЃРѕР±С‹С‚РёР№ РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Установка событий модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleInstaller->InstallEvents();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['install'] == 'tasks') {
-				echo 'РЈСЃС‚Р°РЅРѕРІРєР° Р·Р°РґР°С‡ РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Установка задач модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleInstaller->InstallTasks();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['install'] == 'database') {
-				echo 'РЈСЃС‚Р°РЅРѕРІРєР° Р±Р°Р·С‹ РґР°РЅРЅС‹С… РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Установка базы данных модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleInstaller->InstallDB();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['install'] == 'data') {
 				if( method_exists($ModuleInstaller, 'InstallData') ) {
-					echo 'РЈСЃС‚Р°РЅРѕРІРєР° РёСЃС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… Рё РЅР°СЃС‚СЂРѕРµРє РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+					echo 'Установка исходных данных и настроек модуля "'.$ModuleBuilder->getModuleName().'"...';
 					$ModuleInstaller->InstallData();
 					echo "OK\n";
 				}
 				else {
-					echo 'РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ: РќРµРІРѕР·РјРѕР¶РЅРѕ СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РґР°РЅРЅС‹Рµ РјРѕРґСѓР»СЏ. "'.$ModuleBuilder->getModuleName().'".'
-						.' РЎРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РјРµС‚РѕРґ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РІ СѓСЃС‚Р°РЅРѕРІС‰РёРєРµ РјРѕРґСѓР»СЏ'."\n";
+					echo 'Предупреждение: Невозможно установить данные модуля. "'.$ModuleBuilder->getModuleName().'".'
+						.' Соответствующий метод отсутствует в установщике модуля'."\n";
 				}
 			}
 			elseif($arCommandOptions['install'] == 'register') {
-				echo 'Р РµРіРёСЃС‚СЂР°С†РёСЏ РІ СЃРёСЃС‚РµРјРµ РјРѕРґСѓР»СЏ '.$ModuleBuilder->getModuleName().'"...';
+				echo 'Регистрация в системе модуля '.$ModuleBuilder->getModuleName().'"...';
 				$ModuleBuilder->registerModule();
 				echo "OK\n";
 			}
@@ -2141,54 +2141,54 @@ HELP;
 			}
 			elseif($arCommandOptions['uninstall'] == 'module') {
 				if( method_exists($ModuleInstaller, 'UnInstallData') ) {
-					echo "\n".'РЈРґР°Р»РµРЅРёРµ РёСЃС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… Рё РЅР°СЃС‚СЂРѕРµРє РјРѕРґСѓР»СЏ...';
+					echo "\n".'Удаление исходных данных и настроек модуля...';
 					$ModuleInstaller->UnInstallData();
 					echo "OK\n";
 				}
-				echo "\t".'РЈРґР°Р»РµРЅРёРµ Р·Р°РґР°С‡...';
+				echo "\t".'Удаление задач...';
 				$ModuleInstaller->UnInstallTasks();
 				echo "OK\n";
-				echo "\t".'РЈРґР°Р»РµРЅРёРµ СЃРѕР±С‹С‚РёР№';
+				echo "\t".'Удаление событий';
 				$ModuleInstaller->UnInstallEvents();
 				echo "OK\n";
-				echo "\t".'РЈРґР°Р»РµРЅРёРµ С„Р°Р№Р»РѕРІ';
+				echo "\t".'Удаление файлов';
 				$ModuleBuilder->installResources();
 				echo "OK\n";
-				echo "\t".'РЈРґР°Р»РµРЅРёРµ Р±Р°Р·С‹ РґР°РЅРЅС‹С…';
+				echo "\t".'Удаление базы данных';
 				$ModuleInstaller->UnInstallDB();
 				echo "OK\n";
-				echo "\t".'РЈРґР°Р»РµРЅРёРµ Р·Р°РїРёСЃРё Рѕ СЂРµРіРёСЃС‚СЂР°С†РёРё РјРѕРґСѓР»СЏ';
+				echo "\t".'Удаление записи о регистрации модуля';
 				$ModuleBuilder->unRegisterModule();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'events') {
-				echo 'РЈРґР°Р»РµРЅРёРµ СЃРѕР±С‹С‚РёР№ РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Удаление событий модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleInstaller->UnInstallEvents();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'tasks') {
-				echo 'РЈРґР°Р»РµРЅРёРµ Р·Р°РґР°С‡ РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Удаление задач модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleInstaller->UnInstallTasks();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'database') {
-				echo 'РЈРґР°Р»РµРЅРёРµ Р±Р°Р·С‹ РґР°РЅРЅС‹С… РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Удаление базы данных модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleInstaller->UnInstallDB();
 				echo "OK\n";
 			}
 			elseif($arCommandOptions['uninstall'] == 'data') {
 				if( method_exists($ModuleInstaller, 'UnInstallData') ) {
-					echo 'РЈРґР°Р»РµРЅРёРµ РёСЃС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… Рё РЅР°СЃС‚СЂРѕРµРє РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+					echo 'Удаление исходных данных и настроек модуля "'.$ModuleBuilder->getModuleName().'"...';
 					$ModuleInstaller->UnInstallData();
 					echo "OK\n";
 				}
 				else {
-					echo 'РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ: РќРµРІРѕР·РјРѕР¶РЅРѕ СѓРґР°Р»РёС‚СЊ РґР°РЅРЅС‹Рµ РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'".'
-						.' РЎРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РјРµС‚РѕРґ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РІ СѓСЃС‚Р°РЅРѕРІС‰РёРєРµ РјРѕРґСѓР»СЏ'."\n";
+					echo 'Предупреждение: Невозможно удалить данные модуля "'.$ModuleBuilder->getModuleName().'".'
+						.' Соответствующий метод отсутствует в установщике модуля'."\n";
 				}
 			}
 			elseif($arCommandOptions['uninstall'] == 'register') {
-				echo 'РЈРґР°Р»РµРЅРёРµ Р·Р°РїРёСЃРё СЂРµРіРёСЃС‚СЂР°С†РёРё РІ СЃРёСЃС‚РµРјРµ РјРѕРґСѓР»СЏ "'.$ModuleBuilder->getModuleName().'"...';
+				echo 'Удаление записи регистрации в системе модуля "'.$ModuleBuilder->getModuleName().'"...';
 				$ModuleBuilder->unRegisterModule();
 				echo "OK\n";
 			}
@@ -2243,11 +2243,11 @@ HELP;
 	 * @param $relPath
 	 * @param array $arExclude
 	 * @param array $arPathExclude
-	 * @param array|null $arExcludeEntries - РЅРµ С‚СЂРѕРіР°С‚СЊ СЌС‚РѕС‚ Р°СЂРіСѓРјРµРЅС‚. РќСѓР¶РµРЅСЏ РґР»СЏ СЂРµРєСѓСЂСЃРёРё
+	 * @param array|null $arExcludeEntries - не трогать этот аргумент. Нуженя для рекурсии
 	 * @return array
 	 */
 	public function findRawLangText($relPath = '', $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
-		static $rusLit = 'Р°Р±РІРіРґРµС‘Р¶Р·РёС‘РєР»РјРЅРѕРїСЂСЃС‚СѓС„С…С†С‡С€С‰СЌСЋСЏР¤Р‘Р’Р“Р”Р•РЃР–Р—РР™РљР›РњРќРћРџР РЎРўРЈР¤РҐР¦Р§РЁР©Р­Р®РЇ';
+		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяФБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
 		if($relPath == '.') $relPath = '';
 		$relPath = '/'.trim($relPath, '/ ');
 		$curPath = rtrim($this->_docRootDir.$relPath, '/ ');
@@ -2339,7 +2339,7 @@ HELP;
 			$posMLCOpen = strpos($lineContent, '/*');
 			if( $posMLCOpen !== false ) {
 				if( ($posMLCloseInLine = strpos($lineContent, '*/')) !== false ) {
-					// С‚СѓС‚ РѕР±СЂР°Р±РѕС‚Р°РµРј СЃР»СѓС‡Р°Р№ СЃ РјРЅРѕРіРѕСЃС‚СЂРѕС‡РЅС‹Рј РєРѕРјРјРµРЅС‚Р°СЂРёРµРј РІРѕРґРЅРѕР№ СЃС‚СЂРѕРєРµ
+					// тут обработаем случай с многострочным комментарием водной строке
 					if( ($oneMCommentLength=($posMLCloseInLine - $posMLCOpen))>2 ) {
 						$oneMCommentLength -= 2;
 						$checkString = substr($lineContent, 0, $posMLCOpen+2)
@@ -2409,7 +2409,7 @@ HELP;
 			foreach($arFiles as $arFile) {
 				$result .= ''
 					.'File: '.$arFile['FILE']."\n"
-					.'Line: в„–'.$arFile['LINE']."\n"
+					.'Line: №'.$arFile['LINE']."\n"
 					.'Text: '.$arFile['NEAR']."\n"
 					.'------------------------------------------------------------'
 					.'------------------------------------------------------------'
@@ -2523,7 +2523,7 @@ HELP;
 	/**
 	 * @param string $folderA
 	 * @param string $folderB
-	 * @param string $subFolder - РЅРµ С‚СЂРѕРіР°С‚СЊ, РЅСѓР¶РµРЅ РґР»СЏ СЂРµРєСѓСЂСЃРёРё
+	 * @param string $subFolder - не трогать, нужен для рекурсии
 	 * @return array
 	 */
 	public function compareFolderContents($folderA, $folderB, $subFolder = '.') {
@@ -2614,17 +2614,17 @@ HELP;
 		uksort($arReleasesList['RELEASES_LIST'], 'OBX_Build::compareVersions');
 		foreach($arReleasesList['RELEASES_LIST'] as $version => $arRelease) {
 			if( $arRelease['STATE'] == 'done' && !is_dir($this->_releaseDir.'/release-'.$version) ) {
-				echo 'РћРЁРР‘РљРђ: Р’С‹РїСѓСЃРє '.$this->_moduleName.'-'.$version.' РїРѕРјРµС‡РµРЅ РєР°Рє РіРѕС‚РѕРІС‹Р№(state: done),'
-					.' РЅРѕ РЅРµ РЅР°Р№РґРµРЅ РІ РїР°РїРєРµ СЃР±РѕСЂРєРё СЂРµР»РёР·РѕРІ'
-					.' ('.$this->_releaseFolder.'). Р’С‹РїСѓСЃРє РїСЂРѕРїСѓС‰РµРЅ.'."\n";
+				echo 'ОШИБКА: Выпуск '.$this->_moduleName.'-'.$version.' помечен как готовый(state: done),'
+					.' но не найден в папке сборки релизов'
+					.' ('.$this->_releaseFolder.'). Выпуск пропущен.'."\n";
 				continue;
 			}
 			if(
 				array_key_exists('UPDATE_FROM', $arRelease) && $arRelease['UPDATE_FROM'] != false
 				&& !array_key_exists($arRelease['UPDATE_FROM'], $arReleasesList['RELEASES_LIST'])
 			) {
-				echo 'РћРЁРР‘РљРђ: Р’С‹РїСѓСЃРє '.$this->_moduleName.'-'.$version.' РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕР±РЅРѕРІР»РµРЅ СЃ РІРµСЂСЃРёРё '.$arRelease['UPDATE_FROM']
-					.'. Р”Р°РЅРЅР°СЏ РІРµСЂСЃРёСЏ РЅРµ РЅР°Р№РґРµРЅР° РІ СЃРїРёСЃРєРµ РІС‹РїСѓСЃРєРѕРІ. Р’С‹РїСѓСЃРє РїСЂРѕРїСѓС‰РµРЅ.'."\n";
+				echo 'ОШИБКА: Выпуск '.$this->_moduleName.'-'.$version.' должен быть обновлен с версии '.$arRelease['UPDATE_FROM']
+					.'. Данная версия не найдена в списке выпусков. Выпуск пропущен.'."\n";
 				continue;
 			}
 
@@ -2665,23 +2665,23 @@ HELP;
 			$this->_lastDevReleaseVersion = $this->_lastPubReleaseVersion;
 		}
 		if(self::compareVersions($this->_lastPubReleaseVersion, $this->_lastDevReleaseVersion)>0) {
-			echo 'РћРЁРР‘РљРђ: РїРѕСЃР»РµРґРЅРёР№ РІС‹РїСѓСЃРє РїРѕРјРµС‡РµРЅРЅС‹Р№ РєР°Рє СЃС‚Р°Р±РёР»СЊРЅС‹Р№ '
+			echo 'ОШИБКА: последний выпуск помеченный как стабильный '
 				.'('.$this->_moduleName.'-'.$this->_lastPubReleaseVersion.')'
-				.' РЅРѕРІРµРµ РїРѕСЃР»РµРґРЅРµРіРѕ РІС‹РїСѓСЃРєР° РІ СЂРµР¶РёРјРµ СЂР°Р·СЂР°Р±РѕС‚РєРё '
+				.' новее последнего выпуска в режиме разработки '
 				.'('.$this->_moduleName.'-'.$this->_lastDevReleaseVersion.').'
-				."\n".'        РџРѕРїСЂР°РІСЊС‚Рµ РІР°С€Сѓ РєРѕРЅС„РёРіСѓСЂР°С†РёСЋ РІС‹РїСѓСЃРєРѕРІ'."\n";
+				."\n".'        Поправьте вашу конфигурацию выпусков'."\n";
 			die();
 		}
 	}
 
 	public function makeRelease() {
-		echo 'Р’С‹РїСѓСЃРє '.$this->_moduleName.'-'.$this->_version."\n";
+		echo 'Выпуск '.$this->_moduleName.'-'.$this->_version."\n";
 		if( !array_key_exists($this->_version, $this->_arReleases) ) {
-			echo 'РћС€РёР±РєР°: РІРµСЂСЃРёСЏ РІС‹РїСѓСЃРєР° '.$this->_version.' РЅРµ РЅР°Р№РґРµРЅР° РІ РєРѕРЅС„РёРіСѓСЂР°С†РёРё СЃР±РѕСЂРєРё РІС‹РїСѓСЃРєРѕРІ'."\n";
+			echo 'Ошибка: версия выпуска '.$this->_version.' не найдена в конфигурации сборки выпусков'."\n";
 			return false;
 		}
 		if( self::compareVersions($this->_version, $this->_lastPubReleaseVersion) <= 0 ) {
-			echo 'РћРЁРР‘РљРђ: РўРµРєСѓС‰Р°СЏ РІРµСЂСЃРёСЏ РјРѕРґСѓР»СЏ ('.$this->_version.') РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РїРѕСЃР»РµРґРЅРµР№ РІРµСЂСЃРёРё РѕРїСѓР±Р»РёРєРѕРІР°РЅРЅРѕРіРѕ РІС‹РїСѓСЃРєР° ('.$this->_lastPubReleaseVersion.')'."\n";
+			echo 'ОШИБКА: Текущая версия модуля ('.$this->_version.') должна быть больше последней версии опубликованного выпуска ('.$this->_lastPubReleaseVersion.')'."\n";
 			return false;
 		}
 		self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version);
@@ -2700,13 +2700,13 @@ HELP;
 		$this->removeSQLFileComments($this->_releaseFolder.'/release-'.$this->_version.'/install/db/');
 		$this->_addChangeLogToReleaseVersionFile();
 
-		// РљРѕРїРёСЂСѓРµРј РїРѕРґРјРѕРґСѓР»Рё РІРЅСѓС‚СЂСЊ СЃСѓРїРµСЂ РјРѕРґСѓР»СЏ
+		// Копируем подмодули внутрь супер модуля
 		$arReleaseDeps = &$this->_arReleases[$this->_version]['DEPENDENCIES'];
 		foreach($this->_arDepModules as $Dependency) {
 			/** @var OBX_Build $Dependency */
 			$arDepVersion = self::readVersion($Dependency->_dependencyVersion);
 			if( empty($arDepVersion) ) {
-				echo 'РћС€РёР±РєР°: '.$this->_moduleName.': РІРµСЂСЃРёСЏ РїРѕРґРјРѕРґСѓР»СЏ "'.$Dependency->_moduleName.'" РЅРµ РѕРїСЂРµРґРµР»РµР»РЅР°'."\n";
+				echo 'Ошибка: '.$this->_moduleName.': версия подмодуля "'.$Dependency->_moduleName.'" не определелна'."\n";
 				continue;
 			}
 			$dependencyVersion = $Dependency->_dependencyVersion;
@@ -2720,34 +2720,34 @@ HELP;
 				$dependencyMinVersion = $arReleaseDeps[$Dependency->_moduleName]['MIN_VERSION']['VERSION'];
 			}
 			else {
-				echo '  РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ: Р’ РѕРїРёСЃР°РЅРёРё РІС‹РїСѓСЃРєР° '.$this->_version.' РЅРµ Р·Р°РґР°РЅР° РІРµСЂСЃРёСЏ РїРѕРґРјРѕРґСѓР»СЏ '.$Dependency->_moduleName.'.'
-					.' Р‘СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅ РёРЅС‚РµСЂРІР°Р» РІРµСЂСЃРёР№ СѓРєР°Р·Р°РЅРЅС‹Р№РІ СЂР°Р·РґРµР»Рµ [DEPENDENCIES]:'
+				echo '  Предупреждение: В описании выпуска '.$this->_version.' не задана версия подмодуля '.$Dependency->_moduleName.'.'
+					.' Будет использован интервал версий указанныйв разделе [DEPENDENCIES]:'
 					.' '.$Dependency->_moduleName.'-'.$dependencyMinVersion.'+'.$dependencyVersion
 					.PHP_EOL;
 			}
 
-			echo '  РЎР±РѕСЂРєР° РїРѕРґРјРѕРґСѓР»СЏ '.$Dependency->_moduleName.'-'.$dependencyMinVersion.'+'.$dependencyVersion.'...';
+			echo '  Сборка подмодуля '.$Dependency->_moduleName.'-'.$dependencyMinVersion.'+'.$dependencyVersion.'...';
 
 			if( !is_dir($Dependency->_releaseDir.'/release-'.$dependencyVersion) ) {
-				echo 'РћС€РёР±РєР°: РџР°РїРєР° СЃРѕРґРµСЂР¶Р°С‰Р°СЏ РІС‹РїСѓСЃРє РїРѕРґРјРѕРґСѓР»СЏ '
+				echo 'Ошибка: Папка содержащая выпуск подмодуля '
 					.$Dependency->_moduleName
-					.' ('.$Dependency->_releaseDir.'/release-'.$dependencyVersion.') РЅРµ РЅР°Р№РґРµРЅР°'."\n";
+					.' ('.$Dependency->_releaseDir.'/release-'.$dependencyVersion.') не найдена'."\n";
 				continue;
 			}
-			// РЈРґР°Р»СЏРµРј СЃС‚Р°СЂСѓСЋ РїР°РїРєСѓ СЂРµР»РёР·Р° РїРѕРґРјРѕРґСѓР»СЏ
+			// Удаляем старую папку релиза подмодуля
 			self::deleteDirFilesEx($this->_releaseFolder.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName);
-			// РљРѕРїРёСЂСѓРµРј РЅРѕРІС‹Рµ С„Р°Р№Р»С‹ СЂРµР»РёР·Р° РїРѕРґРјРѕРґСѓР»СЏ
+			// Копируем новые файлы релиза подмодуля
 			self::CopyDirFilesEx(
 				$Dependency->_releaseDir.'/release-'.$dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'
 				,true, true, FALSE, array('.git', 'modules')
 			);
-			// Р”Р°С‘Рј РїР°РїРєРµ СЃ СЂРµР»РёР·РѕРј РїРѕРґРјРѕРґСѓР»СЏ РїСЂР°РІРёР»СЊРЅРѕРµ РёРјСЏ
+			// Даём папке с релизом подмодуля правильное имя
 			rename(
 				 $this->_releaseDir.'/release-'.$this->_version.'/install/modules/release-'.$dependencyVersion
 				,$this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName
 			);
-			// РєРѕРїРёСЂСѓРµРј РІ СЂРµР»РёР· РІСЃРµ РѕР±РЅРѕРІР»РµРЅРёСЏ РїРѕРґРјРѕРґСѓР»РµР№
+			// копируем в релиз все обновления подмодулей
 			$depReleaseDir = opendir($Dependency->_releaseDir);
 			$releaseSubModInsPath = $this->_releaseDir.'/release-'.$this->_version.'/install/modules/'.$Dependency->_moduleName;
 			while($depReleaseFSEntry = readdir($depReleaseDir) ) {
@@ -2768,8 +2768,8 @@ HELP;
 							,$releaseSubModInsPath.'/'
 							,true, true, FALSE, array('.git', 'modules')
 						);
-						// РїРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р»С‹ РѕР±РЅРѕРІР»РµРЅРёР№ РїРѕРґРјРѕРґСѓР»РµР№ updater*.php -> __upd__*.php
-						// РёРЅР°С‡Рµ Р±РёС‚СЂРёРєСЃ РІС‹РєРёРЅРµС‚ РёС… РёР· РїР°РїРєРё РІС‹РїСѓСЃРєР° РїСЂРѕРґСѓРєС‚Р° РїСЂРё РёРЅСЃС‚Р°Р»Р»СЏС†РёРё РёР· РњРџ
+						// переименовываем файлы обновлений подмодулей updater*.php -> __upd__*.php
+						// иначе битрикс выкинет их из папки выпуска продукта при инсталляции из МП
 						$releaseSubModUpdDir = opendir($releaseSubModUpdPath);
 						while($releaseSubModUpdFSEntry = readdir($releaseSubModUpdDir)) {
 							if(
@@ -2816,7 +2816,7 @@ HELP;
 	protected function _checkBuildFolder() {
 		$gitIgnoreFile = $this->_releaseDir.'/build/.gitignore';
 		if( !self::CheckDirPath($gitIgnoreFile) ) {
-			echo 'РћС€РёР±РєР°: РїСѓС‚СЊ РґР»СЏ СЃР±РѕСЂРєРё Р°СЂС…РёРІРѕРІ РЅРµ СЏРІР»СЏРµС‚СЃСЏ РїР°РїРєРѕР№'."\n";
+			echo 'Ошибка: путь для сборки архивов не является папкой'."\n";
 			return false;
 		}
 		if( !is_file($gitIgnoreFile) ) {
@@ -2838,12 +2838,12 @@ HELP;
 		}
 		$arVersion = self::readVersion($version);
 		if(empty($arVersion)) {
-			echo 'РћС€РёР±РєР°: РЅРµРІРµСЂРЅРѕ Р·Р°РґР°РЅР° РІРµСЂСЃРёСЏ РІС‹РїСѓСЃРєР°'."\n";
+			echo 'Ошибка: неверно задана версия выпуска'."\n";
 			return false;
 		}
-		echo 'РЎР±РѕСЂРєР° Р°СЂС…РёРІР° СЃ РІС‹РїСѓСЃРєРѕРј '.$this->_moduleName.'-'.$version."\n";
+		echo 'Сборка архива с выпуском '.$this->_moduleName.'-'.$version."\n";
 		if( !is_dir($this->_releaseDir.'/release-'.$arVersion['VERSION']) ) {
-			echo 'РћС€РёР±РєР°: РЅРµ РЅР°Р№РґРµРЅР° РїР°РїРєР° СЃ РІС‹РїСѓСЃРєРѕРј ('.$this->_releaseDir.'/release-'.$arVersion['VERSION'].')'."\n";
+			echo 'Ошибка: не найдена папка с выпуском ('.$this->_releaseDir.'/release-'.$arVersion['VERSION'].')'."\n";
 			return false;
 		}
 		if( !$this->_checkBuildFolder() ) return false;
@@ -2918,12 +2918,12 @@ HELP;
 			) {
 				$content = file_get_contents($path);
 				// [pronix:2013-08-03] +++
-				// Р’РѕС‚ С‚СѓС‚ С‚РѕРЅРєРёР№ РјРѕРјРµРЅС‚
-				// Р•СЃР»Рё xml-С„Р°Р№Р»С‹ РЅР°С…РѕРґСЏС‚СЃСЏ РІ РїРѕРґРїР°РїРєРµ /ru/ , С‚Рѕ РѕРЅРё Р±СѓРґСѓС‚ РїРµСЂРµРєРѕРґРёСЂРѕРІР°РЅС‹ РІ СЃРёСЃС‚РµРјРѕР№ РњР°СЂРєРµС‚РџР»РµР№СЃР°
-				// 		РџСЂРё СЌС‚РѕРј РЅР°РґРѕ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РїРѕРјРµРЅСЏС‚СЊ Р·Р°РіРѕР»РѕРІРєРё С„Р°Р№Р»РѕРІ СЃ UTF-8 РЅР° windows-1251
-				//		РїРѕС‚РѕРјСѓ С‡С‚Рѕ Р±РёС‚СЂРёРєСЃ РєРѕРІРµСЂС‚РёСЂСѓРµС‚ РІРѕ РІСЂРµРјСЏ РёРјРѕСЂС‚Р° СЃС‚СЂРѕРєРё РёР· UTF-8 РІ 1251,
-				//		РµСЃР»Рё СЃР°Рј Р±РёС‚СЂРёРєСЃ РІ 1251, Р° Р·Р°РіРѕР»РѕРІРѕРє UTF-8
-				//		!! РћРґРЅР°РєРѕ РµСЃР»Рё Р±РёС‚СЂРёРєСЃ Рё xml-С„Р°Р№Р» РІ РєРѕРґРёСЂРѕРІРєРµ UTF-8, С‚Рѕ, Р·Р°РіРѕР»РѕРІРѕРє windows-1251 РґРѕРїСѓСЃРєР°РµС‚СЃСЏ :)
+				// Вот тут тонкий момент
+				// Если xml-файлы находятся в подпапке /ru/ , то они будут перекодированы в системой МаркетПлейса
+				// 		При этом надо обязательно поменять заголовки файлов с UTF-8 на windows-1251
+				//		потому что битрикс ковертирует во время иморта строки из UTF-8 в 1251,
+				//		если сам битрикс в 1251, а заголовок UTF-8
+				//		!! Однако если битрикс и xml-файл в кодировке UTF-8, то, заголовок windows-1251 допускается :)
 				if(
 					$fsEntryExt == '.xml' && strpos($relPath, '/ru/') !== false
 					&& $from == 'UTF-8' && strpos($content,  '<'.'?xml version="1.0" encoding="UTF-8"?>') !== false
@@ -2939,7 +2939,7 @@ HELP;
 					file_put_contents($path, $content);
 				}
 				else {
-					echo 'РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ: РЅРµРІРѕР·РјРѕР¶РЅРѕ РєРѕРЅРІРµСЂС‚РёСЂРѕРІР°С‚СЊ РєРѕРґРёСЂРѕРІРєСѓ С„Р°Р№Р»Р° '.$relPath.' ('.$from.' -> '.$to.')'."\n";
+					echo 'Предупреждение: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
 				}
 			}
 			return true;
@@ -2955,7 +2955,7 @@ HELP;
 			return $bSuccess;
 		}
 		else {
-			echo 'РћС€РёР±РєР°: РЅРµРІРѕР·РјРѕР¶РЅРѕ СЃРєРѕРЅРІРµСЂС‚РёСЂРѕРІР°С‚СЊ РєРѕРґРёСЂРѕРІРєСѓ С„Р°Р№Р»РѕРІ. РџСѓС‚СЊ РЅРµ РЅР°Р№РґРµРЅ ('.$relPath.')'."\n";
+			echo 'Ошибка: невозможно сконвертировать кодировку файлов. Путь не найден ('.$relPath.')'."\n";
 			return false;
 		}
 	}
@@ -3011,10 +3011,10 @@ HELP;
 				$versionFrom = $this->_arReleases[$versionTo]['UPDATE_FROM'];
 			}
 			else {
-				echo 'РџСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ: РёСЃС…РѕРґРЅР°СЏ РІРµСЂСЃРёСЏ РЅРµ СѓРєР°Р·Р°РЅР°'
-					.' Рё РЅРµ Р±С‹Р»Р° РЅР°Р№РґРµРЅР° РІ РєРѕРЅС„РёРіСѓСЂР°С†РёРё С†РµР»РµРІРѕР№ РІРµСЂСЃРёРё.'
-					."\n".'Р’ РєР°С‡РµСЃС‚РІРµ РёСЃС…РѕРґРЅРѕР№ РІРµСЂСЃРёРё'
-					.' РїСЂРёРЅСЏС‚Р° РІРµСЂСЃРёСЏ РїРѕСЃР»РµРґРЅРµРіРѕ РѕРїСѓР±Р»РёРєРѕРІР°РЅРЅРѕРіРѕ РІС‹РїСѓСЃРєР° ['.$this->_lastPubReleaseVersion.'].'."\n";
+				echo 'Предупреждение: исходная версия не указана'
+					.' и не была найдена в конфигурации целевой версии.'
+					."\n".'В качестве исходной версии'
+					.' принята версия последнего опубликованного выпуска ['.$this->_lastPubReleaseVersion.'].'."\n";
 				$versionFrom = $this->_lastPubReleaseVersion;
 			}
 			$arVersionFrom = self::readVersion($versionFrom);
@@ -3029,21 +3029,21 @@ HELP;
 				$arVersionFrom = self::readVersion($versionFrom);
 			}
 		}
-		echo 'РћР±РЅРѕРІР»РµРЅРёРµ '.$this->_moduleName.'-['.$versionFrom.' => '.$versionTo.']'."\n";
+		echo 'Обновление '.$this->_moduleName.'-['.$versionFrom.' => '.$versionTo.']'."\n";
 		if($arVersionFrom['RAW_VERSION'] == $arVersionTo['RAW_VERSION']) {
-			echo 'РћС€РёР±РєР°: С†РµР»РµРІР°СЏ Рё РёСЃС…РѕРґРЅР° РІРµСЂСЃРёРё СЂР°РІРЅС‹. Р—Р°РґР°Р№С‚Рµ СЏРІРЅРѕ РёРЅС‚РµСЂРІР°Р» РІРµСЂСЃРёР№ РґР»СЏ РїРѕСЃС‚СЂРѕРµРЅРёСЏ РѕР±РЅРѕРІР»РµРЅРёСЏ.'
-				.' (С‚Р°РєР°СЏ СЃРёС‚СѓР°С†РёСЏ РІРѕР·РјРѕР¶РЅРѕ РєРѕРіРґР° РІРµСЂСЃРёСЏ РїРѕСЃР»РµРґРЅРµРіРѕ РІС‹РїСѓСЃРєР° СЂР°РІРЅР° РІРµСЂСЃРёРё РґР»СЏ СЂР°Р·СЂР°Р±РѕС‚РєРё'
-				.' Рё РёРЅС‚РµСЂРІР°Р» РІРµСЂСЃРёР№ РЅРµ СѓРєР°Р·Р°РЅ СЏРІРЅРѕ)'."\n";
+			echo 'Ошибка: целевая и исходна версии равны. Задайте явно интервал версий для построения обновления.'
+				.' (такая ситуация возможно когда версия последнего выпуска равна версии для разработки'
+				.' и интервал версий не указан явно)'."\n";
 			return false;
 		}
 		$prevReleaseFolder = $this->_releaseFolder.'/release-'.$versionFrom;
 		$nextReleaseFolder = $this->_releaseFolder.'/release-'.$versionTo;
 		if( !is_dir($this->_docRootDir.$prevReleaseFolder) ) {
-			echo 'РћС€РёР±РєР°: РЅРµ РЅР°Р№РґРµРЅР° РїР°РїРєР° СЃ С„Р°Р№Р»Р°РјРё РёСЃС…РѕРґРЅРѕРіРѕ РІС‹РїСѓСЃРєР° ('.$this->_releaseFolder.'/release-'.$versionFrom.')'."\n";
+			echo 'Ошибка: не найдена папка с файлами исходного выпуска ('.$this->_releaseFolder.'/release-'.$versionFrom.')'."\n";
 			return false;
 		}
 		if( !is_dir($this->_docRootDir.$nextReleaseFolder) ) {
-			echo 'РћС€РёР±РєР°: РЅРµ РЅР°Р№РґРµРЅР° РїР°РїРєР° СЃ С„Р°Р№Р»Р°РјРё С†РµР»РµРІРѕРіРѕ РІС‹РїСѓСЃРєР° ('.$this->_releaseFolder.'/release-'.$versionTo.')'."\n";
+			echo 'Ошибка: не найдена папка с файлами целевого выпуска ('.$this->_releaseFolder.'/release-'.$versionTo.')'."\n";
 			return false;
 		}
 		$arChanges = self::compareFolderContents($prevReleaseFolder, $nextReleaseFolder);
@@ -3064,10 +3064,10 @@ HELP;
 			'updater.custom.after.php',
 		);
 
-		// РћС‡РёС‰Р°РµРј РїР°РїРєСѓ СЃ РѕР±РѕРІР»РµРЅРёСЏРјРё
+		// Очищаем папку с обовлениями
 		if(!empty($arChanges['NEW']) || !empty($arChanges['MODIFIED']) || !empty($arChanges['DELETED'])) {
 			if( !self::CheckDirPath($updateDir.'/.') ) {
-				echo 'РћС€РёР±РєР°: "'.$updateFolder.'" РЅРµ СЏРІР»СЏРµС‚СЃСЏ РїР°РїРєРѕР№.'."\n";
+				echo 'Ошибка: "'.$updateFolder.'" не является папкой.'."\n";
 				return false;
 			}
 			$updateDirHandler = opendir($updateDir);
@@ -3084,7 +3084,7 @@ HELP;
 				self::deleteDirFilesEx($updateFolder.'/'.$updateFSEntry);
 			}
 		}
-		// РіРµРЅРµСЂРёСЂСѓРµРј РѕРїРёСЃР°РЅРёРµ РѕР±РЅРѕРІР»РµРЅРёСЏ
+		// генерируем описание обновления
 		$arUpdateDescriptions = array();
 		foreach($this->_arReleases as $releaseVersion => &$arRelease) {
 			if(
@@ -3103,7 +3103,7 @@ HELP;
 		uksort($arUpdateDescriptions, 'OBX_Build::compareVersionsDesc');
 		file_put_contents($updateDir.'/description.ru', implode("\n", $arUpdateDescriptions));
 
-		// Р РµСЃСѓСЂСЃС‹ РёРЅСЃС‚Р°Р»Р»РёСЂСѓРµРјС‹Рµ РІ /bitrix
+		// Ресурсы инсталлируемые в /bitrix
 		$filenamePattern = '(?:[a-z-A-Z0-9\._\-]+)';
 		$arResourcesPathPatterns = array(
 			'\./install/admin/'.$filenamePattern.'\.php',
@@ -3131,8 +3131,8 @@ HELP;
 		$arDeleteResources = array();
 
 		$genPhpFileHead = '<'."?php\n"
-			."// Р¤Р°Р№Р» СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅ. РќРµ СЂРµРґР°РєС‚РёСЂСѓР№С‚Рµ! \n"
-			."// РСЃРїРѕР»СЊР·СѓР№С‚Рµ updater.custom.(after|before).php \n"
+			."// Файл сгенерирован. Не редактируйте! \n"
+			."// Используйте updater.custom.(after|before).php \n"
 		;
 		$genUtilGenPhpFileHead = ''
 			.'if( !array_key_exists("__runAutoGenUpdater", $GLOBALS) || $GLOBALS["__runAutoGenUpdater"] !== true ) return true;'."\n";
@@ -3163,9 +3163,9 @@ HELP;
 
 				if( strpos($newFSEntry, './install/modules/') === 0 ) {
 					// [pronix:2013-10-17] +++
-					// Р­С‚РѕС‚ РєСѓСЃРѕРє РєРѕРґР° РЅСѓР¶РµРЅ РґР»СЏ РІРѕР·РІСЂР°С‚Р° РёРјРµРЅРё С„Р°Р№Р»РѕРІ updater. РїРѕРґРјРѕРґСѓР»РµР№ РІ РёСЃС…РѕРґРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
-					// РІ Р°СЂС…РёРІРµ СЃ РѕР±РЅРѕРІР»РµРЅРёРµРј СЂРµС€РµРЅРёСЏ updater-С‹ РїРѕРґРјРѕРґСѓР»РµР№ РёРјРµСЋС‚ РёРјСЏ __upd__.*
-					// РёРЅР°С‡Рµ РѕРЅРё РІС‹Р±СЂР°СЃС‹РІР°СЋС‚СЃСЏ СЃРёСЃС‚РµРјРѕР№ РѕР±РЅРѕРІР»РµРЅРёСЏ Р±РёС‚СЂРёРєСЃ РїСЂРё РєРѕРїРёСЂРѕРІР°РЅРёРё
+					// Этот кусок кода нужен для возврата имени файлов updater. подмодулей в исходное состояние
+					// в архиве с обновлением решения updater-ы подмодулей имеют имя __upd__.*
+					// иначе они выбрасываются системой обновления битрикс при копировании
 					if(strpos($newFSEntry, 'update-') !==false) {
 						if( is_dir($this->_docRootDir.$nextReleaseFolder.'/'.$newFSEntry) ) {
 							foreach( $arUpdaterFiles as $updaterFileName ) {
@@ -3322,32 +3322,32 @@ HELP;
 
 		$updaterFilesDoc = <<<DOC
 //
-// updater.mod.*		- СЃРєСЂРёРїС‚С‹ РІС‹РїРѕР»РЅСЏРµРјС‹Рµ С€С‚Р°С‚РЅС‹Рј РѕР±РЅРѕРІР»СЏС‚РѕСЂРѕРј Р±РёС‚СЂРёРєСЃ
-// updater.dep.*		- СЃРєСЂРёРїС‚С‹ РІС‹РїРѕР»РЅСЏРµРјС‹Рµ РІ СЂРµР¶РёРјРµ РѕР±РЅРѕРІР»РµРЅРёСЏ РїРѕРґРјРѕРґСѓР»РµР№ / СЃСѓРїРµСЂ-РјРѕРґСѓР»СЊ РѕР±РЅРѕРІР»СЏРµС‚ РїРѕРґРјРѕРґСѓР»Рё
-//							РЅР°РїСЂРёРјРµСЂ obx.market РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ Рё Р·Р°РїСѓСЃРєР°РµС‚ РѕР±РЅРѕРІР»РµРЅРёРµ РґР»СЏ РјРѕРґРѕРґСѓР»СЏ obx.core
-//							РІС‹РїРѕР»РЅСЏС‚СЃСЏ С„Р°Р№Р»С‹
-//							/РїР°РїРєР°/РѕР±РЅРѕРІР»РµРЅРёСЏ/obx.market/update/install/modules/obx.core/update-РІРµСЂСЃРёСЏ/updater.dep.*.php
-//							/РїР°РїРєР°/РѕР±РЅРѕРІР»РµРЅРёСЏ РјРѕР¶РµС‚ Р±С‹С‚СЊ
-//								/bitrix/updates/obx.market-РІРµСЂСЃРёСЏ
-//								РёР»Рё /bitrix/modules/obx.market/update-РІРµСЂСЃРёСЏ - РІ СЃР»СѓС‡Р°Рµ СѓСЃС‚Р°РЅРѕРІРєРё СЃСѓРїРµСЂРјРѕРґСѓР»СЏ (obx.market)
-//								РєРѕРіРґР° СЃСѓРїРµСЂ-РјРѕРґСѓР»СЊ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ, РѕРЅ РїСЂРѕРІРµСЂСЏРµС‚ СѓСЃС‚Р°РЅРѕРІР»РµРЅС‹ Р»Рё РїРѕРґРјРѕРґСѓР»Рё
-//								Рё РµСЃР»Рё РЅСѓР¶РЅРѕ РѕР±РЅРѕРІР»СЏРµС‚ РёС…
+// updater.mod.*		- скрипты выполняемые штатным обновлятором битрикс
+// updater.dep.*		- скрипты выполняемые в режиме обновления подмодулей / супер-модуль обновляет подмодули
+//							например obx.market обновляется и запускает обновление для мододуля obx.core
+//							выполнятся файлы
+//							/папка/обновления/obx.market/update/install/modules/obx.core/update-версия/updater.dep.*.php
+//							/папка/обновления может быть
+//								/bitrix/updates/obx.market-версия
+//								или /bitrix/modules/obx.market/update-версия - в случае установки супермодуля (obx.market)
+//								когда супер-модуль устанавливается, он проверяет установлены ли подмодули
+//								и если нужно обновляет их
 //
 //
-// РЎР»СѓР¶РµР±РЅС‹Рµ С„Р°Р№Р»С‹ / Р­С‚Рё С„Р°Р№Р»С‹ Р·Р°РїСѓСЃРєР°СЋС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
-// updater.[dep|mod].delete.files.php	- РЈРґР°Р»СЏРµС‚ СѓСЃС‚Р°СЂРµРІС€РёРµ С„Р°Р№Р»С‹ РІ РјРѕРґСѓР»Рµ
-// updater.[dep|mod].delete.list.php	- Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ (РїСѓС‚Рё РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ РїР°РїРєРё СЃ РѕР±РЅРѕРІР»РµРЅРёРµРј)
-// updater.[dep|mod].files.php			- РљРѕРїРёСЂСѓРµС‚ РЅРѕРІС‹Рµ/РёР·Рј. С„Р°Р№Р»С‹ РёР· РїР°РїРєРё РѕР±РЅРѕРІР»РµРЅРёСЏ РІ РјРѕРґСѓР»СЊ
+// Служебные файлы / Эти файлы запускаются автоматически
+// updater.[dep|mod].delete.files.php	- Удаляет устаревшие файлы в модуле
+// updater.[dep|mod].delete.list.php	- Возвращает список файлов для удаления (пути относительно папки с обновлением)
+// updater.[dep|mod].files.php			- Копирует новые/изм. файлы из папки обновления в модуль
 //
-// updater.php						- С„Р°Р№Р» Р·Р°РїСѓСЃРєР°РµРјС‹Р№ СЃРёСЃС‚РµРјРѕР№ РѕР±РЅРѕРІР»РµРЅРёСЏ Р±РёС‚СЂРёРєСЃР°. РџРѕРґРєР»СЋС‡Р°РµС‚ РЎР»СѓР¶РµР±РЅС‹Рµ С„Р°Р№Р»С‹
-// updater.dep.php					- С„Р°Р№Р» Р·Р°РїСѓСЃРєР°РµРјС‹Р№ СЃРёСЃС‚РµРјРѕР№ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃСѓРїРµСЂ-РјРѕРґСѓР»СЏ. РџРѕРґРєР»СЋС‡Р°РµС‚ РЎР»СѓР¶РµР±РЅС‹Рµ С„Р°Р№Р»С‹
+// updater.php						- файл запускаемый системой обновления битрикса. Подключает Служебные файлы
+// updater.dep.php					- файл запускаемый системой обновления супер-модуля. Подключает Служебные файлы
 //
-// Р­С‚Рё СЃРєСЂРёРїС‚С‹ РѕР±С‰РёРµ РєР°Рє РґР»СЏ РѕР±РЅРѕРІР»СЏС‚РѕСЂР° Р±РёС‚СЂРёРєСЃ, С‚Р°Рє Рё РґР»СЏ РѕР±РЅРѕРІР»СЏС‚РѕСЂР° СЃСѓРїРµСЂ-РјРѕРґСѓР»СЏ
-// updater.custom.before.php		- Р—Р°РїСѓСЃРєР°РµС‚СЃСЏ РґРѕ РЎР»СѓР¶РµР±РЅС‹С… С„Р°Р№Р»РѕРІ
-// updater.custom.after.php			- Р—Р°РїСѓСЃРєР°РµС‚СЃСЏ РїРѕСЃР»Рµ РЎР»СѓР¶РµР±РЅС‹С… С„Р°Р№Р»РѕРІ
+// Эти скрипты общие как для обновлятора битрикс, так и для обновлятора супер-модуля
+// updater.custom.before.php		- Запускается до Служебных файлов
+// updater.custom.after.php			- Запускается после Служебных файлов
 
 // ==========================================
-// ==== РњРµСЃС‚Рѕ РґР»СЏ РІР°С€РµРіРѕ РєРѕРґР° РѕР±РЅРѕРІР»РµРЅРёСЏ ====
+// ==== Место для вашего кода обновления ====
 // ==========================================
 DOC;
 
@@ -3489,9 +3489,9 @@ DOC;
 			$versionTo = $this->_version;
 			$arVersionTo = self::readVersion($versionTo);
 		}
-		echo 'РЎРѕР·РґР°РЅРёРµ Р°СЂС…РёРІР° РѕР±РЅРѕРІР»РµРЅРёСЏ '.$this->_moduleName.'-'.$versionTo."\n";
+		echo 'Создание архива обновления '.$this->_moduleName.'-'.$versionTo."\n";
 		if( !is_dir($this->_releaseDir.'/update-'.$versionTo) ) {
-			echo 'РћС€РёР±РєР°: РЅРµ РЅР°Р№РґРµРЅР° РїР°РїРєР° СЃ РѕР±РЅРѕРІР»РµРЅРёРµРј РЅРµ РЅР°Р№РґРµРЅР° ('.$this->_releaseFolder.'/update-'.$versionTo.').'."\n";
+			echo 'Ошибка: не найдена папка с обновлением не найдена ('.$this->_releaseFolder.'/update-'.$versionTo.').'."\n";
 			return false;
 		}
 		if( !$this->_checkBuildFolder() ) return false;
@@ -3531,10 +3531,10 @@ DOC;
 
 	/**
 	 * [pronix:2013-07-23]
-	 * Р”Р°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РїРѕРјРµС‡Р°РµС‚ РІСЃРµ PHP, XML Рё JS С„Р°Р№Р»С‹ РІРЅСѓС‚СЂРё РїР°РїРєРё РєР°Рє PlainText
-	 * Р§С‚Рѕ Р±С‹ Р»СЋР±РёРјС‹Р№ PhpStorm РЅРµ РёРЅРґРµРєСЃРёСЂРѕРІР°Р» Р»РёС€РЅРµРіРѕ :)
-	 * TODO: Р РµР°Р»РёР·РѕРІР°С‚СЊ РјРµС‚РѕРґ OBX_Build::addIdeaProjectFolderAsPlainText
-	 * Р—Р° СЏРІРЅСѓСЋ РїРѕРјРµС‚РєСѓ С„Р°Р№Р»РѕРІ РєР°Рє plainText РѕС‚РІРµС‡Р°РµС‚ С„Р°Р№Р» .idea/misc.xml
+	 * Данная функция помечает все PHP, XML и JS файлы внутри папки как PlainText
+	 * Что бы любимый PhpStorm не индексировал лишнего :)
+	 * TODO: Реализовать метод OBX_Build::addIdeaProjectFolderAsPlainText
+	 * За явную пометку файлов как plainText отвечает файл .idea/misc.xml
 	 */
 	static public function addIdeaProjectFolderAsPlainText() {
 

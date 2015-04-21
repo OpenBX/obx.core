@@ -17,9 +17,9 @@ IncludeModuleLangFile(__FILE__);
 /**
  * Class Request
  * @package OBX\Core\Http
- * ĞšĞ»Ğ°ÑÑÑĞ»ÑƒĞ¶Ğ¸Ñ‚ Ğ´Ğ»Ñ Ğ·Ğ°Ğ³Ñ€ÑƒĞ·ĞºĞ¸ Ğ´Ğ°Ğ½Ğ½Ñ‹Ñ… Ñ‡ĞµÑ€ĞµÑ… HTTP
- * ĞšĞ»Ğ°ÑÑ Ğ¾Ğ±Ñ€Ğ°Ğ±Ğ°Ñ‚Ñ‹Ğ²Ğ°ĞµÑ‚ Ğ¾Ğ´Ğ½Ñƒ ÑÑÑ‹Ğ»ĞºÑƒ.
- * Ğ¡Ğ¾Ğ´ĞµÑ€Ğ¶Ğ¸Ğ¼Ğ¾Ğµ Ğ²Ğ¾Ğ·Ğ¼Ğ¾Ğ¶Ğ½Ğ¾ ÑĞ¾Ñ…Ñ€Ğ°Ğ½Ğ¸Ñ‚ÑŒ Ğ² Ñ„Ğ°Ğ¹Ğ» Ğ¸Ğ»Ğ¸ Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ¸Ñ‚ÑŒ Ğ² Ğ²Ğ¸Ğ´Ğµ ÑÑ‚Ñ€Ğ¾ĞºĞ¸
+ * Êëàñññëóæèò äëÿ çàãğóçêè äàííûõ ÷åğåõ HTTP
+ * Êëàññ îáğàáàòûâàåò îäíó ññûëêó.
+ * Ñîäåğæèìîå âîçìîæíî ñîõğàíèòü â ôàéë èëè ïîëó÷èòü â âèäå ñòğîêè
  */
 class Request {
 
@@ -29,14 +29,14 @@ class Request {
 	const DOWNLOAD_STATE_FILE_EXT = 'state';
 	const DOWNLOAD_FOLDER = '/bitrix/tmp/obx.core';
 
-	// ĞŸÑ€Ğ¸ ÑĞ¾Ñ…Ñ€Ğ°Ğ½ĞµĞ½Ğ¸Ğ¸ Ñ„Ğ°Ğ¹Ğ»Ğ° Ğ² Ğ¿Ğ°Ğ¿ĞºÑƒ Ğ¸Ğ¼Ñ Ğ¾Ğ¿Ñ€ĞµĞ´ĞµĞ»ÑĞµÑ‚ÑÑ Ğ°Ğ²Ñ‚Ğ¾Ğ¼Ğ°Ñ‚Ğ¾Ğ¼.
-	// ĞµÑĞ»Ğ¸ Ñ„Ğ°Ğ¹Ğ» ÑƒĞ¶Ğµ ÑÑƒÑ‰ĞµÑÑ‚Ğ²ÑƒĞµÑ‚, Ñ‚Ğ¾
+	// Ïğè ñîõğàíåíèè ôàéëà â ïàïêó èìÿ îïğåäåëÿåòñÿ àâòîìàòîì.
+	// åñëè ôàéë óæå ñóùåñòâóåò, òî
 
-	/** @const Ğ—Ğ°Ğ¼ĞµĞ½Ğ¸Ñ‚ÑŒ ÑÑƒÑ‰ĞµÑÑ‚Ğ²ÑƒÑÑ‰Ğ¸Ğ¹ Ñ„Ğ°Ğ¹Ğ» */
+	/** @const Çàìåíèòü ñóùåñòâóşùèé ôàéë */
 	const SAVE_TO_DIR_REPLACE = 1;
-	/** @const Ğ¡Ğ³ĞµĞ½ĞµÑ€Ğ¸Ñ€Ğ¾Ğ²Ğ°Ñ‚ÑŒ Ğ½Ğ¾Ğ²Ğ¾Ğµ Ğ¸Ğ¼Ñ, ĞµÑĞ»Ğ¸ ÑƒĞ¶Ğµ ĞµÑÑ‚ÑŒ Ñ„Ğ°Ğ¹Ğ» Ñ Ñ‚Ğ°ĞºĞ¸Ğ¼ Ğ¸Ğ¼ĞµĞ½ĞµĞ¼, Ğ´Ğ¾Ğ±Ğ°Ğ²Ğ¸Ñ‚ÑŒ Ğº Ğ¸Ğ¼ĞµĞ½Ğ¸ ÑÑ‡ĞµÑ‚Ñ‡Ğ¸Ğº */
+	/** @const Ñãåíåğèğîâàòü íîâîå èìÿ, åñëè óæå åñòü ôàéë ñ òàêèì èìåíåì, äîáàâèòü ê èìåíè ñ÷åò÷èê */
 	const SAVE_TO_DIR_COUNT = 2;
-	/** @const ĞĞµ Ğ¾Ğ¿Ñ€ĞµĞ´ĞµĞ»ÑÑ‚ÑŒ Ğ¸Ğ¼Ñ, Ğ° Ñ‚Ğ¾Ğ»ÑŒĞºĞ¾ Ñ€Ğ°ÑÑˆĞ¸Ñ€ĞµĞ½Ğ¸Ğµ Ğ¸ Ğ³ĞµĞ½ĞµÑ€Ğ¸Ñ€Ğ¾Ğ²Ğ°Ñ‚ÑŒ Ğ¸Ğ¼Ñ */
+	/** @const Íå îïğåäåëÿòü èìÿ, à òîëüêî ğàñøèğåíèå è ãåíåğèğîâàòü èìÿ */
 	const SAVE_TO_DIR_GENERATE = 3;
 	static $_bDefaultDwnDirChecked = false;
 
@@ -79,12 +79,12 @@ class Request {
 	protected $_bCaching = false;
 	protected $_bCachingCheckFileSize = false;
 	/**
-	 * Ğ˜Ğ½Ñ„Ğ¾Ñ€Ğ¼Ğ°Ñ†Ğ¸Ñ Ğ¾ Ñ‚Ğ¾Ğ¼ ÑĞ¾Ğ´ĞµÑ€Ğ¶Ğ¸Ñ‚ÑŒÑÑ Ğ»Ğ¸ ID Request-Ğ° Ğ³Ğ´Ğµ-Ğ». ĞºÑ€Ğ¾Ğ¼Ğµ ÑĞ°Ğ¼Ğ¾Ğ³Ğ¾ ĞºĞ»Ğ°ÑÑĞ°
-	 * Ğ•ÑĞ»Ğ¸ Ğ¼Ñ‹ Ğ²ĞºĞ»ÑÑ‡Ğ°ĞµĞ¼ Ñ€ĞµĞ¶Ğ¸Ğ¼ ĞºĞµÑˆĞ¸Ñ€Ğ¾Ğ²Ğ°Ğ½Ğ¸Ñ, Ñ‚Ğ¾ Ğ¼Ñ‹ Ğ½Ğµ Ğ¾Ñ‡Ğ¸Ñ‰Ğ°ĞµĞ¼ ÑĞºĞ°Ñ‡Ğ°Ğ½Ñ‹Ğ½Ğµ Ñ„Ğ°Ğ¹Ğ»Ñ‹,
-	 * Ğ¾Ğ´Ğ½Ğ°ĞºĞ¾ ĞµÑĞ»Ğ¸ Ğ¿Ñ€Ğ¾Ğ³Ñ€Ğ°Ğ¼Ğ¼Ğ¸ÑÑ‚ Ğ½Ğµ Ğ·Ğ°Ğ´Ğ°Ğ²Ğ°Ğ» ID Ğ¸Ğ»Ğ¸ Ğ½Ğµ Ğ¿Ğ¾Ğ»ÑƒÑ‡Ğ°Ğ» ĞµĞ³Ğ¾ ($this->getID())
-	 * Ñ‚Ğ¾ Ğ¾Ğ½ 100% Ğ½Ğµ Ğ·Ğ½Ğ°ĞµÑ‚ ĞµĞ³Ğ¾, Ğ° Ğ·Ğ½Ğ°Ñ‡Ğ¸Ñ‚ Ğ¸ Ğ½Ğµ ÑĞ¼Ğ¾Ğ¶ĞµÑ‚ Ğ²Ğ½Ğ¾Ğ²ÑŒ Ğ¾Ğ±Ñ€Ğ°Ñ‚Ğ¸Ñ‚ÑŒÑÑ Ğº ĞºĞµÑˆÑƒ,
-	 * Ğ° ÑĞ¾Ğ¾Ñ‚Ğ²ĞµÑ‚ÑÑ‚Ğ²ĞµĞ½Ğ½Ğ¾ Ğ¸ Ğ¾Ñ‡Ğ¸ÑÑ‚Ğ¸Ñ‚ÑŒ ĞµĞ³Ğ¾ Ğ¿Ğ¾ Ğ·Ğ°Ğ²ĞµÑ€ÑˆĞµĞ½Ğ¸Ğ¸ Ğ²ÑĞµÑ… Ğ¾Ğ¿ĞµÑ€Ğ°Ñ†Ğ¸Ğ¹.
-	 * Ğ’ Ñ‚Ğ°ĞºĞ¾Ğ¼  ÑĞ»ÑƒÑ‡Ğ°Ğµ ĞºĞµÑˆ Ğ½Ğ°Ğ´Ğ¾ Ğ¾Ñ‡Ğ¸Ñ‰Ğ°Ñ‚ÑŒ Ğ² Ğ»ÑĞ±Ğ¾Ğ¼ ÑĞ»ÑƒÑ‡Ğ°Ğµ Ğ² Ğ´ĞµÑÑ‚Ñ€ÑƒĞºÑ‚Ğ¾Ñ€Ğµ
+	 * Èíôîğìàöèÿ î òîì ñîäåğæèòüñÿ ëè ID Request-à ãäå-ë. êğîìå ñàìîãî êëàññà
+	 * Åñëè ìû âêëş÷àåì ğåæèì êåøèğîâàíèÿ, òî ìû íå î÷èùàåì ñêà÷àíûíå ôàéëû,
+	 * îäíàêî åñëè ïğîãğàììèñò íå çàäàâàë ID èëè íå ïîëó÷àë åãî ($this->getID())
+	 * òî îí 100% íå çíàåò åãî, à çíà÷èò è íå ñìîæåò âíîâü îáğàòèòüñÿ ê êåøó,
+	 * à ñîîòâåòñòâåííî è î÷èñòèòü åãî ïî çàâåğøåíèè âñåõ îïåğàöèé.
+	 * Â òàêîì  ñëó÷àå êåø íàäî î÷èùàòü â ëşáîì ñëó÷àå â äåñòğóêòîğå
 	 * @var bool
 	 */
 	protected $_bEncapsulatedID = true;
@@ -125,7 +125,7 @@ class Request {
 				$this->_dwnFileHandler = null;
 			}
 		}
-		// ÑĞ¼. Ğ¾Ğ¿Ğ¸ÑĞ°Ğ½Ğ¸Ğµ Ğ¿ĞµÑ€ĞµĞ¼ĞµĞ½Ğ½Ğ¾Ğ¹ $this->_bEncapsulatedID
+		// ñì. îïèñàíèå ïåğåìåííîé $this->_bEncapsulatedID
 		if(false === $this->_bCaching || true === $this->_bEncapsulatedID) {
 			$dwnFilePath = $this->_dwnDir.'/'.$this->_ID.'.'.static::DOWNLOAD_FILE_EXT;
 			$dwnStateFilePath = $dwnFilePath.'.'.static::DOWNLOAD_STATE_FILE_EXT;
@@ -184,7 +184,7 @@ class Request {
 	}
 
 	/**
-	 * ĞœĞ°ĞºÑĞ¸Ğ¼Ğ°Ğ»ÑŒĞ½Ğ¾ Ğ¿Ğ¾Ğ·Ğ²Ğ¾Ğ»ĞµĞ½Ğ½Ğ¾Ğµ ĞºĞ¾Ğ»Ğ¸Ñ‡ĞµÑÑ‚Ğ²Ğ¾ ÑĞµĞºÑƒĞ½Ğ´ Ğ´Ğ»Ñ Ğ²Ñ‹Ğ¿Ğ¾Ğ»Ğ½ĞµĞ½Ğ¸Ñ cURL-Ñ„ÑƒĞ½ĞºÑ†Ğ¸Ğ¹.
+	 * Ìàêñèìàëüíî ïîçâîëåííîå êîëè÷åñòâî ñåêóíä äëÿ âûïîëíåíèÿ cURL-ôóíêöèé.
 	 * @param $seconds
 	 */
 	public function setTimeout($seconds) {
@@ -199,7 +199,7 @@ class Request {
 	}
 
 	/**
-	 * ĞšĞ¾Ğ»Ğ¸Ñ‡ĞµÑÑ‚Ğ²Ğ¾ ÑĞµĞºÑƒĞ½Ğ´ Ğ¾Ğ¶Ğ¸Ğ´Ğ°Ğ½Ğ¸Ñ Ğ¿Ñ€Ğ¸ Ğ¿Ğ¾Ğ¿Ñ‹Ñ‚ĞºĞµ ÑĞ¾ĞµĞ´Ğ¸Ğ½ĞµĞ½Ğ¸Ñ. Ğ˜ÑĞ¿Ğ¾Ğ»ÑŒĞ·ÑƒĞ¹Ñ‚Ğµ 0 Ğ´Ğ»Ñ Ğ±ĞµÑĞºĞ¾Ğ½ĞµÑ‡Ğ½Ğ¾Ğ³Ğ¾ Ğ¾Ğ¶Ğ¸Ğ´Ğ°Ğ½Ğ¸Ñ.
+	 * Êîëè÷åñòâî ñåêóíä îæèäàíèÿ ïğè ïîïûòêå ñîåäèíåíèÿ. Èñïîëüçóéòå 0 äëÿ áåñêîíå÷íîãî îæèäàíèÿ.
 	 * @param $seconds
 	 */
 	public function setWaiting($seconds) {
@@ -250,19 +250,19 @@ class Request {
 	 * @param bool|null $secure
 	 * @param bool|null $bHttpOnly
 	 * @return bool
-	 * TODO: OBX\Core\Http\Request::setCookie: Ğ Ğ°Ğ·Ñ€Ğ°Ğ±Ğ¾Ñ‚Ğ°Ñ‚ÑŒ, ĞµÑĞ»Ğ¸ Ğ¿Ğ¾Ğ½Ğ°Ğ´Ğ¾Ğ±Ğ¸Ñ‚ÑÑ
+	 * TODO: OBX\Core\Http\Request::setCookie: Ğàçğàáîòàòü, åñëè ïîíàäîáèòñÿ
 	 */
 	public function setCookie($name, $value=null, $expire=null, $path=null, $domain=null, $secure=null, $bHttpOnly=null) {
 		return true;
 	}
 
 	/**
-	 * Ğ£Ñ‚ÑĞ°Ğ½Ğ°Ğ²Ğ»Ğ¸Ğ²Ğ°Ñ‚ÑŒ cookie Ğ¿Ñ€Ğ¸ÑˆĞµĞ´ÑˆĞ¸Ğµ Ğ² Ğ¾Ñ‚Ğ²ĞµÑ‚Ğµ ÑĞµÑ€Ğ²ĞµÑ€Ğ°
-	 * Ğ¢Ñ€ĞµĞ±ÑƒĞµÑ‚ÑÑ Ñ‚Ğ¾Ğ»ÑŒĞºĞ¾ Ğ´Ğ»Ñ Ğ²Ñ‹Ğ¿Ğ¾Ğ»Ğ½ĞµĞ½Ğ¸Ñ Ğ²Ñ‚Ğ¾Ñ€Ğ¾Ğ³Ğ¾ Ğ·Ğ°Ğ¿Ñ€ÑĞ°
-	 * ĞĞµ Ñ€Ğ°Ğ±Ğ¾Ñ‚Ğ°ĞµÑ‚ Ğ¼ĞµĞ¶Ğ´Ñƒ Ñ€ĞµĞ´Ğ¸Ñ€ĞµĞºÑ‚Ğ°Ğ¼Ğ¸
-	 * Ğ•ÑĞ»Ğ¸ Ñ€ĞµĞ´Ğ¸Ñ€ĞµĞºÑ‚ CURL ÑĞ°Ğ¼ Ğ¿ĞµÑ€ĞµĞ¹Ğ´ĞµÑ‚ Ğ¿Ğ¾ Ğ½ĞµĞ¼Ñƒ Ğ½Ğµ Ğ²Ğ¾Ğ·Ğ²Ñ€Ğ°Ñ‰Ğ°Ñ ÑƒĞ¿Ñ€Ğ°Ğ²Ğ»ĞµĞ½Ğ¸Ğµ ĞºĞ»Ğ°ÑÑÑƒ
-	 * ĞĞµ Ñ€Ğ°Ğ±Ğ¾Ñ‚Ğ°ĞµÑ‚ Ğ² Ñ€ĞµĞ¶Ğ¸Ğ¼Ğµ Download
-	 * TODO: OBX\Core\Http\Request::setServerCookieApply: Ğ Ğ°Ğ·Ñ€Ğ°Ğ±Ğ¾Ñ‚Ğ°Ñ‚ÑŒ, ĞµÑĞ»Ğ¸ Ğ¿Ğ¾Ğ½Ğ°Ğ´Ğ¾Ğ±Ğ¸Ñ‚ÑÑ
+	 * Óòñàíàâëèâàòü cookie ïğèøåäøèå â îòâåòå ñåğâåğà
+	 * Òğåáóåòñÿ òîëüêî äëÿ âûïîëíåíèÿ âòîğîãî çàïğñà
+	 * Íå ğàáîòàåò ìåæäó ğåäèğåêòàìè
+	 * Åñëè ğåäèğåêò CURL ñàì ïåğåéäåò ïî íåìó íå âîçâğàùàÿ óïğàâëåíèå êëàññó
+	 * Íå ğàáîòàåò â ğåæèìå Download
+	 * TODO: OBX\Core\Http\Request::setServerCookieApply: Ğàçğàáîòàòü, åñëè ïîíàäîáèòñÿ
 	 * @param bool $bApply
 	 */
 	public function setServerCookieApply($bApply = true) {
@@ -326,7 +326,7 @@ class Request {
 			if($headerKey == '') {
 				continue;
 			}
-			//Ğ•ÑĞ»Ğ¸ ĞµÑÑ‚ÑŒ ÑĞ¸Ğ¼Ğ²Ğ¾Ğ» ";" Ğ·Ğ½Ğ°Ñ‡Ğ¸Ñ‚ ÑĞºĞ¾Ñ€ĞµĞµ Ğ²ÑĞµĞ³Ğ¾ Ğ·Ğ½Ğ°Ñ‡ĞµĞ½Ğ¸Ğµ Ñ€Ğ°Ğ·Ğ´ĞµĞ»ĞµĞ½Ğ¾ Ğ½Ğ° Ğ¿Ğ¾Ğ´Ğ·Ğ½Ğ°Ñ‡ĞµĞ½Ğ¸Ñ
+			//Åñëè åñòü ñèìâîë ";" çíà÷èò ñêîğåå âñåãî çíà÷åíèå ğàçäåëåíî íà ïîäçíà÷åíèÿ
 			$arValueOptions = array();
 			$bOptionsExists = false;
 			if($headerKey == 'Set-Cookie') {
@@ -413,7 +413,7 @@ class Request {
 		$this->_lastCurlError = curl_error($this->_curlHandler);
 		$this->_reconnectMultiHandler();
 		if($this->_lastCurlErrNo == CURLE_OK && !empty($this->_lastCurlError) ) {
-			// ĞµÑĞ»Ğ¸ ĞºÑ€Ğ¸Ğ²Ğ¾Ğ¹ curl Ğ½Ğµ Ğ²Ñ‹Ğ´Ğ°ĞµÑ‚ errno
+			// åñëè êğèâîé curl íå âûäàåò errno
 			$this->_lastCurlErrNo = CurlError::getCurlErrorNumberByText($this->_lastCurlError);
 		}
 		if($this->_lastCurlErrNo != CURLE_OK) {
@@ -460,7 +460,7 @@ class Request {
 			}
 		}
 		if(true === $this->_bRequestSuccess) {
-			//ĞĞ¿Ñ€ĞµĞ´ĞµĞ»Ğ¸Ğ¼ Ğ¸Ğ¼Ñ Ñ„Ğ°Ğ¹Ğ»Ğ°
+			//Îïğåäåëèì èìÿ ôàéëà
 			if( array_key_exists('Content-Disposition', $this->_arHeader)
 				&& array_key_exists('OPTIONS', $this->_arHeader['Content-Disposition'])
 				&& array_key_exists('filename', $this->_arHeader['Content-Disposition']['OPTIONS'])
@@ -492,9 +492,9 @@ class Request {
 	}
 
 	/**
-	 * ĞÑ‚Ğ´ĞµĞ»ÑŒĞ½Ñ‹Ğ¹ Ğ·Ğ°Ğ¿Ñ€Ğ¾Ñ Ğ·Ğ°Ğ³Ğ¾Ğ»Ğ¾Ğ²ĞºĞ¾Ğ²
+	 * Îòäåëüíûé çàïğîñ çàãîëîâêîâ
 	 * @param bool $bReturnRawHeader
-	 * TODO: Ğ½Ğ°Ğ¿Ğ¸ÑĞ°Ñ‚ÑŒ Ğ¼ĞµÑ‚Ğ¾Ğ´ OBX\Core\Http\Request$->requestHeader()
+	 * TODO: íàïèñàòü ìåòîä OBX\Core\Http\Request$->requestHeader()
 	 */
 	public function requestHeader($bReturnRawHeader = false) {
 
@@ -553,8 +553,8 @@ class Request {
 			if($urlFromState != $this->_url) {
 				return false;
 			}
-			// Ñ„-Ğ¸Ñ filesize ĞºĞµÑˆĞ¸Ñ€ÑƒĞµÑ‚ Ñ€ĞµĞ·ÑƒĞ»ÑŒÑ‚Ğ°Ñ‚, Ğ¿Ğ¾Ñ‚Ğ¾Ğ¼Ñƒ Ğ² Ñ€Ğ°Ğ¼ĞºĞ°Ñ… Ğ½ĞµÑĞºĞ¾Ğ»ÑŒĞºĞ¸Ñ… Ğ¸Ñ‚ĞµÑ€Ğ°Ñ†Ğ¸Ğ¹ Ğ² Ğ¾Ğ´Ğ½Ğ¾Ğ¼
-			// ÑĞºÑ€Ğ¸Ğ¿Ñ‚Ğµ Ğ½Ğ°Ğ´Ğ¾ Ğ¾Ñ‡Ğ¸Ñ‰Ğ°Ñ‚ÑŒ ĞºĞµÑˆ http://www.php.net/manual/ru/function.clearstatcache.php
+			// ô-èÿ filesize êåøèğóåò ğåçóëüòàò, ïîòîìó â ğàìêàõ íåñêîëüêèõ èòåğàöèé â îäíîì
+			// ñêğèïòå íàäî î÷èùàòü êåø http://www.php.net/manual/ru/function.clearstatcache.php
 			if($this->_bCachingCheckFileSize === true) {
 				clearstatcache();
 				$this->_dwnFileSize = intval(filesize($filePath));
@@ -896,7 +896,7 @@ class Request {
 	public function getStatus() {
 		if( null === $this->_responseStatus ) {
 			$this->_responseStatus = curl_getinfo($this->_curlHandler, CURLINFO_HTTP_CODE);
-			// START: Ğ³Ñ€ĞµĞ±Ğ°Ğ½Ñ‹Ğ¹ ĞºÑƒÑ€Ğ» Ğ´Ğ¾ÑÑ‚Ğ°Ğ» ÑĞ²Ğ¾Ğ¸Ğ¼Ğ¸ Ğ³Ğ»ÑĞºĞ°Ğ¼Ğ¸
+			// START: ãğåáàíûé êóğë äîñòàë ñâîèìè ãëşêàìè
 			if($this->_responseStatus == 0) {
 				if(null === $this->_lastCurlErrNo) {
 					$this->_lastCurlErrNo = curl_errno($this->_curlHandler);
@@ -905,7 +905,7 @@ class Request {
 					$this->_responseStatus = 200;
 				}
 			}
-			// END: Ğ³Ñ€ĞµĞ±Ğ°Ğ½Ñ‹Ğ¹ ĞºÑƒÑ€Ğ» Ğ´Ğ¾ÑÑ‚Ğ°Ğ» ÑĞ²Ğ¾Ğ¸Ğ¼Ğ¸ Ğ³Ğ»ÑĞºĞ°Ğ¼Ğ¸
+			// END: ãğåáàíûé êóğë äîñòàë ñâîèìè ãëşêàìè
 		}
 		return $this->_responseStatus;
 	}

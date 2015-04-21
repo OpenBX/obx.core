@@ -84,7 +84,7 @@ class OBX_ImportTools
 
 		$bCanContinueDownload = False;
 
-		// –ò–ù–ò–¶–ò–ê–õ–ò–ó–ò–†–£–ï–ú, –ï–°–õ–ò –î–û–ö–ê–ß–ö–ê
+		// »Õ»÷»¿À»«»–”≈Ã, ≈—À» ƒŒ ¿◊ ¿
 		$strRealUrl_tmp = "";
 		$iRealSize_tmp = 0;
 		if (file_exists($strFilename.".tmp") && file_exists($strFilename.".log") && filesize($strFilename.".log")>0)
@@ -114,11 +114,11 @@ class OBX_ImportTools
 			$iRealSize = $iRealSize_tmp;
 			$iStartSize = filesize($strFilename.".tmp");
 		}
-		// –ö–û–ù–ï–¶: –ò–ù–ò–¶–ò–ê–õ–ò–ó–ò–†–£–ï–ú, –ï–°–õ–ò –î–û–ö–ê–ß–ö–ê
+		//  ŒÕ≈÷: »Õ»÷»¿À»«»–”≈Ã, ≈—À» ƒŒ ¿◊ ¿
 
 		if(self::CheckDebugLevel(2)) self::SetCurrentStatus(GetMessage("LOADER_LOAD_QUERY_SERVER"));
 
-		// –ò–©–ï–ú –§–ê–ô–õ –ò –ó–ê–ü–†–ê–®–ò–í–ê–ï–ú –ò–ù–§–û
+		// »Ÿ≈Ã ‘¿…À » «¿œ–¿ÿ»¬¿≈Ã »Õ‘Œ
 		do
 		{
 			if(self::CheckDebugLevel(2)) self::SetCurrentStatus(str_replace("#DISTR#", $strRealUrl, GetMessage("LOADER_LOAD_QUERY_DISTR")));
@@ -239,12 +239,12 @@ class OBX_ImportTools
 			}
 		}
 		while (true);
-		// –ö–û–ù–ï–¶: –ò–©–ï–ú –§–ê–ô–õ –ò –ó–ê–ü–†–ê–®–ò–í–ê–ï–ú –ò–ù–§–û
+		//  ŒÕ≈÷: »Ÿ≈Ã ‘¿…À » «¿œ–¿ÿ»¬¿≈Ã »Õ‘Œ
 
 		$bCanContinueDownload = ($strAcceptRanges == "bytes");
 
 		/*
-			// –ï–°–õ–ò –ù–ï–õ–¨–ó–Ø –î–û–ö–ê–ß–ò–í–ê–¢–¨
+			// ≈—À» Õ≈À‹«ﬂ ƒŒ ¿◊»¬¿“‹
 			if (!$bCanContinueDownload
 				|| ($iRealSize>0 && $iNewRealSize != $iRealSize))
 			{
@@ -252,10 +252,10 @@ class OBX_ImportTools
 			//	$iStartSize = 0;
 				die(GetMessage("LOADER_LOAD_NEED_RELOAD"));
 			}
-			// –ö–û–ù–ï–¶: –ï–°–õ–ò –ù–ï–õ–¨–ó–Ø –î–û–ö–ê–ß–ò–í–ê–¢–¨
+			//  ŒÕ≈÷: ≈—À» Õ≈À‹«ﬂ ƒŒ ¿◊»¬¿“‹
 		*/
 
-		// –ï–°–õ–ò –ú–û–ñ–ù–û –î–û–ö–ê–ß–ò–í–ê–¢–¨
+		// ≈—À» ÃŒ∆ÕŒ ƒŒ ¿◊»¬¿“‹
 		if ($bCanContinueDownload)
 		{
 			$fh = fopen($strFilename.".log", "wb");
@@ -268,12 +268,12 @@ class OBX_ImportTools
 			fwrite($fh, $iNewRealSize."\n");
 			fclose($fh);
 		}
-		// –ö–û–ù–ï–¶: –ï–°–õ–ò –ú–û–ñ–ù–û –î–û–ö–ê–ß–ò–í–ê–¢–¨
+		//  ŒÕ≈÷: ≈—À» ÃŒ∆ÕŒ ƒŒ ¿◊»¬¿“‹
 
 		if(self::CheckDebugLevel(2)) self::SetCurrentStatus(str_replace("#DISTR#", $strRealUrl, GetMessage("LOADER_LOAD_LOAD_DISTR")));
 		$strRequestedSize = $iNewRealSize;
 
-		// –ö–ê–ß–ê–ï–ú –§–ê–ô–õ
+		//  ¿◊¿≈Ã ‘¿…À
 		$parsedurl = parse_url($strRealUrl);
 		$useproxy = (($proxyAddr != "") && ($proxyPort != ""));
 
@@ -447,8 +447,8 @@ class OBX_ImportTools
 			@unlink($strFilename.".log");
 			return 1;
 		}
-		// –ö–û–ù–ï–¶: –ö–ê–ß–ê–ï–ú –§–ê–ô–õ
-	}// –ö–û–ù–ï–¶: –ö–ê–ß–ê–ï–ú –§–ê–ô–õ
+		//  ŒÕ≈÷:  ¿◊¿≈Ã ‘¿…À
+	}//  ŒÕ≈÷:  ¿◊¿≈Ã ‘¿…À
 
 
 	static public function Unpack()

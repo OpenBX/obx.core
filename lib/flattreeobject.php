@@ -13,11 +13,11 @@ namespace OBX\Core;
 /**
  * Class FlatTreeObject
  * @package OBX\Core
- * РљР»Р°СЃСЃ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РїР»РѕСЃРєРёРјРё РґРµСЂРµРІСЊСЏРјРё.
- * РќР°РїСЂРёРјРµСЂ CIBlockSection::GetList(array('LEFT_MARGIN' => 'ASC'), ...)
- * РёР»Рё arResult РєРѕРјРїРѕРЅРµРЅС‚Р° bitrix:menu
- * Р§С‚Рѕ Р±С‹ СЂР°Р±РѕС‚Р°С‚СЊ СЃ РїР»РѕСЃРєРёРј РґРµСЂРµРІРѕРј РєР°С‚РµРіРѕСЂРёР№, РЅРµРѕР±С…РѕРґРёРјРѕ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РґРѕР±Р°РІРёС‚СЊ
- * РІ arSelect РїРѕР»Рµ DEPTH_LEVEL
+ * Класс для работы с плоскими деревьями.
+ * Например CIBlockSection::GetList(array('LEFT_MARGIN' => 'ASC'), ...)
+ * или arResult компонента bitrix:menu
+ * Что бы работать с плоским деревом категорий, необходимо обязательно добавить
+ * в arSelect поле DEPTH_LEVEL
  */
 class FlatTreeObject
 {

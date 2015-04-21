@@ -1,3 +1,3 @@
 <?php
-$MESS['OBX_CMP_PRM_SOC_LINKS_TITLE'] = 'Ð—Ð°Ð³Ð¾Ð»Ð¾Ð²Ð¾Ðº';
-$MESS['OBX_CMP_PRM_SOC_LINKS_TITLE_DEF'] = 'ÐœÑ‹ Ð² ÑÐ¾Ñ†. ÑÐµÑ‚ÑÑ…';
+$MESS['OBX_CMP_PRM_SOC_LINKS_TITLE'] = 'Çàãîëîâîê';
+$MESS['OBX_CMP_PRM_SOC_LINKS_TITLE_DEF'] = 'Ìû â ñîö. ñåòÿõ';

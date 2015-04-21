@@ -3,29 +3,29 @@ $arComponentParameters = array(
 	'GROUPS' => array(),
 	'PARAMETERS' => array(
 		'TABS_COUNT' => array(
-			'NAME' => 'ÐšÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ð²ÐºÐ»Ð°Ð´Ð¾Ðº',
+			'NAME' => 'Êîëè÷åñòâî âêëàäîê',
 			'TYPE' => 'STRING',
 			'DEFAULT' => '2',
 			'REFRESH' => 'Y',
 			'PARENT' => 'BASE'
 		),
 		'TAB_SWITCHER_ID' => array(
-			'NAME' => 'ID Ð‘Ð»Ð¾ÐºÐ° Ð²ÐºÐ»Ð°Ð´Ð¾Ðº',
+			'NAME' => 'ID Áëîêà âêëàäîê',
 			'TYPE' => 'STRING',
 			'DEFAULT' => 'obx-tabs',
 			'PARENT' => 'BASE'
 		),
 		'URL_TEMPLATE' => array(
-			'NAME' => 'Ð¨Ð°Ð±Ð»Ð¾Ð½ ÑÑÑ‹Ð»Ð¾Ðº',
+			'NAME' => 'Øàáëîí ññûëîê',
 			'TYPE' => 'STRING',
 			'DEFAULT' => '#tab=#TAB_ID#',
 			'PARENT' => 'BASE'
 		),
 		'SELECTED_TAB' => array(
-			'NAME' => 'ÐÐºÑ‚Ð¸Ð²Ð½Ð°Ñ Ð²ÐºÐ»Ð°Ð´ÐºÐ°',
+			'NAME' => 'Àêòèâíàÿ âêëàäêà',
 			'TYPE' => 'LIST',
 			'VALUES' => array(
-				'_none_' => 'Ð½Ðµ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð°'
+				'_none_' => 'íå âûáðàíà'
 			),
 			'PARENT' => 'BASE',
 			'REFRESH' => 'Y'
@@ -46,29 +46,29 @@ else {
 
 $ParameterTools = \OBX\Core\Components\Parameters::getInstance();
 for($iTab=1; $iTab <= $countTabs; $iTab++ ) {
-	$GROUPS['TAB_'.$iTab] = array('NAME' => 'Ð’ÐºÐ»Ð°Ð´ÐºÐ° â„–'.$iTab);
+	$GROUPS['TAB_'.$iTab] = array('NAME' => 'Âêëàäêà ¹'.$iTab);
 	$currentTabID = 'tab_inc_'.$iTab;
 	$PARAMS['TAB_'.$iTab.'_ID'] = array(
-		'NAME' => 'ID Ð²ÐºÐ»Ð°Ð´ÐºÐ¸',
+		'NAME' => 'ID âêëàäêè',
 		'TYPE' => 'STRING',
 		'DEFAULT' => $currentTabID,
 		'PARENT' => 'TAB_'.$iTab
 	);
-	$currentTabCaption = 'Ð’ÐºÐ»Ð°Ð´ÐºÐ° â„–'.$iTab;
+	$currentTabCaption = 'Âêëàäêà ¹'.$iTab;
 	$PARAMS['TAB_'.$iTab.'_CAPTION'] = array(
-		'NAME' => 'ÐÐ°Ð·Ð²Ð°Ð½Ð¸Ðµ Ð²ÐºÐ»Ð°Ð´ÐºÐ¸',
+		'NAME' => 'Íàçâàíèå âêëàäêè',
 		'TYPE' => 'STRING',
 		'DEFAULT' => $currentTabCaption,
 		'PARENT' => 'TAB_'.$iTab
 	);
 	$PARAMS['TAB_'.$iTab.'_TPL'] = array(
-		'NAME' => 'Ð¨Ð°Ð±Ð»Ð¾Ð½ ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ð° bitrix:main.include',
+		'NAME' => 'Øàáëîí êîìïîíåíòà bitrix:main.include',
 		'TYPE' => 'STRING',
 		'DEFAULT' => '.default',
 		'PARENT' => 'TAB_'.$iTab
 	);
     $PARAMS['TAB_'.$iTab.'_CAT_COUNT'] = array(
-        'NAME' => 'ÐšÐ¾Ð»Ð¸Ñ‡ÐµÑÑ‚Ð²Ð¾ Ð¿Ð¾Ð´Ñ€Ð°Ð·Ð´ÐµÐ»Ð¾Ð²',
+        'NAME' => 'Êîëè÷åñòâî ïîäðàçäåëîâ',
         'TYPE' => 'STRING',
         'DEFAULT' => '0',
         'PARENT' => 'TAB_'.$iTab,
@@ -77,21 +77,21 @@ for($iTab=1; $iTab <= $countTabs; $iTab++ ) {
     if ( intval($arCurrentValues['TAB_'.$iTab.'_CAT_COUNT']) > 0) {
         for ($i=0;$i++ < intval($arCurrentValues['TAB_'.$iTab.'_CAT_COUNT']);){
             $PARAMS['TAB_'.$iTab.'_CAT_ID_'.$i] = array(
-                'NAME' => 'ID Ð²ÐºÐ»Ð°Ð´ÐºÐ¸',
+                'NAME' => 'ID âêëàäêè',
                 'TYPE' => 'STRING',
                 'DEFAULT' => $arCurrentValues['TAB_'.$iTab.'_ID']."_".$i,
                 'PARENT' => 'TAB_'.$iTab
             );
             $PARAMS['TAB_'.$iTab.'_CAT_'.$i] = array(
-                'NAME' => 'ÐÐ°Ð·Ð²Ð°Ð½Ð¸Ðµ Ð¿Ð¾Ð´Ñ€Ð°Ð·Ð´ÐµÐ»Ð° â„–'.$i,
+                'NAME' => 'Íàçâàíèå ïîäðàçäåëà ¹'.$i,
                 'TYPE' => 'STRING',
-                'DEFAULT' => 'ÐŸÐ¾Ð´Ñ€Ð°Ð·Ð´ÐµÐ» â„–'.$i,
+                'DEFAULT' => 'Ïîäðàçäåë ¹'.$i,
                 'PARENT' => 'TAB_'.$iTab,
             );
         }
     }
 	$PARAMS['TAB_'.$iTab.'_RCV'] = array(
-		'NAME' => 'Ð ÐµÐºÑƒÑ€ÑÐ¸Ð²Ð½Ð¾Ðµ Ð¿Ð¾Ð´ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ðµ Ð²ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼Ñ‹Ñ… Ð¾Ð±Ð»Ð°ÑÑ‚ÐµÐ¹ Ñ€Ð°Ð·Ð´ÐµÐ»Ð°',
+		'NAME' => 'Ðåêóðñèâíîå ïîäêëþ÷åíèå âêëþ÷àåìûõ îáëàñòåé ðàçäåëà',
 		'TYPE' => 'CHECKBOX',
 		'DEFAULT' => $currentTabID,
 		'PARENT' => 'TAB_'.$iTab

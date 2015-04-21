@@ -22,13 +22,13 @@ class Parser extends ParserDB {
 
 	protected $_filePosition = 0;
 
-	/** @var int Ð Ð·Ð¼ÐµÑ€ Ð¿Ð¾Ñ€Ñ†Ð¸Ð¸ Ð´Ð°Ð½Ð½Ñ‹Ñ… ÑÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°ÐµÐ¼Ñ‹Ñ… Ð¸ xml-Ñ„Ð°Ð¹Ð»Ð° Ð² Ð±Ð°Ð¹Ñ‚Ð°Ñ… */
+	/** @var int Ðçìåð ïîðöèè äàííûõ ñ÷èòûâàåìûõ è xml-ôàéëà â áàéòàõ */
 	protected $_chunkReadSize = 10240;
 	protected $_buffer = null;
 	protected $_bufferLength = 0;
 	protected $_bufferPosition = 0;
 
-	/** @var int Ð’Ñ€ÐµÐ¼Ñ Ð¼ÐµÐ¶Ð´Ñƒ Ð¸Ñ‚ÐµÑ€Ð°Ñ†Ð¸ÑÐ¼Ð¸ Ð¿Ð°Ñ€ÑÐ¸Ð½Ð³Ð° Ð² ÑÐµÐºÑƒÐ½Ð´Ð°Ñ… */
+	/** @var int Âðåìÿ ìåæäó èòåðàöèÿìè ïàðñèíãà â ñåêóíäàõ */
 	protected $_readTimeLimit = 0;
 
 	protected $_arElementStack = array();
@@ -119,7 +119,7 @@ class Parser extends ParserDB {
 
 
 	/**
-	 * @param array $STATE - Ð¼Ð°ÑÑÐ¸Ð² Ñ Ð´Ð°Ð½Ð½Ñ‹Ð¼Ð¸ Ð´Ð»Ñ Ð¿Ð¾ÑˆÐ°Ð³Ð¾Ð²Ð¾Ð³Ð¾ Ñ‡Ñ‚ÐµÐ½Ð¸Ñ xml
+	 * @param array $STATE - ìàññèâ ñ äàííûìè äëÿ ïîøàãîâîãî ÷òåíèÿ xml
 	 * @return bool feof($this->_file)
 	 */
 	public function readXML(&$STATE) {
