@@ -1897,23 +1897,36 @@ OPTIONS
          Сборка архива с обновлением
     --install=[files|module|events|database|register]
          Установить ресурсы модуля
-             files         - установить файлы в соответствие с кофигурацией сборки
-             module-files  - установить файлы используя CModule::InstallFiles()
-             module        - установить модуль используя объекст CModule::DoInstall()
-             events        - установить события модуля - CModule::InstallEvents()
-             database      - уствновить базу данных - CModule::InstallDB()
-             data          - уствновить базу данных - CModule::InstallData() / Если метод существует
-             tasks         - установить задачи модуля
-             register      - только зарегистрировать модуль в системе - RegisterModule()
+             files          - установить файлы в соответствие с кофигурацией сборки
+             module-files   - установить файлы используя CModule::InstallFiles()
+             module         - установить модуль используя объекст CModule::DoInstall()
+             events         - установить события модуля - CModule::InstallEvents()
+             database       - уствновить базу данных - CModule::InstallDB()
+             data           - уствновить базу данных - CModule::InstallData() / Если метод существует
+             tasks          - установить задачи модуля
+             register       - только зарегистрировать модуль в системе - RegisterModule()
     --uninstall=[files|module|events|database|register]
-             files         - удалить файлы в соответствие с кофигурацией сборки
-             module-files  - удалить файлы используя CModule::InstallFiles()
-             module        - удалить модуль используя объекст CModule::DoUnInstall()
-             events        - удалить события модуля - CModule::InstallEvents()
-             database      - удалить базу данных - CModule::InstallDB()
-             data          - удалить данные - CModule::UnInstallData() / Если метод существует
-             tasks         - Удалить задачи модуля
-             register      - пометить модуль как удаленный - UnRegisterModule()
+             files          - удалить файлы в соответствие с кофигурацией сборки
+             module-files   - удалить файлы используя CModule::InstallFiles()
+             module         - удалить модуль используя объекст CModule::DoUnInstall()
+             events         - удалить события модуля - CModule::InstallEvents()
+             database       - удалить базу данных - CModule::InstallDB()
+             data           - удалить данные - CModule::UnInstallData() / Если метод существует
+             tasks          - Удалить задачи модуля
+             register       - пометить модуль как удаленный - UnRegisterModule()
+
+    == В стадии разработки ==
+    --convert-to-cp1251=[<pattern>|all|lang|notjs] - конвертирует файлы модуля в CP1251
+             <pattern>      - сконвертировать файлы путь которых соотвествует pattern-у (POSIX)
+                              Если pattern указывает на папку,
+                              то подразумеваются все вложенные файлы во всех подпапках
+                              Если необходимо указать только файлы указанной папки,
+                              тоследует использовать паттерн вида: "целевая-папка/*"
+             lang           - сконвертирует только lang-файлы
+             not-js         - сконвертировать всё кроме JavaScript-файлов
+    --convert-to-utf8=[<pattern>|all|lang|notjs] - конвертирует файлы модуля в UTF-8
+             Обратная операция. Актуальна, когда надо внести правки
+             из сторонней установки модуля на CP1251 обратно в репозиторий разработки с кодировкой UTF-8
 HELP;
 		}
 		$helpText .= "\n";
@@ -1939,6 +1952,8 @@ HELP;
 			'build-update::',
 			'install::',
 			'uninstall::',
+			//'convert-to-cp1251::',
+			//'convert-to-utf8::',
 		));
 
 		if( empty($arCommandOptions) ) {
@@ -3527,6 +3542,7 @@ DOC;
 			;
 			shell_exec($shellCommand);
 		}
+		return true;
 	}
 
 	/**
@@ -3537,6 +3553,10 @@ DOC;
 	 * За явную пометку файлов как plainText отвечает файл .idea/misc.xml
 	 */
 	static public function addIdeaProjectFolderAsPlainText() {
+
+	}
+
+	public function convertCharset($pattern, $convertFrom, $convertTo) {
 
 	}
 }
