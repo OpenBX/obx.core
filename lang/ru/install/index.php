@@ -1,5 +1,5 @@
 <?php
-$MESS["OBX_MODULE_INSTALL_NAME"] = "OpenBX: Ð‘Ð°Ð·Ð¾Ð²Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒ";
-$MESS["OBX_MODULE_INSTALL_DESCRIPTION"] = 'Ð‘Ð°Ð·Ð¾Ð²Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒ';
+$MESS["OBX_MODULE_INSTALL_NAME"] = "OpenBX: Áàçîâûé ìîäóëü";
+$MESS["OBX_MODULE_INSTALL_DESCRIPTION"] = 'Áàçîâûé ìîäóëü';
 $MESS["OBX_PARTNER_NAME"] = "OpenBitrixSolutions";
 $MESS["OBX_PARTNER_URI"] = "http://www.devtop.ru";

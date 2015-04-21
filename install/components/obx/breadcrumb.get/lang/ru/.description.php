@@ -1,5 +1,5 @@
 <?
-$MESS ['MAIN_BREADCRUMB_NAME'] = "ÐÐ°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ð¾Ð½Ð½Ð°Ñ Ñ†ÐµÐ¿Ð¾Ñ‡ÐºÐ° (Ð²Ð¾Ð·Ð²Ñ€Ð°Ñ‚ Ð´Ð»Ñ OBX\\Core\\Tools::showViewContent)";
-$MESS ['MAIN_BREADCRUMB_DESC'] = "Ð’Ð¾Ð·Ð²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ Ð½Ð°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ð¾Ð½Ð½ÑƒÑŽ Ñ†ÐµÐ¿Ð¾Ñ‡ÐºÑƒ (\"Ñ…Ð»ÐµÐ±Ð½Ñ‹Ðµ ÐºÑ€Ð¾ÑˆÐºÐ¸\") Ð´Ð»Ñ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ñ Ð² Ð¼ÐµÑ…Ð°Ð½Ð¸Ð·Ð¼Ðµ OBX_Tools::showViewContent(): http://dev.1c-bitrix.ru/api_help/main/reference/cmain/showviewcontent.php";
-$MESS ['MAIN_NAVIGATION_SERVICE'] = "ÐÐ°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ñ";
+$MESS ['MAIN_BREADCRUMB_NAME'] = "Íàâèãàöèîííàÿ öåïî÷êà (âîçâðàò äëÿ OBX\\Core\\Tools::showViewContent)";
+$MESS ['MAIN_BREADCRUMB_DESC'] = "Âîçâðàùàåò íàâèãàöèîííóþ öåïî÷êó (\"õëåáíûå êðîøêè\") äëÿ èñïîëüçîâàíèÿ â ìåõàíèçìå OBX_Tools::showViewContent(): http://dev.1c-bitrix.ru/api_help/main/reference/cmain/showviewcontent.php";
+$MESS ['MAIN_NAVIGATION_SERVICE'] = "Íàâèãàöèÿ";
 ?>

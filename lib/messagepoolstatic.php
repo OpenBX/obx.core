@@ -51,7 +51,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РїСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ addNotice
+	 * Метод устарел. правильный метод addNotice
 	 * @param $text
 	 * @param int $code
 	 * @param int $debugLevel
@@ -95,7 +95,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ getLastNotice
+	 * Метод устарел. Правильный метод getLastNotice
 	 * @param string $return
 	 * @return mixed
 	 * @deprecated
@@ -117,7 +117,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ getNotices
+	 * Метод устарел. Правильный метод getNotices
 	 * @return array
 	 * @deprecated
 	 */
@@ -138,7 +138,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ countNotices
+	 * Метод устарел. Правильный метод countNotices
 	 * @return int
 	 * @deprecated
 	 */
@@ -158,7 +158,7 @@ class MessagePoolStatic implements IMessagePoolStatic {
 		return self::getMessagePool()->countMessagePoolData();
 	}
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ clearNotices
+	 * Метод устарел. Правильный метод clearNotices
 	 * @deprecated
 	 */
 	static public function clearMessages() {

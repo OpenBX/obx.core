@@ -13,7 +13,7 @@ namespace OBX\Core\DBEntityEditor;
 /**
  * Class GeneratorBXDBr
  * @package OBX\Core\DBEntityEditor
- * Р“РµРЅРµСЂР°С‚РѕСЂ СЃСѓС‰РЅРѕСЃС‚Рё Bitrix\DataManager
+ * Генератор сущности Bitrix\DataManager
  */
 class GeneratorBXDM extends Generator {
 

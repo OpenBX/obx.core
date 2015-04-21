@@ -9,10 +9,10 @@
  ***********************************************/
 
 use OBX\Core\Exceptions\Curl\CurlError as _;
-$MESS[_::ID._::E_M_TIMEOUT_REACHED] = 'Р”РѕСЃС‚РёРЅРіРЅСѓС‚Рѕ РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РІСЂРµРјСЏ СЂР°Р±РѕС‚С‹ РјСѓР»СЊС‚РёР·Р°РіСЂСѓР·РєРё';
-$MESS[_::ID._::E_M_SELECT_ERROR] = 'РњС‹ СЃРґРµР»Р°Р»Рё РІСЃРµ РІРѕР·РјРѕР¶РЅРѕРµ С‡С‚Рѕ Р±С‹ РѕР±РѕР№С‚Рё СЌС‚РѕС‚ Р±Р°Рі РѕРїРёСЃР°РЅРЅС‹Р№ С‚СѓС‚ https://bugs.php.net/bug.php?id=63411.'
-	.' Р•СЃР»Рё РѕРЅ РїСЂРѕСЏРІРёР»СЃСЏ, Р·РЅР°С‡РёС‚ РЅР° СЃР»РµРґСѓСЋС‰РµР№ РёС‚РµСЂР°С†РёРё СЃРєРѕСЂРµРµ РІСЃРµРіРѕ РЅРµ РїСЂРѕСЏРІРёС‚СЃСЏ Рё С„Р°Р№Р» РІСЃРµ С‚Р°РєРё Р±СѓРґРµС‚ Р·Р°РіСЂСѓР¶РµРЅ.'
-	.' Р•СЃР»Рё РѕРЅ С†РёРєР»РёС‡РЅРѕ РїРѕРІС‚РѕСЂСЏРµС‚СЃСЏ, РЅР°РїРёС€РёС‚Рµ СЃСЋРґР°: РњР°РєСЃРёРј РњР°РєР°СЂРѕРІ <rootfavell@gmail.com>'
+$MESS[_::ID._::E_M_TIMEOUT_REACHED] = 'Достингнуто максимальное время работы мультизагрузки';
+$MESS[_::ID._::E_M_SELECT_ERROR] = 'Мы сделали все возможное что бы обойти этот баг описанный тут https://bugs.php.net/bug.php?id=63411.'
+	.' Если он проявился, значит на следующей итерации скорее всего не проявится и файл все таки будет загружен.'
+	.' Если он циклично повторяется, напишите сюда: Максим Макаров <rootfavell@gmail.com>'
 ;
 
 $MESS[_::ID._::E_UNSUPPORTED_PROTOCOL] = 'The URL you passed to libcurl used a protocol that this libcurl does not support. The support might be a compile-time option that you didn\'t use, it can be a misspelled protocol string or just a protocol libcurl has no code for';

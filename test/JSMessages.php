@@ -22,8 +22,8 @@ class JSMessagesTest extends TestCase
 	public function test(){
 		$JSMessages = JSMessages::getInstance('obx.market');
 
-		$JSMessages->addMessage('basket.currency.format.string',	'# Ñ€ÑƒĞ±.');
-		$JSMessages->addMessage('basket.currency.name',				'Ñ€ÑƒĞ±Ğ»Ğ¸');
+		$JSMessages->addMessage('basket.currency.format.string',	'# ğóá.');
+		$JSMessages->addMessage('basket.currency.name',				'ğóáëè');
 		$JSMessages->addMessage('basket.currency.override',			'override string');
 		$JSMessages->addMessage('basket.currency.override.onemore',	'one more string');
 		$JSMessages->addMessage('basket.currency',					'test override');

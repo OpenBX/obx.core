@@ -27,7 +27,7 @@ abstract class BasicAssistant {
 
 	protected $filterInputs = Array();
 
-	protected $message = 'РћР±СЂР°Р±РѕС‚Р°Р» СЃС‚СЂРѕРєСѓ в„–#ID#';
+	protected $message = 'Обработал строку №#ID#';
 
 	protected $currentPercent = 0;
 
@@ -126,13 +126,13 @@ abstract class BasicAssistant {
 	}
 
 	protected function getFilterHtml() {
-		$html = "<fieldset><legend>Р¤РёР»СЊС‚СЂ</legend>";
+		$html = "<fieldset><legend>Фильтр</legend>";
 		if (!empty($this->filterInputs)) {
 			foreach ($this->filterInputs as $input) {
 				$html .= $input . ' ';
 			}
-			$html .= '<input type="submit" name="set_filter" value="РџСЂРёРјРµРЅРёС‚СЊ С„РёР»СЊС‚СЂ" /> ';
-			$html .= '<input type="submit" name="del_filter" value="РЎР±СЂРѕСЃРёС‚СЊ С„РёР»СЊС‚СЂ" /><br>';
+			$html .= '<input type="submit" name="set_filter" value="Применить фильтр" /> ';
+			$html .= '<input type="submit" name="del_filter" value="Сбросить фильтр" /><br>';
 
 			$html .= "</fieldset><br>";
 		}

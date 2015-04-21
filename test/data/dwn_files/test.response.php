@@ -29,7 +29,7 @@ if(array_key_exists('sleep', $_REQUEST)) {
 
 ?>
 {
-	"response": "РќРµРјРЅРѕРіРѕ СЂСѓСЃСЃРєРѕРіРѕ С‚РµРєСЃС‚Р° Рё <div style=\"padding: 3px; border: 1px solid black; border-radius: 4px;\">html-РєРѕРґ</div>",
+	"response": "Немного русского текста и <div style=\"padding: 3px; border: 1px solid black; border-radius: 4px;\">html-код</div>",
 	"get": <?=json_encode($_GET)?>,
 	"post": <?=json_encode($_POST)?>,
 	"cookie": <?=json_encode($_COOKIE)?>

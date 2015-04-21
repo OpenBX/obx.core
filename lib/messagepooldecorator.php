@@ -50,7 +50,7 @@ class MessagePoolDecorator implements IMessagePool {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РёРІР»СЊРЅС‹Р№ РјРµС‚РѕРґ addNotice
+	 * Метод устарел. Праивльный метод addNotice
 	 * @param $text
 	 * @param int $code
 	 * @param int $debugLevel
@@ -94,7 +94,7 @@ class MessagePoolDecorator implements IMessagePool {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РёРІР»СЊРЅС‹Р№ РјРµС‚РѕРґ getLastNotice
+	 * Метод устарел. Праивльный метод getLastNotice
 	 * @param string $return
 	 * @return mixed
 	 * @deprecated
@@ -113,7 +113,7 @@ class MessagePoolDecorator implements IMessagePool {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ popLastNotice
+	 * Метод устарел. Правильный метод popLastNotice
 	 * @param string $return
 	 * @return mixed
 	 * @deprecated
@@ -126,7 +126,7 @@ class MessagePoolDecorator implements IMessagePool {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РёРІР»СЊРЅС‹Р№ РјРµС‚РѕРґ getNotices
+	 * Метод устарел. Праивльный метод getNotices
 	 * @return array
 	 * @deprecated
 	 */
@@ -147,7 +147,7 @@ class MessagePoolDecorator implements IMessagePool {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ countNotices
+	 * Метод устарел. Правильный метод countNotices
 	 * @return int
 	 * @deprecated
 	 */
@@ -168,7 +168,7 @@ class MessagePoolDecorator implements IMessagePool {
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РёРІР»СЊРЅС‹Р№ РјРµС‚РѕРґ clearNotices
+	 * Метод устарел. Праивльный метод clearNotices
 	 * @deprecated
 	 */
 	public function clearMessages() {

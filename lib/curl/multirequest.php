@@ -274,7 +274,7 @@ class MultiRequest extends MessagePoolDecorator {
 	}
 
 	/**
-	 * @return bool - true РїСЂРё СѓСЃРїРµС€РЅРѕРј Р·Р°РІРµСЂС€РµРЅРёРё, false - РїСЂРё С‚Р°Р№РјР°СѓС‚Рµ
+	 * @return bool - true при успешном завершении, false - при таймауте
 	 * @throws CurlError
 	 */
 	protected function _exec() {
@@ -282,13 +282,13 @@ class MultiRequest extends MessagePoolDecorator {
 			$this->setTimeout($this->_timeoutRequestsMax);
 		}
 		$iSelectErrorCount = 0;
-		$iterationUSleep = 5; // РјРёРєСЂРѕСЃРµРєСѓРЅРґС‹, С‚.Рµ. РѕРґРЅР° РјРёР»Р»РёРѕРЅРЅР°СЏ
-		$multiSelectTimeout = 1; // СЃРµРєСѓРЅРґС‹
-		// Р•СЃР»Рё РѕС€РёР±РєР° select-Р° РїРѕРІС‚РѕСЂСЏРµС‚СЃСЃСЏ СЃС‚РѕР»СЊРєРѕ СЂР°Р·, СЃРєРѕР»СЊРєРѕ РЅСѓР¶РЅРѕ РґР»СЏ РІС‹РїРѕР»РµРЅРµРЅРёСЏ РІ
-		// С‚РµС‡РµРЅРёРµ $multiSelectTimeout, Р·РЅР°С‡РёС‚ СЂР°Р±РѕС‚Р° РёРґРµС‚ РІ С…РѕР»РѕСЃС‚СѓСЋ, С‚РѕР»СЊРєРѕ С‚РѕРіРґР° РґРѕР»Р¶РЅРѕ СЃСЂР°Р±Р°С‚С‹РІР°С‚СЊ
-		// РёСЃРєР»СЋС‡РµРЅРёРµ CurlError::E_M_SELECT_ERROR
-		// РјРёРЅСѓСЃ РєРѕСЌС„. РЅР° СЃРєРѕСЂРѕСЃС‚СЊ РІС‹РїРѕР»РЅРµРЅРёСЏ СЃРєСЂРёРїС‚Р°
-		// РґРѕРїСѓСЃС‚РёРј 30%
+		$iterationUSleep = 5; // микросекунды, т.е. одна миллионная
+		$multiSelectTimeout = 1; // секунды
+		// Если ошибка select-а повторяетсся столько раз, сколько нужно для выполенения в
+		// течение $multiSelectTimeout, значит работа идет в холостую, только тогда должно срабатывать
+		// исключение CurlError::E_M_SELECT_ERROR
+		// минус коэф. на скорость выполнения скрипта
+		// допустим 30%
 		$maxSelectErrors = (($multiSelectTimeout * 1000000) / $iterationUSleep) * 0.7;
 
 		do {
@@ -314,7 +314,7 @@ class MultiRequest extends MessagePoolDecorator {
 				}
 				$mrc = curl_multi_exec($this->_curlMulti, $countRunning);
 			}
-			usleep($iterationUSleep); // РјР°Р»РѕСЃС‚СЊ СѓРјРµРЅСЊС€РёРј РїРѕС‚СЂРµР±Р»РµРЅРёРµ РїСЂРѕС†РµСЃСЃРѕСЂР°
+			usleep($iterationUSleep); // малость уменьшим потребление процессора
 		}
 		return true;
 	}

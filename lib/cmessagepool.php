@@ -12,14 +12,14 @@ namespace OBX\Core;
 /**
  * Class CMessagePool
  * @package OBX\Core
- * РџСЂР°РІРёР»СЊРЅС‹Р№ РєР»Р°СЃСЃ MessagePool
+ * Правильный класс MessagePool
  * @deprecated
  */
 class CMessagePool extends MessagePool {}
 
 /**
- * Class РЎMessagePoolStatic
- * РџСЂР°РІРёР»СЊРЅС‹Р№ РєР»Р°СЃСЃ MessagePoolStatic
+ * Class СMessagePoolStatic
+ * Правильный класс MessagePoolStatic
  * @deprecated
  * @package OBX\Core
  */
@@ -27,7 +27,7 @@ class CMessagePoolStatic extends MessagePoolStatic {}
 
 /**
  * Class CMessagePoolDecorator
- * РџСЂР°РІРёР»РґСЊРЅС‹Р№ РєР»Р°СЃСЃ MessagePoolDecorator
+ * Правилдьный класс MessagePoolDecorator
  * @deprecated
  * @package OBX\Core
  */

@@ -1,5 +1,5 @@
 <?php
-$MESS['OBXCMPP_MIL_IBLOCK_TYPE'] = 'Ð¢Ð¸Ð¿ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¾Ð½Ð½Ð¾Ð³Ð¾ Ð±Ð»Ð¾ÐºÐ°';
-$MESS['OBXCMPP_MIL_IBLOCK_ID_LIST'] = 'Ð¡Ð¿Ð¸ÑÐ¾Ðº Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ñ… Ð±Ð»Ð¾ÐºÐ¾Ð²';
-$MESS['OBXCMPP_MIL_ALL_IBLOCKS'] = 'ÐŸÐ¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð²ÑÐµ Ñ‚Ð¸Ð¿Ñ‹ Ð˜Ð‘';
-$MESS['OBXCMPP_MIL_LIST_IBLOCK_PAGE_URL'] = 'Ð¨Ð°Ð±Ð»Ð¾Ð½ ÑÑÑ‹Ð»ÐºÐ¸ Ð´Ð»Ñ Ð˜Ð‘';
+$MESS['OBXCMPP_MIL_IBLOCK_TYPE'] = 'Òèï èíôîðìàöèîííîãî áëîêà';
+$MESS['OBXCMPP_MIL_IBLOCK_ID_LIST'] = 'Ñïèñîê èíôîðìàöèîííûõ áëîêîâ';
+$MESS['OBXCMPP_MIL_ALL_IBLOCKS'] = 'Ïîêàçàòü âñå òèïû ÈÁ';
+$MESS['OBXCMPP_MIL_LIST_IBLOCK_PAGE_URL'] = 'Øàáëîí ññûëêè äëÿ ÈÁ';

@@ -8,81 +8,81 @@
  ** @copyright 2013 DevTop                    **
  ***********************************************/
 
-$MESS['OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED'] = 'РњРѕРґСѓР»СЊ РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅС… Р±Р»РѕРєРѕРІ РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ';
-$MESS['OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND'] = 'РЎРІРѕР№СЃС‚РІРѕ РЅРµ РЅР°Р№РґРµРЅРѕ РґР»СЏ СЌС‚РѕРіРѕ РР‘';
-$MESS['OBX_CORE_TOOLS_WRONG_TEMPLATE_FILE'] = 'РќРµРІРµСЂРЅРѕ СѓРєР°Р·Р°РЅ С„Р°Р№Р» С€Р°Р±Р»РѕРЅР°';
+$MESS['OBX_CORE_TOOLS_IBLOCK_NOT_INSTALLED'] = 'Модуль информационнх блоков не установлен';
+$MESS['OBX_CORE_TOOLS_IBLOCK_PROP_NOT_FOUND'] = 'Свойство не найдено для этого ИБ';
+$MESS['OBX_CORE_TOOLS_WRONG_TEMPLATE_FILE'] = 'Неверно указан файл шаблона';
 
-$MESS['DAY_N'] = 'РґРµРЅСЊ';
-$MESS['DAY_G'] = 'РґРЅСЏ';
-$MESS['DAY_GM'] = 'РґРЅРµР№';
+$MESS['DAY_N'] = 'день';
+$MESS['DAY_G'] = 'дня';
+$MESS['DAY_GM'] = 'дней';
 
-$MESS['HOUR_N'] = 'С‡Р°СЃ';
-$MESS['HOUR_G'] = 'С‡Р°СЃР°';
-$MESS['HOUR_GM'] = 'С‡Р°СЃРѕРІ';
+$MESS['HOUR_N'] = 'час';
+$MESS['HOUR_G'] = 'часа';
+$MESS['HOUR_GM'] = 'часов';
 
-$MESS['SOME_G'] = 'Р°';
-$MESS['SOME_GM'] = 'РѕРІ';
+$MESS['SOME_G'] = 'а';
+$MESS['SOME_GM'] = 'ов';
 
-$MESS['January'] = 'СЏРЅРІР°СЂСЊ';
-$MESS['JanuaryG'] = 'СЏРЅРІР°СЂСЏ';
+$MESS['January'] = 'январь';
+$MESS['JanuaryG'] = 'января';
 
-$MESS['February'] = 'С„РµРІСЂР°Р»СЊ';
-$MESS['FebruaryG'] = 'С„РµРІСЂР°Р»СЏ';
+$MESS['February'] = 'февраль';
+$MESS['FebruaryG'] = 'февраля';
 
-$MESS['March'] = 'РјР°СЂС‚';
-$MESS['MarchG'] = 'РјР°СЂС‚Р°';
+$MESS['March'] = 'март';
+$MESS['MarchG'] = 'марта';
 
-$MESS['April'] = 'Р°РїСЂРµР»СЊ';
-$MESS['AprilG'] = 'Р°РїСЂРµР»СЏ';
+$MESS['April'] = 'апрель';
+$MESS['AprilG'] = 'апреля';
 
-$MESS['May'] = 'РјР°Р№';
-$MESS['MayG'] = 'РјР°СЏ';
+$MESS['May'] = 'май';
+$MESS['MayG'] = 'мая';
 
-$MESS['June'] = 'РёСЋРЅСЊ';
-$MESS['JuneG'] = 'РёСЋРЅСЏ';
+$MESS['June'] = 'июнь';
+$MESS['JuneG'] = 'июня';
 
-$MESS['July'] = 'РёСЋР»СЊ';
-$MESS['JulyG'] = 'РёСЋР»СЏ';
+$MESS['July'] = 'июль';
+$MESS['JulyG'] = 'июля';
 
-$MESS['August'] = 'РёРІРіСѓСЃС‚';
-$MESS['AugustG'] = 'РёРІРіСѓСЃС‚Р°';
+$MESS['August'] = 'ивгуст';
+$MESS['AugustG'] = 'ивгуста';
 
-$MESS['September'] = 'СЃРµРЅС‚СЏР±СЂСЊ';
-$MESS['SeptemberG'] = 'СЃРµРЅС‚СЏР±СЂСЏ';
+$MESS['September'] = 'сентябрь';
+$MESS['SeptemberG'] = 'сентября';
 
-$MESS['October'] = 'РѕРєС‚СЏР±СЂСЊ';
-$MESS['OctoberG'] = 'РѕРєС‚СЏР±СЂСЏ';
+$MESS['October'] = 'октябрь';
+$MESS['OctoberG'] = 'октября';
 
-$MESS['November'] = 'РЅРѕСЏР±СЂСЊ';
-$MESS['NovemberG'] = 'РЅРѕСЏР±СЂСЏ';
+$MESS['November'] = 'ноябрь';
+$MESS['NovemberG'] = 'ноября';
 
-$MESS['December'] = 'РґРµРєР°Р±СЂСЊ';
-$MESS['DecemberG'] = 'РґРµРєР°Р±СЂСЏ';
+$MESS['December'] = 'декабрь';
+$MESS['DecemberG'] = 'декабря';
 
-$MESS['Monday'] = 'РїРѕРЅРµРґРµР»СЊРЅРёРє';
-$MESS['MondayA'] = 'РїРѕРЅРµРґРµР»СЊРЅРёРє';
+$MESS['Monday'] = 'понедельник';
+$MESS['MondayA'] = 'понедельник';
 
-$MESS['Tuesday'] = 'РІС‚РѕСЂРЅРёРє';
-$MESS['TuesdayA'] = 'РІС‚РѕСЂРЅРёРє';
+$MESS['Tuesday'] = 'вторник';
+$MESS['TuesdayA'] = 'вторник';
 
-$MESS['Wednesday'] = 'СЃСЂРµРґР°';
-$MESS['WednesdayA'] = 'СЃСЂРµРґСѓ';
+$MESS['Wednesday'] = 'среда';
+$MESS['WednesdayA'] = 'среду';
 
-$MESS['Thursday'] = 'С‡РµС‚РІРµСЂРі';
-$MESS['ThursdayA'] = 'С‡РµС‚РІРµСЂРі';
+$MESS['Thursday'] = 'четверг';
+$MESS['ThursdayA'] = 'четверг';
 
-$MESS['Friday'] = 'РїСЏС‚РЅРёС†Р°';
-$MESS['FridayA'] = 'РїСЏС‚РЅРёС†Сѓ';
+$MESS['Friday'] = 'пятница';
+$MESS['FridayA'] = 'пятницу';
 
-$MESS['Saturday'] = 'СЃСѓР±Р±РѕС‚Р°';
-$MESS['SaturdayA'] = 'СЃСѓР±Р±РѕС‚Сѓ';
+$MESS['Saturday'] = 'суббота';
+$MESS['SaturdayA'] = 'субботу';
 
-$MESS['Sunday'] = 'РІРѕСЃРєСЂРµСЃРµРЅСЊРµ';
-$MESS['SundayA'] = 'РІРѕСЃРєСЂРµСЃРµРЅСЊРµ';
+$MESS['Sunday'] = 'воскресенье';
+$MESS['SundayA'] = 'воскресенье';
 
-$MESS['OBX_TOOLS_JSON_ERROR_NONE'] = 'Р‘РµР· РѕС€РёР±РѕРє';
-$MESS['OBX_TOOLS_JSON_ERROR_DEPTH'] = 'Р”РѕСЃС‚РёРіРЅСѓС‚Р° РјР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° СЃС‚РµРєР°';
-$MESS['OBX_TOOLS_JSON_ERROR_STATE_MISMATCH'] = 'РќРµСЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ СЂРµР¶РёРјР°';
-$MESS['OBX_TOOLS_JSON_ERROR_CTRL_CHAR'] = 'РќРµРѕР¶РёРґР°РЅРЅС‹Р№ СѓРїСЂР°РІР»СЏР±С‰РёР№ СЃРёРјРІРѕР»';
-$MESS['OBX_TOOLS_JSON_ERROR_SYNTAX'] = 'РЎРёРЅС‚Р°РєСЃРёС‡РµСЃРєР°СЏ РѕС€РёР±РєР° json';
-$MESS['OBX_TOOLS_JSON_ERROR_UTF8'] = 'Р’РµСЂРѕСЏС‚РЅР°СЏ РѕС€РёР±РєР° РєРѕРґРёСЂРѕРІРєРё';
+$MESS['OBX_TOOLS_JSON_ERROR_NONE'] = 'Без ошибок';
+$MESS['OBX_TOOLS_JSON_ERROR_DEPTH'] = 'Достигнута максимальная длина стека';
+$MESS['OBX_TOOLS_JSON_ERROR_STATE_MISMATCH'] = 'Несоответствие режима';
+$MESS['OBX_TOOLS_JSON_ERROR_CTRL_CHAR'] = 'Неожиданный управлябщий символ';
+$MESS['OBX_TOOLS_JSON_ERROR_SYNTAX'] = 'Синтаксическая ошибка json';
+$MESS['OBX_TOOLS_JSON_ERROR_UTF8'] = 'Вероятная ошибка кодировки';

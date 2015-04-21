@@ -183,7 +183,7 @@ class Connector
 						is_file(OBX_DOC_ROOT.SITE_TEMPLATE_PATH.'/'.$compiledLessFilePath)
 						&& $this->isProductionReady()
 					)
-					//					// ÐÐ° ÑÐ»ÑƒÑ‡Ð°Ð¹ ÐµÑÐ»Ð¸ Ð¼Ñ‹ Ð±ÑƒÐ´ÐµÐ¼ ÐºÐ¾Ð¼Ð¸Ð¿Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ less Ð² Ð¿Ð°Ð¿ÐºÑƒ css
+					//					// Íà ñëó÷àé åñëè ìû áóäåì êîìèïèðîâàòü less â ïàïêó css
 					//					|| (
 					//						substr($compiledLessFilePath, 0, 5) == 'less/'
 					//						&& $this->isLessProductionReady()

@@ -442,7 +442,7 @@ class ImportIBlock
 		$bTypeSuccess = $this->createIBlockType();
 		if(!$bTypeSuccess) return false;
 		if( ! $this->deleteOldIBlockData() ) return false;
-		// Ğ­Ñ‚Ğ¾ ĞµÑĞ»Ğ¸ Ğ¼Ñ‹ Ñ€ĞµĞ¸Ğ½ÑÑ‚Ğ°Ğ»Ğ»Ğ¸Ñ€ÑƒĞµĞ¼ Ğ´Ğ°Ğ½Ğ½Ñ‹Ğµ Ğ¸Ğ½Ñ„Ğ¾Ğ±Ğ»Ğ¾ĞºĞ¾Ğ²
+		// İòî åñëè ìû ğåèíñòàëëèğóåì äàííûå èíôîáëîêîâ
 		if( $this->_iblockID == 0 ) {
 			$arFields = Tools::arrayMergeRecursiveDistinct(self::$_arDefaultIBlockFields, $this->_arConfig['IBLOCK'][$this->_iblockCode]);
 			$arPermissions = $arFields['PERMISSIONS'];
@@ -476,7 +476,7 @@ class ImportIBlock
 			$iblock = new \CIBlock;
 			$iblock->Update($this->_iblockID, $arFields);
 		}
-		// ÑÑ‚Ğ¾ ĞµÑĞ»Ğ¸ Ğ´Ğ°Ğ½Ğ½Ñ‹Ğµ ÑƒĞ¶Ğµ ÑÑ‚Ğ°Ğ½Ğ¾Ğ²Ğ»ĞµĞ½Ñ‹ Ğ¿Ñ€Ğ¾ÑÑ‚Ğ¾ Ğ´Ğ¾Ğ±Ğ°Ğ²Ğ¸Ğ¼ Ğ½ĞµĞ´Ğ¾ÑÑ‚Ğ°ÑÑ‰Ğ¸Ğµ Ğ¿Ñ€Ğ¸Ğ²ÑĞ·ĞºĞ¸ Ğº ÑĞ°Ğ¹Ñ‚Ğ°Ğ¼
+		// ıòî åñëè äàííûå óæå ñòàíîâëåíû ïğîñòî äîáàâèì íåäîñòàşùèå ïğèâÿçêè ê ñàéòàì
 		else {
 			$arSites = self::getIBlockSites($this->_iblockID);
 			if (!in_array(WIZARD_SITE_ID, $arSites))
@@ -560,7 +560,7 @@ class ImportIBlock
 	}
 }
 
-///////////// ĞŸĞ Ğ˜ĞœĞ•Ğ  ĞšĞĞĞ¤Ğ˜Ğ“Ğ /////////////
+///////////// ÏĞÈÌÅĞ ÊÎÍÔÈÃÀ /////////////
 //	$arIBlockInstallerConfig = array(
 //		'IBLOCK_TYPE' => array(
 //			'dvt_smoke_catalog' => array(
@@ -577,8 +577,8 @@ class ImportIBlock
 //		'IBLOCK' => array(
 //			'cig' => array(
 //				'IBLOCK_TYPE_ID' => 'dvt_smoke_catalog',
-//				// Ğ¢Ğ°ĞºĞ¶Ğµ Ğ¼Ğ¾Ğ¶Ğ½Ğ¾ Ğ¿ĞµÑ€ĞµĞ´Ğ°Ñ‚ÑŒ XML_ID
-//				// ĞµÑĞ»Ğ¸ Ğ½Ğµ Ğ¿ĞµÑ€ĞµĞ´Ğ°Ğ²Ğ°Ñ‚ÑŒ, Ğ±ÑƒĞ´ĞµÑ‚ ÑĞ³ĞµĞ½ĞµÑ€Ğ¸Ñ€Ğ¾Ğ²Ğ°Ğ½ Ğ°Ğ²Ñ‚Ğ¾Ğ¼Ğ°Ñ‚Ğ¸Ñ‡ĞµÑĞºĞ¸
+//				// Òàêæå ìîæíî ïåğåäàòü XML_ID
+//				// åñëè íå ïåğåäàâàòü, áóäåò ñãåíåğèğîâàí àâòîìàòè÷åñêè
 //				'XML_FILE' => 'cig.xml',
 //				'FORM_SETTINGS' => 'cig.form_settings',
 //				'PERMISSIONS' => array(

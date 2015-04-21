@@ -9,7 +9,7 @@
 
 namespace OBX\Core\Migration;
 
-// Р¦РµРїРѕС‡РєР° РІРµСЂСЃРёР№
+// Цепочка версий
 class Chain implements \Iterator
 {
 	private $firstElement = null;

@@ -32,7 +32,7 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.ph
 __IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/__bootstrap_tests.php');
 global $USER;
 global $DB;
-// Р‘РµР· СЌС‚РѕРіРѕ С„РёРєСЃР° РїРѕС‡РµРјСѓ-С‚Рѕ РЅРµ СЂР°Р±РѕС‚Р°РµС‚. РќРµ РІРёРґРёС‚ СЌС‚Рѕ Р·РЅР°С‡РµРЅРёРµ РІ include.php РјРѕРґСѓР»СЏ
+// Без этого фикса почему-то не работает. Не видит это значение в include.php модуля
 global $DBType;
 $DBType = strtolower($DB->type);
 

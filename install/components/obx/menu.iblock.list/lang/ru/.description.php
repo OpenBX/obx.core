@@ -1,4 +1,4 @@
 <?php
-$MESS['OBX_CMP_MENU_IB_LIST_NAME'] = 'ÐŸÑƒÐ½ÐºÑ‚Ñ‹ Ð¼ÐµÐ½ÑŽ: Ð’Ñ‹Ð²Ð¾Ð´ ÑÐ¿Ð¸ÑÐºÐ° Ð¸Ð½Ñ„Ð¾Ð±Ð»Ð¾ÐºÐ¾Ð²';
-$MESS['OBX_CMP_MENU_IB_LIST_DESCRIPTION'] = 'Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÑ‚ Ð²Ñ‹Ð²Ð¾Ð´ Ð¸Ð½Ñ„Ð¾Ñ€Ð¼Ð°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ñ… Ð±Ð»Ð¾ÐºÐ¾Ð² Ð² Ð¼ÐµÐ½ÑŽ';
-$MESS['MAIN_NAVIGATION_SERVICE'] = 'ÐÐ°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ñ';
+$MESS['OBX_CMP_MENU_IB_LIST_NAME'] = 'Ïóíêòû ìåíþ: Âûâîä ñïèñêà èíôîáëîêîâ';
+$MESS['OBX_CMP_MENU_IB_LIST_DESCRIPTION'] = 'Äîáàâëÿåò âûâîä èíôîðìàöèîííûõ áëîêîâ â ìåíþ';
+$MESS['MAIN_NAVIGATION_SERVICE'] = 'Íàâèãàöèÿ';

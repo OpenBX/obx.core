@@ -16,7 +16,7 @@ list($_SERVER['DOCUMENT_ROOT']) = explode('/bitrix/modules', __DIR__);
  * Note:
  * Autoloading is not available if using PHP in CLI interactive mode.
  *
- * РџРѕС‚РѕРјСѓ РґРµР»Р°РµРј С„-РёСЋ, Р° РµС‘ СѓР¶Рµ РІС‹Р·С‹РІР°РµРј РІ РёРЅС‚РµСЂР°РєС‚РёРІРЅРѕРј СЂРµР¶РёРјРµ Рё РґР°Р»РµРµ СЂР°Р±РѕС‚Р°РµРј СЃ Р±РёС‚СЂРёРєСЃРѕРј
+ * Потому делаем ф-ию, а её уже вызываем в интерактивном режиме и далее работаем с битриксом
  */
 function _bx() {
 	define("BX_SKIP_SESSION_EXPAND", true);

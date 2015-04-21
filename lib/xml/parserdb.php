@@ -231,10 +231,10 @@ class ParserDB {
 		if( $bAttrsExist ) {
 			$bFirst = true;
 			foreach($this->_arAttributes as &$arAttr) {
-				// PARENT_ID = self::B_ATTRIBUTE - РїСЂРёР·РЅР°Рє С‚РѕРіРѕ С‡С‚Рѕ Р·Р°РїРёСЃСЊ РЅРµ РЅРѕРґР°, Р° Р°С‚С‚СЂРёР±СѓС‚
-				// NAME - РёРјСЏ Р°С‚С‚СЂРёР±СѓС‚Р°
-				// VALUE - РЅРѕРґР° Р°С‚С‚СЂРёР±СѓС‚Р°
-				// DEPTH_LEVEL - DEPTH_LEVEL РЅРѕРґС‹
+				// PARENT_ID = self::B_ATTRIBUTE - признак того что запись не нода, а аттрибут
+				// NAME - имя аттрибута
+				// VALUE - нода аттрибута
+				// DEPTH_LEVEL - DEPTH_LEVEL ноды
 				$sqlAttrInsertName = 'PARENT_ID, NAME, VALUE, DEPTH_LEVEL, ATTRIBUTES, LEFT_MARGIN';
 				$sqlAttrInsertValue = self::B_ATTRIBUTE.', '
 					.'"'.$arAttr['NAME'].'", '

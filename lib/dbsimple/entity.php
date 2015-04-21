@@ -34,66 +34,66 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 
 
 	/*
-	 * FIELD TYPES РўРёРїС‹ РїРѕР»РµР№ РїРѕР»РµР№ РґР»СЏ РјР°СЃСЃРёРІР° $_arTableFieldsCheck
+	 * FIELD TYPES Типы полей полей для массива $_arTableFieldsCheck
 	 */
-	const FLD_T_NO_CHECK = 1;				// Р±РµР· РїСЂРѕРІРµСЂРєРё - РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃ FLD_CUSTOM_CK
-	const FLD_T_INT = 2;					// С†РµР»С‹Р№
-	const FLD_T_CHAR = 4;					// РѕРґРёРЅ СЃРёРјРІРѕР»
-	const FLD_T_STRING = 8;					// Р»СЋР±Р°СЏ СЃС‚СЂРѕРєР°: htmlspecialcharsEx
-	const FLD_T_CODE = 16;					// РЎРёРјРІРѕР»СЊРЅС‹Р№ РєРѕРґ: ~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~
-	const FLD_T_BCHAR = 32;					// Р±РёС‚СЂРёРєСЃРѕРІСЃРєРёР№ Р±СѓР»РµРІ СЃРёРјРІРѕР»:) : 'Y' || 'N'
-	const FLD_T_FLOAT = 64;					// РґРµСЃСЏС‚РёС‡РЅС‹Р№
-	const FLD_T_IDENT = 128;				// Р»СЋР±РѕР№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ ~^[a-z0-9A-Z\_]{1,254}$~
-	const FLD_T_DATETIME = 256;				// Р”Р°С‚Р° Рё РІСЂРµРјСЏ
+	const FLD_T_NO_CHECK = 1;				// без проверки - использовать с FLD_CUSTOM_CK
+	const FLD_T_INT = 2;					// целый
+	const FLD_T_CHAR = 4;					// один символ
+	const FLD_T_STRING = 8;					// любая строка: htmlspecialcharsEx
+	const FLD_T_CODE = 16;					// Символьный код: ~^[a-zA-Z\_][a-z0-9A-Z\_]{0,15}$~
+	const FLD_T_BCHAR = 32;					// битриксовский булев символ:) : 'Y' || 'N'
+	const FLD_T_FLOAT = 64;					// десятичный
+	const FLD_T_IDENT = 128;				// любой идентификатор ~^[a-z0-9A-Z\_]{1,254}$~
+	const FLD_T_DATETIME = 256;				// Дата и время
 
-	const FLD_T_BX_LANG_ID = 512;			// Р‘РёС‚СЂРёРєСЃРѕРІСЃРєРёР№ LID РґРІР° СЃРёРјРІРѕР»Р°
-	const FLD_T_IBLOCK_ID = 1024;			// ID РРЅС„РѕР±Р»РѕРєР°. РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ
-	const FLD_T_IBLOCK_PROP_ID = 2048;		// ID СЃРІРѕР№СЃС‚РІР° СЌР»РµРјРµРЅС‚Р° РР‘. РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ
-	const FLD_T_IBLOCK_ELEMENT_ID = 4096;	// ID СЌР»РµРјРµРЅС‚Р° РёРЅС„РѕР±Р»РѕРєР°. РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ
-	const FLD_T_IBLOCK_SECTION_ID = 8192;	// ID СЃРµРєС†РёРё РёРЅС„Р±Р»РѕРєР°. РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ
-	const FLD_T_USER_ID = 16384;			// ID РїРѕР»СЊР·РІРѕР°С‚РµР»СЏ Р±РёС‚СЂРёРєСЃ
-	const FLD_T_GROUP_ID = 32768;			// ID РіСЂСѓРїРїС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ Р±РёС‚СЂРёРєСЃ
+	const FLD_T_BX_LANG_ID = 512;			// Битриксовский LID два символа
+	const FLD_T_IBLOCK_ID = 1024;			// ID Инфоблока. Проверяет наличие
+	const FLD_T_IBLOCK_PROP_ID = 2048;		// ID свойства элемента ИБ. Проверяет наличие
+	const FLD_T_IBLOCK_ELEMENT_ID = 4096;	// ID элемента инфоблока. Проверяет наличие
+	const FLD_T_IBLOCK_SECTION_ID = 8192;	// ID секции инфблока. Проверяет наличие
+	const FLD_T_USER_ID = 16384;			// ID пользвоателя битрикс
+	const FLD_T_GROUP_ID = 32768;			// ID группы пользователей битрикс
 
 	/*
 	 * FIELD ATTR
-	 * РќРёР¶Рµ РёРґСѓС‚ РєРѕРЅС‚СЃР°РЅС‚РЅС‹-Р°С‚С‚СЂРёР±СѓС‚С‹
+	 * Ниже идут контсантны-аттрибуты
 	 */
 
 	/**
-	 * Р‘Р°Р·Р·РЅР°РєРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ
-	 * РџСЂРёРјРµРЅСЏРµС‚СЃСЏ РІ СЃРѕС‡РµС‚Р°РЅРёРё СЃ FLD_T_INT / FLD_T_FLOAT / FLD_T_BCHAR
-	 * РґР»СЏ FLD_T_INT FLD_T_FLOAT - РїСЂРѕСЃС‚Рѕ РїСЂРѕРІРµСЂРєР° РЅРµ РЅР°РµРѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕСЃС‚СЊ
-	 * FLD_T_BCHAR - РІ СЌС‚РѕРј СЃР»СѓС‡Р°Рµ РїСЂРѕР№РґРµС‚ С‚РѕР»СЊРєРѕ 'Y' РІСЃРµ С‡С‚Рѕ РЅРµ СЂР°РІРЅРѕ 'Y' Р±СѓРґРµС‚ РѕС‚Р±СЂРѕС€РµРЅРѕ
+	 * Баззнаковое значение
+	 * Применяется в сочетании с FLD_T_INT / FLD_T_FLOAT / FLD_T_BCHAR
+	 * для FLD_T_INT FLD_T_FLOAT - просто проверка не наеотрицательность
+	 * FLD_T_BCHAR - в этом случае пройдет только 'Y' все что не равно 'Y' будет отброшено
 	 * @const
 	 */
 //32768
 	const FLD_UNSIGNED = 65536;
 
-	const FLD_NOT_ZERO = 131072;			// РќРµ РЅСѓР»СЊ РґР»СЏ int Рё float Рё РЅРµ РїСѓСЃС‚Р°СЏ РґР»РёРЅР° РґР»СЏ string
-	const FLD_NOT_NULL = 262144;		// РќРµ NULL - РёРјРµРЅРЅРѕ NULL РєР°Рє С‚РёРї РґР°РЅРЅС‹С… РЎРЈР‘Р”
-	const FLD_DEFAULT = 524288;			// Р·Р°РґР°С‚СЊ Р·РЅР°С‡РµРЅРёРµ РїРѕ РґРµС„РѕР»С‚Сѓ РµСЃР»Рё РЅСѓР»СЊ - Р·РЅ-СЏ РїРѕ СѓРјРѕР»С‡. РІ РјР°СЃСЃРёРІРµ $this->_arTableFieldsDefault
-	const FLD_REQUIRED = 1048576;		// Р·РЅР°С‡РµРЅРёРµ РїРѕР»СЏ СЏРІР»СЏРµС‚СЃСЏ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рј РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё РЅРѕРІРѕР№ СЃС‚СЂРѕРєРё
-	const FLD_CUSTOM_CK = 2097152;		// СЃРІРѕСЏ С„-РёСЏ РїСЂРѕРІРµСЂРєРё Р·РЅР°С‡РµРЅРёСЏ
-	const FLD_UNSET = 4194304;			// РІС‹РєРёРЅСѓС‚СЊ Р·РЅР°С‡РµРЅРёРµ РёР· arFields!
+	const FLD_NOT_ZERO = 131072;			// Не нуль для int и float и не пустая длина для string
+	const FLD_NOT_NULL = 262144;		// Не NULL - именно NULL как тип данных СУБД
+	const FLD_DEFAULT = 524288;			// задать значение по дефолту если нуль - зн-я по умолч. в массиве $this->_arTableFieldsDefault
+	const FLD_REQUIRED = 1048576;		// значение поля является обязательным при добавлении новой строки
+	const FLD_CUSTOM_CK = 2097152;		// своя ф-ия проверки значения
+	const FLD_UNSET = 4194304;			// выкинуть значение из arFields!
 
 
 
 
 	/**
-	 * Р’С‹РїРѕР»РЅРµРЅРёРµ С„-РёРё self::add() / self::update() Р±СѓРґРµС‚ РїСЂРµСЂРІР°РЅРѕ
-	 * РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РЅРµ РєРѕСЂСЂРµС‚РЅРѕ Р±РµР· Р·Р°РЅРµСЃРµРЅРёСЏ РєРѕРґР° Рё С‚РµРєСЃС‚Р° РѕС€РёР±РєРё РІ РїСѓР» РѕС€РёР±РѕРє
-	 * СѓРґРѕР±РЅРѕ РїСЂРёРјРµРЅСЏС‚СЊ РІ СЃРѕС‡РµС‚Р°РЅРёРё СЃ self::FLD_CUSTOM_CK
-	 * РїСЂРё СЌС‚РѕРј СЃРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ РґРѕР»Р¶РµРЅ РґРѕР±Р°РІРёС‚СЊ РїСЂРѕРіСЂР°РјРјРёСЃС‚ РІ РјРµС‚РѕРґРµ __check_FIELD_NAME()
+	 * Выполнение ф-ии self::add() / self::update() будет прервано
+	 * если значение не корретно без занесения кода и текста ошибки в пул ошибок
+	 * удобно применять в сочетании с self::FLD_CUSTOM_CK
+	 * при этом сообщение об ошибке должен добавить программист в методе __check_FIELD_NAME()
 	 * @const
 	 */
 
-	const FLD_BRK_INCORR = 8388608;		// РїСЂРµСЂРІР°С‚СЊ РІС‹РїРѕР»РЅРµРЅРёРµ С„-РёРё, РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РЅРµРІРµСЂРЅРѕ
+	const FLD_BRK_INCORR = 8388608;		// прервать выполнение ф-ии, если значение неверно
 
-	const FLD_ATTR_ALL = 16711680;		// РІСЃРµ FIELD ATTRs РІРјРµСЃС‚Рµ
+	const FLD_ATTR_ALL = 16711680;		// все FIELD ATTRs вместе
 
 
 	/**
-	 * РљРѕРјРїР»РµРєСЃРЅС‹Р№ С‚РёРї СЃРѕС‡РµС‚Р°СЋС‰РёР№ С‚РёРї int c Р°С‚С‚СЂРёР±СѓС‚Р°РјРё С‚РёРїРёС‡РЅРІРјРё РґР»СЏ РїРµСЂРІРёС‡РЅРѕРіРѕ РєР»СЋС‡Р° ID
+	 * Комплексный тип сочетающий тип int c аттрибутами типичнвми для первичного ключа ID
 	 * self::FLD_T_INT
 	 * | self::FLD_NOT_NULL
 	 * | self::FLD_NOT_ZERO
@@ -105,12 +105,12 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	 */
 	const FLD_T_PK_ID = 458754;
 
-	const E_NOTHING_TO_DELETE = 101;		// РЅРµРІРѕР·РјРѕР¶РЅРѕ СѓРґР°Р»РёС‚СЊ. Р·Р°РёСЃСЊ РЅРµ РЅР°Р№РґРµРЅР°
-	const E_DUP_PK = 102;					// Р—Р°РїРёСЃСЊ СЃ С‚Р°РєРёРј PRIMARY_KEY СѓР¶Рµ РµСЃС‚СЊ
-	const E_DUP_UNIQUE = 103;				// РґСѓР±Р»РёСЂРѕРІР°РЅРёРµ Р·РЅР°С‡РµРЅРёСЏ СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ РёРЅРґРµРєСЃР°
-	const E_MISS_REQUIRED = 104;			// РќРµ Р·Р°РїРѕР»РЅРµРЅРѕ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РїРѕР»Рµ
-	const E_NOTHING_TO_UPDATE = 105;		// РЅРµРІРѕР·РјРѕР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ. Р·Р°РїРёСЃСЊ РЅРµ РЅР°Р№РґРµРЅР°
-	const E_CANT_DEL_WITHOUT_PK = 106;		// РЅРµРІРѕР·РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РјРµС‚РѕРґ delete Р±РµР· РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ PrimaryKey
+	const E_NOTHING_TO_DELETE = 101;		// невозможно удалить. заись не найдена
+	const E_DUP_PK = 102;					// Запись с таким PRIMARY_KEY уже есть
+	const E_DUP_UNIQUE = 103;				// дублирование значения уникального индекса
+	const E_MISS_REQUIRED = 104;			// Не заполнено обязательное поле
+	const E_NOTHING_TO_UPDATE = 105;		// невозможно обновить. запись не найдена
+	const E_CANT_DEL_WITHOUT_PK = 106;		// невозможно использовать метод delete без использования PrimaryKey
 	//const WRN_
 	//const MSG_
 	
@@ -118,13 +118,13 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	const PREPARE_UPDATE = 5;
 
 	/**
-	 * @const FLD_CUSTOM_CK - Р±РёС‚ РЅР°Р»РёС‡РёСЏ СЃРІРѕРµР№ С„-РёРё РїСЂРѕРІРµСЂРєРё Р·РЅР°С‡РµРЅРёСЏ
-	 * РўСѓС‚ РїРѕРґР±СЂРѕР±РЅРµРµ
-	 * РЎСѓС‚СЊ РІ С‚РѕРј, С‡С‚Рѕ РІ РєР»Р°СЃСЃРµ-РЅР°СЃР»РµРґРЅРёРєРµ, РµСЃР»Рё СѓРєР°Р·Р°С‚СЊ СЌС‚РѕС‚ Р°С‚С‚СЂРёР±СѓС‚ РїРѕР»СЏ,
-	 * РїСЂРё РІС‹РїРѕР»РЅРµРЅРёРё $this->prepareFieldsData()
-	 * Р±СѓРґРµС‚ РІС‹РїРѕР»РЅРµРЅР° С„-РёСЏ РєР»Р°СЃСЃР°-РЅР°СЃР»РµРґРЅРёРєР° РІРёРґР° __check_<РРњРЇ_РџРћР›РЇ>($fieldValue, $arCheckData)
-	 * РўР°РєРёРј РѕР±СЂР°Р·РѕРј РјРѕР¶РЅРѕ РІ РєР»Р°СЃСЃРµ РЅР°СЃР»РµРґРіРЅРёРєРµ РґРѕР±Р°РІРёС‚СЊ СЃРІРѕСЋ РїСЂРѕРІРµСЂРєСѓ С‚РёРїР°
-	 * РґР»СЏ РјРµС‚РѕРґР° $this->prepareFieldsData()
+	 * @const FLD_CUSTOM_CK - бит наличия своей ф-ии проверки значения
+	 * Тут подбробнее
+	 * Суть в том, что в классе-наследнике, если указать этот аттрибут поля,
+	 * при выполнении $this->prepareFieldsData()
+	 * будет выполнена ф-ия класса-наследника вида __check_<ИМЯ_ПОЛЯ>($fieldValue, $arCheckData)
+	 * Таким образом можно в классе наследгнике добавить свою проверку типа
+	 * для метода $this->prepareFieldsData()
 	 */
 
 	/**
@@ -133,8 +133,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	protected $_bDistinctGetList = false;
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃ РѕРїРёСЃР°РЅРёРµРј С‚Р°Р±Р»РёС† СЃСѓС‰РЅРѕСЃС‚Рё
-	 * Р’ РєР°С‡РµСЃС‚РІРµ РєР»СЋС‡Р° РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ alias С‚Р°Р±Р»РёС†Р° (long_table_name as ARKEY)
+	 * Массив с описанием таблиц сущности
+	 * В качестве ключа используется alias таблица (long_table_name as ARKEY)
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arTableList = array(
@@ -154,14 +154,14 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃ РѕРїРёСЃР°РЅРёРµРј РїРѕР»РµР№ СЃСѓС‰РЅСЃС‚Рё
-	 * Р”Р°РЅРЅС‹Рµ РїРѕР»СЏ Р±СѓРґСѓС‚ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ Р° Р°СЂРіСѓРјРµРЅС‚Рµ РјРµС‚РѕРґР° Entity::getList() РІ РєР°С‡РµСЃС‚РІРµ $arSelect
-	 * РРјРµРЅР° РЅРµ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ СЃРѕРІРїР°РґР°РµС‚ СЃ РёРјРµРЅР°РјРё РїРѕР»РµР№ С‚Р°Р±Р»РёС†
-	 * РљР°Рє РІРёРґРЅРѕ РёР· РїСЂРёРјРµСЂР° РІ РєР°Р¶РґРј РєР»СЋС‡Рµ СЃРѕРґРµСЂР¶РёС‚СЃСЏ РјР°СЃСЃРёРІ РѕРїРёСЃС‹РІР°СЋС‰РёР№ РїРѕР»Рµ СЃСѓС‰РЅРѕСЃС‚Рё
-	 * РњР°СЃСЃРёРІ РїРѕР»СЏ СЃСѓС‰РЅРѕСЃС‚Рё СЃРѕРґРµСЂР¶РёС‚ РІР»РѕР¶РµРЅРЅС‹Р№ РјР°СЃСЃРёРІ РєР»СЋС‡РµРј РєРѕС‚РѕСЂРѕРіРѕ СЏРІР»СЏРµС‚СЃСЏ ALIAS С‚Р°Р±Р»РёС†С‹,
-	 * 	Р° Р·РЅР°С‡РµРЅРёРµРј - РёРјСЏ РїРѕР»СЏ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµР№ С‚Р°Р±Р»РёС†Рµ.
-	 * 	РўР°Рє Р¶Рµ РІРѕР·РјРѕР¶РЅС‹ РїРѕРґР·Р°РїСЂРѕСЃС‹ РЅР° РїСЂРёРјРµСЂРµ РїРѕР»СЏ USER_NAME,
-	 * 	РўР°Рє Р¶Рµ РІРѕР·РјРѕР¶РЅС‹ СЃР»РѕР¶РЅС‹Рµ РїРѕРґР·Р°РїСЂРѕСЃС‹. РџСЂРёРјРµСЂ РјРѕР¶РЅРѕ РїРѕСЃРјРѕС‚СЂРµС‚СЊ РІ РјРѕРґСѓР»Рµ obx.market РІ РєР»Р°СЃСЃРµ OBX\OrdersList
+	 * Массив с описанием полей сущнсти
+	 * Данные поля будут использоваться а аргументе метода Entity::getList() в качестве $arSelect
+	 * Имена не обязательно совпадает с именами полей таблиц
+	 * Как видно из примера в каждм ключе содержится массив описывающий поле сущности
+	 * Массив поля сущности содержит вложенный массив ключем которого является ALIAS таблицы,
+	 * 	а значением - имя поля в соответствующей таблице.
+	 * 	Так же возможны подзапросы на примере поля USER_NAME,
+	 * 	Так же возможны сложные подзапросы. Пример можно посмотреть в модуле obx.market в классе OBX\OrdersList
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arTableFields = array(
@@ -178,8 +178,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	 * </code>
 	 *
 	 *
-	 * РћС‚РґРµР»СЊРЅРѕРіРѕ РІСЂРёРЅРёРјР°РЅРёСЏ Р·Р°СЃР»СѓР¶РёРІР°СЋС‚ РїРѕР»СЏ С‚РёРїР° DATETIME
-	 * Р”Р»СЏ РЅРёС… РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ СЃСѓС‰РЅРѕСЃС‚Рё РЅРµРѕР±С…РѕРґРёРјРѕ РѕРїСЂРµРґРµР»РёС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ РєРѕРґ
+	 * Отдельного вринимания заслуживают поля типа DATETIME
+	 * Для них в конструкторе сущности необходимо определить следующий код
 	 * <code>
 	 * $this->_arTableFields['START_DATE'] = array('E' => '('.$DB->DateToCharFunction('E.START_DATE').')');
 	 * </code>
@@ -194,7 +194,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РЇР·С‹РєРѕР·Р°РІРёСЃРёРјРѕРµ РѕРїРёСЃР°РЅРёРµ РїРѕР»РµР№ Р·Р°РґР°РЅРЅС‹С… РІ $this->_arTableFields
+	 * Языкозависимое описание полей заданных в $this->_arTableFields
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arFieldsDescription = array(
@@ -224,8 +224,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РџРµСЂРµРјРµРЅРЅР°СЏ СЃРѕРґРµСЂР¶РёС‚ ALIAS РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё.
-	 * РћСЃРЅРѕРІРЅР°СЏ С‚Р°Р±Р»РёС†Р° СЃСѓС‰РЅРѕСЃС‚Рё Р±СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅР° РІ РјРµС‚РѕРґР°С…:
+	 * Переменная содержит ALIAS основной таблицы сущности.
+	 * Основная таблица сущности будет использована в методах:
 	 * 	$this->add(), $this->update(), $this->delete()
 	 * @var string
 	 */
@@ -235,8 +235,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РџРµСЂРµРјРµРЅРЅР°СЏ СЃРѕРґРµСЂР¶РёС‚ РёРјСЏ РџРћР›РЇ РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё,
-	 * РєРѕС‚РѕСЂРѕРµ СЏРІР»СЏРµС‚СЃСЏ РїРµСЂРІРёС‡РЅС‹Рј РєР»СЋС‡РѕРј
+	 * Переменная содержит имя ПОЛЯ основной таблицы сущности,
+	 * которое является первичным ключом
 	 * @var string
 	 * @access protected
 	 */
@@ -246,8 +246,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РџРµСЂРµРјРµРЅРЅР°СЏ СЃРѕРґРµСЂР¶РёС‚ РёРјСЏ РџРћР›РЇ РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё,
-	 * РєРѕС‚РѕСЂРѕРµ СЏРІР»СЏРµС‚СЃСЏ Р°РІС‚РѕРёРЅРєСЂРµРјРµРЅС‚РЅС‹Рј
+	 * Переменная содержит имя ПОЛЯ основной таблицы сущности,
+	 * которое является автоинкрементным
 	 * @var string
 	 * @access protected
 	 */
@@ -257,16 +257,16 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃРѕРґРµСЂР¶Р°С‰РёР№ СЃРІСЏР·Рё РїРѕР»РµР№ С‚Р°Р±Р»РёС†
-	 * Р”Р°РЅРЅС‹Рµ СЃРІСЏР·Рё Р±СѓРґСѓС‚ РїСЂРёРјРµРЅСЏС‚СЊСЃСЏ РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ СѓСЃР»РѕРІРёР№ РІ Р±Р»РѕРєРµ WHERE.
-	 * 	Рђ С‚Р°Рє Р¶Рµ РІ РјРµС‚РѕРґРµ $this->getByID() РІРѕР·РјРѕР¶РЅР° СЃРёС‚СѓР°С†РёСЏ
-	 * 	РєРѕРіРґР° РІ arSelect СѓРєР°Р·Р°РЅРѕ РїРѕР»Рµ РёРјРµСЋС‰РµРµСЃСЏ РІ РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†Рµ СЃСѓС‰РЅРѕСЃС‚Рё, РЅРѕ СЏРІРЅРѕ СѓРєР°Р·С‹РІР°РµС‚ РЅР° СЃРІСЏР·РЅСѓР± С‚Р°Р±Р»РёС†Р°.
-	 * 	Р’ С‚Р°РєРёС… СЃР»СѓС‡Р°СЏС… РјРµС‚РѕРґ $this->getByID() Р·Р°РіР»СЏРґС‹РІР°РµС‚ РІ РґР°РЅРЅС‹Р№ РјР°СЃСЃРёРІ РґР»СЏ С‚РѕРіРѕ, С‡С‚Рѕ Р±С‹ СѓР±РµРґРёС‚СЊСЃСЏ
-	 * 	РІ С‚РѕРј, С‡С‚Рѕ СЃСЃС‹Р»РєР° РЅР° РґР°РЅРЅРѕР№ РїРѕР»Рµ РёРјРµРµС‚СЃСЏ Рё РїРѕР»Рµ РјРµР¶РЅРѕ РїСЂРёРјРµРЅСЏС‚СЊ СЃРґРµР»Р°РІ РІС‹Р±РѕСЂРєСѓ РёР· РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё.
-	 * 	РџСЂРёРјРµС‡Р°РЅРёРµ: РўР°РєРѕРµ РІРѕР·РЅРёРєР°РµС‚ РєРѕРіРґР° РїСЂРёРјРµРЅСЏСЋС‚СЃСЏ Рё JOIN-С‹. Р’ С‚Р°РєРёС… СЃР»СѓС‡Р°СЏС… РЅР°РґРѕ Р·Р°РїРѕР»РЅСЏС‚СЊ
-	 * 	Рё $this->_arTableLeftJoin Рё $this->_arTableLinks
+	 * Массив содержащий связи полей таблиц
+	 * Данные связи будут применяться для формирования условий в блоке WHERE.
+	 * 	А так же в методе $this->getByID() возможна ситуация
+	 * 	когда в arSelect указано поле имеющееся в основной таблице сущности, но явно указывает на связнуб таблица.
+	 * 	В таких случаях метод $this->getByID() заглядывает в данный массив для того, что бы убедиться
+	 * 	в том, что ссылка на данной поле имеется и поле межно применять сделав выборку из основной таблицы сущности.
+	 * 	Примечание: Такое возникает когда применяются и JOIN-ы. В таких случаях надо заполнять
+	 * 	и $this->_arTableLeftJoin и $this->_arTableLinks
 	 *
-	 * Р”Р°Р¶Рµ РµСЃР»Рё РґР»СЏ СЂРµР°Р»РёР·Р°С†РёРё Р°РєС‚СѓР°Р»СЊРЅС‹ С‚РѕР»СЊРєРѕ JOIN, РІСЃРµ СЂР°РІРЅРѕ Р·Р°С‡Р°СЃС‚СѓСЋ РІР°Р¶РЅРѕ Р·РІРїРѕР»РЅСЏС‚СЊ РјР°СЃСЃРёРІ СЃРІСЏР·РµР№
+	 * Даже если для реализации актуальны только JOIN, все равно зачастую важно звполнять массив связей
 	 * @var array
 	 * @access protected
 	 */
@@ -276,7 +276,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РњР°СЃСЃРёРІ РѕРїРёСЃС‹РІР°СЋС‰РёР№ СѓСЃР»РѕРІРёСЏ РґР»СЏ LEFT JOIN
+	 * Массив описывающий условия для LEFT JOIN
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arTableLeftJoin = array(
@@ -312,27 +312,27 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃ РѕРїСЃР°РЅРёРµРј РёРЅРґРµРєСЃРѕРІ
-	 * РџРѕРєР° РЅРµ РїСЂРёРјРµРЅСЏРµС‚СЃСЏ
+	 * Массив с опсанием индексов
+	 * Пока не применяется
 	 * @var array
 	 * @access protected
-	 * @deprecated РїСЂРёРјРµРЅСЏС‚СЊСЃСЏ РЅРµ Р±СѓРґРµС‚
+	 * @deprecated применяться не будет
 	 */
 	protected $_arTableIndex = array();
-	/** @deprecated РїСЂРёРјРµРЅСЏС‚СЊСЃСЏ РЅРµ Р±СѓРґРµС‚ */
+	/** @deprecated применяться не будет */
 	final public function getTableIndex() {
 		/** @noinspection PhpDeprecationInspection */
 		return $this->_arTableIndex;
 	}
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃ РѕРїРёСЃР°РЅРёРµРј unique-РёРЅРґРµРєСЃРѕРІ
-	 * Р—Р°РїРѕР»РЅСЏС‚СЊ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ.
-	 * РњРµС‚РѕРґС‹ $this->add() Рё $this->update() РїСЂРѕРІРµСЂСЏСЋС‚ СЌС‚РѕС‚ РјР°СЃСЃРёРІ РґР»СЏ РїСЂРµРґРѕС‚РІСЂР°С‰РµРЅРёСЏ РІСЃС‚Р°РІРєРё РґСѓР±Р»РµР№
+	 * Массив с описанием unique-индексов
+	 * Заполнять обязательно.
+	 * Методы $this->add() и $this->update() проверяют этот массив для предотвращения вставки дублей
 	 * <code>
 	 * 	<?php
 	 * 		$_arTableUnique = array(
-	 * 			'РёРјСЏ_СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ_РёРЅРґРµРєСЃР°' => array('РїРѕР»Рµ1', 'РїРѕР»Рµ2')
+	 * 			'имя_уникального_индекса' => array('поле1', 'поле2')
 	 * 		);
 	 * 	?>
 	 * </code>
@@ -345,10 +345,10 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * Р—РЅР°С‡РµРЅРёРµ СѓРєР°Р·Р°РЅРЅС‹С… РїРѕР»РµР№ РґР°РЅРЅРѕРіРѕ РјР°СЃСЃРёРІР° Р±СѓРґСѓС‚ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІСЃС‚Р°РІР»РµРЅС‹ РІ arFilter РјРµС‚РѕРґР° GetList,
-	 * РµСЃР»Рё РЅРµ Р±СѓРґСѓС‚ СѓРєР°Р·Р°РЅС‹ С‚Р°Рј СЏРІРЅРѕ.
-	 * Р’Р°Р¶РЅРѕ РїРѕРЅРёРјР°С‚СЊ, С‡С‚Рѕ _arFilterDefault РєР°Рє РїСЂР°РІРёР»Рѕ Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РІ РєРѕРЅС‚СЂСѓРєС‚РѕСЂРµ
-	 * Рё Р·РЅР°РµРЅРёСЏ СЌС‚РёС… Р±СѓРґРµС‚ Р°РєС‚СѓР°Р»СЊРЅС‹Рј РІ РјРѕРјРµРЅС‚ СЃРѕРґР°РЅРёСЏ РѕР±СЉРµРєС‚Р° Entity
+	 * Значение указанных полей данного массива будут автоматически вставлены в arFilter метода GetList,
+	 * если не будут указаны там явно.
+	 * Важно понимать, что _arFilterDefault как правило заполняется в контрукторе
+	 * и знаения этих будет актуальным в момент содания объекта Entity
 	 * @var array
 	 * @access protected
 	 */
@@ -358,10 +358,10 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * arSelect РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
-	 * Р•СЃР»Рё РІ РјРµС‚РѕРґРµ $this->getLis() РЅРµ Р·Р°РґР°РЅ Р°СЂРіСѓРјРµРЅС‚ arSelect, С‚Рѕ Р±СѓРґРµС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅ СЌС‚РѕС‚.
-	 * Р•СЃР»Рё РІ РєР»Р°СЃСЃРµ СЃСѓС‰РЅРѕСЃС‚Рё РЅРµ Р·Р°РґР°РЅ Рё СЌС‚РѕС‚ РјР°СЃСЃРёРІ,
-	 * С‚Рѕ РІ РєР°С‡РµСЃС‚РІРµ arSelect Р±СѓРґРµС‚ РїСЂРёРЅСЏС‚ РїРѕР»РЅС‹Р№ СЃРїРёСЃРѕРє РєР»СЋС‡РµР№ РјР°СЃСЃРёРІР° $this->_arTableFields
+	 * arSelect по умолчанию
+	 * Если в методе $this->getLis() не задан аргумент arSelect, то будет использован этот.
+	 * Если в классе сущности не задан и этот массив,
+	 * то в качестве arSelect будет принят полный список ключей массива $this->_arTableFields
 	 * @var array
 	 * @access protected
 	 */
@@ -371,8 +371,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РЎРѕСЂС‚С‚РёСЂРѕРІРєР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
-	 * Р•СЃР»Рё РІ РјРµС‚РѕРґРµ $this->getList() РЅРµ СѓРєР°Р·Р°РЅ Р°СЂРіСѓРјРµРЅС‚ arSort, С‚Рѕ РѕРЅ Р±СѓРґРµС‚ РЅР°РїРѕР»РЅРµРЅ РёР· СЌС‚РѕРіРѕ РјР°СЃСЃРёРІР°
+	 * Сорттировка по умолчанию
+	 * Если в методе $this->getList() не указан аргумент arSort, то он будет наполнен из этого массива
 	 * @var array
 	 * @access protected
 	 */
@@ -382,10 +382,10 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РўРёРїС‹ Рё Р°С‚СЂРёР±СѓС‚С‹ РїРѕР»РµР№ РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё
-	 * РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С… РІ РјРµС‚РѕРґР°С… $this->add() Рё $this->update()
-	 * Р’С‹С€Рµ РІСЃРµ РєРѕРЅС‚СЃС‚Р°РЅС‚С‹ РёСЃРїРѕР»СЊР·СѓРµРјС‹Рµ РІ СЌС‚РѕРј РјР°СЃСЃРёРІРµ РґРѕРєСѓРјРµРЅС‚РёСЂРѕРІР°РЅС‹
-	 * РџСЂРёРјРµСЂ:
+	 * Типы и атрибуты полей основной таблицы сущности
+	 * Используется для проверки входных данных в методах $this->add() и $this->update()
+	 * Выше все контстанты используемые в этом массиве документированы
+	 * Пример:
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arTableFieldsCheck = array(
@@ -413,34 +413,34 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РЇР·С‹РєРѕРІС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ РїСЂРё РІС‹РІРѕРґРµ РѕС€РёР±РѕРє
-	 * РР· РґР°РЅРЅРѕРіРѕ РјР°СЃСЃРёРІР° Р±СѓРґСѓС‚ РїРѕР»СѓС‡РµРЅС‹ РѕС€РёР±РєРё Рё РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёСЏ
-	 * РљР»СЋС‡РµРІС‹Рµ СЃРѕР±С‹С‚РёСЏ СЃС‚Р°РЅРґР°СЂС‚РёР·РёСЂРѕРІРЅС‹ Рё Р·Р°РєСЂРµРїР»РµРЅС‹ Р·Р° РїСЂРµС„РёРєСЃР°РјРё РєР»СЋС‡РµР№ РјР°СЃСЃРёРІР°
-	 * REQ_FLD_РРњРЇ_РџРћР›РЇ - РѕРїРёСЃР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ РµСЃР»Рё РІ Р°СЂРіСѓРјРµРЅС‚Рµ $arFields РјРµС‚РѕРґР° $this->add($arFields)
-	 * 				РЅРµ Р·Р°РїРѕР»РЅРµРЅРѕ РїРѕР»Рµ "РРњРЇ_РџРћР›РЇ"
-	 * DUP_ADD_РРњРЇ_UNIQUE_РРќР”Р•РљРЎРђ - РѕРїРёСЃР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ РµСЃР»Рё РІ Р°СЂРіСѓРјРµРЅС‚Рµ $arFields РјРµС‚РѕРґР° $this->add($arFields)
-	 * 				Р·Р°РґР°РЅС‹ РїРѕР»СЏ СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ РёРЅРґРµРєСЃР° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ РґР»СЏ Р·Р°РїРёСЃРё РІ С‚Р°Р±Р»РёС†Рµ Р‘Р”
-	 * DUP_UPD_РРњРЇ_UNIQUE_РРќР”Р•РљРЎРђ - РѕРїРёСЃР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ РµСЃР»Рё РІ Р°СЂРіСѓРјРµРЅС‚Рµ $arFields РјРµС‚РѕРґР° $this->update($arFields)
-	 * 				Р·Р°РґР°РЅС‹ РїРѕР»СЏ СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ РёРЅРґРµРєСЃР° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ РґР»СЏ Р·Р°РїРёСЃРё РІ С‚Р°Р±Р»РёС†Рµ Р‘Р”
-	 * NOTHING_TO_DELETE - РѕРїРёСЃР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ РµСЃР»Рё РІ РјРµС‚РѕРґ $this->delete() РЅР° РЅР°С€РµР» Р·Р°РїРёСЃСЊ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ
-	 * 				РЅРµ Р·Р°РїРѕР»РЅРµРЅРѕ РїРѕР»Рµ "РРњРЇ_РџРћР›РЇ"
-	 * NOTHING_TO_UPDATE - РѕРїРёСЃР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ РµСЃР»Рё РІ РјРµС‚РѕРґ $this->update() РЅР° РЅР°С€РµР» Р·Р°РїРёСЃСЊ РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ
-	 * 				РЅРµ Р·Р°РїРѕР»РЅРµРЅРѕ РїРѕР»Рµ "РРњРЇ_РџРћР›РЇ"
+	 * Языковые сообщения при выводе ошибок
+	 * Из данного массива будут получены ошибки и предупреждения
+	 * Ключевые события стандартизировны и закреплены за префиксами ключей массива
+	 * REQ_FLD_ИМЯ_ПОЛЯ - описание события если в аргументе $arFields метода $this->add($arFields)
+	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
+	 * DUP_ADD_ИМЯ_UNIQUE_ИНДЕКСА - описание события если в аргументе $arFields метода $this->add($arFields)
+	 * 				заданы поля уникального индекса уже существующие для записи в таблице БД
+	 * DUP_UPD_ИМЯ_UNIQUE_ИНДЕКСА - описание события если в аргументе $arFields метода $this->update($arFields)
+	 * 				заданы поля уникального индекса уже существующие для записи в таблице БД
+	 * NOTHING_TO_DELETE - описание события если в метод $this->delete() на нашел запись для удаления
+	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
+	 * NOTHING_TO_UPDATE - описание события если в метод $this->update() на нашел запись для обновления
+	 * 				не заполнено поле "ИМЯ_ПОЛЯ"
 	 *
-	 * РљР°Р¶РґРѕРµ РѕРїРёСЃР°РЅРёРµ СЃРѕРґРµСЂР¶РёС‚ СЃР»РµРґСѓСЋС‰РёРµ РєР»СЋС‡Рё
-	 * 		'TYPE' - РјРѕР¶РµС‚ РїСЂРёРЅРёРјР°С‚СЊ Р·РЅР°С‡РµРЅРёСЏ
-	 * 			РџСЂРёРјРµС‡РµРЅРёРµ: Р’ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ СЌС‚РѕРіРѕ С‚РёРїР° Р±СѓРґРµС‚ РІС‹Р·РІР°РЅ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РјРµС‚РѕРґ РѕР±СЉРµРєС‚Р° CMessagePool
-	 * 			'E' - Error - РѕС€РёР±РєР° - MessagePool::addError()
-	 * 			'W' - Warning - РїСЂРµРґСѓРїСЂРµР¶РґРµРЅРёРµ - MessagePool::addError()
-	 * 			'M' - MessageРЎРѕРѕР±С‰РµРЅРёРµ - MessagePool::addMessage()
-	 * 		'TEXT' - С‚РµРєСЃС‚ СЃРѕР±С‹С‚РёСЏ
-	 * 		'CODE' - РєРѕРґ СЃРѕР±С‹С‚РёСЏ
-	 * 		РљР°Рє РїСЂР°РІРёР»Рѕ РїСЂРёРјРµРЅСЏРµС‚СЃСЏ 'E'
-	 * РџСЂРёРјРµСЂ:
+	 * Каждое описание содержит следующие ключи
+	 * 		'TYPE' - может принимать значения
+	 * 			Примечение: В зависимости от этого типа будет вызван соответствующий метод объекта CMessagePool
+	 * 			'E' - Error - ошибка - MessagePool::addError()
+	 * 			'W' - Warning - предупреждение - MessagePool::addError()
+	 * 			'M' - MessageСообщение - MessagePool::addMessage()
+	 * 		'TEXT' - текст события
+	 * 		'CODE' - код события
+	 * 		Как правило применяется 'E'
+	 * Пример:
 	 * <code>
 	 * 	<?php
 	 * 		$this->_arDBSimpleLangMessages = array(
-	 *			'REQ_FLD_РРњРЇ_РџРћР›РЇ' =>  array(
+	 *			'REQ_FLD_ИМЯ_ПОЛЯ' =>  array(
 	 * 				'TYPE' => 'E',
 	 * 				'TEXT' => GetMessage('OBX_ORDER_STATUS_ERROR_1'),
 	 * 				'CODE' => 1
@@ -457,7 +457,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃРѕР¶РµСЂР¶РёС‚ Р·РЅР°С‡РµРЅРёСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ РїРѕР»РµР№ Р°СЂРіСѓРјРµРЅС‚Р° arFields РјРµС‚РѕРґР° $this->add()
+	 * Массив сожержит значения по умолчанию для полей аргумента arFields метода $this->add()
 	 * @var array
 	 * @access protected
 	 */
@@ -467,7 +467,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * Р“СЂСѓРїРїРёСЂРѕРІРєР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+	 * Группировка по умолчанию
 	 * @var array
 	 * @access protected
 	 */
@@ -478,14 +478,14 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 
 	/**
 	 * @var null | string
-	 * РњРѕРґСѓР»СЊ Рє РєРѕС‚РѕСЂРѕРјСѓ РїСЂРёРЅР°РґР»РµР¶РёС‚ СЃСѓС‰РЅРѕСЃС‚СЊ
+	 * Модуль к которому принадлежит сущность
 	 */
 	protected $_entityModuleID = null;
 
 	/**
 	 * @var null | string
-	 * РРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ РёСЃРїРѕР»СЊР·СѓРµРјС‹Р№ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ СЃРѕР±С‹С‚РёР№ РїСЂРёРёСЃС…РѕРґСЏС‰РёС… РІ СЃСѓС‰РЅРѕСЃС‚Рё
-	 * СЃРїРёСЃРѕРє РіРµРЅРµСЂРёСЂСѓРµРјС‹С… СЃРѕР±С‹С‚РёР№
+	 * Идентификатор используемый для создания событий приисходящих в сущности
+	 * список генерируемых событий
 	 * on<EventsID>StartAdd
 	 * on<EventsID>BeforeAdd
 	 * on<EventsID>AfterAdd
@@ -512,18 +512,18 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 
 	/**
 	 * @var array
-	 * РЎРїРёСЃРѕРє СЃРѕР±С‹С‚РёР№ СЃСѓС‰РЅРѕСЃС‚Рё
+	 * Список событий сущности
 	 */
 	protected $_arEntityEvents = array();
 
 	/**
 	 * @var bool
-	 * РџСЂРёР·РЅР°Рє С‚РѕРіРѕ, С‡С‚Рѕ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рµ СЃРѕР±С‹С‚РёСЏ СЃСѓС‰РЅРѕСЃС‚Рё РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°РЅС‹
+	 * Признак того, что стандартные события сущности инициализированы
 	 */
 	protected $_bEntityEventsInit = false;
 
 	/**
-	 * РњР°СЃСЃРёРІ СЃРѕРґРµСЂР¶РёС‚ РёРјРµРЅР° РїРѕР»РµР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё, РєРѕС‚РѕСЂС‹Рµ РґРѕСЃС‚СѓРїРЅС‹ РґР»СЏ СЂРµРґР°РєС‚СЂРёСЂРѕРІР°РЅРёСЏ РІ Р°РґРјРёРЅРёСЃС‚СЂР°С‚РёРІРЅРѕР№ РїР°РЅРµР»Рё
+	 * Массив содержит имена полей таблицы сущности, которые доступны для редактрирования в административной панели
 	 * @var array
 	 * @access protected
 	 */
@@ -535,9 +535,9 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РџРѕР»СѓС‡РёС‚СЊ РІ СЃСѓС‰РЅРѕСЃС‚Рё РѕР±СЉРµРєС‚ СЃРїРёСЃРєР° СЃРѕР±С‹С‚РёР№
-	 * Р”Р»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕР№ РіРµРЅРµСЂР°С†РёРё СЃС‚Р°РЅРґР°СЂС‚РЅРѕРіРѕ СЃРїРёСЃРєР° СЃРѕР±Р№С‚РёР№
-	 * РґР°РЅРЅС‹Р№ РјРµС‚РѕРґ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІС‹РїРѕР»РЅРµРЅ РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ СЃСѓС‰РЅРѕСЃС‚Рё
+	 * Получить в сущности объект списка событий
+	 * Для автоматической генерации стандартного списка собйтий
+	 * данный метод должен быть выполнен в конструкторе сущности
 	 * @return void
 	 */
 	protected function _getEntityEvents() {
@@ -656,13 +656,13 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 		return $bValueIsCorrect;
 	}
 	/**
-	 * РњРµС‚РѕРґ РїРѕРґРіРѕС‚РѕРІРєРё РґР°РЅРЅС‹С…
-	 * РџСЂРёРјРµРЅСЏРµС‚СЃСЏ РІ $this->add() Рё $this->update()
-	 * РСЃРїРѕР»СЊР·СѓРµС‚ Р°С‚СЂРёР±СѓС‚С‹ РїРѕР»РµР№ РёР· РјР°СЃСЃРёРІР° $this->_arTableFieldsCheck РґР»СЏ РїСЂРѕРІРµСЂРєРё РІС…РѕРґРЅС‹С… РїР°СЂР°РјРµС‚СЂРѕРІ РјРµС‚РѕРґР°
-	 * @param int $prepareType - РјРѕР¶РµС‚ РїСЂРёРЅРёРјР°С‚СЊ РґР»СЏ Р·Р°С‡РµРЅРёСЏ self::PREPARE_ADD РёР»Рё self::PREPARE_UPDATE
-	 * @param array $arFields - Р·РЅР°С‡РµРЅРёСЏ РїРѕР»РµР№ РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё
-	 * @param null|array $arTableFieldsCheck - РµСЃР»Рё Р·Р°РґР°РЅ, С‚Рѕ РїРµСЂРµРѕРїСЂРµРґРµР»СЏРµС‚ С€С‚Р°С‚РЅС‹Р№ $this->_arTableFieldsCheck
-	 * @param null|array $arTableFieldsDefault - РµСЃР»Рё Р·Р°РґР°РЅ, С‚Рѕ РїРµСЂРµРѕРїСЂРµРґРµР»СЏРµС‚ С€С‚Р°С‚РЅС‹Р№ $this->_arTableFieldsDefault
+	 * Метод подготовки данных
+	 * Применяется в $this->add() и $this->update()
+	 * Использует атрибуты полей из массива $this->_arTableFieldsCheck для проверки входных параметров метода
+	 * @param int $prepareType - может принимать для зачения self::PREPARE_ADD или self::PREPARE_UPDATE
+	 * @param array $arFields - значения полей основной таблицы сущности
+	 * @param null|array $arTableFieldsCheck - если задан, то переопределяет штатный $this->_arTableFieldsCheck
+	 * @param null|array $arTableFieldsDefault - если задан, то переопределяет штатный $this->_arTableFieldsDefault
 	 * @return array
 	 */
 	protected function prepareFieldsData($prepareType, &$arFields, $arTableFieldsCheck = null, $arTableFieldsDefault = null) {
@@ -820,7 +820,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = self::FLD_T_DATETIME;
 							$fieldValue = trim($fieldValue);
 							$bValueIsCorrect = true;
-							// TODO: РўСѓС‚ РЅР°РґРѕ РґРѕРїРёСЃР°С‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ РґР°С‚ Рё РІСЂРµРјРµРЅРё
+							// TODO: Тут надо дописать обработку дат и времени
 							break;
 						case self::FLD_T_BX_LANG_ID:
 							$arCheckResult[$fieldName]['FIELD_TYPE'] = 'FLD_T_BX_LANG_ID';
@@ -924,18 +924,18 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РћС‡РµРЅСЊ СѓРґРѕР±РЅР°СЏ С„-РёСЏ РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РїРѕСЃР»Рµ $this->prepareFieldsData
-	 * $this->prepareFieldsData РѕС‚СЃРµРєР°РµС‚ РїСѓСЃС‚С‹Рµ РёР»Рё РЅРµРІР°Р»РёРґРЅС‹Рµ РґР°РЅРЅС‹Рµ,
-	 * Р° СЌС‚Р° -С„РёСЏ РїСЂРѕРІРµСЂСЏРµС‚ С‚Рµ РёР· РЅРёС… РєРѕС‚РѕСЂС‹Рµ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹ РґР»СЏ РІРЅРµСЃРµРЅРёСЏ РІ Р‘Р”
-	 * РќР°РїСЂРёРјРµСЂ:
-	 *		prepareFieldsData РѕС‚СЃРµРє РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РїРѕР»Рµ CODE РєРѕС‚РѕСЂРѕРµ РЅРµ РїСЂРѕС€Р»Рѕ РІР°Р»РёРґР°С†РёСЋ,
-	 * 		РµСЃР»Рё РґР»СЏ РїРѕР»СЏ РІС‹СЃС‚Р°РІР»РµРЅ Р°С‚С‚СЂРёР±СѓС‚ РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРіРѕ РЅР°Р»РёС‡РёСЏ(self::FLD_REQUIRED), С‚Рѕ РґР°РЅРЅР°СЏ С„-РёСЏ РІРµСЂРЅРµС‚
-	 * 		РґР°РЅРЅРѕРµ РїРѕР»Рµ РІ СЂРµР·СѓР»СЊС‚РёСЂСѓСЋС‰РµРј РјР°СЃСЃРёРІРµ
-	 * @param array &$arFields СЃСЃС‹Р»РєР° - РїРѕР»СЏ РїРµСЂРµРґР°РЅРЅС‹Рµ РІ Р°СЂРіСѓРјРµРЅС‚Рµ
+	 * Очень удобная ф-ия для использования после $this->prepareFieldsData
+	 * $this->prepareFieldsData отсекает пустые или невалидные данные,
+	 * а эта -фия проверяет те из них которые обязательны для внесения в БД
+	 * Например:
+	 *		prepareFieldsData отсек обязательное поле CODE которое не прошло валидацию,
+	 * 		если для поля выставлен аттрибут обязательного наличия(self::FLD_REQUIRED), то данная ф-ия вернет
+	 * 		данное поле в результирующем массиве
+	 * @param array &$arFields ссылка - поля переданные в аргументе
 	 * @param array &$arCheckResult
 	 * @param array|null $arTableFieldsCheck
-	 * @param array|null $arTableFieldsDefault  - Р·РЅР°С‡РµРЅРёСЏ РїРѕР»РµР№ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, РµСЃР»Рё РїРѕР»Рµ РїРѕС‚РµСЂСЏРЅРѕ, РЅРѕ РµСЃС‚СЊ РґРµС„РѕР»С‚РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ, Р±СѓРґРµС‚ РїРѕРґСЃС‚Р°РІР»РµРЅРѕ РѕРЅРѕ
-	 * @return array РњР°СЃСЃРёРІ РїСЂРѕРїСѓС‰РµРЅРЅС‹С… РѕР±СЏР·Р°С‚РµР»СЊРЅС‹С… Р·РЅР°С‡РµРЅРёР№
+	 * @param array|null $arTableFieldsDefault  - значения полей по умолчанию, если поле потеряно, но есть дефолтное значение, будет подставлено оно
+	 * @return array Массив пропущенных обязательных значений
 	 */
 	protected function checkRequiredFields(&$arFields, &$arCheckResult, $arTableFieldsCheck = null, $arTableFieldsDefault = null) {
 
@@ -976,8 +976,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	/**
 	 * @param $arFilter
 	 * @param $arSelectFromTables
-	 * @param $bLogicOrInsideSubFilter - С„РѕРјРёСЂРѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё С„РёР»СЊС‚СЂР° РґР»СЏ Р±Р»РѕРєР° СЃ Р»РѕРіРёРєРѕР№ OR
-	 * @param string $aws - additional white space - РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РѕС‚СЃС‚СѓРї - РґР»СЏ СѓРґРѕР±СЃС‚РІР° РѕС‚Р»Р°РґРєРё :)
+	 * @param $bLogicOrInsideSubFilter - фомирование строки фильтра для блока с логикой OR
+	 * @param string $aws - additional white space - дополнительный отступ - для удобства отладки :)
 	 * @return string
 	 */
 	private function _getWhereSQL(&$arFilter, &$arSelectFromTables, $bLogicOrInsideSubFilter = false, $aws = '') {
@@ -1046,9 +1046,9 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 					$isSubQuery = (strpos($tblFieldName,'(')!==false);
 					/** @noinspection PhpUnusedLocalVariableInspection */
 					$sqlField = $asName.'.'.$tblFieldName;
-					// РќРµР»СЊР·СЏ СЃРґРµР»Р°С‚СЊ С„РёР»СЊС‚СЂ РїРѕ РїРѕР»СЋ, РєРѕС‚РѕСЂРѕРµ СЏРІР»СЏРµС‚СЃСЏ РїРѕРґР·Р°РїСЂРѕСЃРѕРј
+					// Нельзя сделать фильтр по полю, которое является подзапросом
 					if($isSubQuery) {
-						// [pronix:2013-06-19]РµСЃР»Рё РєРѕРЅРµС‡РЅРѕ РЅРµ СѓРєР°Р·Р°С‚СЊ СЏРІРЅС‹Р№ РїРѕРґР·Р°РїСЂРѕСЃ СЃРїРµС†РёР°Р»СЊРЅРѕ РґР»СЏ С„РёР»СЊС‚СЂР° :)
+						// [pronix:2013-06-19]если конечно не указать явный подзапрос специально для фильтра :)
 						if( !array_key_exists('GET_LIST_FILTER', $arTblField) ) {
 							continue;
 						}
@@ -1129,13 +1129,13 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє Р·Р°РїРёСЃРµР№ СЃСѓС‰РЅРѕСЃС‚Рё
-	 * @param null | array $arSort - РїРѕР»СЏ Рё РїРѕСЂСЏРґРѕРє СЃРѕСЂС‚РёСЂРѕРІРєРё
-	 * @param null | array $arFilter - С„РёР»СЊС‚СЂ РїРѕР»РµР№
-	 * @param null | array $arGroupBy - РіСЂРїРёРёСЂРѕРІР°С‚СЊ РїРѕ РїРѕР»СЏРј
-	 * @param null | array $arPagination - РјР°СЃСЃРёРІ РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РїРѕСЃС‚СЂР°РЅРёС‡РЅРѕР№ РЅР°РІРёРіР°С†РёРё
-	 * @param null | array $arSelect - РІС‹Р±РёСЂР°РµРјС‹Рµ РїРѕР»СЏ
-	 * @param bool $bShowNullFields - РїРѕРєР°Р·С‹РІРІР°С‚СЊ NULL Р·РЅР°С‡РµРЅРёСЏ - С‚.Рµ. СЂР°Р·СЂРµС€РёС‚СЊ Р»Рё РїСЂРёРјРµРЅРµРЅРёРµ JOIN
+	 * Возвращает список записей сущности
+	 * @param null | array $arSort - поля и порядок сортировки
+	 * @param null | array $arFilter - фильтр полей
+	 * @param null | array $arGroupBy - грпиировать по полям
+	 * @param null | array $arPagination - массив для формирования постраничной навигации
+	 * @param null | array $arSelect - выбираемые поля
+	 * @param bool $bShowNullFields - показыввать NULL значения - т.е. разрешить ли применение JOIN
 	 * @return bool | DBResult
 	 */
 	public function getList($arSort = null, $arFilter = null, $arGroupBy = null, $arPagination = null, $arSelect = null, $bShowNullFields = true) {
@@ -1164,7 +1164,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 
 		// SELECT
 		if( empty($arSelect) || !is_array($arSelect) ) {
-			// Р•СЃР»Рё SELECT РїСѓСЃС‚РѕР№
+			// Если SELECT пустой
 			$arSelectDefault = $this->_arSelectDefault;
 			if( count($arSelectDefault)>0 ) {
 				$arSelect = $arSelectDefault;
@@ -1259,7 +1259,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 			}
 		}
 
-		// Р“СЂСѓРїРїРёСЂСѓРµРј
+		// Группируем
 		$arGroupByFields = $this->_arGroupByFields;
 		if( !empty($arGroupBy) && is_array($arGroupBy) ) {
 			foreach ($arGroupBy as $fieldCode){
@@ -1284,7 +1284,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 			$sGroupBy = "\nGROUP BY ( ".implode(", ",$arGroupByFields)." )";
 		}
 
-		// Р§Р°СЃС‚СЊ WHERE РІ РєРѕС‚РѕСЂРѕР№ СЃРІСЏР·С‹РІР°РµРј С‚Р°Р±Р»РёС†С‹
+		// Часть WHERE в которой связываем таблицы
 		foreach($arTableLinks as $linkKey => $arTblLink) {
 			$arLeftField = $arTblLink[0];
 			$arRightField = $arTblLink[1];
@@ -1315,7 +1315,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 		foreach($arTableRightJoinTables as $sdTblName => &$bJoinThisTable) {
 			$bJoinThisTable = false;
 		}
-		// РР· РєР°РєРёС… С‚Р°Р±Р»РёС† РІС‹Р±РёСЂР°РµРј | РєР°РєРёРµ С‚Р°Р±Р»РёС†С‹ РґР¶РѕР№РЅРёРј
+		// Из каких таблиц выбираем | какие таблицы джойним
 		$bFirstSelectFrom = true;
 		foreach($arSelectFromTables as $asTblName => $bSelectFromTable) {
 			if($bSelectFromTable) {
@@ -1367,7 +1367,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РўРѕ Р¶Рµ С‡С‚Рѕ Рё $this->getList() С‚РѕР»СЊРєРѕ РІРѕР·РІСЂР°С‰Р°РµС‚ РЅРµ CDBResult, Р° array
+	 * То же что и $this->getList() только возвращает не CDBResult, а array
 	 * @param null | array $arSort
 	 * @param null | array $arFilter
 	 * @param null | array $arGroupBy
@@ -1395,10 +1395,10 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 	}
 
 	/**
-	 * РњРµС‚РѕРґ РїРѕР·РІРѕР»СЏРµС‚ РїРѕР»СѓС‡РёС‚СЊ С‚РѕР»СЊРєРѕ РїРѕР»СЏ РёР· РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹ СЃСѓС‰РЅРѕСЃС‚Рё
-	 * РёР»Рё РІ РєСЂР°Р№РЅРµРј СЃР»СѓС‡Р°Рµ РїРѕР»СЏ РёР· РґСЂСѓРіРёС… С‚Р°Р±Р»РёС†,
-	 * РЅРѕ С‚РѕР»СЊРєРѕ РІ С‚РѕРј СЃР»СѓС‡Р°Рµ РµСЃР»Рё РѕРЅРё РїСЂРѕРїРёСЃР°РЅС‹ РІ РјР°СЃСЃРёРІРµ $this->_arTableLinks
-	 * РџРѕР»СЏ-РїРѕРґР·Р°РїСЂРѕСЃС‹ РІ $arSelect С‚Р°Рє Р¶Рµ Р±СѓРґСѓС‚ РїСЂРѕРёРіРЅРѕСЂРёСЂРѕРІР°РЅС‹
+	 * Метод позволяет получить только поля из основной таблицы сущности
+	 * или в крайнем случае поля из других таблиц,
+	 * но только в том случае если они прописаны в массиве $this->_arTableLinks
+	 * Поля-подзапросы в $arSelect так же будут проигнорированы
 	 * @param string |int | float $PRIMARY_KEY_VALUE
 	 * @param array | null $arSelect
 	 * @param bool $bReturnDBSResult
@@ -1442,7 +1442,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 		}
 		// SELECT
 		if( empty($arSelect) || !is_array($arSelect) ) {
-			// Р•СЃР»Рё SELECT РїСѓСЃС‚РѕР№
+			// Если SELECT пустой
 			$arSelect = array();
 			foreach ($arTableFields as $fieldCode => $arSqlField) {
 				list($tlbAlias, $tblFieldName) = each($arSqlField);
@@ -1457,7 +1457,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 			if(array_key_exists($fieldCode, $arTableFields) ) {
 				$arTblField = $arTableFields[$fieldCode];
 				list($asName, $tblFieldName) = each($arTblField);
-				// TODO: СЌС‚Рѕ РјРѕР¶РµС‚ СЃР»РѕРјР°С‚СЊСЃСЏ РІ Р»СЋР±РѕР№ РјРѕРјРµРЅС‚. Р Р°Р·РѕР±СЂР°С‚СЊСЃСЏ РћС‡РµРЅСЊ СЃРїРѕСЂРЅС‹Р№ РјРѕРјРµРЅС‚. РќСѓР¶РЅРѕ Р°РєРєСѓСЂР°С‚РЅРѕ РїСЂРѕРµРєС‚РёСЂРѕРІР°С‚СЊ РїРѕРґР·Р°РїСЂРѕСЃС‹
+				// TODO: это может сломаться в любой момент. Разобраться Очень спорный момент. Нужно аккуратно проектировать подзапросы
 				$isSubQuery = ((strpos($tblFieldName,'(')===false)?false:true);
 				if($isSubQuery) {
 					continue;
@@ -1504,7 +1504,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 				$arSelectFromTables[$asName] = true;
 			}
 		}
-		// Р§Р°СЃС‚СЊ WHERE РІ РєРѕС‚РѕСЂРѕР№ СЃРІСЏР·С‹РІР°РµРј С‚Р°Р±Р»РёС†С‹
+		// Часть WHERE в которой связываем таблицы
 		foreach($arTableLinks as $linkKey => $arTblLink) {
 			$arLeftField = $arTblLink[0];
 			$arRightField = $arTblLink[1];
@@ -1679,7 +1679,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 			foreach($arMissedFields as $fieldName) {
 				if(array_key_exists('REQ_FLD_'.$fieldName, $arLangMessages) ) {
 					$arLangMessage = $arLangMessages['REQ_FLD_'.$fieldName];
-					// Р—Р°РјРµРЅСЏРµРј РјР°РєСЂРѕСЃС‹ РёРјС‘РЅ РїРѕР»РµР№ РІ lang-СЃРѕРѕР±С‰РµРЅРёСЏС…
+					// Заменяем макросы имён полей в lang-сообщениях
 					$arLangReplace = $this->_getLangMessageReplace($fieldName);
 					if( count($arLangReplace)>0 ) {
 						$arLangMessage['TEXT'] = str_replace($arLangReplace['TARGET'], $arLangReplace['VALUE'], $arLangMessage['TEXT']);
@@ -1882,8 +1882,8 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 			return true;
 		}
 		$arLangMessages = $this->_arDBSimpleLangMessages;
-		// РµСЃР»Рё PK РЅРµ Р·Р°РґР°РЅ, С‚Рѕ РјРѕР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ СЏРІР»СЏРµС‚СЃСЏ Р»Рё РЅР°Р±РѕСЂ Р·Р°РґР°РЅРЅС‹Р№ РІ arFields unique РёРЅРґРµРєСЃРѕРј
-		// Рё РїРѕ РЅРµРјСѓ РЅР°Р№С‚Рё Р·РЅР°С‡РµРЅРёРµ PK
+		// если PK не задан, то можно проверить является ли набор заданный в arFields unique индексом
+		// и по нему найти значение PK
 		$arThatElement = null;
 		if( !$ID && is_array($this->_arTableUnique) && count($this->_arTableUnique)>0 ) {
 			foreach($this->_arTableUnique as $arUnique) {
@@ -1900,7 +1900,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 					$arExistsRowList = $this->getListArray(null, $arUniqueFilter, null, null, array($mainTablePrimaryKey), false);
 					if( count($arExistsRowList)==1 && isset($arExistsRowList[0])) {
 						if( !empty($arExistsRowList[0]) && isset($arExistsRowList[0][$mainTablePrimaryKey])) {
-							// TODO: РћРїС‚РёРјРёР·РёСЂРѕРІР°С‚СЊ РєРѕР»-РІРѕ Р·Р°РїСЂРѕСЃРѕРІ Рє Р‘Р”
+							// TODO: Оптимизировать кол-во запросов к БД
 							//$arThatElement = $arExistsRowList[0];
 							//$ID = $arThatElement[$mainTablePrimaryKey];
 							$ID = $arExistsRowList[0][$mainTablePrimaryKey];
@@ -1944,7 +1944,7 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 		if( count($arTableUnique)>0 ) {
 			foreach( $arTableUnique as $udxName => $arUniqueFields ) {
 				if($bNotUpdateUniqueFields) {
-					// Р•СЃР»Рё Р·Р°РїСЂРµС€РµРЅРѕ РѕР±РЅРѕРІР»СЏС‚СЊ РїРѕР»СЏ РІС…РѕРґСЏС‰РёРµ РІ СѓРЅРёРєР°Р»СЊРЅС‹Р№ РёРЅРґРµРєСЃ
+					// Если запрешено обновлять поля входящие в уникальный индекс
 					foreach($arUniqueFields as $inUniqueFieldName) {
 						if( array_key_exists($inUniqueFieldName, $arFields) ) {
 							unset($arFields[$inUniqueFieldName]);
@@ -2328,11 +2328,11 @@ abstract class Entity extends MessagePoolDecorator implements IEntity
 				}
 			}
 			else {
-				// TODO: РўСѓС‚ РїРѕР»СѓС‡Р°РµРј РїРѕР»СЏ СѓРЅРёРєР°Р»СЊРЅРѕРіРѕ РёРЅРґРµРєСЃР° Рё РїРѕ РµРіРѕ РїРѕР»СЏРј РІС‹Р·С‹РІР°РµРј deleteByFilter
+				// TODO: Тут получаем поля уникального индекса и по его полям вызываем deleteByFilter
 			}
 		}
 		else {
-			// TODO: РўСѓС‚ РІС‹РєРёРґС‹РІР°РµРј РѕС€РёР±РєСѓ. РџРѕС‚РѕРјСѓ С‡С‚Рѕ РЅРµР»СЊР·СЏ СѓРґР°Р»СЏС‚СЊ Р·Р°РїРёСЃРё СЃСѓС‰РЅРѕСЃС‚Рё РїР»СѓС‡РµРЅРЅС‹Рµ СЃ РїРѕРјРѕС‰СЊСЋ РєР»Р°СЃСЃР° РґСЂСѓРіРѕР№ СЃСѓС‰РЅРѕСЃС‚Рё
+			// TODO: Тут выкидываем ошибку. Потому что нельзя удалять записи сущности плученные с помощью класса другой сущности
 		}
 		return $bResult;
 	}

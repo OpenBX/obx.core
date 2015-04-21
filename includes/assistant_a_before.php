@@ -10,6 +10,6 @@ IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("main");
 if ($POST_RIGHT == "D")
-	$APPLICATION->AuthForm("Р”РѕСЃС‚СѓРї Р·Р°РїСЂРµС‰РµРЅ");
+	$APPLICATION->AuthForm("Доступ запрещен");
 
 CModule::IncludeModule('obx.core');

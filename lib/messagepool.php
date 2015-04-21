@@ -91,7 +91,7 @@ class MessagePool implements IMessagePool
 	}
 
 	/**
-	 * Р”Р°РЅРЅС‹Р№ РјРµС‚РѕРґ РїРѕРјРµС‡РµРЅ РєР°Рє СѓСЃС‚Р°СЂРµРІС€РёР№, РїРѕСЃРєРѕР»СЊРєСѓ РІРµСЂРЅРѕРµ РµРіРѕ РЅР°Р·РІР°РЅРёРµ addNotice
+	 * Данный метод помечен как устаревший, поскольку верное его название addNotice
 	 * @deprecated
 	 */
 	public function addMessage($text, $code = 0, $debugLevel=0) {
@@ -155,7 +155,7 @@ class MessagePool implements IMessagePool
 
 	/**
 	 * @param \Exception $Exception
-	 * @deprecated РЅРµ Р¶РµР»Р°С‚РµР»СЊРЅРѕ РїРѕР»СЊР·РѕРІР°С‚СЊСЃСЏ СЌС‚РёРј СЃРїРѕСЃРѕР±РѕРј. line_no Р±СѓРґРµС‚ РІСЃРµРіРґР° СѓРєР°Р·С‹РІР°С‚СЊ РІ СЌС‚РѕС‚ РјРµС‚РѕРґ
+	 * @deprecated не желательно пользоваться этим способом. line_no будет всегда указывать в этот метод
 	 * @throws \Exception
 	 */
 	public function throwErrorException(\Exception $Exception) {
@@ -208,7 +208,7 @@ class MessagePool implements IMessagePool
 
 
 	/**
-	 * Р”Р°РЅРЅС‹Р№ РјРµС‚РѕРґ СѓСЃС‚Р°СЂРµР», РїРѕСЃРєРѕР»СЊРєСѓ РїСЂР°РІРёР»СЊРЅРѕРµ РµРіРѕ РЅР°Р·РІР°РЅРёРµ getLastNotice
+	 * Данный метод устарел, поскольку правильное его название getLastNotice
 	 * @param string $return
 	 * @return mixed
 	 * @deprecated
@@ -270,7 +270,7 @@ class MessagePool implements IMessagePool
 	}
 
 	/**
-	 * Р”Р°РЅРЅС‹Р№ РјРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». Р’РµСЂРЅРѕРµ РµРіРѕ РЅР°Р·РІР°РЅРёРµ popLastNotice
+	 * Данный метод устарел. Верное его название popLastNotice
 	 * @param string $return
 	 * @return mixed
 	 * @deprecated
@@ -305,7 +305,7 @@ class MessagePool implements IMessagePool
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ getNotices
+	 * Метод устарел. Правильный метод getNotices
 	 * @deprecated
 	 * @return array
 	 */
@@ -339,7 +339,7 @@ class MessagePool implements IMessagePool
 	}
 
 	/**
-	 * РњРµС‚РѕРґ СѓСЃС‚Р°СЂРµР». РџСЂР°РІРёР»СЊРЅС‹Р№ РјРµС‚РѕРґ clearNotices
+	 * Метод устарел. Правильный метод clearNotices
 	 * @deprecated
 	 */
 	public function clearMessages() {

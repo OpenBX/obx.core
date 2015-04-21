@@ -76,7 +76,7 @@ class XmlParserTest extends TestCase {
 	 * @dataProvider getXmlFilePath
 	 */
 	public function testParser($filePath) {
-		// Р§С‚Рѕ Р±С‹ СЃРґРµР»Р°С‚СЊ РїРѕС€Р°РіРѕРІРѕСЃС‚СЊ РІ РїСѓР±Р»РёС‡РєРµ РЅР°РґРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ $NS С‡РµСЂРµР· СЂРµРіРёСЃС‚СЂР°С†РёСЋ РґР°РЅРЅС‹Р· РІ:
+		// Что бы сделать пошаговость в публичке надо использовать $NS через регистрацию данныз в:
 		//bitrix/modules/main/tools.php
 		//FormDecode();
 		$ITERATION = array();
