@@ -1916,15 +1916,26 @@ OPTIONS
              register       - пометить модуль как удаленный - UnRegisterModule()
 
     == В стадии разработки ==
-    --convert-to-cp1251=[<pattern>|all|lang|notjs] - конвертирует файлы модуля в CP1251
-             <pattern>      - сконвертировать файлы путь которых соотвествует pattern-у (POSIX)
-                              Если pattern указывает на папку,
-                              то подразумеваются все вложенные файлы во всех подпапках
-                              Если необходимо указать только файлы указанной папки,
-                              тоследует использовать паттерн вида: "целевая-папка/*"
-             lang           - сконвертирует только lang-файлы
-             not-js         - сконвертировать всё кроме JavaScript-файлов
-    --convert-to-utf8=[<pattern>|all|lang|notjs] - конвертирует файлы модуля в UTF-8
+    --convert-to-cp1251=<relative path>:<modifier list> - конвертирует файлы в CP1251
+        <relative path> - путь до папки/файла (относительно \$CWD)
+        <modifier list> - список модификаторов разделенных двоеточием.
+             Доступные модификаторы:
+             lang    - конвкертировать только те файлы, в пути которых содержится /ru/
+             php     - конвкртировать *.php-файлы
+             js      - конвертировать *.js-файлы
+             html    - конвертировать *.html-файлы
+             css     - конвертировать *.css-файлы
+             less    - конвертировать *.less-файлы
+             tmpl    - конвертировать *.tmpl-файлы
+             sql     - конвертировать *.sql-файлы
+             upd-dsc - конвертировать файл description.ru этот файл
+                       будет сконвертирован независимо от модификатора lang
+        Пример использования:
+             --convert-to-cp1251=relative/path/to/dir/:php:js:lang
+             Что произведет конвертирование всех *.php и *.js файлов
+             находящихся в папках/подпапках */ru/*
+
+    --convert-to-utf8=<relative path>:<modifier list> - конвертирует файлы в UTF-8
              Обратная операция. Актуальна, когда надо внести правки
              из сторонней установки модуля на CP1251 обратно в репозиторий разработки с кодировкой UTF-8
 HELP;
@@ -2911,7 +2922,7 @@ HELP;
 	const ICONV_TMPL = 64;		// Конвертировать файлы *.tmpl
 	const ICONV_XML = 128;		// Конвертировать файлы *.xml
 	const ICONV_SQL = 256;		// Конвертировать файлы *.sql
-	const ICONV_DSC = 512;		// Конвертировать файл description.ru
+	const ICONV_UPD_DSC = 512;	// Конвертировать файл description.ru
 	const ICONV_ALL = 1022;		// Конвертировать все вышепереисленные типы файлов
 	const ICONV_ALL_LANG = 1023; // Конвертировать се вышеперечисленные типы файлов в подпути */ru/*
 
@@ -2946,7 +2957,7 @@ HELP;
 		if( ($target & self::ICONV_LESS)>0 ) $arAllFilesExt[] = '.less';
 		if( ($target & self::ICONV_TMPL)>0 ) $arAllFilesExt[] = '.tmpl';
 		if( ($target & self::ICONV_SQL)>0 ) $arAllFilesExt[] = '.sql';
-		$bConvertDescriptionRu = ( ($target & self::ICONV_DSC)>0 );
+		$bConvertDescriptionRu = ( ($target & self::ICONV_UPD_DSC)>0 );
 		$bConvertLangDir = ( ($target & self::ICONV_LANG_DIR)>0 );
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
