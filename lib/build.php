@@ -2879,7 +2879,7 @@ HELP;
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->iconvFiles($this->_releaseFolder.'/build/.last_version/');
+		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/.last_version/');
 		closedir($releaseDirHandler);
 		if($bIConvSuccess) {
 			$shellCommand = ''
@@ -2897,38 +2897,67 @@ HELP;
 			;
 			shell_exec($shellCommand);
 		}
+		return true;
 	}
 
-	const ICONV_ALL_FILES = 1;
-	const ICONV_PHP_FILES = 2;
-	const ICONV_LANG_FILES = 3;
-	public function iconvFiles($relPath, $target = self::ICONV_ALL_FILES, $from = 'UTF-8', $to = 'CP1251') {
+
+	// Константы задаваемые в качестве аргумента $target метода iconvFiles
+	const ICONV_LANG_DIR = 1;	// Конвертировать только файлы в подпути */ru/* - не применяется отдельно
+	const ICONV_PHP = 2;		// Конвертировать файлы *.php
+	const ICONV_JS = 4;			// Конвертировать файлы *.js
+	const ICONV_HTML = 8;		// Конвертировать файлы *.html
+	const ICONV_CSS = 16;		// Конвертировать файлы *.css
+	const ICONV_LESS = 32;		// Конвертировать файлы *.less
+	const ICONV_TMPL = 64;		// Конвертировать файлы *.tmpl
+	const ICONV_XML = 128;		// Конвертировать файлы *.xml
+	const ICONV_SQL = 256;		// Конвертировать файлы *.sql
+	const ICONV_DSC = 512;		// Конвертировать файл description.ru
+	const ICONV_ALL = 1022;		// Конвертировать все вышепереисленные типы файлов
+	const ICONV_ALL_LANG = 1023; // Конвертировать се вышеперечисленные типы файлов в подпути */ru/*
+
+	/**
+	 * @param $relPath
+	 * @param int $target - битовая маска с типами файлов для конвертирования
+	 * @param string $from
+	 * @param string $to
+	 * @return bool
+	 *
+	 * Пример применения
+	 * 	iconvFiles(
+	 * 		'path/to/'
+	 * 		,OBX_Build::ICONV_LANG_DIR
+	 * 			| OBX_Build::ICONV_PHP
+	 * 			| OBX_Build::ICONV_JS
+	 * 		,'UTF-8', 'CP1251'
+	 * 	);
+	 * 	Что означает: "Сконвертировать php- и js-файлы находящиеся в подпути /ru/
+	 * 					из кодировки UTF-8 в CP1251"
+	 */
+	public function convertCharset($relPath, $target = self::ICONV_ALL_LANG, $from = 'UTF-8', $to = 'CP1251') {
+		$target = intval($target);
+		if($target < 2)
 		$relPath = str_replace(array('//', '\\', '/./'), '/', rtrim($relPath, '/'));
 		$path = $this->_docRootDir.$relPath;
-		static $arAllFilesExt = null;
-		if($arAllFilesExt === null) {
-			$arAllFilesExt = array(
-				'.php', '.js', '.html', '.css', '.less', '.tmpl', '.sql',
-			);
-		}
+		$arAllFilesExt = array();
+		if( ($target & self::ICONV_PHP)>0 ) $arAllFilesExt[] = '.php';
+		if( ($target & self::ICONV_JS)>0 ) $arAllFilesExt[] = '.js';
+		if( ($target & self::ICONV_HTML)>0 ) $arAllFilesExt[] = '.html';
+		if( ($target & self::ICONV_CSS)>0 ) $arAllFilesExt[] = '.css';
+		if( ($target & self::ICONV_LESS)>0 ) $arAllFilesExt[] = '.less';
+		if( ($target & self::ICONV_TMPL)>0 ) $arAllFilesExt[] = '.tmpl';
+		if( ($target & self::ICONV_SQL)>0 ) $arAllFilesExt[] = '.sql';
+		$bConvertDescriptionRu = ( ($target & self::ICONV_DSC)>0 );
+		$bConvertLangDir = ( ($target & self::ICONV_LANG_DIR)>0 );
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
 			$fsEntryExt = strtolower(substr($fsEntry, strrpos($fsEntry, '.')));
-			if(
-				($target == self::ICONV_ALL_FILES
-					&& (
-						in_array($fsEntryExt, $arAllFilesExt)
-						|| $fsEntry == 'description.ru'
+			if( (in_array($fsEntryExt, $arAllFilesExt)
+					&& (false === $bConvertLangDir
+						|| false !== strpos($relPath, '/ru/')
 					)
 				)
-				|| (
-					$target == self::ICONV_PHP_FILES
-					&& $fsEntryExt == '.php'
-				)
-				|| (
-					$target == self::ICONV_LANG_FILES
-					&& $fsEntryExt == '.php'
-					&& strpos($relPath, '/ru/') !== false
+				|| ( true === $bConvertDescriptionRu
+					&& $fsEntry == 'description.ru'
 				)
 			) {
 				$content = file_get_contents($path);
@@ -2964,7 +2993,7 @@ HELP;
 			$bSuccess = true;
 			while($fsEntry = readdir($dir)) {
 				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git' || $fsEntry == '.directory') continue;
-				$bSuccess = self::iconvFiles($relPath.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
+				$bSuccess = self::convertCharset($relPath.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
 			}
 			closedir($dir);
 			return $bSuccess;
@@ -3529,7 +3558,7 @@ DOC;
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->iconvFiles($this->_releaseFolder.'/build/'.$versionTo);
+		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/'.$versionTo);
 		closedir($updateDirHandler);
 		if($bIConvSuccess) {
 			$shellCommand = ''
@@ -3553,10 +3582,6 @@ DOC;
 	 * За явную пометку файлов как plainText отвечает файл .idea/misc.xml
 	 */
 	static public function addIdeaProjectFolderAsPlainText() {
-
-	}
-
-	public function convertCharset($pattern, $convertFrom, $convertTo) {
 
 	}
 }
