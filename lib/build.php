@@ -1915,7 +1915,6 @@ OPTIONS
              tasks          - Удалить задачи модуля
              register       - пометить модуль как удаленный - UnRegisterModule()
 
-    == В стадии разработки ==
     --convert-to-cp1251=<relative path>:<modifiers list> - конвертирует файлы в CP1251
         <relative path> - путь до папки/файла (относительно \$CWD)
         <modifiers list> - список модификаторов разделенных двоеточием.
@@ -2978,6 +2977,8 @@ HELP;
 	 * @param int $target - битовая маска с типами файлов для конвертирования
 	 * @param string $from
 	 * @param string $to
+	 * @param null|string $relPathParent - Часть пути,
+	 * в которой производить поиск  папки /ru/ . Актуально с модификатором lang
 	 * @return bool
 	 *
 	 * Пример применения
@@ -2991,7 +2992,7 @@ HELP;
 	 * 	Что означает: "Сконвертировать php- и js-файлы находящиеся в подпути /ru/
 	 * 					из кодировки UTF-8 в CP1251"
 	 */
-	static public function convertCharset($path, $target = self::ICONV_DEF_MOD, $from = 'UTF-8', $to = 'CP1251') {
+	static public function convertCharset($path, $target = self::ICONV_DEF_MOD, $from = 'UTF-8', $to = 'CP1251', $relPathParent = null) {
 		$target = intval($target);
 		$path = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($path), '/'));
 
@@ -3000,10 +3001,22 @@ HELP;
 		$arAllFilesExt = self::covertFileTypeMaskToExtList($target);
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
-			$fsEntryExt = strtolower(substr($fsEntry, strrpos($fsEntry, '.')+1));
+			$fsEntityExtDotPos = strrpos($fsEntry, '.');
+			$fsEntryExt = '';
+			if($fsEntityExtDotPos !== false) {
+				$fsEntryExt = strtolower(substr($fsEntry, $fsEntityExtDotPos+1));
+			}
+
+			$relPath4CheckLang = $path;
+			if(null !== $relPathParent) {
+				$relPathParent = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($relPathParent), '/.'));
+				if(strpos($path, $relPathParent) === 0) {
+					$relPath4CheckLang = substr($path, strlen($relPathParent));
+				}
+			}
 			if( (in_array($fsEntryExt, $arAllFilesExt)
 					&& (false === $bConvertLangDir
-						|| false !== strpos($path, '/ru/')
+						|| false !== strpos($relPath4CheckLang, '/ru/')
 					)
 				)
 				|| ( true === $bConvertDescriptionRu
@@ -3043,7 +3056,7 @@ HELP;
 			$bSuccess = true;
 			while($fsEntry = readdir($dir)) {
 				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git' || $fsEntry == '.directory') continue;
-				$bSuccess = self::convertCharset($path.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
+				$bSuccess = self::convertCharset($path.'/'.$fsEntry, $target, $from, $to, $relPathParent) && $bSuccess;
 			}
 			closedir($dir);
 			return $bSuccess;
@@ -3068,37 +3081,39 @@ HELP;
 				echo 'Ошибка: Для конвертирования доступны только кодировки UTF-8 и CP1251';
 				return;
 		}
-		$modifiersPos = strrpos($options, ':');
+		$modifiersPos = strpos($options, ':');
 		$path = null;
 		$strModifiersList = null;
 		$targetModifiers = 0;
 		if($modifiersPos === false) {
-
 			$path = $options;
 			$targetModifiers = self::ICONV_DEF_MOD;
 		}
 		else {
-			$path = substr($options, $modifiersPos);
-			$strModifiersList = substr($options, 0, $modifiersPos);
+			$path = substr($options, 0, $modifiersPos);
+			$strModifiersList = trim(substr($options, $modifiersPos), ' :');
 			$arModifiersList = explode(':', $strModifiersList);
+			$moduleDirOnly = true;
+			$documentRootOnly = true;
 			foreach($arModifiersList as $strModifier) {
 				$strModifier = trim($strModifier);
 				switch($strModifier) {
-					case 'all':		$targetModifiers |= self::ICONV_ALL; break;
-					case 'lang':	$targetModifiers |= self::ICONV_LANG_DIR; break;
-					case 'php':		$targetModifiers |= self::F_PHP; break;
-					case 'js':		$targetModifiers |= self::F_JS; break;
-					case 'html':	$targetModifiers |= self::F_HTML; break;
-					case 'css':		$targetModifiers |= self::F_CSS; break;
-					case 'less':	$targetModifiers |= self::F_LESS; break;
-					case 'tmpl':	$targetModifiers |= self::F_TMPL; break;
-					case 'xml':		$targetModifiers |= self::F_XML; break;
-					case 'yaml':	$targetModifiers |= self::F_YAML; break;
-					case 'json':	$targetModifiers |= self::F_JSON; break;
-					case 'txt':		$targetModifiers |= self::F_TXT; break;
-					case 'cfg':		$targetModifiers |= self::F_CFG; break;
-					case 'sql':		$targetModifiers |= self::F_SQL; break;
-					case 'upd-dsc':	$targetModifiers |= self::ICONV_UPD_DSC; break;
+					case 'all':			$targetModifiers |= self::ICONV_ALL; break;
+					case 'lang':		$targetModifiers |= self::ICONV_LANG_DIR; break;
+					case 'php':			$targetModifiers |= self::F_PHP; break;
+					case 'js':			$targetModifiers |= self::F_JS; break;
+					case 'html':		$targetModifiers |= self::F_HTML; break;
+					case 'css':			$targetModifiers |= self::F_CSS; break;
+					case 'less':		$targetModifiers |= self::F_LESS; break;
+					case 'tmpl':		$targetModifiers |= self::F_TMPL; break;
+					case 'xml':			$targetModifiers |= self::F_XML; break;
+					case 'yaml':		$targetModifiers |= self::F_YAML; break;
+					case 'json':		$targetModifiers |= self::F_JSON; break;
+					case 'txt':			$targetModifiers |= self::F_TXT; break;
+					case 'cfg':			$targetModifiers |= self::F_CFG; break;
+					case 'sql':			$targetModifiers |= self::F_SQL; break;
+					case 'upd-dsc':		$targetModifiers |= self::ICONV_UPD_DSC; break;
+					case 'doc-root':	$moduleDirOnly = false;
 				}
 			}
 
@@ -3106,14 +3121,33 @@ HELP;
 			if(substr($path, 0, 1) !== '/') {
 				$path = getcwd().'/'.$path;
 			}
+			$path = rtrim(str_replace(array('//', '\\', '/./'), '/', $path), '/.');
 
-			if( strpos($path, $this->_docRootDir) === false) {
-				echo 'Ошибка: попытка конвертировать файлы за пределами DOCUMENT_ROOT';
-				return;
+			$relPathParent = $this->_modulesDir.'/'.$this->_moduleName;
+			if(strpos($path, $relPathParent) === false) {
+				if( $moduleDirOnly ) {
+					echo 'Ошибка: конвертировать файлы за пределами папки модуля '.$this->_moduleName
+						.' не разрешено. Используйте модификатор doc-root';
+					return;
+				}
+				$relPathParent = $this->_docRootDir;
+			}
+			elseif( strpos($path, $this->_docRootDir) === false ) {
+				if( $documentRootOnly ) {
+					echo 'Ошибка: конвертировать файлы за пределами DOCUMENT_ROOT запрещено';
+					return;
+				}
+				$relPathParent = null;
 			}
 
-			if(is_file($path)) {
 
+
+			if(is_file($path)) {
+				echo 'Конвертирование отдельного файла пока не реализовано.';
+				return;
+			}
+			else {
+				self::convertCharset($path, $targetModifiers, $charsetFrom, $charsetTo, $relPathParent);
 			}
 		}
 	}
