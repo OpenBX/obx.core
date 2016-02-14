@@ -2284,7 +2284,7 @@ HELP;
 	 * @return array
 	 */
 	public function findRawLangText($relPath = '', $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
-		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяФБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
+		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
 		if($relPath == '.') $relPath = '';
 		$relPath = '/'.trim($relPath, '/ ');
 		$curPath = rtrim($this->_docRootDir.$relPath, '/ ');
