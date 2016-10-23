@@ -105,7 +105,7 @@ namespace OBX\Core {
 			}
 		}
 
-		static function cropString($str, $len, $endOfLine = '') {
+		static function cropString($str, $len, $endOfLine = '', $byWord = true) {
 			$str = trim($str);
 			$len = intval($len);
 			if (strlen($str) < 1 || $len < 1) {
@@ -115,7 +115,13 @@ namespace OBX\Core {
 				return $str;
 			}
 			$len++;
-			$str = substr($str, 0, strrpos(substr($str, 0, $len), ' ')).$endOfLine;
+			if( true === $byWord ) {
+				$str = substr($str, 0, strrpos(substr($str, 0, $len), ' ')).$endOfLine;
+			}
+			else {
+				$str = substr($str, 0, $len).$endOfLine;
+			}
+
 			return $str;
 		}
 
