@@ -12,17 +12,22 @@
 use OBX\Core\Tools;
 
 if( !function_exists('wd') ) {
-	function wd($mixed, $collapse = null, $bPrint = true) {
-		return Tools::debug($mixed, $collapse, $bPrint);
+	function wd($data, $collapseTitle = null, $bPrintCondition = true) {
+		Tools::debug($data, $collapseTitle, $bPrintCondition);
 	}
 }
 if( !function_exists('d') ) {
-	function d($mixed, $collapse = null, $bPrint = true) {
-		return Tools::debug($mixed, $collapse, $bPrint);
+	function d($data, $collapseTitle = null, $bPrintCondition = true) {
+		Tools::debug($data, $collapseTitle, $bPrintCondition);
 	}
 }
 if( !function_exists('dd') ) {
-	function dd($mixed, $collapse = null, $bPrint = true) {
-		return Tools::debug($mixed, $collapse, $bPrint);
+	function dd($data, $collapseTitle = null, $bPrintCondition = true) {
+		Tools::debug($data, $collapseTitle, $bPrintCondition);
+	}
+}
+if( !function_exists('dc') ) {
+	function dc($data, $collapseTitle = '', $bPrintCondition = true) {
+		Tools::debugConsoleLog($data, $collapseTitle, $bPrintCondition);
 	}
 }

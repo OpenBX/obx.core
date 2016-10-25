@@ -31,7 +31,6 @@ DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/layout");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/breadcrumb.get");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/menu.iblock.list");
 DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/social.links");
-DeleteDirFilesEx("/bitrix/modules/obx.core/install/components/obx/include.tabs");
 if( ! is_dir($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d") ) {
 	@mkdir($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/php_interface/event.d", BX_DIR_PERMISSIONS, true);
 }
@@ -47,6 +46,5 @@ OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/layout", $_
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/breadcrumb.get", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/menu.iblock.list", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/", true, true);
 OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/social.links", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/", true, true);
-OBX_CopyDirFilesEx($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/obx/include.tabs", $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/obx.core/install/components/obx/", true, true);
 if($bConnectEpilog) require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
 ?>
