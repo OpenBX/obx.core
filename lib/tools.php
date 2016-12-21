@@ -498,9 +498,17 @@ namespace OBX\Core {
 		}
 
 
+
 		static private $_bViewContentDispatcherActive = false;
 		static private $_arContentViewTargets = array();
+		/**
+		 * @param $view
+		 * @deprecated use method ::showViewFile
+		 */
 		static public function showViewContent($view) {
+			self::showViewFile($view);
+		}
+		static public function showViewFile($view) {
 			if(preg_match('~^[a-zA-Z0-9\_\-\.]{1,30}$~', $view)) {
 				if( is_dir($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target') ) {
 					$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target/'.$view.'.php';
@@ -524,7 +532,6 @@ namespace OBX\Core {
 					}
 				}
 			}
-
 		}
 
 		static public function dispatchViewTargetContents() {
@@ -536,6 +543,60 @@ namespace OBX\Core {
 				$content = ob_get_clean();
 				$APPLICATION->AddViewContent($view, $content);
 			}
+		}
+
+		static private $_deferredViewClosuresActive = false;
+		static private $_arDeferredViewList = array();
+		static public function showViewFunction($view, $closure) {
+			/** @global \CMain $APPLICATION */
+			global $APPLICATION;
+			if(preg_match('~^[a-zA-Z0-9\_\-\.]{1,30}$~', $view)
+				&& is_callable($closure)
+			) {
+				self::$_arDeferredViewList[$view] = $closure;
+				$APPLICATION->ShowViewContent($view);
+				if(!self::$_deferredViewClosuresActive) {
+					AddEventHandler('main', 'OnEpilog', 'OBX\Core\Tools::dispatchDeferredView');
+					self::$_deferredViewClosuresActive = true;
+				}
+			}
+		}
+
+		static public function dispatchDeferredView() {
+			/** @global \CMain $APPLICATION */
+			global $APPLICATION;
+			foreach(self::$_arDeferredViewList as $view => $closure) {
+				ob_start();
+				$closure();
+				$content = ob_get_clean();
+				$APPLICATION->AddViewContent($view, $content);
+			}
+		}
+
+		static public function newBufferContentFunction($closure) {
+			if(is_callable($closure)) {
+				return function() use ($closure) {
+					ob_start();
+					$closure();
+					$content = ob_get_clean();
+					return $content;
+				};
+			}
+			return function() {return '';};
+		}
+
+		/**
+		 * Ф-ия для вывода отложенного вывода контента
+		 * Применяется так
+		 * Tools::addBufferContentFunction(function() {
+		 * 		echo 'some deferred content';
+		 * });
+		 * @param $closure
+		 */
+		static public function addBufferContentFunction($closure) {
+			/** @global \CMain $APPLICATION */
+			global $APPLICATION;
+			$APPLICATION->AddBufferContent(self::newBufferContentFunction($closure));
 		}
 
 		/////////////////////////////
