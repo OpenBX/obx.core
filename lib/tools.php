@@ -582,7 +582,7 @@ namespace OBX\Core {
 					return $content;
 				};
 			}
-			return function() {return '';};
+			return function() use ($closure) {return ''.$closure;};
 		}
 
 		/**
@@ -593,7 +593,7 @@ namespace OBX\Core {
 		 * });
 		 * @param $closure
 		 */
-		static public function addBufferContentFunction($closure) {
+		static public function addBufferContent($closure) {
 			/** @global \CMain $APPLICATION */
 			global $APPLICATION;
 			$APPLICATION->AddBufferContent(self::newBufferContentFunction($closure));
