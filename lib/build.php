@@ -1860,7 +1860,7 @@ SHORT OPTIONS
     -f: alias --full
 OPTIONS
     --module=MODULE_ID
-         Устанавливает модуль(и) для которыз будут применены действия
+         Устанавливает модуль(и) для которых будут применены действия
     --build
          Собирает файлы из установленного битрикса внутрь модуля
     --full
@@ -3720,16 +3720,5 @@ DOC;
 			shell_exec($shellCommand);
 		}
 		return true;
-	}
-
-	/**
-	 * [pronix:2013-07-23]
-	 * Данная функция помечает все PHP, XML и JS файлы внутри папки как PlainText
-	 * Что бы любимый PhpStorm не индексировал лишнего :)
-	 * TODO: Реализовать метод OBX_Build::addIdeaProjectFolderAsPlainText
-	 * За явную пометку файлов как plainText отвечает файл .idea/misc.xml
-	 */
-	static public function addIdeaProjectFolderAsPlainText() {
-
 	}
 }

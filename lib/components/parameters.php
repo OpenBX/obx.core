@@ -34,7 +34,7 @@ class Parameters {
 	 * @param int $cols
 	 * @param int $rows
 	 * @return array
-	 * @deprecated - есть штатный тип FILE
+	 * @deprecated - есть штатный тип STRING с параметрами нескольких строк
 	 */
 	public function getTextArea($name, $cols = 32, $rows = 4) {
 		$cols = intval($cols);
