@@ -707,10 +707,17 @@ class OBX_Build {
 		}
 		if( count($this->_arResources)>0 ) {
 			foreach($this->_arResources as &$arResource) {
-				if($arResource['BUILD_ONLY']) {
+				if($arResource['OPTIONS']['BUILD_ONLY']) {
+					echo 'Пропуск build_only ресурса: '.$arResource['TARGET_FOLDER'].$fsEntryName.PHP_EOL;
 					continue;
 				}
 				foreach($arResource['FILES'] as $fsEntryName) {
+					echo 'Установка ресурса: '
+						.$arResource['INSTALL_FOLDER']
+						.'/'.$fsEntryName
+						.' -> '
+						.$arResource['TARGET_FOLDER'].'/'
+						.PHP_EOL;
 					self::CopyDirFilesEx(
 						  $this->_docRootDir.$arResource['INSTALL_FOLDER'].'/'.$fsEntryName
 						, $this->_docRootDir.$arResource['TARGET_FOLDER'].'/'
@@ -862,6 +869,7 @@ class OBX_Build {
 				if($arResource['OPTIONS']['BUILD_ONLY']) {
 					continue;
 				}
+				
 				foreach($arResource['FILES'] as $fsEntryName) {
 					$installCode .= 'OBX_CopyDirFilesEx('
 						.'$_SERVER["DOCUMENT_ROOT"]."'
