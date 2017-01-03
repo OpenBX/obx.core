@@ -105,7 +105,7 @@ namespace OBX\Core {
 			}
 		}
 
-		static function cropString($str, $len, $endOfLine = '') {
+		static function cropString($str, $len, $endOfLine = '', $byWord = true) {
 			$str = trim($str);
 			$len = intval($len);
 			if (strlen($str) < 1 || $len < 1) {
@@ -115,7 +115,13 @@ namespace OBX\Core {
 				return $str;
 			}
 			$len++;
-			$str = substr($str, 0, strrpos(substr($str, 0, $len), ' ')).$endOfLine;
+			if( true === $byWord ) {
+				$str = substr($str, 0, strrpos(substr($str, 0, $len), ' ')).$endOfLine;
+			}
+			else {
+				$str = substr($str, 0, $len).$endOfLine;
+			}
+
 			return $str;
 		}
 
@@ -492,9 +498,17 @@ namespace OBX\Core {
 		}
 
 
+
 		static private $_bViewContentDispatcherActive = false;
 		static private $_arContentViewTargets = array();
+		/**
+		 * @param $view
+		 * @deprecated use method ::showViewFile
+		 */
 		static public function showViewContent($view) {
+			self::showViewFile($view);
+		}
+		static public function showViewFile($view) {
 			if(preg_match('~^[a-zA-Z0-9\_\-\.]{1,30}$~', $view)) {
 				if( is_dir($_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target') ) {
 					$contentFile = $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/view_target/'.$view.'.php';
@@ -518,7 +532,6 @@ namespace OBX\Core {
 					}
 				}
 			}
-
 		}
 
 		static public function dispatchViewTargetContents() {
@@ -530,6 +543,60 @@ namespace OBX\Core {
 				$content = ob_get_clean();
 				$APPLICATION->AddViewContent($view, $content);
 			}
+		}
+
+		static private $_deferredViewClosuresActive = false;
+		static private $_arDeferredViewList = array();
+		static public function showViewFunction($view, $closure) {
+			/** @global \CMain $APPLICATION */
+			global $APPLICATION;
+			if(preg_match('~^[a-zA-Z0-9\_\-\.]{1,30}$~', $view)
+				&& is_callable($closure)
+			) {
+				self::$_arDeferredViewList[$view] = $closure;
+				$APPLICATION->ShowViewContent($view);
+				if(!self::$_deferredViewClosuresActive) {
+					AddEventHandler('main', 'OnEpilog', 'OBX\Core\Tools::dispatchDeferredView');
+					self::$_deferredViewClosuresActive = true;
+				}
+			}
+		}
+
+		static public function dispatchDeferredView() {
+			/** @global \CMain $APPLICATION */
+			global $APPLICATION;
+			foreach(self::$_arDeferredViewList as $view => $closure) {
+				ob_start();
+				$closure();
+				$content = ob_get_clean();
+				$APPLICATION->AddViewContent($view, $content);
+			}
+		}
+
+		static public function newBufferContentFunction($closure) {
+			if(is_callable($closure)) {
+				return function() use ($closure) {
+					ob_start();
+					$closure();
+					$content = ob_get_clean();
+					return $content;
+				};
+			}
+			return function() use ($closure) {return ''.$closure;};
+		}
+
+		/**
+		 * Ф-ия для вывода отложенного вывода контента
+		 * Применяется так
+		 * Tools::addBufferContentFunction(function() {
+		 * 		echo 'some deferred content';
+		 * });
+		 * @param $closure
+		 */
+		static public function addBufferContent($closure) {
+			/** @global \CMain $APPLICATION */
+			global $APPLICATION;
+			$APPLICATION->AddBufferContent(self::newBufferContentFunction($closure));
 		}
 
 		/////////////////////////////
@@ -982,54 +1049,75 @@ namespace OBX\Core {
 			}
 		}
 
+		static private function _debugCollapse(&$title) {
+			static $countFuncCall = 0;
+			static $arCountFuncCallWithTitleKey = array();
+			$countFuncCall++;
+			$bCollapse = false;
+			$elemTitle = 'debug#'.$countFuncCall;
+			if($title !== null) {
+				$bCollapse = true;
+				if( is_string($title) && strlen($title)>0) {
+					if( !@isset($arCountFuncCallWithTitleKey[$title]) ) {
+						$arCountFuncCallWithTitleKey[$title] = 0;
+					}
+					$arCountFuncCallWithTitleKey[$title]++;
+					$elemTitle = $title.'#'.$arCountFuncCallWithTitleKey[$title];
+				}
+			}
+			return [
+				'collapse' => $bCollapse,
+				'title' => $elemTitle,
+				'id' => dechex(crc32($elemTitle))
+			];
+		}
+
 		/**
 		 * Debug data print
-		 * @param mixed $mixed
-		 * @param mixed $collapse
-		 * @param bool $bPrint
+		 * @param mixed $data
+		 * @param mixed $collapseTitle
+		 * @param bool $bPrintCondition
 		 */
-		static public function debug($mixed, $collapse = null, $bPrint = true) {
-			if(!$bPrint) {
+		static public function debug($data, $collapseTitle = null, $bPrintCondition = true) {
+			if(!$bPrintCondition) {
 				return;
 			}
-			static $arCountFuncCall = 0;
-			static $arCountFuncCallWithTitleKey = array();
-			$arCountFuncCall++;
-
-			$bCollapse = false;
-			if($collapse !== null) {
-				$bCollapse = true;
-				if( is_string($collapse) && strlen($collapse)>0) {
-					if( !@isset($arCountFuncCallWithTitleKey[$collapse]) ) {
-						$arCountFuncCallWithTitleKey[$collapse] = 0;
-					}
-					$arCountFuncCallWithTitleKey[$collapse]++;
-
-					$elemTitle = $collapse.'#'.$arCountFuncCallWithTitleKey[$collapse];
-					$elemId = rand(1,500).$collapse.'#'.$arCountFuncCallWithTitleKey[$collapse];
-				}
-				else {
-					$elemTitle = 'dData#'.$arCountFuncCall;
-					$elemId = rand(1,500).$arCountFuncCall;
-				}
-				$elemId = str_replace(array("'", '"'), '_', $elemId);
-			}
+			$collapse = self::_debugCollapse($collapseTitle);
 			?>
-			<?php if($bCollapse):?>
-				<a	href="javascript:void(0)"
-					  style="display: block;background: white; border:1px dotted #5A82CE;padding:3px; text-shadow: none; color: #5A82CE;"
-					  onclick="document.getElementById('<?php echo $elemId?>').style.display = ( document.getElementById('<?php echo $elemId?>').style.display == 'none')?'block':'none'"
-					>
-					<?php echo $elemTitle?>
+			<?php if($collapse['collapse']):?>
+				<a href="javascript:void(0)"
+				   style="display: block;background: white; border:1px dotted #5A82CE;padding:3px; text-shadow: none; color: #5A82CE;"
+				   onclick="document.getElementById('<?php echo $collapse['id']?>').style.display = ( document.getElementById('<?php echo $collapse['id']?>').style.display == 'none')?'block':'none'"
+				>
+					<?php echo $collapse['title']?>
 				</a>
-				<div id="<?php echo $elemId?>" style="text-align: left; display:none; background-color: #b1cdef; position: absolute; z-index: 10000;">
+				<div id="<?php echo $collapse['id']?>" style="text-align: left; display:none; background-color: #b1cdef; position: absolute; z-index: 10000;">
 			<?php endif?>
 
-			<pre style="text-align: left; text-shadow: none; color: black;"><?php print_r($mixed);?></pre>
+			<pre style="text-align: left; text-shadow: none; color: black;"><?php print_r($data);?></pre>
 
-			<?php if ($bCollapse):?>
+			<?php if ($collapse['collapse']):?>
 				</div>
 			<?php endif;
+		}
+
+		static public function debugConsoleLog($data, $collapseTitle = '', $bPrintCondition = true) {
+			$collapse = self::_debugCollapse($collapseTitle);
+			?>
+			<a href="javascript:void(0)"
+			   style="display: inline-block;background: white; border:1px dotted #5A82CE;padding:3px; text-shadow: none; color: #5A82CE;"
+			   id="<?=$collapse['id']?>"
+				><?=$collapse['title']?></a>
+			<script type="text/javascript">
+				(function() {
+					document.getElementById('<?=$collapse['id']?>').onclick = function() {
+						console.log(
+							'<?=$collapse['title']?>',
+							<?=\CUtil::PhpToJSObject($data)?>
+						);
+					};
+				})();
+			</script><?
 		}
 
 		static public function getJsonErrorMsg() {
