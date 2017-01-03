@@ -1915,10 +1915,9 @@ OPTIONS
              tasks          - Удалить задачи модуля
              register       - пометить модуль как удаленный - UnRegisterModule()
 
-    == В стадии разработки ==
-    --convert-to-cp1251=<relative path>:<modifier list> - конвертирует файлы в CP1251
+    --convert-to-cp1251=<relative path>:<modifiers list> - конвертирует файлы в CP1251
         <relative path> - путь до папки/файла (относительно \$CWD)
-        <modifier list> - список модификаторов разделенных двоеточием.
+        <modifiers list> - список модификаторов разделенных двоеточием.
              Доступные модификаторы:
              lang    - конвкертировать только те файлы, в пути которых содержится /ru/
              php     - конвкртировать *.php-файлы
@@ -1927,6 +1926,11 @@ OPTIONS
              css     - конвертировать *.css-файлы
              less    - конвертировать *.less-файлы
              tmpl    - конвертировать *.tmpl-файлы
+             xml     - конвертировать *.xml-файлы, *.yml
+             yaml    - конвертировать *.yaml-файлы
+             json    - конвертировать *.json-файлы
+             txt     - конвертировать *.txt-файлы
+             cfg     - конвертировать *.cfg-, *.conf-, *.ini-, *.obuild-файлы
              sql     - конвертировать *.sql-файлы
              upd-dsc - конвертировать файл description.ru этот файл
                        будет сконвертирован независимо от модификатора lang
@@ -1935,7 +1939,7 @@ OPTIONS
              Что произведет конвертирование всех *.php и *.js файлов
              находящихся в папках/подпапках */ru/*
 
-    --convert-to-utf8=<relative path>:<modifier list> - конвертирует файлы в UTF-8
+    --convert-to-utf8=<relative path>:<modifiers list> - конвертирует файлы в UTF-8
              Обратная операция. Актуальна, когда надо внести правки
              из сторонней установки модуля на CP1251 обратно в репозиторий разработки с кодировкой UTF-8
 HELP;
@@ -1963,8 +1967,8 @@ HELP;
 			'build-update::',
 			'install::',
 			'uninstall::',
-			//'convert-to-cp1251::',
-			//'convert-to-utf8::',
+			'convert-to-cp1251::',
+			'convert-to-utf8::',
 		));
 
 		if( empty($arCommandOptions) ) {
@@ -2219,6 +2223,13 @@ HELP;
 				echo "OK\n";
 			}
 		}
+
+		if( array_key_exists('convert-to-cp1251', $arCommandOptions) ) {
+			$ModuleBuilder->cliConvertTo('CP1251', $arCommandOptions['convert-to-cp1251']);
+		}
+		elseif( array_key_exists('convert-to-utf8', $arCommandOptions) ) {
+			$ModuleBuilder->cliConvertTo('UTF-8', $arCommandOptions['convert-to-utf8']);
+		}
 	}
 
 	public function registerModule() {
@@ -2273,7 +2284,7 @@ HELP;
 	 * @return array
 	 */
 	public function findRawLangText($relPath = '', $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
-		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяФБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
+		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
 		if($relPath == '.') $relPath = '';
 		$relPath = '/'.trim($relPath, '/ ');
 		$curPath = rtrim($this->_docRootDir.$relPath, '/ ');
@@ -2912,25 +2923,62 @@ HELP;
 	}
 
 
-	// Константы задаваемые в качестве аргумента $target метода iconvFiles
-	const ICONV_LANG_DIR = 1;	// Конвертировать только файлы в подпути */ru/* - не применяется отдельно
-	const ICONV_PHP = 2;		// Конвертировать файлы *.php
-	const ICONV_JS = 4;			// Конвертировать файлы *.js
-	const ICONV_HTML = 8;		// Конвертировать файлы *.html
-	const ICONV_CSS = 16;		// Конвертировать файлы *.css
-	const ICONV_LESS = 32;		// Конвертировать файлы *.less
-	const ICONV_TMPL = 64;		// Конвертировать файлы *.tmpl
-	const ICONV_XML = 128;		// Конвертировать файлы *.xml
-	const ICONV_SQL = 256;		// Конвертировать файлы *.sql
-	const ICONV_UPD_DSC = 512;	// Конвертировать файл description.ru
-	const ICONV_ALL = 1022;		// Конвертировать все вышепереисленные типы файлов
-	const ICONV_ALL_LANG = 1023; // Конвертировать се вышеперечисленные типы файлов в подпути */ru/*
+	// Константы с битами маски типов файлов
+	const F_PHP = 1;		// *.php
+	const F_JS = 2;			// *.js
+	const F_HTML = 4;		// *.html
+	const F_TMPL = 8;		// *.tmpl
+	const F_CSS = 16;		// *.css
+	const F_LESS = 32;		// *.less
+	const F_XML = 64;		// *.xml и *.yml
+	const F_YAML = 128;		// *.yaml
+	const F_JSON = 256;		// *.json
+	const F_TXT = 512;		// *.txt
+	const F_CFG = 1024;		// *.cfg, *.conf, *.obuild, *.ini
+	const F_SQL = 2048;		// *.sql
+	const F_ALL = 4095;		// Все вышеперечисленные типы
+	/** @const Конвертировать только файлы в подпути .../ru/...- не применяется отдельно */
+	const ICONV_LANG_DIR = 4096;
+	/** @const Конвертировать файл description.ru */
+	const ICONV_UPD_DSC = 8192;
+	/** Конвертировать все вышепереисленные типы файлов */
+	const ICONV_ALL = 12287; // F_ALL | ICONV_UPD_DSC
+	/** Конвертировать се вышеперечисленные типы файлов в подпути .../ru/... */
+	const ICONV_ALL_LANG = 16383; // ICONV_LANG_DIR | F_ALL | ICONV_UPD_DSC
+	const ICONV_DEF_MOD = self::ICONV_ALL_LANG;
+
+	static protected function covertFileTypeMaskToExtList($target = self::ICONV_DEF_MOD) {
+		$arAllFilesExt = array();
+		if( ($target & self::F_PHP)>0 ) $arAllFilesExt[] = 'php';
+		if( ($target & self::F_JS)>0 ) $arAllFilesExt[] = 'js';
+		if( ($target & self::F_HTML)>0 ) $arAllFilesExt[] = 'html';
+		if( ($target & self::F_TMPL)>0 ) $arAllFilesExt[] = 'tmpl';
+		if( ($target & self::F_CSS)>0 ) $arAllFilesExt[] = 'css';
+		if( ($target & self::F_LESS)>0 ) $arAllFilesExt[] = 'less';
+		if( ($target & self::F_XML)>0 ) {
+			$arAllFilesExt[] = 'xml';
+			$arAllFilesExt[] = 'yml';
+		}
+		if( ($target & self::F_YAML)>0 ) $arAllFilesExt[] = 'yaml';
+		if( ($target & self::F_JSON)>0 ) $arAllFilesExt[] = 'json';
+		if( ($target & self::F_TXT)>0 ) $arAllFilesExt[] = 'txt';
+		if( ($target & self::F_CFG)>0 ) {
+			$arAllFilesExt[] = 'cfg';
+			$arAllFilesExt[] = 'conf';
+			$arAllFilesExt[] = 'obuild';
+			$arAllFilesExt[] = 'ini';
+		}
+		if( ($target & self::F_SQL)>0 ) $arAllFilesExt[] = 'sql';
+		return $arAllFilesExt;
+	}
 
 	/**
-	 * @param $relPath
+	 * @param string $path
 	 * @param int $target - битовая маска с типами файлов для конвертирования
 	 * @param string $from
 	 * @param string $to
+	 * @param null|string $relPathParent - Часть пути,
+	 * в которой производить поиск  папки /ru/ . Актуально с модификатором lang
 	 * @return bool
 	 *
 	 * Пример применения
@@ -2944,27 +2992,31 @@ HELP;
 	 * 	Что означает: "Сконвертировать php- и js-файлы находящиеся в подпути /ru/
 	 * 					из кодировки UTF-8 в CP1251"
 	 */
-	public function convertCharset($relPath, $target = self::ICONV_ALL_LANG, $from = 'UTF-8', $to = 'CP1251') {
+	static public function convertCharset($path, $target = self::ICONV_DEF_MOD, $from = 'UTF-8', $to = 'CP1251', $relPathParent = null) {
 		$target = intval($target);
-		if($target < 2)
-		$relPath = str_replace(array('//', '\\', '/./'), '/', rtrim($relPath, '/'));
-		$path = $this->_docRootDir.$relPath;
-		$arAllFilesExt = array();
-		if( ($target & self::ICONV_PHP)>0 ) $arAllFilesExt[] = '.php';
-		if( ($target & self::ICONV_JS)>0 ) $arAllFilesExt[] = '.js';
-		if( ($target & self::ICONV_HTML)>0 ) $arAllFilesExt[] = '.html';
-		if( ($target & self::ICONV_CSS)>0 ) $arAllFilesExt[] = '.css';
-		if( ($target & self::ICONV_LESS)>0 ) $arAllFilesExt[] = '.less';
-		if( ($target & self::ICONV_TMPL)>0 ) $arAllFilesExt[] = '.tmpl';
-		if( ($target & self::ICONV_SQL)>0 ) $arAllFilesExt[] = '.sql';
+		$path = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($path), '/'));
+
 		$bConvertDescriptionRu = ( ($target & self::ICONV_UPD_DSC)>0 );
 		$bConvertLangDir = ( ($target & self::ICONV_LANG_DIR)>0 );
+		$arAllFilesExt = self::covertFileTypeMaskToExtList($target);
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
-			$fsEntryExt = strtolower(substr($fsEntry, strrpos($fsEntry, '.')));
+			$fsEntityExtDotPos = strrpos($fsEntry, '.');
+			$fsEntryExt = '';
+			if($fsEntityExtDotPos !== false) {
+				$fsEntryExt = strtolower(substr($fsEntry, $fsEntityExtDotPos+1));
+			}
+
+			$relPath4CheckLang = $path;
+			if(null !== $relPathParent) {
+				$relPathParent = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($relPathParent), '/.'));
+				if(strpos($path, $relPathParent) === 0) {
+					$relPath4CheckLang = substr($path, strlen($relPathParent));
+				}
+			}
 			if( (in_array($fsEntryExt, $arAllFilesExt)
 					&& (false === $bConvertLangDir
-						|| false !== strpos($relPath, '/ru/')
+						|| false !== strpos($relPath4CheckLang, '/ru/')
 					)
 				)
 				|| ( true === $bConvertDescriptionRu
@@ -2980,7 +3032,7 @@ HELP;
 				//		если сам битрикс в 1251, а заголовок UTF-8
 				//		!! Однако если битрикс и xml-файл в кодировке UTF-8, то, заголовок windows-1251 допускается :)
 				if(
-					$fsEntryExt == '.xml' && strpos($relPath, '/ru/') !== false
+					$fsEntryExt == '.xml' && strpos($path, '/ru/') !== false
 					&& $from == 'UTF-8' && strpos($content,  '<'.'?xml version="1.0" encoding="UTF-8"?>') !== false
 				) {
 					$content = str_replace(
@@ -2994,7 +3046,7 @@ HELP;
 					file_put_contents($path, $content);
 				}
 				else {
-					echo 'Предупреждение: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
+					echo 'Предупреждение: невозможно конвертировать кодировку файла '.$path.' ('.$from.' -> '.$to.')'."\n";
 				}
 			}
 			return true;
@@ -3004,14 +3056,99 @@ HELP;
 			$bSuccess = true;
 			while($fsEntry = readdir($dir)) {
 				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git' || $fsEntry == '.directory') continue;
-				$bSuccess = self::convertCharset($relPath.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
+				$bSuccess = self::convertCharset($path.'/'.$fsEntry, $target, $from, $to, $relPathParent) && $bSuccess;
 			}
 			closedir($dir);
 			return $bSuccess;
 		}
 		else {
-			echo 'Ошибка: невозможно сконвертировать кодировку файлов. Путь не найден ('.$relPath.')'."\n";
+			echo 'Ошибка: невозможно сконвертировать кодировку файлов. Путь не найден ('.$path.')'."\n";
 			return false;
+		}
+	}
+
+	public function cliConvertTo($charsetTo, $options) {
+		$charsetTo = trim($charsetTo);
+		$charsetFrom = null;
+		switch($charsetTo) {
+			case 'UTF-8':
+				$charsetFrom = 'CP1251';
+				break;
+			case 'CP1251':
+				$charsetFrom = 'UTF-8';
+				break;
+			default:
+				echo 'Ошибка: Для конвертирования доступны только кодировки UTF-8 и CP1251';
+				return;
+		}
+		$modifiersPos = strpos($options, ':');
+		$path = null;
+		$strModifiersList = null;
+		$targetModifiers = 0;
+		if($modifiersPos === false) {
+			$path = $options;
+			$targetModifiers = self::ICONV_DEF_MOD;
+		}
+		else {
+			$path = substr($options, 0, $modifiersPos);
+			$strModifiersList = trim(substr($options, $modifiersPos), ' :');
+			$arModifiersList = explode(':', $strModifiersList);
+			$moduleDirOnly = true;
+			$documentRootOnly = true;
+			foreach($arModifiersList as $strModifier) {
+				$strModifier = trim($strModifier);
+				switch($strModifier) {
+					case 'all':			$targetModifiers |= self::ICONV_ALL; break;
+					case 'lang':		$targetModifiers |= self::ICONV_LANG_DIR; break;
+					case 'php':			$targetModifiers |= self::F_PHP; break;
+					case 'js':			$targetModifiers |= self::F_JS; break;
+					case 'html':		$targetModifiers |= self::F_HTML; break;
+					case 'css':			$targetModifiers |= self::F_CSS; break;
+					case 'less':		$targetModifiers |= self::F_LESS; break;
+					case 'tmpl':		$targetModifiers |= self::F_TMPL; break;
+					case 'xml':			$targetModifiers |= self::F_XML; break;
+					case 'yaml':		$targetModifiers |= self::F_YAML; break;
+					case 'json':		$targetModifiers |= self::F_JSON; break;
+					case 'txt':			$targetModifiers |= self::F_TXT; break;
+					case 'cfg':			$targetModifiers |= self::F_CFG; break;
+					case 'sql':			$targetModifiers |= self::F_SQL; break;
+					case 'upd-dsc':		$targetModifiers |= self::ICONV_UPD_DSC; break;
+					case 'doc-root':	$moduleDirOnly = false;
+				}
+			}
+
+			$path = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($path), '/'));
+			if(substr($path, 0, 1) !== '/') {
+				$path = getcwd().'/'.$path;
+			}
+			$path = rtrim(str_replace(array('//', '\\', '/./'), '/', $path), '/.');
+
+			$relPathParent = $this->_modulesDir.'/'.$this->_moduleName;
+			if(strpos($path, $relPathParent) === false) {
+				if( $moduleDirOnly ) {
+					echo 'Ошибка: конвертировать файлы за пределами папки модуля '.$this->_moduleName
+						.' не разрешено. Используйте модификатор doc-root';
+					return;
+				}
+				$relPathParent = $this->_docRootDir;
+			}
+			elseif( strpos($path, $this->_docRootDir) === false ) {
+				if( $documentRootOnly ) {
+					echo 'Ошибка: конвертировать файлы за пределами DOCUMENT_ROOT запрещено';
+					return;
+				}
+				$relPathParent = null;
+			}
+
+
+
+			if(is_file($path)) {
+				echo 'Конвертирование отдельного файла пока не реализовано.';
+				return;
+			}
+			else {
+				self::convertCharset($path, $targetModifiers, $charsetFrom, $charsetTo, $relPathParent);
+			}
 		}
 	}
 
