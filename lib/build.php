@@ -4,7 +4,7 @@
  * @author Maksim S. Makarov aka pr0n1x
  * @license Affero GPLv3
  * @mailto rootfavell@gmail.com
- * @copyright 2013 Devtop
+ * @copyright 2017 Devtop
  */
 
 class OBX_Build {
@@ -94,6 +94,7 @@ class OBX_Build {
 			$this->_moduleName = $moduleName;
 			$this->_selfFolder = self::MODULES_FOLDER.'/'.$this->_moduleName;
 			$this->_selfDir = $this->_modulesDir.'/'.$this->_moduleName;
+			/** @noinspection PhpIncludeInspection */
 			$arModuleInfo = require $this->_docRootDir.$this->_selfFolder.'/install/version.php';
 			$this->_version = $arModuleInfo['VERSION'];
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
@@ -106,7 +107,7 @@ class OBX_Build {
 		$this->_arDepModules = array();
 		$this->includeConfigFile('%SELF_FOLDER%/module.obuild', true);
 		$this->findResourcesFiles();
-
+		return true;
 	}
 
 	public function isInit() {
@@ -129,6 +130,7 @@ class OBX_Build {
 			define('NO_KEEP_STATISTIC', 'Y');
 			define('NO_AGENT_CHECK', true);
 			define('BX_SKIP_TIMEZONE_COOKIE', true);
+			/** @noinspection PhpIncludeInspection */
 			require($this->_modulesDir.'/main/include/prolog_before.php');
 			global $DB, $DBType;
 			$DBType = strtolower($DB->type);
@@ -637,10 +639,12 @@ class OBX_Build {
 		if(!empty($arDependencies)) {
 			foreach($arDependencies as $subModule) {
 				if($this->addDependency($subModule) === null) {
-					die();
+					die(); // no need to print an error:
+					// addDependency prints text and return null if error
 				}
 			}
 		}
+		return true;
 	}
 
 	public function findResourcesFiles() {
@@ -695,7 +699,10 @@ class OBX_Build {
 
 	public function installResources() {
 		if( count($this->_arDepModules) ) {
+			echo 'Установка ресурсов модулей зависимостей:'.PHP_EOL;
+			/** @var self $DependencyModule */
 			foreach($this->_arDepModules as $DependencyModule) {
+				echo 'Установка файлов модуля "'.$DependencyModule->getModuleName().'"'.PHP_EOL;
 				self::CopyDirFilesEx(
 					 $this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName()
 					,$this->_modulesDir.'/'.$DependencyModule->getModuleName()
@@ -708,7 +715,7 @@ class OBX_Build {
 		if( count($this->_arResources)>0 ) {
 			foreach($this->_arResources as &$arResource) {
 				if($arResource['OPTIONS']['BUILD_ONLY']) {
-					echo 'Пропуск build_only ресурса: '.$arResource['TARGET_FOLDER'].$fsEntryName.PHP_EOL;
+					echo 'Пропуск build_only ресурса: '.$arResource['TARGET_FOLDER'].PHP_EOL;
 					continue;
 				}
 				foreach($arResource['FILES'] as $fsEntryName) {
@@ -819,7 +826,6 @@ class OBX_Build {
 						 $this->_docRootDir.$arResource['TARGET_FOLDER'].'/'.$fsEntryName
 						,$this->_docRootDir.$arResource['INSTALL_FOLDER'].'/'
 						,true, true);
-					$debug = 1;
 				}
 			}
 			$this->_removeGitSubModuleLinks();
@@ -1092,19 +1098,15 @@ if(!defined("BX_ROOT")) {
 ';
 	}
 
-	static public function CheckDirPath($path, $bPermission=true)
+	static public function CheckDirPath($path)
 	{
 		$path = str_replace(array("\\", "//"), "/", $path);
-
 		//remove file name
-		if(substr($path, -1) != "/")
-		{
+		if(substr($path, -1) != "/") {
 			$p = strrpos($path, "/");
 			$path = substr($path, 0, $p);
 		}
-
 		$path = rtrim($path, "/");
-
 		if(!file_exists($path))
 			return mkdir($path, BX_DIR_PERMISSIONS, true);
 		else
@@ -1263,41 +1265,6 @@ if(!defined("BX_ROOT")) {
 		return false;
 	}
 
-//	static function DeleteDirFilesEx($path)
-//	{
-//		if(strlen($path) == 0 || $path == '/')
-//			return false;
-//
-//		$full_path = $_SERVER["DOCUMENT_ROOT"].$path;
-//
-//		$f = true;
-//		if(is_file($full_path) || is_link($full_path))
-//		{
-//			if(@unlink($full_path))
-//				return true;
-//			return false;
-//		}
-//		elseif(is_dir($full_path))
-//		{
-//			if($handle = opendir($full_path))
-//			{
-//				while(($file = readdir($handle)) !== false)
-//				{
-//					if($file == "." || $file == "..")
-//						continue;
-//
-//					if(!self::DeleteDirFilesEx($path."/".$file))
-//						$f = false;
-//				}
-//				closedir($handle);
-//			}
-//			if(!@rmdir($full_path))
-//				return false;
-//			return $f;
-//		}
-//		return false;
-//	}
-
 	/**
 	 * Работает так же как битриксовская, но в отличие от неё, может принимать полный путь.
 	 * @param String $path - путь
@@ -1450,6 +1417,7 @@ if(!defined("BX_ROOT")) {
 		$path = $this->_docRootDir.$path;
 
 		if( file_exists($configPath) ) {
+			/** @noinspection PhpIncludeInspection */
 			$arComponentParamsPlaceholdersList = require($configPath);
 			foreach($arComponentParamsPlaceholdersList as $pubFileRelPath => $arComponentReplaces) {
 				if(!is_array($arComponentReplaces)) {
@@ -1466,7 +1434,7 @@ if(!defined("BX_ROOT")) {
 
 	static public function __replaceComponentParameters($path, $arComponentReplaces) {
 		if( !file_exists($path) ) {
-			return false;
+			return;
 		}
 		$regComponent = '('
 			.'\$APPLICATION\-\>IncludeComponent\((?:[\s\S]*?)\)\;'
@@ -1526,7 +1494,7 @@ if(!defined("BX_ROOT")) {
 
 		$arFileContent = preg_split('~'.$regComponent.'~im', $fileContent, -1, PREG_SPLIT_OFFSET_CAPTURE);
 		if( count($arFileContent) < (count($arComponents)+1) ) {
-			return false;
+			return;
 		}
 		$newFileContent = '';
 		foreach($arFileContent as $key => $arContentChank) {
@@ -1618,7 +1586,7 @@ if(!defined("BX_ROOT")) {
 	}
 
 	static protected function __removeTmpDataFromListIndex(&$arListIndex) {
-		foreach($arListIndex as $key => &$arItem) {
+		foreach($arListIndex as &$arItem) {
 			if( is_array($arItem) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arItem) ) {
 				self::__removeTmpDataFromListIndex($arItem);
 			}
@@ -1701,8 +1669,8 @@ if(!defined("BX_ROOT")) {
 			return true;
 		}
 		$this->_includeProlog();
-		CModule::IncludeModule('iblock');
-		$rsIBlock = CIBlock::GetList(false, array('CODE' => $iblockCode));
+		\CModule::IncludeModule('iblock');
+		$rsIBlock = \CIBlock::GetList(array('SORT'=>'ASC'), array('CODE' => $iblockCode));
 		if( !($arIBlock = $rsIBlock->GetNext()) ) {
 			echo "Iblock \"$iblockCode\" not found \n";
 			return false;
@@ -1745,6 +1713,7 @@ if(!defined("BX_ROOT")) {
 				 	$obExport->ExportProperties($arPropertyMap);
 					// </Свойства>
 					// <Группы>
+					/** @noinspection PhpUnusedLocalVariableInspection */
 					$result = $obExport->ExportSections(
 						$arSectionMap,
 						$start_time,
@@ -1758,6 +1727,8 @@ if(!defined("BX_ROOT")) {
 				// <Каталог>
 				$obExport->StartExportCatalog();
 					// <Товары>
+					/** @noinspection PhpUnusedLocalVariableInspection */
+					/** @noinspection PhpParamsInspection */
 					$result = $obExport->ExportElements(
 						$arPropertyMap,
 						$arSectionMap,
@@ -1778,10 +1749,14 @@ if(!defined("BX_ROOT")) {
 		}
 		if($fpXmlFile)
 			fclose($fpXmlFile);
+
+		return true;
 	}
+
 	public function exportIBlockCML($iblockCode = null) {
 		$bSuccess = true;
 		if($iblockCode === null) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			foreach($this->_arIBlockData as $iblockCode => &$arIB) {
 				$bSuccess = $this->_exportIBlockXML($iblockCode) && $bSuccess;
 			}
@@ -1831,11 +1806,13 @@ if(!defined("BX_ROOT")) {
 		$serFormSettings = serialize($arFormSettings);
 		fwrite($fpFormSettFile, $serFormSettings);
 		if($fpFormSettFile) fclose($fpFormSettFile);
+		return true;
 	}
 
 	public function exportIBlockFormSettings($iblockCode = null) {
 		$bSuccess = true;
 		if($iblockCode === null) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			foreach($this->_arIBlockData as $iblockCode => &$arIB) {
 				$bSuccess = $this->_exportIBlockFormSettings($iblockCode) && $bSuccess;
 			}
@@ -2254,16 +2231,17 @@ HELP;
 	}
 
 	/**
-	 * @return \CModule
+	 * @return \CModule|null
 	 */
 	protected function getCModuleObject() {
-		static $oModule = null;
-		if( $oModule === null ) {
+		static $ModuleInstaller = null;
+		if( $ModuleInstaller === null ) {
 			$this->_includeProlog();
+			/** @noinspection PhpIncludeInspection */
 			require_once $this->_selfDir.'/install/index.php';
-			$oCModule = new $this->_moduleClass;
+			$ModuleInstaller = new $this->_moduleClass;
 		}
-		return $oCModule;
+		return $ModuleInstaller;
 	}
 
 
@@ -2374,7 +2352,6 @@ HELP;
 		$iLine = 0;
 		while( $lineContent = fgets($file) ) {
 			$iLine++;
-			$checkString = '';
 			$bMultiLineCommentInOneLine = false;
 			$posMLCClose = strpos($lineContent, '*/');
 			if($posMLCClose!==false) $bMultiLineComment = false;
@@ -2744,6 +2721,7 @@ HELP;
 		);
 		$this->removeSQLFileComments($this->_releaseFolder.'/release-'.$this->_version.'/install/db/');
 		$this->_addChangeLogToReleaseVersionFile();
+		$this->_addInstallerClassTemplateIfUsed();
 
 		// Копируем подмодули внутрь супер модуля
 		$arReleaseDeps = &$this->_arReleases[$this->_version]['DEPENDENCIES'];
@@ -2832,6 +2810,7 @@ HELP;
 			closedir($depReleaseDir);
 			echo 'OK'.PHP_EOL;
 		}
+		return true;
 	}
 
 	protected function _addChangeLogToReleaseVersionFile() {
@@ -2855,6 +2834,27 @@ HELP;
 				$versionFileContent = str_replace('#CHANGE_LOG#', $changeLog, $versionFileContent);
 				file_put_contents($this->_releaseDir.'/release-'.$this->_version.'/install/version.php', $versionFileContent);
 			}
+		}
+	}
+
+	protected function _addInstallerClassTemplateIfUsed() {
+		$installerPath = $this->_releaseDir.'/release-'.$this->_version.'/install/index.php';
+		$installerCode = file_get_contents($installerPath);
+		$regUsedInstallerTemplate = '~class[\s\n\t]+?'
+			.$this->getModuleClass().'_installer'
+			.'[\s\n\t]+?extends[\s\n\t\\\\]+?'
+			.'OBX\\\\Core\\\\Builder\\\\InstallerTemplate'
+			.'[\s\n\t]*?\{[\s\n\t]*?\}~'
+		;
+		if(preg_match($regUsedInstallerTemplate, $installerCode)) {
+			$installerTemplateCode = file_get_contents(
+				$this->_modulesDir.'/obx.core/lib/builder/installertemplate.php'
+			);
+			$installerCode = preg_replace(
+				$regUsedInstallerTemplate,
+				$installerTemplateCode,
+				$installerCode);
+			file_put_contents($installerPath, $installerCode);
 		}
 	}
 
@@ -3094,7 +3094,9 @@ HELP;
 		$strModifiersList = null;
 		$targetModifiers = 0;
 		if($modifiersPos === false) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			$path = $options;
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			$targetModifiers = self::ICONV_DEF_MOD;
 		}
 		else {
@@ -3621,6 +3623,7 @@ DOC;
 			.'unset($GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
+		return true;
 	}
 
 	static public function convertUpdateDescription($descriptionText) {
@@ -3637,6 +3640,7 @@ DOC;
 				$descriptionHtml .= $descriptionLine."\n";
 			}
 			else {
+				$newListLevel = 0;
 				if( strpos($descriptionLine, '-===') === 0 ) {
 					$newListLevel = 3;
 				}
@@ -3649,6 +3653,7 @@ DOC;
 
 				if($bLiOpened) {
 					$descriptionHtml .= '</li>'."\n";
+					/** @noinspection PhpUnusedLocalVariableInspection */
 					$bLiOpened = false;
 				}
 				if( ($newListLevel - $listLevel) > 0 ) {
@@ -3687,6 +3692,7 @@ DOC;
 		$arVersionTo = self::readVersion($versionTo);
 		if(empty($arVersionTo)) {
 			$versionTo = $this->_version;
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			$arVersionTo = self::readVersion($versionTo);
 		}
 		echo 'Создание архива обновления '.$this->_moduleName.'-'.$versionTo."\n";
@@ -3717,6 +3723,7 @@ DOC;
 		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/'.$versionTo);
 		closedir($updateDirHandler);
 		if($bIConvSuccess) {
+			/** @noinspection SpellCheckingInspection */
 			$shellCommand = ''
 				.'cd '.$this->_releaseDir.'/build;'."\n"
 				.(file_exists($this->_releaseDir.'/build/'.$versionTo.'.tar.gz')
