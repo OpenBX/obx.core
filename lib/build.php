@@ -2918,7 +2918,7 @@ HELP;
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/.last_version/');
+		$bIConvSuccess = $this->convertCharset($this->_releaseDir.'/build/.last_version/');
 		closedir($releaseDirHandler);
 		if($bIConvSuccess) {
 			$shellCommand = ''
@@ -3011,7 +3011,7 @@ HELP;
 	 */
 	static public function convertCharset($path, $target = self::ICONV_DEF_MOD, $from = 'UTF-8', $to = 'CP1251', $relPathParent = null) {
 		$target = intval($target);
-		$path = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($path), '/'));
+		$path = str_replace(array('\\', '//', '/./'), '/', rtrim(trim($path), '/'));
 
 		$bConvertDescriptionRu = ( ($target & self::ICONV_UPD_DSC)>0 );
 		$bConvertLangDir = ( ($target & self::ICONV_LANG_DIR)>0 );
@@ -3729,7 +3729,7 @@ DOC;
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/'.$versionTo);
+		$bIConvSuccess = $this->convertCharset($this->_releaseDir.'/build/'.$versionTo);
 		closedir($updateDirHandler);
 		if($bIConvSuccess) {
 			/** @noinspection SpellCheckingInspection */
