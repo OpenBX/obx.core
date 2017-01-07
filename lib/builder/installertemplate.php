@@ -232,7 +232,7 @@ class InstallerTemplate  extends \CModule
 			);
 		}
 		else {
-			$_SESSION[$this->stepsSessionKey] = time();
+			$_SESSION[$this->stepsSessionKey]['TIMESTAMP'] = time();
 			$this->bSuccessInstallDB		= &$_SESSION[$this->stepsSessionKey]['I_DB'];
 			$this->bSuccessInstallFiles		= &$_SESSION[$this->stepsSessionKey]['I_FILES'];
 			$this->bSuccessInstallDeps		= &$_SESSION[$this->stepsSessionKey]['I_DEPS'];
@@ -244,7 +244,7 @@ class InstallerTemplate  extends \CModule
 			$this->bSuccessUnInstallFiles	= &$_SESSION[$this->stepsSessionKey]['U_FILES'];
 			$this->bSuccessUnInstallDeps	= &$_SESSION[$this->stepsSessionKey]['U_DEPS'];
 			$this->bSuccessUnInstallEvents	= &$_SESSION[$this->stepsSessionKey]['U_EVENTS'];
-			$this->bSuccessUnInstallTasks	= &$_SESSION[$this->stepsSessionKey]['U_EVENTS'];
+			$this->bSuccessUnInstallTasks	= &$_SESSION[$this->stepsSessionKey]['U_TASKS'];
 			$this->bSuccessUnInstallData	= &$_SESSION[$this->stepsSessionKey]['U_DATA'];
 		}
 	}
