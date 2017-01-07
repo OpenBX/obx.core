@@ -31,3 +31,4 @@ function _bx() {
 	CModule::IncludeModule('iblock');
 	CModule::IncludeModule('obx.core');
 }
+_bx();

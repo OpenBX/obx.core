@@ -10,7 +10,8 @@
 namespace OBX\Core\Builder;
 
 
-class InstallerTemplate  extends \CModule {
+class InstallerTemplate  extends \CModule
+{
 	protected $installDir = null;
 	protected $moduleDir = null;
 	protected $bxModulesDir = null;

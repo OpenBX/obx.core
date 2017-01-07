@@ -2841,7 +2841,7 @@ HELP;
 		$installerPath = $this->_releaseDir.'/release-'.$this->_version.'/install/index.php';
 		$installerCode = file_get_contents($installerPath);
 		$regUsedInstallerTemplate = '~class[\s\n\t]+?'
-			.$this->getModuleClass().'_installer'
+			.$this->getModuleClass().'_install'
 			.'[\s\n\t]+?extends[\s\n\t\\\\]+?'
 			.'OBX\\\\Core\\\\Builder\\\\InstallerTemplate'
 			.'[\s\n\t]*?\{[\s\n\t]*?\}~'
@@ -2850,6 +2850,15 @@ HELP;
 			$installerTemplateCode = file_get_contents(
 				$this->_modulesDir.'/obx.core/lib/builder/installertemplate.php'
 			);
+			$installerTemplateCode = str_replace('\\', '\\\\', $installerTemplateCode);
+			$regInstallerTemplateDefinition = '~class[\s\n\t]+?InstallerTemplate'
+				.'[\s\n\t]+?extends[\s\n\t\\\\]+?\\\\CModule~'
+			;
+			list($tmp, $installerTemplateCode) = preg_split($regInstallerTemplateDefinition, $installerTemplateCode);
+			$installerTemplateCode =
+				'class '.$this->getModuleClass().'_install extends \CModule'
+				.$installerTemplateCode
+			;
 			$installerCode = preg_replace(
 				$regUsedInstallerTemplate,
 				$installerTemplateCode,
