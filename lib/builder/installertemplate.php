@@ -42,24 +42,25 @@ class InstallerTemplate  extends \CModule
 
 	const INSTALL_COMPLETE = self::INSTALL_NO_DEPS;
 
+	const FILE = '__file_not_set__';
+	const DIR = '__dir_not_set';
+	const LANG_PREFIX = 'OBX_INSTALL_MODULE_';
+
 	public function __construct() {
 		self::includeLangFile();
-		$this->installDir = str_replace(array("\\", "//"), "/", __FILE__);
-		//10 == strlen("/index.php")
-		//8 == strlen("/install")
-		$this->installDir = substr($this->installDir, 0, strlen($this->installDir) - 10);
-		$this->moduleDir = substr($this->installDir, 0, strlen($this->installDir) - 8);
-		$this->bxModulesDir = $_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules";
+		$this->installDir = str_replace(array('\\', '//'), '/', static::DIR);
+		$this->moduleDir = substr($this->installDir, 0, ( strlen($this->installDir)-strlen('/install') ));
+		$this->bxModulesDir = $_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules';
 
 		/** @noinspection PhpIncludeInspection */
-		$arModuleVersion = include($this->installDir."/version.php");
-		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
-		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
+		$arModuleVersion = include($this->installDir.'/version.php');
+		$this->MODULE_VERSION = $arModuleVersion['VERSION'];
+		$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 
-		$this->MODULE_NAME = GetMessage("DVT_MODULE_INSTALL_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("DVT_MODULE_INSTALL_DESCRIPTION");
-		$this->PARTNER_NAME = GetMessage("DVT_PARTNER_NAME");
-		$this->PARTNER_URI = GetMessage("DVT_PARTNER_URI");
+		$this->MODULE_NAME = GetMessage(static::LANG_PREFIX.'NAME');
+		$this->MODULE_DESCRIPTION = GetMessage(static::LANG_PREFIX.'DESCRIPTION');
+		$this->PARTNER_NAME = GetMessage(static::LANG_PREFIX.'PARTNER_NAME');
+		$this->PARTNER_URI = GetMessage(static::LANG_PREFIX.'PARTNER_URI');
 		$this->linkStepsToSession();
 	}
 
@@ -93,7 +94,7 @@ class InstallerTemplate  extends \CModule
 		$bSuccess = true;
 		$arBlockedSubModules = array();
 		if( !$this->checkUnInstallSubmodules($arBlockedSubModules) ) {
-			$strError = GetMessage('DVT_MODULE_CANT_DEL_INSTALLED_SUB_MOD', array(
+			$strError = GetMessage(static::LANG_PREFIX.'CANT_DEL_SUB_MOD', array(
 				'#MODULES_LIST#' => '"'.implode('", "', $arBlockedSubModules).'"'
 			));
 			$APPLICATION->ThrowException($strError);
@@ -114,9 +115,9 @@ class InstallerTemplate  extends \CModule
 
 	public function InstallFiles($bSkipDepsInstall = false) {
 		$this->bSuccessInstallFiles = true;
-		if (is_file($this->installDir . "/install_files.php")) {
+		if (is_file($this->installDir . '/install_files.php')) {
 			/** @noinspection PhpIncludeInspection */
-			require($this->installDir . "/install_files.php");
+			require($this->installDir . '/install_files.php');
 		}
 		else {
 			$this->bSuccessInstallFiles = false;
@@ -142,9 +143,9 @@ class InstallerTemplate  extends \CModule
 			$this->bSuccessUnInstallFiles = false;
 		}
 		if($this->bSuccessUnInstallDeps) {
-			if (is_file($this->installDir . "/uninstall_files.php")) {
+			if (is_file($this->installDir . '/uninstall_files.php')) {
 				/** @noinspection PhpIncludeInspection */
-				require($this->installDir . "/uninstall_files.php");
+				require($this->installDir . '/uninstall_files.php');
 			}
 			else {
 				$this->bSuccessUnInstallFiles = false;
@@ -301,7 +302,7 @@ class InstallerTemplate  extends \CModule
 		$arDepsList = $this->getDepsList();
 		$this->bSuccessInstallDeps = true;
 		foreach($arDepsList as $depModID => $depModClass) {
-			$depModInstallerFile = $this->bxModulesDir."/".$depModID."/install/index.php";
+			$depModInstallerFile = $this->bxModulesDir.'/'.$depModID.'/install/index.php';
 			if( !IsModuleInstalled($depModID) ) {
 				if(file_exists($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/'.$depModID)) {
 					DeleteDirFilesEx($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/'.$depModID);
@@ -450,7 +451,7 @@ class InstallerTemplate  extends \CModule
 		$CUpdateClientPartner = new \CUpdateClientPartner();
 		$arBlockedSubModules = array();
 		if( !$this->checkUnInstallSubmodules($arBlockedSubModules) ) {
-			$strError = GetMessage('DVT_MODULE_CANT_DEL_INSTALLED_SUB_MOD', array(
+			$strError = GetMessage(static::LANG_PREFIX.'CANT_DEL_SUB_MOD', array(
 				'#MODULES_LIST#' => '"'.implode('", "', $arBlockedSubModules).'"'
 			));
 			$CUpdateClientPartner->AddMessage2Log('Installer "'.$this->MODULE_ID.'": '.$strError);
@@ -484,14 +485,14 @@ class InstallerTemplate  extends \CModule
 	protected function getSubModuleObject($moduleID) {
 		$arDepsList = $this->getDepsList();
 		if( !array_key_exists($moduleID, $arDepsList) ) {
-			$this->arErrors[] = GetMessage('DVT_MODULE_IS_NOT_DEP', array(
+			$this->arErrors[] = GetMessage(static::LANG_PREFIX.'MODULE_IS_NOT_DEP', array(
 				'#MODULE#' => $moduleID
 			));
 			return null;
 		}
-		$moduleInstallerFile = $this->bxModulesDir."/".$moduleID."/install/index.php";
+		$moduleInstallerFile = $this->bxModulesDir.'/'.$moduleID.'/install/index.php';
 		if( !is_file($moduleInstallerFile) ) {
-			$this->arErrors[] = GetMessage('DVT_SUBMODULE_INSTALLER_NOT_FOUND', array(
+			$this->arErrors[] = GetMessage(static::LANG_PREFIX.'SUBMODULE_INSTALLER_NOT_FOUND', array(
 				'#MODULE#' => $moduleID
 			));
 			return null;
@@ -504,7 +505,7 @@ class InstallerTemplate  extends \CModule
 
 	public function getDepsList() {
 		$arDepsList = array();
-		if( is_dir($this->installDir."/modules") && is_file($this->installDir.'/dependencies.php') ) {
+		if( is_dir($this->installDir.'/modules') && is_file($this->installDir.'/dependencies.php') ) {
 			/** @noinspection PhpIncludeInspection */
 			$arDepsList = require $this->installDir.'/dependencies.php';
 		}
@@ -605,7 +606,7 @@ class InstallerTemplate  extends \CModule
 		unset($GLOBALS['__IncludeStepFileGlobalKeysIterator']);
 		unset($GLOBALS['__IncludeStepFileGlobalKeysCount']);
 		/** @noinspection PhpIncludeInspection */
-		include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
+		include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/include/prolog_admin_after.php');
 		/**
 		 * @var \CMain $APPLICATION
 		 */
@@ -616,7 +617,7 @@ class InstallerTemplate  extends \CModule
 		/** @noinspection PhpIncludeInspection */
 		include($stepFilePath);
 		/** @noinspection PhpIncludeInspection */
-		include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
+		include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/include/epilog_admin.php');
 		die();
 	}
 
@@ -668,21 +669,15 @@ class InstallerTemplate  extends \CModule
 		return false;
 	}
 
-	static public function getModuleCurDir() {
-		static $modCurDir = null;
-		if ($modCurDir === null) {
-			$modCurDir = str_replace("\\", "/", __FILE__);
-			// 18 = strlen of "/install/index.php"
-			$modCurDir = substr($modCurDir, 0, strlen($modCurDir) - 18);
-		}
-		return $modCurDir;
-	}
-
 	static public function includeLangFile() {
-		/** @noinspection PhpUnusedLocalVariableInspection */
-		global $MESS;
-		/** @noinspection PhpIncludeInspection */
-		@include(self::getModuleCurDir().'/lang/'.LANGUAGE_ID.'/install/index.php');
+		static $langFileIncluded = false;
+		if(false === $langFileIncluded) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
+			global $MESS;
+			/** @noinspection PhpIncludeInspection */
+			@include(self::DIR.'/lang/'.LANGUAGE_ID.'/install/index.php');
+			$langFileIncluded = true;
+		}
 	}
 
 	static public function readVersion($version) {
