@@ -67,7 +67,7 @@ class InstallerTemplate  extends \CModule
 	public function DoInstall() {
 		$bSuccess = true;
 		$bSuccess = $this->InstallDB() && $bSuccess;
-		$bSuccess = $this->InstallFiles() && $bSuccess;
+		$bSuccess = $this->InstallFiles(true) && $bSuccess;
 		if(method_exists($this, 'InstallDeps')) {
 			$bSuccess = $this->InstallDeps() && $bSuccess;
 		}
@@ -102,8 +102,10 @@ class InstallerTemplate  extends \CModule
 		}
 		$bSuccess = $this->UnInstallTasks() && $bSuccess;
 		$bSuccess = $this->UnInstallEvents() && $bSuccess;
-		$bSuccess = $this->UnInstallDeps() && $bSuccess;
-		$bSuccess = $this->UnInstallFiles(($bSkipDepsInstall = true)) && $bSuccess;
+		if(method_exists($this, 'UnInstallDeps')) {
+			$bSuccess = $this->UnInstallDeps() && $bSuccess;
+		}
+		$bSuccess = $this->UnInstallFiles(true) && $bSuccess;
 		$bSuccess = $this->UnInstallDB() && $bSuccess;
 		if($bSuccess) {
 			if( IsModuleInstalled($this->MODULE_ID) ) {
@@ -167,10 +169,12 @@ class InstallerTemplate  extends \CModule
 
 	public function InstallDB() {
 		$this->bSuccessInstallDB = true;
+		if( $this->registerIfComplete() ) return true;
 		return $this->bSuccessInstallDB;
 	}
 	public function UnInstallDB() {
 		$this->bSuccessUnInstallDB = true;
+		if( $this->unRegisterIfComplete() ) return true;
 		return $this->bSuccessUnInstallDB;
 	}
 	public function InstallTasks() {
@@ -207,7 +211,9 @@ class InstallerTemplate  extends \CModule
 	}
 
 	protected function linkStepsToSession() {
-		$this->stepsSessionKey = md5('__MODULE_INSTALL_STEPS_'.$this->MODULE_ID.'_'.$this->MODULE_VERSION);
+		$this->stepsSessionKey = md5(
+			'__MODULE_INSTALL_STEPS_'.$this->MODULE_ID.'_'.$this->MODULE_VERSION
+		);
 //		if(array_key_exists($this->stepsSessionKey, $_SESSION)) {
 //			$timeDelta = time() - $_SESSION[$sessionKey]['TIMESTAMP'];
 //			if($timeDelta < 0 || $timeDelta >= 60) {
@@ -675,7 +681,7 @@ class InstallerTemplate  extends \CModule
 			/** @noinspection PhpUnusedLocalVariableInspection */
 			global $MESS;
 			/** @noinspection PhpIncludeInspection */
-			@include(self::DIR.'/lang/'.LANGUAGE_ID.'/install/index.php');
+			@include(static::DIR.'/lang/'.LANGUAGE_ID.'/install/index.php');
 			$langFileIncluded = true;
 		}
 	}
