@@ -42,14 +42,14 @@ class InstallerTemplate  extends \CModule
 
 	const INSTALL_COMPLETE = self::INSTALL_NO_DEPS;
 
-	const FILE = '__file_not_set__';
-	const DIR = '__dir_not_set';
+	const FILE = '__FILE__';
+	const DIR = '__DIR__';
 	const LANG_PREFIX = 'OBX_INSTALL_MODULE_';
 
 	public function __construct() {
 		self::includeLangFile();
-		$this->installDir = str_replace(array('\\', '//'), '/', static::DIR);
-		$this->moduleDir = substr($this->installDir, 0, ( strlen($this->installDir)-strlen('/install') ));
+		$this->installDir = static::getInstallDir();
+		$this->moduleDir = static::getModuleDir();
 		$this->bxModulesDir = $_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules';
 
 		/** @noinspection PhpIncludeInspection */
@@ -62,6 +62,14 @@ class InstallerTemplate  extends \CModule
 		$this->PARTNER_NAME = GetMessage(static::LANG_PREFIX.'PARTNER_NAME');
 		$this->PARTNER_URI = GetMessage(static::LANG_PREFIX.'PARTNER_URI');
 		$this->linkStepsToSession();
+	}
+
+	static public function getInstallDir() {
+		return str_replace(array('\\', '//'), '/', static::DIR);;
+	}
+	static public function getModuleDir() {
+		$installDir = static::getInstallDir();
+		return substr($installDir, 0, ( strlen($installDir)-strlen('/install') ));
 	}
 
 	public function DoInstall() {
@@ -680,8 +688,12 @@ class InstallerTemplate  extends \CModule
 		if(false === $langFileIncluded) {
 			/** @noinspection PhpUnusedLocalVariableInspection */
 			global $MESS;
+			$fileName = 'index.php';
+			if(strpos(static::FILE, static::DIR.'/') === 0) {
+				$fileName = substr(static::FILE, strlen(static::DIR)+1);
+			}
 			/** @noinspection PhpIncludeInspection */
-			@include(static::DIR.'/lang/'.LANGUAGE_ID.'/install/index.php');
+			@include(static::getModuleDir().'/lang/'.LANGUAGE_ID.'/install/'.$fileName);
 			$langFileIncluded = true;
 		}
 	}
