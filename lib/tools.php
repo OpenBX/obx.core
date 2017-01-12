@@ -576,10 +576,13 @@ namespace OBX\Core {
 		static public function newBufferContentFunction($closure) {
 			if(is_callable($closure)) {
 				return function() use ($closure) {
-					ob_start();
-					$closure();
-					$content = ob_get_clean();
-					return $content;
+					if(!defined('BX_BUFFER_SHUTDOWN')) {
+						ob_start();
+						$closure();
+						$content = ob_get_clean();
+						return $content;
+					}
+					return '';
 				};
 			}
 			return function() use ($closure) {return ''.$closure;};
