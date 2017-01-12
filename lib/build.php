@@ -4,7 +4,7 @@
  * @author Maksim S. Makarov aka pr0n1x
  * @license Affero GPLv3
  * @mailto rootfavell@gmail.com
- * @copyright 2013 Devtop
+ * @copyright 2017 Devtop
  */
 
 class OBX_Build {
@@ -94,6 +94,7 @@ class OBX_Build {
 			$this->_moduleName = $moduleName;
 			$this->_selfFolder = self::MODULES_FOLDER.'/'.$this->_moduleName;
 			$this->_selfDir = $this->_modulesDir.'/'.$this->_moduleName;
+			/** @noinspection PhpIncludeInspection */
 			$arModuleInfo = require $this->_docRootDir.$this->_selfFolder.'/install/version.php';
 			$this->_version = $arModuleInfo['VERSION'];
 			$this->_versionDate = $arModuleInfo['VERSION_DATE'];
@@ -106,7 +107,7 @@ class OBX_Build {
 		$this->_arDepModules = array();
 		$this->includeConfigFile('%SELF_FOLDER%/module.obuild', true);
 		$this->findResourcesFiles();
-
+		return true;
 	}
 
 	public function isInit() {
@@ -129,6 +130,7 @@ class OBX_Build {
 			define('NO_KEEP_STATISTIC', 'Y');
 			define('NO_AGENT_CHECK', true);
 			define('BX_SKIP_TIMEZONE_COOKIE', true);
+			/** @noinspection PhpIncludeInspection */
 			require($this->_modulesDir.'/main/include/prolog_before.php');
 			global $DB, $DBType;
 			$DBType = strtolower($DB->type);
@@ -637,10 +639,12 @@ class OBX_Build {
 		if(!empty($arDependencies)) {
 			foreach($arDependencies as $subModule) {
 				if($this->addDependency($subModule) === null) {
-					die();
+					die(); // no need to print an error:
+					// addDependency prints text and return null if error
 				}
 			}
 		}
+		return true;
 	}
 
 	public function findResourcesFiles() {
@@ -695,7 +699,10 @@ class OBX_Build {
 
 	public function installResources() {
 		if( count($this->_arDepModules) ) {
+			echo 'Установка ресурсов модулей зависимостей:'.PHP_EOL;
+			/** @var self $DependencyModule */
 			foreach($this->_arDepModules as $DependencyModule) {
+				echo 'Установка файлов модуля "'.$DependencyModule->getModuleName().'"'.PHP_EOL;
 				self::CopyDirFilesEx(
 					 $this->_selfDir.'/install/modules/'.$DependencyModule->getModuleName()
 					,$this->_modulesDir.'/'.$DependencyModule->getModuleName()
@@ -707,10 +714,17 @@ class OBX_Build {
 		}
 		if( count($this->_arResources)>0 ) {
 			foreach($this->_arResources as &$arResource) {
-				if($arResource['BUILD_ONLY']) {
+				if($arResource['OPTIONS']['BUILD_ONLY']) {
+					echo 'Пропуск build_only ресурса: '.$arResource['TARGET_FOLDER'].PHP_EOL;
 					continue;
 				}
 				foreach($arResource['FILES'] as $fsEntryName) {
+					echo 'Установка ресурса: '
+						.$arResource['INSTALL_FOLDER']
+						.'/'.$fsEntryName
+						.' -> '
+						.$arResource['TARGET_FOLDER'].'/'
+						.PHP_EOL;
 					self::CopyDirFilesEx(
 						  $this->_docRootDir.$arResource['INSTALL_FOLDER'].'/'.$fsEntryName
 						, $this->_docRootDir.$arResource['TARGET_FOLDER'].'/'
@@ -812,7 +826,6 @@ class OBX_Build {
 						 $this->_docRootDir.$arResource['TARGET_FOLDER'].'/'.$fsEntryName
 						,$this->_docRootDir.$arResource['INSTALL_FOLDER'].'/'
 						,true, true);
-					$debug = 1;
 				}
 			}
 			$this->_removeGitSubModuleLinks();
@@ -862,6 +875,7 @@ class OBX_Build {
 				if($arResource['OPTIONS']['BUILD_ONLY']) {
 					continue;
 				}
+				
 				foreach($arResource['FILES'] as $fsEntryName) {
 					$installCode .= 'OBX_CopyDirFilesEx('
 						.'$_SERVER["DOCUMENT_ROOT"]."'
@@ -1084,19 +1098,15 @@ if(!defined("BX_ROOT")) {
 ';
 	}
 
-	static public function CheckDirPath($path, $bPermission=true)
+	static public function CheckDirPath($path)
 	{
 		$path = str_replace(array("\\", "//"), "/", $path);
-
 		//remove file name
-		if(substr($path, -1) != "/")
-		{
+		if(substr($path, -1) != "/") {
 			$p = strrpos($path, "/");
 			$path = substr($path, 0, $p);
 		}
-
 		$path = rtrim($path, "/");
-
 		if(!file_exists($path))
 			return mkdir($path, BX_DIR_PERMISSIONS, true);
 		else
@@ -1255,41 +1265,6 @@ if(!defined("BX_ROOT")) {
 		return false;
 	}
 
-//	static function DeleteDirFilesEx($path)
-//	{
-//		if(strlen($path) == 0 || $path == '/')
-//			return false;
-//
-//		$full_path = $_SERVER["DOCUMENT_ROOT"].$path;
-//
-//		$f = true;
-//		if(is_file($full_path) || is_link($full_path))
-//		{
-//			if(@unlink($full_path))
-//				return true;
-//			return false;
-//		}
-//		elseif(is_dir($full_path))
-//		{
-//			if($handle = opendir($full_path))
-//			{
-//				while(($file = readdir($handle)) !== false)
-//				{
-//					if($file == "." || $file == "..")
-//						continue;
-//
-//					if(!self::DeleteDirFilesEx($path."/".$file))
-//						$f = false;
-//				}
-//				closedir($handle);
-//			}
-//			if(!@rmdir($full_path))
-//				return false;
-//			return $f;
-//		}
-//		return false;
-//	}
-
 	/**
 	 * Работает так же как битриксовская, но в отличие от неё, может принимать полный путь.
 	 * @param String $path - путь
@@ -1442,6 +1417,7 @@ if(!defined("BX_ROOT")) {
 		$path = $this->_docRootDir.$path;
 
 		if( file_exists($configPath) ) {
+			/** @noinspection PhpIncludeInspection */
 			$arComponentParamsPlaceholdersList = require($configPath);
 			foreach($arComponentParamsPlaceholdersList as $pubFileRelPath => $arComponentReplaces) {
 				if(!is_array($arComponentReplaces)) {
@@ -1458,7 +1434,7 @@ if(!defined("BX_ROOT")) {
 
 	static public function __replaceComponentParameters($path, $arComponentReplaces) {
 		if( !file_exists($path) ) {
-			return false;
+			return;
 		}
 		$regComponent = '('
 			.'\$APPLICATION\-\>IncludeComponent\((?:[\s\S]*?)\)\;'
@@ -1518,7 +1494,7 @@ if(!defined("BX_ROOT")) {
 
 		$arFileContent = preg_split('~'.$regComponent.'~im', $fileContent, -1, PREG_SPLIT_OFFSET_CAPTURE);
 		if( count($arFileContent) < (count($arComponents)+1) ) {
-			return false;
+			return;
 		}
 		$newFileContent = '';
 		foreach($arFileContent as $key => $arContentChank) {
@@ -1610,7 +1586,7 @@ if(!defined("BX_ROOT")) {
 	}
 
 	static protected function __removeTmpDataFromListIndex(&$arListIndex) {
-		foreach($arListIndex as $key => &$arItem) {
+		foreach($arListIndex as &$arItem) {
 			if( is_array($arItem) && !array_key_exists('__THIS_IS_VALUE_ARRAY', $arItem) ) {
 				self::__removeTmpDataFromListIndex($arItem);
 			}
@@ -1693,8 +1669,8 @@ if(!defined("BX_ROOT")) {
 			return true;
 		}
 		$this->_includeProlog();
-		CModule::IncludeModule('iblock');
-		$rsIBlock = CIBlock::GetList(false, array('CODE' => $iblockCode));
+		\CModule::IncludeModule('iblock');
+		$rsIBlock = \CIBlock::GetList(array('SORT'=>'ASC'), array('CODE' => $iblockCode));
 		if( !($arIBlock = $rsIBlock->GetNext()) ) {
 			echo "Iblock \"$iblockCode\" not found \n";
 			return false;
@@ -1737,6 +1713,7 @@ if(!defined("BX_ROOT")) {
 				 	$obExport->ExportProperties($arPropertyMap);
 					// </Свойства>
 					// <Группы>
+					/** @noinspection PhpUnusedLocalVariableInspection */
 					$result = $obExport->ExportSections(
 						$arSectionMap,
 						$start_time,
@@ -1750,6 +1727,8 @@ if(!defined("BX_ROOT")) {
 				// <Каталог>
 				$obExport->StartExportCatalog();
 					// <Товары>
+					/** @noinspection PhpUnusedLocalVariableInspection */
+					/** @noinspection PhpParamsInspection */
 					$result = $obExport->ExportElements(
 						$arPropertyMap,
 						$arSectionMap,
@@ -1770,10 +1749,14 @@ if(!defined("BX_ROOT")) {
 		}
 		if($fpXmlFile)
 			fclose($fpXmlFile);
+
+		return true;
 	}
+
 	public function exportIBlockCML($iblockCode = null) {
 		$bSuccess = true;
 		if($iblockCode === null) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			foreach($this->_arIBlockData as $iblockCode => &$arIB) {
 				$bSuccess = $this->_exportIBlockXML($iblockCode) && $bSuccess;
 			}
@@ -1823,11 +1806,13 @@ if(!defined("BX_ROOT")) {
 		$serFormSettings = serialize($arFormSettings);
 		fwrite($fpFormSettFile, $serFormSettings);
 		if($fpFormSettFile) fclose($fpFormSettFile);
+		return true;
 	}
 
 	public function exportIBlockFormSettings($iblockCode = null) {
 		$bSuccess = true;
 		if($iblockCode === null) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			foreach($this->_arIBlockData as $iblockCode => &$arIB) {
 				$bSuccess = $this->_exportIBlockFormSettings($iblockCode) && $bSuccess;
 			}
@@ -1860,7 +1845,7 @@ SHORT OPTIONS
     -f: alias --full
 OPTIONS
     --module=MODULE_ID
-         Устанавливает модуль(и) для которыз будут применены действия
+         Устанавливает модуль(и) для которых будут применены действия
     --build
          Собирает файлы из установленного битрикса внутрь модуля
     --full
@@ -1915,10 +1900,9 @@ OPTIONS
              tasks          - Удалить задачи модуля
              register       - пометить модуль как удаленный - UnRegisterModule()
 
-    == В стадии разработки ==
-    --convert-to-cp1251=<relative path>:<modifier list> - конвертирует файлы в CP1251
+    --convert-to-cp1251=<relative path>:<modifiers list> - конвертирует файлы в CP1251
         <relative path> - путь до папки/файла (относительно \$CWD)
-        <modifier list> - список модификаторов разделенных двоеточием.
+        <modifiers list> - список модификаторов разделенных двоеточием.
              Доступные модификаторы:
              lang    - конвкертировать только те файлы, в пути которых содержится /ru/
              php     - конвкртировать *.php-файлы
@@ -1927,6 +1911,11 @@ OPTIONS
              css     - конвертировать *.css-файлы
              less    - конвертировать *.less-файлы
              tmpl    - конвертировать *.tmpl-файлы
+             xml     - конвертировать *.xml-файлы, *.yml
+             yaml    - конвертировать *.yaml-файлы
+             json    - конвертировать *.json-файлы
+             txt     - конвертировать *.txt-файлы
+             cfg     - конвертировать *.cfg-, *.conf-, *.ini-, *.obuild-файлы
              sql     - конвертировать *.sql-файлы
              upd-dsc - конвертировать файл description.ru этот файл
                        будет сконвертирован независимо от модификатора lang
@@ -1935,7 +1924,7 @@ OPTIONS
              Что произведет конвертирование всех *.php и *.js файлов
              находящихся в папках/подпапках */ru/*
 
-    --convert-to-utf8=<relative path>:<modifier list> - конвертирует файлы в UTF-8
+    --convert-to-utf8=<relative path>:<modifiers list> - конвертирует файлы в UTF-8
              Обратная операция. Актуальна, когда надо внести правки
              из сторонней установки модуля на CP1251 обратно в репозиторий разработки с кодировкой UTF-8
 HELP;
@@ -1963,8 +1952,8 @@ HELP;
 			'build-update::',
 			'install::',
 			'uninstall::',
-			//'convert-to-cp1251::',
-			//'convert-to-utf8::',
+			'convert-to-cp1251::',
+			'convert-to-utf8::',
 		));
 
 		if( empty($arCommandOptions) ) {
@@ -2219,6 +2208,13 @@ HELP;
 				echo "OK\n";
 			}
 		}
+
+		if( array_key_exists('convert-to-cp1251', $arCommandOptions) ) {
+			$ModuleBuilder->cliConvertTo('CP1251', $arCommandOptions['convert-to-cp1251']);
+		}
+		elseif( array_key_exists('convert-to-utf8', $arCommandOptions) ) {
+			$ModuleBuilder->cliConvertTo('UTF-8', $arCommandOptions['convert-to-utf8']);
+		}
 	}
 
 	public function registerModule() {
@@ -2235,16 +2231,17 @@ HELP;
 	}
 
 	/**
-	 * @return \CModule
+	 * @return \CModule|null
 	 */
 	protected function getCModuleObject() {
-		static $oModule = null;
-		if( $oModule === null ) {
+		static $ModuleInstaller = null;
+		if( $ModuleInstaller === null ) {
 			$this->_includeProlog();
+			/** @noinspection PhpIncludeInspection */
 			require_once $this->_selfDir.'/install/index.php';
-			$oCModule = new $this->_moduleClass;
+			$ModuleInstaller = new $this->_moduleClass;
 		}
-		return $oCModule;
+		return $ModuleInstaller;
 	}
 
 
@@ -2273,7 +2270,7 @@ HELP;
 	 * @return array
 	 */
 	public function findRawLangText($relPath = '', $arExclude = array(), $arPathExclude = array(), &$arExcludeEntries = null) {
-		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяФБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
+		static $rusLit = 'абвгдеёжзиёклмнопрстуфхцчшщэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЭЮЯ';
 		if($relPath == '.') $relPath = '';
 		$relPath = '/'.trim($relPath, '/ ');
 		$curPath = rtrim($this->_docRootDir.$relPath, '/ ');
@@ -2355,7 +2352,6 @@ HELP;
 		$iLine = 0;
 		while( $lineContent = fgets($file) ) {
 			$iLine++;
-			$checkString = '';
 			$bMultiLineCommentInOneLine = false;
 			$posMLCClose = strpos($lineContent, '*/');
 			if($posMLCClose!==false) $bMultiLineComment = false;
@@ -2725,6 +2721,7 @@ HELP;
 		);
 		$this->removeSQLFileComments($this->_releaseFolder.'/release-'.$this->_version.'/install/db/');
 		$this->_addChangeLogToReleaseVersionFile();
+		$this->_addInstallerClassTemplateIfUsed();
 
 		// Копируем подмодули внутрь супер модуля
 		$arReleaseDeps = &$this->_arReleases[$this->_version]['DEPENDENCIES'];
@@ -2813,6 +2810,7 @@ HELP;
 			closedir($depReleaseDir);
 			echo 'OK'.PHP_EOL;
 		}
+		return true;
 	}
 
 	protected function _addChangeLogToReleaseVersionFile() {
@@ -2836,6 +2834,36 @@ HELP;
 				$versionFileContent = str_replace('#CHANGE_LOG#', $changeLog, $versionFileContent);
 				file_put_contents($this->_releaseDir.'/release-'.$this->_version.'/install/version.php', $versionFileContent);
 			}
+		}
+	}
+
+	protected function _addInstallerClassTemplateIfUsed() {
+		$installerPath = $this->_releaseDir.'/release-'.$this->_version.'/install/index.php';
+		$installerCode = file_get_contents($installerPath);
+		$regUsedInstallerTemplate = '~class[\s\n\t]+?'
+			.$this->getModuleClass().'_install'
+			.'[\s\n\t]+?extends[\s\n\t\\\\]+?'
+			.'OBX\\\\Core\\\\Builder\\\\InstallerTemplate'
+			.'[\s\n\t]*?\{[\s\n\t]*?\}~'
+		;
+		if(preg_match($regUsedInstallerTemplate, $installerCode)) {
+			$installerTemplateCode = file_get_contents(
+				$this->_modulesDir.'/obx.core/lib/builder/installertemplate.php'
+			);
+			$installerTemplateCode = str_replace('\\', '\\\\', $installerTemplateCode);
+			$regInstallerTemplateDefinition = '~class[\s\n\t]+?InstallerTemplate'
+				.'[\s\n\t]+?extends[\s\n\t\\\\]+?\\\\CModule~'
+			;
+			list($tmp, $installerTemplateCode) = preg_split($regInstallerTemplateDefinition, $installerTemplateCode);
+			$installerTemplateCode =
+				'class '.$this->getModuleClass().'_install extends \CModule'
+				.$installerTemplateCode
+			;
+			$installerCode = preg_replace(
+				$regUsedInstallerTemplate,
+				$installerTemplateCode,
+				$installerCode);
+			file_put_contents($installerPath, $installerCode);
 		}
 	}
 
@@ -2890,7 +2918,7 @@ HELP;
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/.last_version/');
+		$bIConvSuccess = $this->convertCharset($this->_releaseDir.'/build/.last_version/');
 		closedir($releaseDirHandler);
 		if($bIConvSuccess) {
 			$shellCommand = ''
@@ -2912,25 +2940,62 @@ HELP;
 	}
 
 
-	// Константы задаваемые в качестве аргумента $target метода iconvFiles
-	const ICONV_LANG_DIR = 1;	// Конвертировать только файлы в подпути */ru/* - не применяется отдельно
-	const ICONV_PHP = 2;		// Конвертировать файлы *.php
-	const ICONV_JS = 4;			// Конвертировать файлы *.js
-	const ICONV_HTML = 8;		// Конвертировать файлы *.html
-	const ICONV_CSS = 16;		// Конвертировать файлы *.css
-	const ICONV_LESS = 32;		// Конвертировать файлы *.less
-	const ICONV_TMPL = 64;		// Конвертировать файлы *.tmpl
-	const ICONV_XML = 128;		// Конвертировать файлы *.xml
-	const ICONV_SQL = 256;		// Конвертировать файлы *.sql
-	const ICONV_UPD_DSC = 512;	// Конвертировать файл description.ru
-	const ICONV_ALL = 1022;		// Конвертировать все вышепереисленные типы файлов
-	const ICONV_ALL_LANG = 1023; // Конвертировать се вышеперечисленные типы файлов в подпути */ru/*
+	// Константы с битами маски типов файлов
+	const F_PHP = 1;		// *.php
+	const F_JS = 2;			// *.js
+	const F_HTML = 4;		// *.html
+	const F_TMPL = 8;		// *.tmpl
+	const F_CSS = 16;		// *.css
+	const F_LESS = 32;		// *.less
+	const F_XML = 64;		// *.xml и *.yml
+	const F_YAML = 128;		// *.yaml
+	const F_JSON = 256;		// *.json
+	const F_TXT = 512;		// *.txt
+	const F_CFG = 1024;		// *.cfg, *.conf, *.obuild, *.ini
+	const F_SQL = 2048;		// *.sql
+	const F_ALL = 4095;		// Все вышеперечисленные типы
+	/** @const Конвертировать только файлы в подпути .../ru/...- не применяется отдельно */
+	const ICONV_LANG_DIR = 4096;
+	/** @const Конвертировать файл description.ru */
+	const ICONV_UPD_DSC = 8192;
+	/** Конвертировать все вышепереисленные типы файлов */
+	const ICONV_ALL = 12287; // F_ALL | ICONV_UPD_DSC
+	/** Конвертировать се вышеперечисленные типы файлов в подпути .../ru/... */
+	const ICONV_ALL_LANG = 16383; // ICONV_LANG_DIR | F_ALL | ICONV_UPD_DSC
+	const ICONV_DEF_MOD = self::ICONV_ALL_LANG;
+
+	static protected function covertFileTypeMaskToExtList($target = self::ICONV_DEF_MOD) {
+		$arAllFilesExt = array();
+		if( ($target & self::F_PHP)>0 ) $arAllFilesExt[] = 'php';
+		if( ($target & self::F_JS)>0 ) $arAllFilesExt[] = 'js';
+		if( ($target & self::F_HTML)>0 ) $arAllFilesExt[] = 'html';
+		if( ($target & self::F_TMPL)>0 ) $arAllFilesExt[] = 'tmpl';
+		if( ($target & self::F_CSS)>0 ) $arAllFilesExt[] = 'css';
+		if( ($target & self::F_LESS)>0 ) $arAllFilesExt[] = 'less';
+		if( ($target & self::F_XML)>0 ) {
+			$arAllFilesExt[] = 'xml';
+			$arAllFilesExt[] = 'yml';
+		}
+		if( ($target & self::F_YAML)>0 ) $arAllFilesExt[] = 'yaml';
+		if( ($target & self::F_JSON)>0 ) $arAllFilesExt[] = 'json';
+		if( ($target & self::F_TXT)>0 ) $arAllFilesExt[] = 'txt';
+		if( ($target & self::F_CFG)>0 ) {
+			$arAllFilesExt[] = 'cfg';
+			$arAllFilesExt[] = 'conf';
+			$arAllFilesExt[] = 'obuild';
+			$arAllFilesExt[] = 'ini';
+		}
+		if( ($target & self::F_SQL)>0 ) $arAllFilesExt[] = 'sql';
+		return $arAllFilesExt;
+	}
 
 	/**
-	 * @param $relPath
+	 * @param string $path
 	 * @param int $target - битовая маска с типами файлов для конвертирования
 	 * @param string $from
 	 * @param string $to
+	 * @param null|string $relPathParent - Часть пути,
+	 * в которой производить поиск  папки /ru/ . Актуально с модификатором lang
 	 * @return bool
 	 *
 	 * Пример применения
@@ -2944,27 +3009,31 @@ HELP;
 	 * 	Что означает: "Сконвертировать php- и js-файлы находящиеся в подпути /ru/
 	 * 					из кодировки UTF-8 в CP1251"
 	 */
-	public function convertCharset($relPath, $target = self::ICONV_ALL_LANG, $from = 'UTF-8', $to = 'CP1251') {
+	static public function convertCharset($path, $target = self::ICONV_DEF_MOD, $from = 'UTF-8', $to = 'CP1251', $relPathParent = null) {
 		$target = intval($target);
-		if($target < 2)
-		$relPath = str_replace(array('//', '\\', '/./'), '/', rtrim($relPath, '/'));
-		$path = $this->_docRootDir.$relPath;
-		$arAllFilesExt = array();
-		if( ($target & self::ICONV_PHP)>0 ) $arAllFilesExt[] = '.php';
-		if( ($target & self::ICONV_JS)>0 ) $arAllFilesExt[] = '.js';
-		if( ($target & self::ICONV_HTML)>0 ) $arAllFilesExt[] = '.html';
-		if( ($target & self::ICONV_CSS)>0 ) $arAllFilesExt[] = '.css';
-		if( ($target & self::ICONV_LESS)>0 ) $arAllFilesExt[] = '.less';
-		if( ($target & self::ICONV_TMPL)>0 ) $arAllFilesExt[] = '.tmpl';
-		if( ($target & self::ICONV_SQL)>0 ) $arAllFilesExt[] = '.sql';
+		$path = str_replace(array('\\', '//', '/./'), '/', rtrim(trim($path), '/'));
+
 		$bConvertDescriptionRu = ( ($target & self::ICONV_UPD_DSC)>0 );
 		$bConvertLangDir = ( ($target & self::ICONV_LANG_DIR)>0 );
+		$arAllFilesExt = self::covertFileTypeMaskToExtList($target);
 		if( is_file($path) ) {
 			$fsEntry = substr($path, strrpos($path, '/')+1);
-			$fsEntryExt = strtolower(substr($fsEntry, strrpos($fsEntry, '.')));
+			$fsEntityExtDotPos = strrpos($fsEntry, '.');
+			$fsEntryExt = '';
+			if($fsEntityExtDotPos !== false) {
+				$fsEntryExt = strtolower(substr($fsEntry, $fsEntityExtDotPos+1));
+			}
+
+			$relPath4CheckLang = $path;
+			if(null !== $relPathParent) {
+				$relPathParent = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($relPathParent), '/.'));
+				if(strpos($path, $relPathParent) === 0) {
+					$relPath4CheckLang = substr($path, strlen($relPathParent));
+				}
+			}
 			if( (in_array($fsEntryExt, $arAllFilesExt)
 					&& (false === $bConvertLangDir
-						|| false !== strpos($relPath, '/ru/')
+						|| false !== strpos($relPath4CheckLang, '/ru/')
 					)
 				)
 				|| ( true === $bConvertDescriptionRu
@@ -2980,7 +3049,7 @@ HELP;
 				//		если сам битрикс в 1251, а заголовок UTF-8
 				//		!! Однако если битрикс и xml-файл в кодировке UTF-8, то, заголовок windows-1251 допускается :)
 				if(
-					$fsEntryExt == '.xml' && strpos($relPath, '/ru/') !== false
+					$fsEntryExt == '.xml' && strpos($path, '/ru/') !== false
 					&& $from == 'UTF-8' && strpos($content,  '<'.'?xml version="1.0" encoding="UTF-8"?>') !== false
 				) {
 					$content = str_replace(
@@ -2994,7 +3063,7 @@ HELP;
 					file_put_contents($path, $content);
 				}
 				else {
-					echo 'Предупреждение: невозможно конвертировать кодировку файла '.$relPath.' ('.$from.' -> '.$to.')'."\n";
+					echo 'Предупреждение: невозможно конвертировать кодировку файла '.$path.' ('.$from.' -> '.$to.')'."\n";
 				}
 			}
 			return true;
@@ -3004,14 +3073,101 @@ HELP;
 			$bSuccess = true;
 			while($fsEntry = readdir($dir)) {
 				if($fsEntry == '.' || $fsEntry == '..' || $fsEntry == '.git' || $fsEntry == '.directory') continue;
-				$bSuccess = self::convertCharset($relPath.'/'.$fsEntry, $target, $from, $to) && $bSuccess;
+				$bSuccess = self::convertCharset($path.'/'.$fsEntry, $target, $from, $to, $relPathParent) && $bSuccess;
 			}
 			closedir($dir);
 			return $bSuccess;
 		}
 		else {
-			echo 'Ошибка: невозможно сконвертировать кодировку файлов. Путь не найден ('.$relPath.')'."\n";
+			echo 'Ошибка: невозможно сконвертировать кодировку файлов. Путь не найден ('.$path.')'."\n";
 			return false;
+		}
+	}
+
+	public function cliConvertTo($charsetTo, $options) {
+		$charsetTo = trim($charsetTo);
+		$charsetFrom = null;
+		switch($charsetTo) {
+			case 'UTF-8':
+				$charsetFrom = 'CP1251';
+				break;
+			case 'CP1251':
+				$charsetFrom = 'UTF-8';
+				break;
+			default:
+				echo 'Ошибка: Для конвертирования доступны только кодировки UTF-8 и CP1251';
+				return;
+		}
+		$modifiersPos = strpos($options, ':');
+		$path = null;
+		$strModifiersList = null;
+		$targetModifiers = 0;
+		if($modifiersPos === false) {
+			/** @noinspection PhpUnusedLocalVariableInspection */
+			$path = $options;
+			/** @noinspection PhpUnusedLocalVariableInspection */
+			$targetModifiers = self::ICONV_DEF_MOD;
+		}
+		else {
+			$path = substr($options, 0, $modifiersPos);
+			$strModifiersList = trim(substr($options, $modifiersPos), ' :');
+			$arModifiersList = explode(':', $strModifiersList);
+			$moduleDirOnly = true;
+			$documentRootOnly = true;
+			foreach($arModifiersList as $strModifier) {
+				$strModifier = trim($strModifier);
+				switch($strModifier) {
+					case 'all':			$targetModifiers |= self::ICONV_ALL; break;
+					case 'lang':		$targetModifiers |= self::ICONV_LANG_DIR; break;
+					case 'php':			$targetModifiers |= self::F_PHP; break;
+					case 'js':			$targetModifiers |= self::F_JS; break;
+					case 'html':		$targetModifiers |= self::F_HTML; break;
+					case 'css':			$targetModifiers |= self::F_CSS; break;
+					case 'less':		$targetModifiers |= self::F_LESS; break;
+					case 'tmpl':		$targetModifiers |= self::F_TMPL; break;
+					case 'xml':			$targetModifiers |= self::F_XML; break;
+					case 'yaml':		$targetModifiers |= self::F_YAML; break;
+					case 'json':		$targetModifiers |= self::F_JSON; break;
+					case 'txt':			$targetModifiers |= self::F_TXT; break;
+					case 'cfg':			$targetModifiers |= self::F_CFG; break;
+					case 'sql':			$targetModifiers |= self::F_SQL; break;
+					case 'upd-dsc':		$targetModifiers |= self::ICONV_UPD_DSC; break;
+					case 'doc-root':	$moduleDirOnly = false;
+				}
+			}
+
+			$path = str_replace(array('//', '\\', '/./'), '/', rtrim(trim($path), '/'));
+			if(substr($path, 0, 1) !== '/') {
+				$path = getcwd().'/'.$path;
+			}
+			$path = rtrim(str_replace(array('//', '\\', '/./'), '/', $path), '/.');
+
+			$relPathParent = $this->_modulesDir.'/'.$this->_moduleName;
+			if(strpos($path, $relPathParent) === false) {
+				if( $moduleDirOnly ) {
+					echo 'Ошибка: конвертировать файлы за пределами папки модуля '.$this->_moduleName
+						.' не разрешено. Используйте модификатор doc-root';
+					return;
+				}
+				$relPathParent = $this->_docRootDir;
+			}
+			elseif( strpos($path, $this->_docRootDir) === false ) {
+				if( $documentRootOnly ) {
+					echo 'Ошибка: конвертировать файлы за пределами DOCUMENT_ROOT запрещено';
+					return;
+				}
+				$relPathParent = null;
+			}
+
+
+
+			if(is_file($path)) {
+				echo 'Конвертирование отдельного файла пока не реализовано.';
+				return;
+			}
+			else {
+				self::convertCharset($path, $targetModifiers, $charsetFrom, $charsetTo, $relPathParent);
+			}
 		}
 	}
 
@@ -3476,6 +3632,7 @@ DOC;
 			.'unset($GLOBALS["__runUpdaterFrom"]);'
 			.'?'.'>'
 		);
+		return true;
 	}
 
 	static public function convertUpdateDescription($descriptionText) {
@@ -3492,6 +3649,7 @@ DOC;
 				$descriptionHtml .= $descriptionLine."\n";
 			}
 			else {
+				$newListLevel = 0;
 				if( strpos($descriptionLine, '-===') === 0 ) {
 					$newListLevel = 3;
 				}
@@ -3504,6 +3662,7 @@ DOC;
 
 				if($bLiOpened) {
 					$descriptionHtml .= '</li>'."\n";
+					/** @noinspection PhpUnusedLocalVariableInspection */
 					$bLiOpened = false;
 				}
 				if( ($newListLevel - $listLevel) > 0 ) {
@@ -3542,6 +3701,7 @@ DOC;
 		$arVersionTo = self::readVersion($versionTo);
 		if(empty($arVersionTo)) {
 			$versionTo = $this->_version;
+			/** @noinspection PhpUnusedLocalVariableInspection */
 			$arVersionTo = self::readVersion($versionTo);
 		}
 		echo 'Создание архива обновления '.$this->_moduleName.'-'.$versionTo."\n";
@@ -3569,9 +3729,10 @@ DOC;
 				,true, true, FALSE, '.git'
 			);
 		}
-		$bIConvSuccess = $this->convertCharset($this->_releaseFolder.'/build/'.$versionTo);
+		$bIConvSuccess = $this->convertCharset($this->_releaseDir.'/build/'.$versionTo);
 		closedir($updateDirHandler);
 		if($bIConvSuccess) {
+			/** @noinspection SpellCheckingInspection */
 			$shellCommand = ''
 				.'cd '.$this->_releaseDir.'/build;'."\n"
 				.(file_exists($this->_releaseDir.'/build/'.$versionTo.'.tar.gz')
@@ -3583,16 +3744,5 @@ DOC;
 			shell_exec($shellCommand);
 		}
 		return true;
-	}
-
-	/**
-	 * [pronix:2013-07-23]
-	 * Данная функция помечает все PHP, XML и JS файлы внутри папки как PlainText
-	 * Что бы любимый PhpStorm не индексировал лишнего :)
-	 * TODO: Реализовать метод OBX_Build::addIdeaProjectFolderAsPlainText
-	 * За явную пометку файлов как plainText отвечает файл .idea/misc.xml
-	 */
-	static public function addIdeaProjectFolderAsPlainText() {
-
 	}
 }
