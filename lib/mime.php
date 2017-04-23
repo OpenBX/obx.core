@@ -47,18 +47,26 @@ class Mime {
 	);
 
 	protected $arMimeCompressedTypes = array(
-		'application/x-rar-compressed' => 'rar',
+		'application/zip' => 'zip',
 		'application/x-rar' => 'rar',
+		'application/x-rar-compressed' => 'rar',
 		'application/x-tar' => 'tar',
+		'application/gzip' => 'gz',
+		'application/x-gzip' => 'gz',
+		'application/x-bzip' => 'bz2',
+		'application/bz2' => 'bz2',
+		'application/bzip2' => 'bz2',
 		'application/x-bzip2' => 'bz2',
+		'application/x-7z' => '7z',
+		'application/x-7z-compressed' => '7z',
+		'application/x-lzma' => 'lzma',
+		'application/x-xz' => 'xz',
+		'application/x-iso9660-image' => 'iso',
+		'application/x-tgz' => 'tar.gz',
+		'application/x-gzip-compressed-tar' => 'tar.gz',
 		'application/x-bzip-compressed-tar' => 'tar.bz2',
 		'application/x-bzip2-compressed-tar' => 'tar.bz2',
-		'application/zip' => 'zip',
-		'application/x-7z-compressed' => '7z',
-		'application/x-gzip' => 'gz',
-		'application/x-gzip-compressed-tar' => 'tar.gz',
-		'application/x-xz' => 'xz',
-		'application/x-iso9660-image' => 'iso'
+		'application/x-lzma-compressed-tar' => 'tar.lzma'
 	);
 
 
