@@ -29,6 +29,7 @@ Loc::loadLanguageFile(__FILE__);
  * @property-read bool $useTildaKeys;
  * @property-read array $actualParams
  * @property-read array $params
+ * @property array $additionalData
  */
 class Ajax {
 	private $_callId = null;
@@ -36,6 +37,7 @@ class Ajax {
 	private $_template = null;
 	private $_actualParams = null;
 	private $_params = null;
+	private $_additionalData = null;
 	private $_useTildaKeys = false;
 	private $_isAjaxHitNow = false;
 	static private $cache = null;
@@ -43,38 +45,54 @@ class Ajax {
 	const CACHE_INIT_DIR = 'ajax_call';
 	const AJAX_CALL_PARAMS_MARKER = 'COMPONENT_AJAX_CALL';
 
-	private function __construct($component, $actualFields = null, $useTildaKeys = false) {
-		list($this->_name, $this->_template, $this->_params) = self::getComponentData($component);
+	private function __construct($component, $actualFields = null, $useTildaKeys = false, $fillDummyObjectByArray = false) {
+		$this->_params = array();
+		list($this->_name, $this->_template, $arParams) = self::getComponentData($component);
 		$this->_useTildaKeys = !!$useTildaKeys;
-		if( array_key_exists(self::AJAX_CALL_PARAMS_MARKER, $this->_params)
-			&& $this->_params[self::AJAX_CALL_PARAMS_MARKER] == 'Y'
+		if( array_key_exists(self::AJAX_CALL_PARAMS_MARKER, $arParams)
+			&& $arParams[self::AJAX_CALL_PARAMS_MARKER] == 'Y'
 		) {
 			$this->_isAjaxHitNow = true;
 		}
-		else {
-			$this->_params[self::AJAX_CALL_PARAMS_MARKER] = 'Y';
-		}
+		$arParams[self::AJAX_CALL_PARAMS_MARKER] = 'Y';
+		$this->_params[self::AJAX_CALL_PARAMS_MARKER] = 'Y';
 
-		$actualParamsSerialized = '';
-		if( !empty($actualFields) && is_array($actualFields) ) {
-			foreach($actualFields as $actualFieldName) {
-				if( substr($actualFieldName, 0, 1) === '~' ) {
-					continue;
-				}
-				if(true === $this->_useTildaKeys) {
-					$actualFieldName = '~'.$actualFieldName;
-				}
-				if( array_key_exists($actualFieldName, $this->_params) ) {
-					$this->_actualParams[] = $actualFieldName;
-					$actualFieldValue = $this->_params[$actualFieldName];
-					if( is_array($actualFieldValue) ) {
-						$actualFieldValue = implode(',', $actualFieldValue);
-					}
-					$actualParamsSerialized .= '['.$actualFieldName.': '.$actualFieldValue.'];';
-				}
+		if( $fillDummyObjectByArray && is_array($component) ) {
+			if( empty($component['callId']) ) {
+				//todo: throw
+			}
+			$this->_name = $component['name'];
+			$this->_template = $component['template'];
+			$this->_useTildaKeys = $component['useTildaKeys'];
+			$this->_params = $arParams;
+			$this->_actualParams = $component['actualParams'];
+			$this->_callId = $component['callId'];
+			if( array_key_exists('additionalData', $component) ) {
+				$this->additionalData = $component['additionalData'];
 			}
 		}
-		$this->_callId = md5(SITE_ID.':'.$this->_name.':'.$this->_template.':'.$actualParamsSerialized);
+		else {
+			$actualParamsSerialized = '';
+			$tildaPrefix = (true === $this->_useTildaKeys)?'~':'';
+			if( empty($actualFields) || !is_array($actualFields) ) {
+				$actualFields = array_keys($arParams);
+			}
+			foreach ($actualFields as &$actualFieldName) {
+				if (substr($actualFieldName, 0, 1) === '~') {
+					continue;
+				}
+				if (array_key_exists($tildaPrefix . $actualFieldName, $arParams)) {
+					$actualFieldValue = $arParams[$tildaPrefix . $actualFieldName];
+					$this->_actualParams[] = $actualFieldName;
+					$this->_params[$actualFieldName] = $actualFieldValue;
+					if (is_array($actualFieldValue)) {
+						$actualFieldValue = implode(',', $actualFieldValue);
+					}
+					$actualParamsSerialized .= '[' . $actualFieldName . ': ' . $actualFieldValue . '];';
+				}
+			}
+			$this->_callId = md5(SITE_ID.':'.$this->_name.':'.$this->_template.':'.$actualParamsSerialized);
+		}
 	}
 
 	public function __get($name) {
@@ -84,37 +102,48 @@ class Ajax {
 			case 'template': return $this->_template;
 			case 'isAjaxHitNow': return $this->_isAjaxHitNow;
 			case 'useTildaKeys': return $this->_useTildaKeys;
-			case 'params':
-				$sourceParams = [];
-				foreach($this->_params as $paramName => &$paramValue) {
-					$hasTilda = (substr($paramName, 0, 1) === '~');
-					if($this->_useTildaKeys === $hasTilda) {
-						$sourceParams[$paramName] = $paramValue;
-					}
-				}
-				return $sourceParams;
+			case 'params': return $this->_params;
 			case 'actualParams': return $this->_actualParams;
+			case 'additionalData': return $this->_additionalData;
 			default:
 				throw new ObjectPropertyException($name);
 		}
 	}
 
-	static public function prepare($component, $actualFields = null, $useTildaKeys = false) {
+	public function __set($name, $value) {
+		switch($name) {
+			case 'additionalData':
+				if( is_array($value) && !empty($value) ) {
+					$this->_additionalData = $value;
+				}
+				break;
+			default:
+				throw new ObjectPropertyException($name);
+		}
+	}
+
+	public function saveParams() {
 		$cache = self::getCache();
-		$ajax = new self($component, $actualFields, $useTildaKeys);
-		$d=1;
-		if( ! $ajax->isAjaxHitNow &&
-			$cache->startDataCache(self::CACHE_TTL, $ajax->_callId, self::CACHE_INIT_DIR)
+		if( ! $this->isAjaxHitNow &&
+			$cache->startDataCache(self::CACHE_TTL, $this->_callId, self::CACHE_INIT_DIR)
 		) {
 			/** @noinspection PhpParamsInspection */
 			$cache->endDataCache([
-				'callId' => $ajax->_callId,
-				'name' => $ajax->_name,
-				'template' => $ajax->_template,
-				'useTildaKeys' => $ajax->_useTildaKeys,
-				'actualParams' => $ajax->_actualParams,
-				'params' => $ajax->_params
+				'callId' => $this->_callId,
+				'name' => $this->_name,
+				'template' => $this->_template,
+				'useTildaKeys' => $this->_useTildaKeys,
+				'actualParams' => $this->_actualParams,
+				'params' => $this->_params,
+				'additionalData' => $this->_additionalData
 			]);
+		}
+	}
+
+	static public function prepare($component, $actualFields = null, $useTildaKeys = false, $immadiateSaveToCache = false) {
+		$ajax = new self($component, $actualFields, $useTildaKeys);
+		if( true === $immadiateSaveToCache ) {
+			$ajax->saveParams();
 		}
 		return $ajax;
 	}
@@ -133,7 +162,8 @@ class Ajax {
 			return new self(
 				$componentData,
 				$componentData['actualParams'],
-				$componentData['useTildaKeys']
+				$componentData['useTildaKeys'],
+				true
 			);
 		}
 		return null;
@@ -179,4 +209,4 @@ class Ajax {
 			$arParams
 		];
 	}
-} 
+}
