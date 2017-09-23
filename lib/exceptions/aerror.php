@@ -45,7 +45,7 @@ abstract class AError extends \ErrorException implements IBase {
 		if(static::ID === null) {
 			throw new \ErrorException('You must redeclare '.$class.'::ID constant exactly: const ID = "YOUR_LANG_MESSAGES_PREFIX";');
 		}
-		self::$_arLangMessages[$class] = Loc::loadLanguageFile(static::FILE, false, true);
+		self::$_arLangMessages[$class] = Loc::loadLanguageFile(static::FILE, LANGUAGE_ID, true);
 	}
 
 	/**
