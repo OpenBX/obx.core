@@ -210,6 +210,8 @@ class Ajax {
 	}
 
 	static public function getByCallId($callId) {
+		$callId = trim($callId);
+		if( empty($callId) ) return null;
 		$cache = self::getCache();
 		$componentData = null;
 		if( $cache->initCache(self::CACHE_AUTO_TTL, $callId, self::CACHE_INIT_DIR) ) {
