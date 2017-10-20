@@ -86,7 +86,9 @@ class Ajax {
 				$actualFields = array_keys($arParams);
 			}
 			foreach ($actualFields as &$actualFieldName) {
-				if (substr($actualFieldName, 0, 1) === '~') {
+				if ( '~' === substr($actualFieldName, 0, 1)
+					|| self::AJAX_CALL_PARAMS_MARKER === $actualFieldName
+				) {
 					continue;
 				}
 				if (array_key_exists($tildaPrefix . $actualFieldName, $arParams)) {
@@ -210,6 +212,8 @@ class Ajax {
 	}
 
 	static public function getByCallId($callId) {
+		$callId = trim($callId);
+		if( empty($callId) ) return null;
 		$cache = self::getCache();
 		$componentData = null;
 		if( $cache->initCache(self::CACHE_AUTO_TTL, $callId, self::CACHE_INIT_DIR) ) {
