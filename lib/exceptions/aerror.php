@@ -24,7 +24,7 @@ abstract class AError extends \ErrorException implements IBase {
 	 * @param int $lineno [optional] The line number where the exception is thrown.
 	 * @param \Exception $previous [optional] The previous exception used for the exception chaining.
 	 */
-	public function __construct($message = '', $code = 0, $severity = 1, $filename = __FILE__, $lineno = __LINE__, $previous = null) {
+	public function __construct($message = '', $code = 0, $severity = 1, $filename = null, $lineno = null, $previous = null) {
 		if(empty($message)) {
 			$message = static::getLangMessage($code);
 		}
@@ -32,6 +32,9 @@ abstract class AError extends \ErrorException implements IBase {
 			$arReplace = $message;
 			$message = static::getLangMessage($code, $arReplace);
 		}
+		$trace = debug_backtrace();
+		if(null === $filename) $filename = $trace[0]['file'];
+		if(null === $lineno) $lineno = $trace[0]['line'];
 		parent::__construct($message, $code, $severity, $filename, $lineno, $previous);
 	}
 
