@@ -8,5 +8,5 @@
  ** @mailto rootfavell@gmail.com    **
  ** @mailto tashiro@yandex.ru       **
  *************************************/
-$MESS['OBX_CORE_IS_NOT_INSTALLED'] = '«Базовый модуль А68» не установлен';
+$MESS['OBX_CORE_IS_NOT_INSTALLED'] = 'OpenBX: Базовый модуль';
 ?>
