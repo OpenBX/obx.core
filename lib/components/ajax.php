@@ -32,25 +32,83 @@ Loc::loadLanguageFile(__FILE__);
  * @property array $additionalData
  */
 class Ajax {
+	/** @var \CBitrixComponent|null - Объект вызываемого компонента */
+	private $_component = null;
+
+	/** @var string|null - идентификатор ajax-вызова */
 	private $_callId = null;
+
+	/** @var string|null - имя компонента */
 	private $_name = null;
+
+	/** @var string|null - шаблон компонента */
 	private $_template = null;
+
+	/** @var array|null - список значимых (сохраняемых) ключей $arParams */
 	private $_actualParams = null;
+
+	/** @var array|null - значения значимых параметров $arParams */
 	private $_params = null;
+
+	/**
+	 * @var array|null - дополнительные данные
+	 * Например фактическое содержимое фильтра, передаваемого в глобальной переменной,
+	 * имя которой передано в параметрах. Нам необходимо сохранить в кеш ajax-вызова
+	 * не только параметры, но и само содержимое фильра, поскольку внутри ajax-вызова
+	 * интересующего нас занчения в GLOBALS уже не будет (хит новый же...).
+	 * Потому сохраняем в это поле, сохраняем в кеш и вытаскиваем из кеша
+	 * во время ajax-вызова.
+	 */
 	private $_additionalData = null;
+
+	/**
+	 * @var bool - признак использования сырых значений arParams полученных в шаблоне компонента.
+	 * Треюуется это, потому что многие компоненты модифицируют переменную $arParams,
+	 * что не позволяет внутри шаблона компонента получить те знаения $arParams,
+	 * которые были исползованы в коде вызова компонента.
+	 * Решается банальным получением значений из параметров с префиксом "~",
+	 * В методах-наследниках \CBitrixComponent::onPrepareComponentParams()
+	 * параметры с тильдой не принято модифицировать - это противоречит
+	 * назначению параметров с тильдой.
+	 */
 	private $_useTildaKeys = false;
+
+	/** @var bool - признак того, что сейчас осуществляется ajax-вызов */
 	private $_isAjaxHitNow = false;
+
+	/** @var string - тип кеша */
 	private $_cacheType = 'A';
+
+	/** @var int - Вермя кеширования (сек.) */
 	private $_cacheTime = 3600;
+
+	/** @var \Bitrix\Main\Data\Cache|null - объект менеджера кеширования  */
 	static private $cache = null;
+
 	const CACHE_AUTO_TTL = 36000000;
 	const CACHE_SESSION_TTL = 300;
 	const CACHE_INIT_DIR = 'ajax_call';
 	const AJAX_CALL_PARAMS_MARKER = 'COMPONENT_AJAX_CALL';
+	const ADDITIONAL_DATA_MARKER = 'COMPONENT_AJAX_ADDITIONAL_STAMP';
 
+	/**
+	 * @param \CBitrixComponentTemplate|\CBitrixComponent|array $component -
+	 * 			объект шаблона компонента или самого компонента
+	 * или массив описывающий компонент
+	 * @param null $actualFields - сохраняемые (пробрасываемые) колючи arParams.
+	 * 			Значение null эквивалентно array_keys($arParams) - т.е.
+	 * 			получает все значения
+	 * @param bool $useTildaKeys - в качестве занчений параметров компонента в ajax-вызове
+	 * 			использовать первичные (сырые) значений arParams, ключи которых
+	 * 			имеют вид ~PARAM_NAME
+	 * @param bool $fillDummyObjectByArray - служебный параметр. Создать объек не из обхекта
+	 * 			\CBitrixComponentTemplate или \CBitrixComponent,
+	 * 			а из простого массива определенноый структуры
+	 */
 	private function __construct($component, $actualFields = null, $useTildaKeys = false, $fillDummyObjectByArray = false) {
 		$this->_params = array();
-		list($this->_name,
+		list($this->_component,
+			$this->_name,
 			$this->_template,
 			$arParams,
 			$this->_cacheType,
@@ -80,30 +138,37 @@ class Ajax {
 			}
 		}
 		else {
-			$actualParamsSerialized = '';
-			$tildaPrefix = (true === $this->_useTildaKeys)?'~':'';
-			if( empty($actualFields) || !is_array($actualFields) ) {
-				$actualFields = array_keys($arParams);
-			}
-			foreach ($actualFields as &$actualFieldName) {
-				if ( '~' === substr($actualFieldName, 0, 1)
-					|| self::AJAX_CALL_PARAMS_MARKER === $actualFieldName
-				) {
-					continue;
-				}
-				if (array_key_exists($tildaPrefix . $actualFieldName, $arParams)) {
-					$actualFieldValue = $arParams[$tildaPrefix . $actualFieldName];
-					$this->_actualParams[] = $actualFieldName;
-					$this->_params[$actualFieldName] = $actualFieldValue;
-					if (is_array($actualFieldValue)) {
-						$actualFieldValue = implode(',', $actualFieldValue);
-					}
-					$actualParamsSerialized .= '[' . $actualFieldName . ': ' . $actualFieldValue . '];';
-				}
-			}
-			$this->_callId = md5(SITE_ID.':'.$this->_name.':'.$this->_template.':'.$actualParamsSerialized);
+			$this->makeCallId($arParams);
 		}
 		self::clearSavedOutdatedSessionParams();
+	}
+
+	protected function makeCallId($arParams) {
+		$actualParamsSerialized = '';
+		$tildaPrefix = (true === $this->_useTildaKeys)?'~':'';
+		if( empty($actualFields) || !is_array($actualFields) ) {
+			$actualFields = array_keys($arParams);
+		}
+		$this->_callId = null;
+		$this->_actualParams = [];
+		$this->_params = [];
+		foreach ($actualFields as &$actualFieldName) {
+			if ( '~' === substr($actualFieldName, 0, 1)
+				|| self::AJAX_CALL_PARAMS_MARKER === $actualFieldName
+			) {
+				continue;
+			}
+			if (array_key_exists($tildaPrefix . $actualFieldName, $arParams)) {
+				$actualFieldValue = $arParams[$tildaPrefix . $actualFieldName];
+				$this->_actualParams[] = $actualFieldName;
+				$this->_params[$actualFieldName] = $actualFieldValue;
+				if (is_array($actualFieldValue)) {
+					$actualFieldValue = implode(',', $actualFieldValue);
+				}
+				$actualParamsSerialized .= '[' . $actualFieldName . ': ' . $actualFieldValue . '];';
+			}
+		}
+		$this->_callId = md5(SITE_ID.':'.$this->_name.':'.$this->_template.':'.$actualParamsSerialized);
 	}
 
 	public function __get($name) {
@@ -135,6 +200,9 @@ class Ajax {
 		}
 	}
 
+	/**
+	 * Сохранить параметры компонента в кеш (или в сессию, в случае использования clear_cache=Y)
+	 */
 	public function saveParams() {
 		$cache = self::getCache();
 		$cachedParams = [
@@ -161,6 +229,10 @@ class Ajax {
 		}
 	}
 
+	/**
+	 * Сохранить значения параметров компонентов в сессии
+	 * @param $cachedParams
+	 */
 	static private function saveParamsToSession(&$cachedParams) {
 		if( !isset($_SESSION['OBX_AJAX_CALL_PARAMS'])
 			|| !is_array($_SESSION['OBX_AJAX_CALL_PARAMS']) ) {
@@ -170,6 +242,12 @@ class Ajax {
 		$_SESSION['OBX_AJAX_CALL_PARAMS'][$cachedParams['callId']]['timeout'] = time()+self::CACHE_SESSION_TTL;
 	}
 
+	/**
+	 * Обновить значение таймаута хранения значений параметров сохраненных в сессии
+	 * по идентификатору ajax-вызова компонента
+	 * @param $callId
+	 * @return bool
+	 */
 	static public function _updateSessionParamsTimeout($callId) {
 		if( !isset($_SESSION['OBX_AJAX_CALL_PARAMS'])
 			|| !is_array($_SESSION['OBX_AJAX_CALL_PARAMS'])
@@ -181,10 +259,20 @@ class Ajax {
 		return true;
 	}
 
+	/**
+	 * Обновить значение таймаута хранения значений параметров сохраненных в сессии
+	 * текущего объекта
+	 */
 	public function updateSessionParamsTimeout() {
 		self::_updateSessionParamsTimeout($this->_callId);
 	}
 
+	/**
+	 * Очистить все устаревшие сохраненные значения кеша параметров ajax-компонентов.
+	 * Подобная очистка проиводится при каждом обращении к ajax-компоненту, но есть вероятность,
+	 * что пользователь не зайдет в обозримом периоде в раздел, в котором применяется ajax-вызовы компонента,
+	 * а значит значения могу зависнуть в сессии на долго. Потому можно переодически подчищать их этим методом
+	 */
 	static public function clearSavedOutdatedSessionParams() {
 		if( isset($_SESSION['OBX_AJAX_CALL_PARAMS'])
 			&& is_array($_SESSION['OBX_AJAX_CALL_PARAMS']) ) {
@@ -196,6 +284,17 @@ class Ajax {
 		}
 	}
 
+	/**
+	 * @param $component
+	 * @param null $actualFields - сохраняемые (пробрасываемые) колючи arParams
+	 * @param bool $useTildaKeys - в качестве занчений параметров компонента в ajax-вызове
+	 * 			использовать первичные (сырые) значений arParams, ключи которых
+	 * 			имеют вид ~PARAM_NAME
+	 * @param bool $immediateSaveToCache - сразу сохранить значения параметров компонента,
+	 * 			без явного вызова метода saveParams().
+	 * 			Нельзя использовать если применяется поле additionalData
+	 * @return Ajax
+	 */
 	static public function prepare($component, $actualFields = null, $useTildaKeys = false, $immediateSaveToCache = false) {
 		$ajax = new self($component, $actualFields, $useTildaKeys);
 		if( true === $immediateSaveToCache ) {
@@ -204,6 +303,10 @@ class Ajax {
 		return $ajax;
 	}
 
+	/**
+	 * Возвращает объект менеджера кеша
+	 * @return Cache|null
+	 */
 	static private function getCache() {
 		if( null === self::$cache ) {
 			self::$cache = Cache::createInstance();
@@ -211,6 +314,12 @@ class Ajax {
 		return self::$cache;
 	}
 
+	/**
+	 * Получить массив параметров компонента из кеша
+	 * по идентификатору ajax-вызов (callId)
+	 * @param $callId
+	 * @return null|Ajax
+	 */
 	static public function getByCallId($callId) {
 		$callId = trim($callId);
 		if( empty($callId) ) return null;
@@ -235,7 +344,17 @@ class Ajax {
 		return null;
 	}
 
+	/**
+	 * Получить данные компонента по объекту
+	 * \CBitrixComponentTemplate или \CBitrixComponent
+	 * или из простого массива определенного формата
+	 * @param $component
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentTypeException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
 	static private function getComponentData($component) {
+		$bitrixComponent = null;
 		$name = null;
 		$template = null;
 		$arParams = null;
@@ -243,11 +362,13 @@ class Ajax {
 		$cacheTime = null;
 
 		if($component instanceof CBitrixComponent) {
+			$bitrixComponent = $component;
 			$name = $component->getName();
 			$template = $component->getTemplateName();
 			$arParams = $component->arParams;
 		}
 		elseif($component instanceof CBitrixComponentTemplate) {
+			$bitrixComponent = $component->__component;
 			$name = $component->__component->getName();
 			$template = $component->__component->getTemplateName();
 			$arParams = $component->__component->arParams;
@@ -278,6 +399,7 @@ class Ajax {
 			$cacheTime = self::CACHE_AUTO_TTL;
 		}
 		return [
+			$bitrixComponent,
 			$name,
 			$template,
 			$arParams,
