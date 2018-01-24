@@ -82,8 +82,38 @@ class Ajax {
 	/** @var int - Вермя кеширования (сек.) */
 	private $_cacheTime = 3600;
 
+	private $_cacheDir = null;
+
 	/** @var \Bitrix\Main\Data\Cache|null - объект менеджера кеширования  */
 	static private $cache = null;
+
+	/**
+	 * TODO: реализовать перегенерацию callId при задании additionalData
+	 *
+	 * @var bool - контроль чтения поля callId.
+	 * Если программист добавит значения
+	 * в additionalData, то callId примет новое значение - это повлечет перегенерацию callId.
+	 * Если при этом программист уже получил значение callId,
+	 * то велика вероятность, что он забудет получить новое значение callId.
+	 * Потому мы через контроль чтения callId запретим ему получить callId раньше чем
+	 * он изменить additionalData. Бросим ему исключение при попытке задать additionalData
+	 * после того как callId был прочитан.
+	 */
+	private $_callIdAlreadyRead = false;
+
+	/**
+	 * @var bool - контроль за сохранением по аналогии с $_callIdAlreadyRead
+	 * Необхоидмо запретить программисту задавать additionalData после того, как он
+	 * сохранил данные в кеш. Иначе программист рано или поздно забудет пересохранить
+	 * параметры которые задаст в additionalData
+	 */
+	private $_paramsAlreadySaved = false;
+
+	/**
+	 * @var bool Включет проверку целостности
+	 * описанную в доке для переменных $_callIdAlreadyRead и $_paramsAlreadySaved
+	 */
+	private $_useStrictCacheControl = true;
 
 	const CACHE_AUTO_TTL = 36000000;
 	const CACHE_SESSION_TTL = 300;
@@ -173,7 +203,9 @@ class Ajax {
 
 	public function __get($name) {
 		switch($name) {
-			case 'callId': return $this->_callId;
+			case 'callId':
+				$this->_callIdAlreadyRead = true;
+				return $this->_callId;
 			case 'name': return $this->_name;
 			case 'template': return $this->_template;
 			case 'isAjaxHitNow': return $this->_isAjaxHitNow;
@@ -194,6 +226,9 @@ class Ajax {
 				if( is_array($value) && !empty($value) ) {
 					$this->_additionalData = $value;
 				}
+				break;
+			case 'useStrictCacheControl':
+				$this->_useStrictCacheControl = (bool) $value;
 				break;
 			default:
 				throw new ObjectPropertyException($name);
