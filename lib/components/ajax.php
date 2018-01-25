@@ -9,6 +9,8 @@
 
 
 namespace OBX\Core\Components;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\ObjectPropertyException;
@@ -23,14 +25,17 @@ Loc::loadLanguageFile(__FILE__);
 /**
  * Class Ajax
  * @package OBX\Core\Components
- * @property-read string $callId
- * @property-read string $name
- * @property-read string $template
- * @property-read bool $isAjaxHitNow
- * @property-read bool $useTildaKeys;
- * @property-read array $actualParams
- * @property-read array $params
- * @property array $additionalData
+ * @property-read string $callId - идентификатор ajax-вызова
+ * @property-read string $name - имя компонента
+ * @property-read string $template - шаблон компонента
+ * @property-read bool $isAjaxHitNow - признак, того, что раотает ajax-взов (обращение к компоненту через ajax-обработчик)
+ * @property-read bool $useTildaKeys - признак использования в качестве значений сохраняемых параметров компонента мырых данных (тильда-ключей) $arParams
+ * @property-read array $actualParams - список кешируемых ключей $arParams
+ * @property-read array $paramsKeys - список кешируемых ключей $arParams (синоним $actualParams)
+ * @property-read array $params - значения параметров компонента
+ * @property-read bool $useStrictCacheControl - режим контроля консистентности кеша параметров компонента. по умолчанию: true
+ * @property array $additionalData - дополнительные кешируемые данные типа фильтров для bitrix:news.list или bitrix:catalog.section
+ * @property array $globalsExport - массив ключей в $additionalParams, которые будут экспортированы в $GLOBALS в ajax-обработчике
  */
 class Ajax {
 	/** @var \CBitrixComponent|null - Объект вызываемого компонента */
@@ -61,6 +66,12 @@ class Ajax {
 	 * и вытаскиваем из кеша во время ajax-вызова.
 	 */
 	private $_additionalData = null;
+
+	/**
+	 * @var array|null - ключи $additionalData, которые будут экспортированы
+	 * в $GLOBALS в ajax-обработчике. Формат: ['KEY_IN_$GLOBALS' => 'KEY_IN_$additionalData']
+	 */
+	private $_globalsExport = null;
 
 	/**
 	 * @var bool - признак использования сырых значений arParams полученных в шаблоне компонента.
@@ -102,9 +113,9 @@ class Ajax {
 
 	/**
 	 * @var bool - контроль за сохранением по аналогии с $_callIdAlreadyRead
-	 * Необхоидмо запретить программисту задавать additionalData после того, как он
+	 * Необхоидмо запретить программисту задавать additionalData и globalsExport после того, как он
 	 * сохранил данные в кеш. Иначе программист рано или поздно забудет пересохранить
-	 * параметры которые задаст в additionalData
+	 * параметры которые задаст в additionalData и/или в globalsExport
 	 */
 	private $_paramsAlreadySaved = false;
 
@@ -129,7 +140,7 @@ class Ajax {
 	const CACHE_INIT_DIR = 'ajax_call';
 
 	/**
-	 * @const Имя ключа в массиве (например $arResult),
+	 * @const Имя ключа в массиве (например $arResult или $_REQUEST),
 	 * который содержит значение $callId
 	 */
 	const MARKER_CALL_ID = 'AJAX_CALL_ID';
@@ -185,6 +196,12 @@ class Ajax {
 		$arParams[self::MARKER_CALL_IS_AJAX] = 'Y';
 		$this->_params[self::MARKER_CALL_IS_AJAX] = 'Y';
 
+		if( array_key_exists(self::MARKER_ADDITIONAL_STAMP, $arParams) ) {
+			// Это не обязательно, но так первоначальный callId в ajax-хите будет
+			// таким же как в НЕ-ajax-овом хите перед заполнением additionalData и globalsExport
+			unset($arParams[self::MARKER_ADDITIONAL_STAMP]);
+		}
+
 		if( $fillDummyObjectByArray && is_array($component) ) {
 			if( empty($component['callId']) ) {
 				//todo: throw
@@ -193,10 +210,13 @@ class Ajax {
 			$this->_template = $component['template'];
 			$this->_useTildaKeys = $component['useTildaKeys'];
 			$this->_params = $arParams;
-			$this->_actualParams = $component['actualParams'];
+			$this->_actualParams = array_keys($component['params']);
 			$this->_callId = $component['callId'];
 			if( array_key_exists('additionalData', $component) ) {
-				$this->additionalData = $component['additionalData'];
+				$this->_additionalData = $component['additionalData'];
+			}
+			if( array_key_exists('globalsExport', $component) ) {
+				$this->_globalsExport = $component['globalsExport'];
 			}
 		}
 		else {
@@ -215,30 +235,29 @@ class Ajax {
 		$this->_params = [];
 
 		if( !empty($this->_additionalData) ) {
-			$arParams[self::MARKER_ADDITIONAL_STAMP] = md5(serialize($this->additionalData));
+			$serializedAdditionalData = empty($this->_additionalData)?'':serialize($this->_additionalData);
+			$serializedGlobalsExport = empty($this->_globalsExport)?'':serialize($this->_globalsExport);
+			$arParams[self::MARKER_ADDITIONAL_STAMP] = md5($serializedAdditionalData.$serializedGlobalsExport);
 			if( true === $useTildaKeys ) {
 				$arParams[$tildaPrefix.self::MARKER_ADDITIONAL_STAMP] = $arParams[self::MARKER_ADDITIONAL_STAMP];
 			}
 		}
+		$actualParams = array_keys($arParams);
 
-		if( empty($actualFields) || !is_array($actualFields) ) {
-			$actualFields = array_keys($arParams);
-		}
-
-		foreach ($actualFields as &$actualFieldName) {
-			if ( '~' === substr($actualFieldName, 0, 1)
-				|| self::MARKER_CALL_IS_AJAX === $actualFieldName
+		foreach ($actualParams as &$actualParamName) {
+			if ( '~' === substr($actualParamName, 0, 1)
+				|| self::MARKER_CALL_IS_AJAX === $actualParamName
 			) {
 				continue;
 			}
-			if (array_key_exists($tildaPrefix . $actualFieldName, $arParams)) {
-				$actualFieldValue = $arParams[$tildaPrefix . $actualFieldName];
-				$this->_actualParams[] = $actualFieldName;
-				$this->_params[$actualFieldName] = $actualFieldValue;
+			if (array_key_exists($tildaPrefix . $actualParamName, $arParams)) {
+				$actualFieldValue = $arParams[$tildaPrefix . $actualParamName];
+				$this->_actualParams[] = $actualParamName;
+				$this->_params[$actualParamName] = $actualFieldValue;
 				if (is_array($actualFieldValue)) {
 					$actualFieldValue = implode(',', $actualFieldValue);
 				}
-				$actualParamsSerialized .= '[' . $actualFieldName . ': ' . $actualFieldValue . '];';
+				$actualParamsSerialized .= '[' . $actualParamName . ': ' . $actualFieldValue . '];';
 			}
 		}
 		$this->_callId = md5(SITE_ID.':'.$this->_name.':'.$this->_template.':'.$actualParamsSerialized);
@@ -260,8 +279,10 @@ class Ajax {
 			case '_debug_params': return $this->_params;
 			case 'cacheTime': return $this->_cacheTime;
 			case 'cacheDir': return $this->_cacheDir;
+			case 'paramsKeys': return $this->_actualParams;
 			case 'actualParams': return $this->_actualParams;
 			case 'additionalData': return $this->_additionalData;
+			case 'globalsExport': return $this->_globalsExport;
 			case 'useStrictCacheControl': return $this->_useStrictCacheControl;
 			default:
 				throw new ObjectPropertyException($name);
@@ -271,30 +292,10 @@ class Ajax {
 	public function __set($name, $value) {
 		switch($name) {
 			case 'additionalData':
-				if( is_array($value) && !empty($value) ) {
-					if( $this->_useStrictCacheControl ) {
-						if( $this->_callIdAlreadyRead ) {
-							throw new NotSupportedException(
-								'Modifying of $additionalData is denied after $callId has been read.'
-								.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
-							);
-						}
-						if( $this->_paramsAlreadyRead ) {
-							throw new NotSupportedException(
-								'Modifying of $additionalData is denied after $params ($arParams) has been read.'
-								.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
-							);
-						}
-						if( $this->_paramsAlreadySaved ) {
-							throw new NotSupportedException(
-								'Modifying of $additionalData is denied after $params ($arParams) has been saved.'
-								.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
-							);
-						}
-					}
-					$this->_additionalData = $value;
-					$this->makeCallId($this->_params, false);
-				}
+				$this->_setAdditionalData($value);
+				break;
+			case 'globalsExport':
+				$this->_setGlobalsExport($value);
 				break;
 			case 'useStrictCacheControl':
 				$this->_useStrictCacheControl = (bool) $value;
@@ -302,6 +303,76 @@ class Ajax {
 			default:
 				throw new ObjectPropertyException($name);
 		}
+	}
+
+	private function _throwOnModifyAdditionalData() {
+		if( $this->_useStrictCacheControl ) {
+			if( $this->_callIdAlreadyRead ) {
+				throw new NotSupportedException(
+					'Modifying of $additionalData is denied after $callId has been read.'
+					.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
+				);
+			}
+			if( $this->_paramsAlreadyRead ) {
+				throw new NotSupportedException(
+					'Modifying of $additionalData is denied after $params ($arParams) has been read.'
+					.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
+				);
+			}
+			if( $this->_paramsAlreadySaved ) {
+				throw new NotSupportedException(
+					'Modifying of $additionalData is denied after $params ($arParams) has been saved.'
+					.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
+				);
+			}
+		}
+	}
+
+	private function _setAdditionalData(&$value) {
+		if( empty($this->_additionalData) && (!is_array($value) || empty($value)) ) {
+			$this->_additionalData = null;
+			return false;
+		}
+		$this->_throwOnModifyAdditionalData();
+		$this->_additionalData = $value;
+		$this->makeCallId($this->_params, false);
+		return true;
+	}
+
+	private function _setGlobalsExport(&$value) {
+		if( empty($this->_globalsExport) && (!is_array($value) || empty($value)) ) {
+			$this->_globalsExport = null;
+			return false;
+		}
+		$this->_throwOnModifyAdditionalData();
+		if( !is_array($value) || empty($value) ) {
+			$this->makeCallId($this->_params, false);
+			$this->_globalsExport = null;
+			return true;
+		}
+		$this->_globalsExport = [];
+		foreach($value as $globalKey => $additionalDataKey) {
+			$additionalDataKey = trim($additionalDataKey);
+			if( empty($additionalDataKey) ) {
+				continue;
+			}
+			if( !array_key_exists($additionalDataKey, $this->_additionalData) ) {
+				continue;
+			}
+			if( is_numeric($globalKey) ) {
+				throw new NotSupportedException('Incorrect format of $globalsExport.'
+					.PHP_EOL.'You should to follow this [\'KEY_IN_$GLOBALS\' => \'KEY_IN_$additionalData\']'
+					.PHP_EOL.'Numeric keys does not support.'
+				);
+			}
+			//todo: добавить валидацию имени переменной, хранимой в ключе
+			$this->_globalsExport[$globalKey] = $additionalDataKey;
+		}
+		if( empty($this->_globalsExport) ) {
+			$this->_globalsExport = null;
+		}
+		$this->makeCallId($this->_params, false);
+		return true;
 	}
 
 	/**
@@ -314,9 +385,9 @@ class Ajax {
 			'name' => $this->_name,
 			'template' => $this->_template,
 			'useTildaKeys' => $this->_useTildaKeys,
-			'actualParams' => $this->_actualParams,
 			'params' => $this->_params,
-			'additionalData' => $this->_additionalData
+			'additionalData' => $this->_additionalData,
+			'globalsExport' => $this->_globalsExport
 		];
 		if( ! $this->_isAjaxHitNow && $this->_cacheTime > 0 ) {
 			if( !$cache->startDataCache($this->_cacheTime+60, $this->_callId, self::CACHE_INIT_DIR) ) {
@@ -441,7 +512,7 @@ class Ajax {
 		if( !empty($componentData) ) {
 			return new self(
 				$componentData,
-				$componentData['actualParams'],
+				array_keys($componentData['params']),
 				$componentData['useTildaKeys'],
 				true
 			);
@@ -511,5 +582,37 @@ class Ajax {
 			$cacheType,
 			$cacheTime
 		];
+	}
+
+	public function exportGlobals() {
+		foreach($this->_globalsExport as $globalKey => $additionalDataKey) {
+			if( array_key_exists($additionalDataKey, $this->_additionalData) ) {
+				$GLOBALS[$globalKey] = $this->_additionalData[$additionalDataKey];
+			}
+		}
+	}
+
+	static public function includeAjaxComponent() {
+		/** @global \CMain $APPLICATION */
+		global $APPLICATION;
+		if( empty($_REQUEST[Ajax::MARKER_CALL_ID]) ) {
+			ShowError('Не передан идентификатор ajax-вызова компонента ['.Ajax::MARKER_CALL_ID.']');
+			return null;
+		}
+		$ajaxComponent = Ajax::getByCallId($_REQUEST[Ajax::MARKER_CALL_ID]);
+		if( !($ajaxComponent instanceof Ajax) ) {
+			ShowError('Данные ajax-вызова компонента не найдены');
+			return null;
+		}
+
+		$ajaxComponent->updateSessionParamsTimeout();
+		$ajaxComponent->exportGlobals();
+		$componentReturnValue = $APPLICATION->IncludeComponent(
+			$ajaxComponent->name,
+			$ajaxComponent->template,
+			$ajaxComponent->params,
+			false, ['HIDE_ICONS' => 'Y']
+		);
+		return $componentReturnValue;
 	}
 }
