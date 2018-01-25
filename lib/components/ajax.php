@@ -127,8 +127,31 @@ class Ajax {
 	const CACHE_AUTO_TTL = 36000000;
 	const CACHE_SESSION_TTL = 300;
 	const CACHE_INIT_DIR = 'ajax_call';
-	const AJAX_CALL_PARAMS_MARKER = 'COMPONENT_AJAX_CALL';
-	const ADDITIONAL_STAMP_MARKER = 'COMPONENT_AJAX_ADDITIONAL_STAMP';
+
+	/**
+	 * @const Имя ключа в массиве (например $arResult),
+	 * который содержит значение $callId
+	 */
+	const MARKER_CALL_ID = 'AJAX_CALL_ID';
+
+	/**
+	 * @const Имя ключа в массиве (например $arResult),
+	 * который содержит признак того,
+	 * что вызов осуществляется по ajax (isAjaxHitNow)
+	 */
+	const MARKER_CALL_IS_AJAX = 'COMPONENT_CALL_IS_AJAX';
+
+	/**
+	 * @const Имя ключа в массиве $arParams,
+	 * который содержит контрольную сумму данных $additionalData
+	 */
+	const MARKER_ADDITIONAL_STAMP = 'AJAX_ADDITIONAL_DATA_STAMP';
+
+	/**
+	 * @const - то же что Ajax::MARKER_CALL_IS_AJAX - устаревшее.
+	 * @deprecated
+	 */
+	const AJAX_CALL_PARAMS_MARKER = self::MARKER_CALL_IS_AJAX;
 
 	/**
 	 * @param \CBitrixComponentTemplate|\CBitrixComponent|array $component -
@@ -154,13 +177,13 @@ class Ajax {
 			$this->_cacheTime
 			) = self::getComponentData($component);
 		$this->_useTildaKeys = (bool) $useTildaKeys;
-		if( array_key_exists(self::AJAX_CALL_PARAMS_MARKER, $arParams)
-			&& $arParams[self::AJAX_CALL_PARAMS_MARKER] == 'Y'
+		if( array_key_exists(self::MARKER_CALL_IS_AJAX, $arParams)
+			&& $arParams[self::MARKER_CALL_IS_AJAX] == 'Y'
 		) {
 			$this->_isAjaxHitNow = true;
 		}
-		$arParams[self::AJAX_CALL_PARAMS_MARKER] = 'Y';
-		$this->_params[self::AJAX_CALL_PARAMS_MARKER] = 'Y';
+		$arParams[self::MARKER_CALL_IS_AJAX] = 'Y';
+		$this->_params[self::MARKER_CALL_IS_AJAX] = 'Y';
 
 		if( $fillDummyObjectByArray && is_array($component) ) {
 			if( empty($component['callId']) ) {
@@ -192,9 +215,9 @@ class Ajax {
 		$this->_params = [];
 
 		if( !empty($this->_additionalData) ) {
-			$arParams[self::ADDITIONAL_STAMP_MARKER] = md5(serialize($this->additionalData));
+			$arParams[self::MARKER_ADDITIONAL_STAMP] = md5(serialize($this->additionalData));
 			if( true === $useTildaKeys ) {
-				$arParams[$tildaPrefix.self::ADDITIONAL_STAMP_MARKER] = $arParams[self::ADDITIONAL_STAMP_MARKER];
+				$arParams[$tildaPrefix.self::MARKER_ADDITIONAL_STAMP] = $arParams[self::MARKER_ADDITIONAL_STAMP];
 			}
 		}
 
@@ -204,7 +227,7 @@ class Ajax {
 
 		foreach ($actualFields as &$actualFieldName) {
 			if ( '~' === substr($actualFieldName, 0, 1)
-				|| self::AJAX_CALL_PARAMS_MARKER === $actualFieldName
+				|| self::MARKER_CALL_IS_AJAX === $actualFieldName
 			) {
 				continue;
 			}
