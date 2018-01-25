@@ -12,6 +12,7 @@ namespace OBX\Core\Components;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Data\Cache;
 use CBitrixComponent;
@@ -56,8 +57,8 @@ class Ajax {
 	 * имя которой передано в параметрах. Нам необходимо сохранить в кеш ajax-вызова
 	 * не только параметры, но и само содержимое фильра, поскольку внутри ajax-вызова
 	 * интересующего нас занчения в GLOBALS уже не будет (хит новый же...).
-	 * Потому сохраняем в это поле, сохраняем в кеш и вытаскиваем из кеша
-	 * во время ajax-вызова.
+	 * Потому сохраняем доп. значения в это поле (в кеш),
+	 * и вытаскиваем из кеша во время ajax-вызова.
 	 */
 	private $_additionalData = null;
 
@@ -88,9 +89,7 @@ class Ajax {
 	static private $cache = null;
 
 	/**
-	 * TODO: реализовать перегенерацию callId при задании additionalData
-	 *
-	 * @var bool - контроль чтения поля callId.
+	 * @var bool - контроль чтения поля $callId.cn
 	 * Если программист добавит значения
 	 * в additionalData, то callId примет новое значение - это повлечет перегенерацию callId.
 	 * Если при этом программист уже получил значение callId,
@@ -111,15 +110,25 @@ class Ajax {
 
 	/**
 	 * @var bool Включет проверку целостности
-	 * описанную в доке для переменных $_callIdAlreadyRead и $_paramsAlreadySaved
+	 * описанную в доке для переменных
+	 * $_callIdAlreadyRead, $_paramsAlreadySaved и $_paramsAlreadyRead
 	 */
 	private $_useStrictCacheControl = true;
+
+	/**
+	 * @var bool - контроль чтения поля $params по аналогии с $_callIdAlreadyRead
+	 * Необхоидмо запретить программисту задавать additionalData после того, как он
+	 * прочитал $params, поскольку после того как программист задаст значние $additionalData
+	 * в параметрах появится как минимум ещё один ключ,
+	 * и полученные им ранее массив параметров будет отличаться от фактического занчения $params
+	 */
+	private $_paramsAlreadyRead = false;
 
 	const CACHE_AUTO_TTL = 36000000;
 	const CACHE_SESSION_TTL = 300;
 	const CACHE_INIT_DIR = 'ajax_call';
 	const AJAX_CALL_PARAMS_MARKER = 'COMPONENT_AJAX_CALL';
-	const ADDITIONAL_DATA_MARKER = 'COMPONENT_AJAX_ADDITIONAL_STAMP';
+	const ADDITIONAL_STAMP_MARKER = 'COMPONENT_AJAX_ADDITIONAL_STAMP';
 
 	/**
 	 * @param \CBitrixComponentTemplate|\CBitrixComponent|array $component -
@@ -144,7 +153,7 @@ class Ajax {
 			$this->_cacheType,
 			$this->_cacheTime
 			) = self::getComponentData($component);
-		$this->_useTildaKeys = !!$useTildaKeys;
+		$this->_useTildaKeys = (bool) $useTildaKeys;
 		if( array_key_exists(self::AJAX_CALL_PARAMS_MARKER, $arParams)
 			&& $arParams[self::AJAX_CALL_PARAMS_MARKER] == 'Y'
 		) {
@@ -168,20 +177,31 @@ class Ajax {
 			}
 		}
 		else {
-			$this->makeCallId($arParams);
+			$this->makeCallId($arParams, $this->_useTildaKeys);
 		}
 		self::clearSavedOutdatedSessionParams();
 	}
 
-	protected function makeCallId($arParams) {
+	protected function makeCallId($arParams, $useTildaKeys) {
 		$actualParamsSerialized = '';
-		$tildaPrefix = (true === $this->_useTildaKeys)?'~':'';
-		if( empty($actualFields) || !is_array($actualFields) ) {
-			$actualFields = array_keys($arParams);
-		}
+		$useTildaKeys = (bool) $useTildaKeys;
+		$tildaPrefix = (true === $useTildaKeys)?'~':'';
+
 		$this->_callId = null;
 		$this->_actualParams = [];
 		$this->_params = [];
+
+		if( !empty($this->_additionalData) ) {
+			$arParams[self::ADDITIONAL_STAMP_MARKER] = md5(serialize($this->additionalData));
+			if( true === $useTildaKeys ) {
+				$arParams[$tildaPrefix.self::ADDITIONAL_STAMP_MARKER] = $arParams[self::ADDITIONAL_STAMP_MARKER];
+			}
+		}
+
+		if( empty($actualFields) || !is_array($actualFields) ) {
+			$actualFields = array_keys($arParams);
+		}
+
 		foreach ($actualFields as &$actualFieldName) {
 			if ( '~' === substr($actualFieldName, 0, 1)
 				|| self::AJAX_CALL_PARAMS_MARKER === $actualFieldName
@@ -206,15 +226,20 @@ class Ajax {
 			case 'callId':
 				$this->_callIdAlreadyRead = true;
 				return $this->_callId;
+			case '_debug_callId': return $this->_callId;
 			case 'name': return $this->_name;
 			case 'template': return $this->_template;
 			case 'isAjaxHitNow': return $this->_isAjaxHitNow;
 			case 'useTildaKeys': return $this->_useTildaKeys;
-			case 'params': return $this->_params;
+			case 'params':
+				$this->_paramsAlreadyRead = true;
+				return $this->_params;
+			case '_debug_params': return $this->_params;
 			case 'cacheTime': return $this->_cacheTime;
 			case 'cacheDir': return $this->_cacheDir;
 			case 'actualParams': return $this->_actualParams;
 			case 'additionalData': return $this->_additionalData;
+			case 'useStrictCacheControl': return $this->_useStrictCacheControl;
 			default:
 				throw new ObjectPropertyException($name);
 		}
@@ -224,7 +249,28 @@ class Ajax {
 		switch($name) {
 			case 'additionalData':
 				if( is_array($value) && !empty($value) ) {
+					if( $this->_useStrictCacheControl ) {
+						if( $this->_callIdAlreadyRead ) {
+							throw new NotSupportedException(
+								'Modifying of $additionalData is denied after $callId has been read.'
+								.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
+							);
+						}
+						if( $this->_paramsAlreadyRead ) {
+							throw new NotSupportedException(
+								'Modifying of $additionalData is denied after $params ($arParams) has been read.'
+								.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
+							);
+						}
+						if( $this->_paramsAlreadySaved ) {
+							throw new NotSupportedException(
+								'Modifying of $additionalData is denied after $params ($arParams) has been saved.'
+								.PHP_EOL.'You can set $useStrictCacheControl field to false. But do it responsibly.'
+							);
+						}
+					}
 					$this->_additionalData = $value;
+					$this->makeCallId($this->_params, false);
 				}
 				break;
 			case 'useStrictCacheControl':
@@ -249,19 +295,20 @@ class Ajax {
 			'params' => $this->_params,
 			'additionalData' => $this->_additionalData
 		];
-		if( ! $this->isAjaxHitNow &&
-			$this->_cacheTime > 0 &&
-			$cache->startDataCache($this->_cacheTime+60, $this->_callId, self::CACHE_INIT_DIR)
-		) {
+		if( ! $this->_isAjaxHitNow && $this->_cacheTime > 0 ) {
+			if( !$cache->startDataCache($this->_cacheTime+60, $this->_callId, self::CACHE_INIT_DIR) ) {
+				//todo: throw
+			}
 			/** @noinspection PhpParamsInspection */
 			$cache->endDataCache($cachedParams);
 		}
-		if( ! $this->isAjaxHitNow
+		if( ! $this->_isAjaxHitNow
 			&& isset($_REQUEST['clear_cache'])
 			&& 'Y' === $_REQUEST['clear_cache']
 		) {
 			self::saveParamsToSession($cachedParams);
 		}
+		$this->_paramsAlreadySaved = true;
 	}
 
 	/**
