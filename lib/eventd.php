@@ -9,27 +9,47 @@
 
 namespace OBX\Core;
 class EventD {
-	const PATH_TO_USRINC_DIR = '/bitrix/php_interface/';
-	const PATH_TO_EVENT_D = '/bitrix/php_interface/event.d';
+	const BITRIX_EVENT_D = '/bitrix/php_interface/event.d';
+	const LOCAL_EVENT_D = '/local/php_interface/event.d';
 
-	public function connectAllEvents() {
-		$pathEventD = $_SERVER['DOCUMENT_ROOT'].self::PATH_TO_EVENT_D;
+	public static function connectAllEvents() {
+		self::connectBitrixUsrEvents();
+		self::connectLocalUsrEvents();
+	}
 
+	public static function connectBitrixUsrEvents() {
+		$pathEventD = $_SERVER['DOCUMENT_ROOT'].self::BITRIX_EVENT_D;
 		if( !is_dir($pathEventD)) {
-			return false;
+			return;
 		}
-
 		$dirEventD = opendir($pathEventD);
 		$arFilesList = array();
 		self::fillDirFilesList($dirEventD, $arFilesList);
-
 		if( is_dir($pathEventD.'/'.SITE_ID) ) {
 			$dirSiteEventD = opendir($pathEventD.'/'.SITE_ID);
 			self::fillDirFilesList($dirSiteEventD, $arFilesList, SITE_ID.'/');
 		}
-
 		foreach($arFilesList as $eventFileName) {
 			$eventFilePath = $pathEventD.'/'.$eventFileName;
+			/** @noinspection PhpIncludeInspection */
+			@include $eventFilePath;
+		}
+	}
+	public static function connectLocalUsrEvents() {
+		$pathEventD = $_SERVER['DOCUMENT_ROOT'].self::LOCAL_EVENT_D;
+		if( !is_dir($pathEventD)) {
+			return;
+		}
+		$dirEventD = opendir($pathEventD);
+		$arFilesList = array();
+		self::fillDirFilesList($dirEventD, $arFilesList);
+		if( is_dir($pathEventD.'/'.SITE_ID) ) {
+			$dirSiteEventD = opendir($pathEventD.'/'.SITE_ID);
+			self::fillDirFilesList($dirSiteEventD, $arFilesList, SITE_ID.'/');
+		}
+		foreach($arFilesList as $eventFileName) {
+			$eventFilePath = $pathEventD.'/'.$eventFileName;
+			/** @noinspection PhpIncludeInspection */
 			@include $eventFilePath;
 		}
 	}
