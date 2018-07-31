@@ -18,7 +18,9 @@ namespace {
 }
 
 namespace OBX\Core {
+	use Bitrix\Main\SystemException;
 	use OBX\Core\LessCss\Connector as LessCssConnector;
+	use Bitrix\Main\Localization\Loc;
 	class Tools
 	{
 
@@ -527,18 +529,19 @@ namespace OBX\Core {
 						'CONTENT_LANG_FILE' => $contentLangFile
 					);
 					if(!self::$_bViewContentDispatcherActive) {
-						AddEventHandler('main', 'OnEpilog', 'OBX\Core\Tools::dispatchViewTargetContents');
+						AddEventHandler('main', 'OnEpilog', 'OBX\Core\Tools::dispatchViewTargetFiles');
 						self::$_bViewContentDispatcherActive = true;
 					}
 				}
 			}
 		}
 
-		static public function dispatchViewTargetContents() {
+		static public function dispatchViewTargetFiles() {
 			global $APPLICATION, $USER, $DB;
 			foreach(self::$_arContentViewTargets as $view => &$arViewTarget) {
 				ob_start();
-				__IncludeLang($arViewTarget['CONTENT_LANG_FILE']);
+				Loc::loadMessages($arViewTarget['CONTENT_LANG_FILE']);
+				/** @noinspection PhpIncludeInspection */
 				include $arViewTarget['CONTENT_FILE'];
 				$content = ob_get_clean();
 				$APPLICATION->AddViewContent($view, $content);
@@ -547,13 +550,60 @@ namespace OBX\Core {
 
 		static private $_deferredViewClosuresActive = false;
 		static private $_arDeferredViewList = array();
-		static public function showViewFunction($view, $closure) {
+
+		/**
+		 * @param $view
+		 * @param $handler
+		 * @param array $handlerParams
+		 * @param bool $denyOverride
+		 * @param bool $incrementalView - По умолчанию == false,
+		 * 				то есть любой контент этого view
+		 * 				будет заменен на результат $handler-а.
+		 * 				Если же передать явно значение true
+		 * 				содержимое $handler-а будет выведено под уже существующим
+		 * 				содержимым указанног view
+		 * 				(которое, например, может быть задано в компоненте
+		 * 					методами $this->SetViewTarget(...)
+		 * 					и $this->EndViewTarget()
+		 * 				)
+		 * @param int $positionSort - Параметр актуален только при $incrementalView == true.
+		 * 				- позиция контента $handler-а относительно
+		 * 				контента, который был помещен системными инструментами
+		 * 				типа $component->SetViewTarget(...)
+		 * 				или $APPLICATION->AddViewContent(...).
+		 * 				Важный аспект работы в том, что контент $handler-а
+		 * 				будет дорбавлен в $APP->__view последним,
+		 * 				потому луче явно указывать positionSort = 1,
+		 * 				что бы содержимое блока было наверху
+		 *
+		 * @throws \Bitrix\Main\SystemException
+		 */
+		static public function showViewFunction($view, $handler, $handlerParams = [],
+												$denyOverride = false,
+												$incrementalView = false,
+												$positionSort = 1
+		) {
+			$positionSort = intval($positionSort);
 			/** @global \CMain $APPLICATION */
 			global $APPLICATION;
-			if(preg_match('~^[a-zA-Z0-9\_\-\.]{1,30}$~', $view)
-				&& is_callable($closure)
+			if(preg_match('~^[a-zA-Z0-9\_\-\.@%#]{1,30}$~', $view)
+				&& is_callable($handler)
 			) {
-				self::$_arDeferredViewList[$view] = $closure;
+				if( array_key_exists($view, $APPLICATION->__view) ) {
+					throw new SystemException('View "'.$view.'" already exists');
+				}
+
+				if( !array_key_exists($view, self::$_arDeferredViewList[$view])
+					|| true === $denyOverride
+				) {
+					self::$_arDeferredViewList[$view] = [
+						'handler' => $handler,
+						'params' => $handlerParams,
+						'denyOverride' => true === $denyOverride,
+						'incrementalView' => true === $incrementalView,
+						'positionSort' => $positionSort
+					];
+				}
 				$APPLICATION->ShowViewContent($view);
 				if(!self::$_deferredViewClosuresActive) {
 					AddEventHandler('main', 'OnEpilog', 'OBX\Core\Tools::dispatchDeferredView');
@@ -562,14 +612,53 @@ namespace OBX\Core {
 			}
 		}
 
+		static public function overrideViewFunction($view, $handler, $handlerParams = []) {
+			if(preg_match('~^[a-zA-Z0-9\_\-\.@%#]{1,30}$~', $view)
+				&& is_callable($handler)
+			) {
+				if( !array_key_exists($view, self::$_arDeferredViewList[$view]) ) {
+					self::$_arDeferredViewList[$view] = [
+						'handler' => $handler,
+						'params' => $handlerParams,
+						'denyOverride' => null,
+						// если в showViewFunction( аргумент $denyOverride
+						// будет равен true, это значение будет затёрто
+						// Помечаем как null, потому что мы пока не знаем
+						// разрешено ли переопределять этот блок,
+						// поскольку overrideViewFunction выполнилась ранее showViewFunction
+						'incrementalView' => null,
+						'positionSort' => null
+						// с incrementalView и positionSort так же как и с denyOverride
+					];
+				}
+				elseif( true !== self::$_arDeferredViewList[$view]['denyOverride'] ) {
+					self::$_arDeferredViewList[$view]['handler'] = $handler;
+					self::$_arDeferredViewList[$view]['params'] = $handlerParams;
+				}
+			}
+		}
+
 		static public function dispatchDeferredView() {
 			/** @global \CMain $APPLICATION */
 			global $APPLICATION;
-			foreach(self::$_arDeferredViewList as $view => $closure) {
+			foreach(self::$_arDeferredViewList as $view => $handler) {
+				if( null === $handler['denyOverride'] ) {
+					// Если этот параметр === null, значит overrideViewFunction
+					// была вызвана, а showViewFunction - нет,
+					// а значит этот view можно пропустить,
+					// ибо для него не определена точка вывода
+					continue;
+				}
 				ob_start();
-				$closure();
+				call_user_func_array($handler['handler'], $handler['params']);
 				$content = ob_get_clean();
-				$APPLICATION->AddViewContent($view, $content);
+				if( true === $handler['incrementalView'] ) {
+					$APPLICATION->AddViewContent($view, $content, $handler['positionSort']);
+				}
+				else {
+					// Затираем содержимое view, которое было ранее
+					$APPLICATION->__view[$view] = [[$content, $handler['positionSort']]];
+				}
 			}
 		}
 
