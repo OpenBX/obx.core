@@ -593,7 +593,7 @@ namespace OBX\Core {
 					throw new SystemException('View "'.$view.'" already exists');
 				}
 
-				if( !array_key_exists($view, self::$_arDeferredViewList[$view])
+				if( !array_key_exists($view, self::$_arDeferredViewList)
 					|| true === $denyOverride
 				) {
 					self::$_arDeferredViewList[$view] = [
@@ -616,7 +616,7 @@ namespace OBX\Core {
 			if(preg_match('~^[a-zA-Z0-9\_\-\.@%#]{1,30}$~', $view)
 				&& is_callable($handler)
 			) {
-				if( !array_key_exists($view, self::$_arDeferredViewList[$view]) ) {
+				if( !array_key_exists($view, self::$_arDeferredViewList) ) {
 					self::$_arDeferredViewList[$view] = [
 						'handler' => $handler,
 						'params' => $handlerParams,
