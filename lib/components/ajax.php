@@ -179,6 +179,7 @@ class Ajax {
 	 * 			а из простого массива определенноый структуры
 	 */
 	private function __construct($component, $actualFields = null, $useTildaKeys = false, $fillDummyObjectByArray = false) {
+		$this->_useTildaKeys = (bool) $useTildaKeys;
 		$this->_params = array();
 		list($this->_component,
 			$this->_name,
@@ -187,7 +188,6 @@ class Ajax {
 			$this->_cacheType,
 			$this->_cacheTime
 			) = self::getComponentData($component);
-		$this->_useTildaKeys = (bool) $useTildaKeys;
 		if( array_key_exists(self::MARKER_CALL_IS_AJAX, $arParams)
 			&& $arParams[self::MARKER_CALL_IS_AJAX] == 'Y'
 		) {
@@ -537,17 +537,17 @@ class Ajax {
 		$cacheType = null;
 		$cacheTime = null;
 
-		if($component instanceof CBitrixComponent) {
-			$bitrixComponent = $component;
-			$name = $component->getName();
-			$template = $component->getTemplateName();
-			$arParams = $component->arParams;
-		}
-		elseif($component instanceof CBitrixComponentTemplate) {
-			$bitrixComponent = $component->__component;
-			$name = $component->__component->getName();
-			$template = $component->__component->getTemplateName();
-			$arParams = $component->__component->arParams;
+		$bitrixComponent = (($component instanceof CBitrixComponent)
+			? $component
+			: (($component instanceof CBitrixComponentTemplate)
+				? $component->__component
+				: null
+			)
+		);
+		if( null !== $bitrixComponent ) {
+			$name = $bitrixComponent->getName();
+			$template = $bitrixComponent->getTemplateName();
+			$arParams = $bitrixComponent->arParams;
 		}
 		elseif(is_array($component)) {
 			if( empty($component['name']) ) {
@@ -568,6 +568,14 @@ class Ajax {
 		}
 		else {
 			throw new ArgumentNullException(Loc::getMessage('OBX_CMP_AJAX_WRONG_ARG_CMP'));
+		}
+		// restore bool values to string markers
+		foreach($arParams as $paramName => &$paramValue) {
+			if (is_scalar($paramValue)) {
+				$paramValue = is_bool($paramValue)
+					? ($paramValue ? 'Y' : 'N')
+					: ((string) $paramValue);
+			}
 		}
 		$cacheTime = intval($arParams['CACHE_TIME']);
 		$cacheType = isset($arParams['CACHE_TYPE'])?$arParams['CACHE_TYPE']:'A';
