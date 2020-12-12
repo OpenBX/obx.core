@@ -395,10 +395,9 @@ class Ajax {
 		$cachedParams['params'][self::MARKER_CALL_ID] = $this->_callId;
 		$cachedParams['params'][self::MARKER_CALL_IS_AJAX] = 'Y';
 		if( ! $this->_isAjaxHitNow && $this->_cacheTime > 0 ) {
-			if( !$cache->startDataCache($this->_cacheTime+60, $this->_callId, self::CACHE_INIT_DIR) ) {
-				throw new SystemException('Не удалось инициализировать кеш для хранения параметров вызова компонентов через ajax');
+			if( $cache->startDataCache($this->_cacheTime+60, $this->_callId, self::CACHE_INIT_DIR) ) {
+				$cache->endDataCache($cachedParams);
 			}
-			$cache->endDataCache($cachedParams);
 		}
 		if( ! $this->_isAjaxHitNow
 			&& isset($_REQUEST['clear_cache'])
